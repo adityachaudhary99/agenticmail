@@ -176,7 +176,14 @@ IMAP_PORT=143
     const composePath = join(dataDir, 'docker-compose.yml');
     writeFileSync(composePath, `services:
   stalwart:
-    image: stalwartlabs/stalwart:latest
+    # Pinned to v0.15.5 — Stalwart 0.16+ moved its config to JSON
+    # at /etc/stalwart/config.json (hardcoded into the container
+    # CMD), runs as UID 2000, and silently ignores our pre-0.10
+    # TOML mount. On those builds Stalwart enters bootstrap mode
+    # and the setup wizard 404s on the admin API. Pinning until
+    # the templates are migrated to the 0.16+ JSON layout.
+    # Tracking: https://github.com/agenticmail/agenticmail/issues/10
+    image: stalwartlabs/stalwart:v0.15.5
     container_name: agenticmail-stalwart
     ports:
       - "127.0.0.1:8080:8080"   # HTTP Admin + JMAP (localhost only)

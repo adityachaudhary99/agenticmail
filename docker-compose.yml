@@ -1,6 +1,13 @@
 services:
   stalwart:
-    image: stalwartlabs/stalwart:latest
+    # Pinned to v0.15.5 — Stalwart 0.16+ moved config to JSON at
+    # /etc/stalwart/config.json, hardcoded the container CMD to that
+    # path, and switched the runtime UID to 2000. Our pre-0.10 TOML
+    # mount is silently ignored on those builds and Stalwart enters
+    # bootstrap mode, breaking `agenticmail setup` with a 404 on the
+    # admin API. Pinning until the templates migrate to 0.16+ layout.
+    # Tracking issue: https://github.com/agenticmail/agenticmail/issues/10
+    image: stalwartlabs/stalwart:v0.15.5
     container_name: agenticmail-stalwart
     ports:
       - "8080:8080"   # HTTP Admin + JMAP

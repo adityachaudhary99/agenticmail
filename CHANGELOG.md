@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.55] - 2026-05-02
+
+### Fixed
+
+- **`@agenticmail/mcp` crash on startup with MCP SDK 1.13+** (#9). The
+  loose `^1.12.0` semver let npm install 1.13+ fresh, where tool
+  registration tightened to require Zod schemas instead of raw JSON
+  Schema. Added a JSON-Schema-to-Zod converter so the existing tool
+  definitions register cleanly on every SDK release ≥ 1.12, and
+  switched the tool callback signature to the post-1.13 `(args)`
+  shape. Initial fix from @Abeyron in #8.
+- **`db_admin` arrays silently rejected** — the converter previously
+  fell back to `z.array(z.string())` for arrays without an explicit
+  `items` declaration, which broke `columns`, `rows`, `operations`
+  and other object-array inputs. Fallback is now `z.any()` for
+  defence-in-depth, and every existing array field has explicit
+  `items` so OpenAI-strict validators accept the schema upstream.
+- **Free-form objects (`where`, `set`, `column`) rejected by the
+  converter** — `z.object({})` rejected every real call. Now
+  resolved to `z.record(z.any())` when `properties` is empty.
+- **`cc` / `bcc` dropped on domain-mode sends** — `sendViaStalwart()`
+  built a nodemailer envelope without the `cc`/`bcc` fields even
+  though the upstream `SendMailOptions` carried them. Initial fix
+  from @Abeyron in #8.
+- **Inbound relay messages mis-attributed to the agent in domain
+  mode** — `parseEmail()` only restored `X-Original-From` when the
+  rewritten sender ended in `@localhost`. Now also matches messages
+  carrying `X-AgenticMail-Relay: inbound`. Initial fix from
+  @Abeyron in #8.
+- **First-run setup fails with 404 on Stalwart admin** (#10). Pinned
+  `stalwartlabs/stalwart` to `v0.15.5` in both the bundled
+  `docker-compose.yml` and the `generateDockerFiles()` template
+  (and the CI service). Stalwart 0.16+ moved its config to JSON
+  at `/etc/stalwart/config.json`, runs as UID 2000, and silently
+  ignores the legacy TOML mount, leaving the container in
+  bootstrap mode. The wizard's setup error mapping now also
+  recognises Stalwart 404s and points to issue #10 with the exact
+  recovery commands.
+
+### Credits
+
+Thanks to **@Abeyron** for the original PR (#8) covering the MCP
+schema, cc/bcc, and `X-Original-From` fixes, and to
+**@StreamlinedStartup** for the detailed reproductions in #9 and #10
+that made the root causes obvious.
+
 ## [0.2.26] - 2026-02-15
 
 ### Added

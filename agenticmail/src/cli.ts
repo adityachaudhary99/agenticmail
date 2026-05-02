@@ -1256,6 +1256,23 @@ function parseFriendlyError(rawText: string): { message: string; isAuthError: bo
       };
     }
 
+    // Stalwart admin endpoint missing (404). Almost always means the
+    // container is on a Stalwart 0.16+ build that ignored our TOML
+    // config and entered bootstrap mode — see issue #10. The pinned
+    // image fixes this for fresh installs; existing users on
+    // `:latest` need to re-pull and recreate the container.
+    if (error.includes('Stalwart API error') && error.includes('404')) {
+      return {
+        message:
+          'Mail server is in bootstrap mode (likely Stalwart 0.16+ on `:latest`). '
+          + 'Pull the pinned image and recreate the container: '
+          + '`docker compose -f ~/.agenticmail/docker-compose.yml pull && '
+          + 'docker compose -f ~/.agenticmail/docker-compose.yml up -d --force-recreate`. '
+          + 'See https://github.com/agenticmail/agenticmail/issues/10',
+        isAuthError: false,
+      };
+    }
+
     // API key / authorization errors (master key mismatch)
     if (error.includes('Invalid API key') || error.includes('Master API key required')) {
       return {

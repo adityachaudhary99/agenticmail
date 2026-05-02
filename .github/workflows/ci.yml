@@ -12,7 +12,11 @@ jobs:
 
     services:
       stalwart:
-        image: stalwartlabs/stalwart:latest
+        # Pinned to v0.15.5 — Stalwart 0.16+ moved its config to JSON
+        # at /etc/stalwart/config.json, runs as UID 2000, and ignores
+        # the legacy TOML mount, so the container enters bootstrap
+        # mode and CI can't reach the admin API. See issue #10.
+        image: stalwartlabs/stalwart:v0.15.5
         ports:
           - 8080:8080
           - 587:587

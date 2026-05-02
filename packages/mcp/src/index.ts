@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { z, type ZodTypeAny } from 'zod';
 
-setTelemetryVersion('0.5.50');
+setTelemetryVersion('0.5.55');
 
 type JsonSchema = {
   type?: string;
@@ -31,20 +31,35 @@ function jsonSchemaToZod(schema: JsonSchema | undefined, topLevel = false): Reco
   } else if (schema.type === 'boolean') {
     result = z.boolean();
   } else if (schema.type === 'array') {
-    // OpenAI-compatible validators reject arrays that serialize without an explicit items schema.
-    // z.any() round-trips to a naked array schema, so fallback to string for empty/absent items.
+    // When `items` is missing or empty, default to `z.any()` so the
+    // tool still accepts heterogeneous arrays at runtime — several
+    // existing tools pass arrays of objects without an items
+    // declaration (db_admin's columns/rows/operations etc.) and a
+    // string-only fallback would silently reject them. Strict
+    // OpenAI-compatible validators still want explicit items
+    // upstream — those are now declared per-field in tools.ts so
+    // the runtime fallback is just defence-in-depth for new tools.
     const hasItems = !!schema.items && typeof schema.items === 'object' && Object.keys(schema.items).length > 0;
-    result = z.array(hasItems ? jsonSchemaToZod(schema.items, false) as ZodTypeAny : z.string());
+    result = z.array(hasItems ? jsonSchemaToZod(schema.items, false) as ZodTypeAny : z.any());
   } else if (schema.type === 'object') {
-    const shape: Record<string, ZodTypeAny> = {};
-    const required = new Set(schema.required ?? []);
-    for (const [key, prop] of Object.entries(schema.properties ?? {})) {
-      let child = jsonSchemaToZod(prop, false) as ZodTypeAny;
-      if (!required.has(key)) child = child.optional();
-      shape[key] = child;
+    // Free-form object (no declared properties) → z.record(z.any())
+    // so callers can pass arbitrary keys. db_admin's `where`,
+    // `set`, and `column` are all free-form by design — turning
+    // them into z.object({}) would reject every real call.
+    if (!schema.properties || Object.keys(schema.properties).length === 0) {
+      if (topLevel) return {};
+      result = z.record(z.string(), z.any());
+    } else {
+      const shape: Record<string, ZodTypeAny> = {};
+      const required = new Set(schema.required ?? []);
+      for (const [key, prop] of Object.entries(schema.properties)) {
+        let child = jsonSchemaToZod(prop, false) as ZodTypeAny;
+        if (!required.has(key)) child = child.optional();
+        shape[key] = child;
+      }
+      if (topLevel) return shape;
+      result = z.object(shape);
     }
-    if (topLevel) return shape;
-    result = z.object(shape);
   } else {
     result = z.any();
   }
