@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.57] - 2026-05-07
+
+### Changed
+
+- **Renamed the CLI package from `agenticmail` to `@agenticmail/cli`.**
+  GitHub Packages requires scoped names, so `agenticmail` (the only
+  unscoped package in the monorepo) couldn't ship to
+  `https://npm.pkg.github.com` alongside the rest of the
+  `@agenticmail/*` workspaces. Renaming aligns the publish surface
+  on both registries and makes the package set easier to manage as
+  a single namespace. The CLI binary itself is still
+  `agenticmail` — only the install name changed:
+  `npm install -g @agenticmail/cli`.
+  The legacy `agenticmail@0.5.56` package on npm stays available
+  for in-flight installs but receives no further updates.
+
 ## [0.5.56] - 2026-05-07
 
 ### Added

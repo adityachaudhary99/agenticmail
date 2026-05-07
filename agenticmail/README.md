@@ -7,7 +7,7 @@ It bundles a setup wizard, API server launcher, and a full interactive shell wit
 ## Install
 
 ```bash
-npm install -g agenticmail
+npm install -g @agenticmail/cli
 ```
 
 **Requirements:** Node.js 20+, Docker (for Stalwart mail server)
@@ -78,7 +78,7 @@ Agent emails use proper addresses like `secretary@yourdomain.com`.
 
 ## CLI Commands
 
-All commands are available via `agenticmail <command>` or `npx agenticmail@latest <command>`.
+All commands are available via `agenticmail <command>` or `npx @agenticmail/cli@latest <command>`.
 
 ### Core Commands
 
@@ -449,7 +449,7 @@ Update the path in `~/.openclaw/openclaw.json` accordingly.
 If you installed locally with `npm install agenticmail`, use `npx agenticmail` instead. For a global install:
 
 ```bash
-npm install -g agenticmail
+npm install -g @agenticmail/cli
 ```
 
 ---

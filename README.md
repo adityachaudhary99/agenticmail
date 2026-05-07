@@ -230,7 +230,7 @@ AI agents need to communicate with the real world. Email is the universal commun
 ### Install
 
 ```bash
-npm install -g agenticmail
+npm install -g @agenticmail/cli
 ```
 
 ### Setup
@@ -309,7 +309,7 @@ curl -X POST http://127.0.0.1:3100/api/agenticmail/mail/send \
 
 ## CLI Commands
 
-AgenticMail includes a full CLI for managing your server. All commands are available via `agenticmail <command>` or `npx agenticmail@latest <command>`.
+AgenticMail includes a full CLI for managing your server. All commands are available via `agenticmail <command>` or `npx @agenticmail/cli@latest <command>`.
 
 ### Core Commands
 
@@ -554,7 +554,7 @@ Already have OpenClaw? Two steps:
 
 ```bash
 # Step 1 — Install AgenticMail globally and run the setup wizard
-npm install -g agenticmail && agenticmail setup
+npm install -g @agenticmail/cli && agenticmail setup
 ```
 
 ```bash
@@ -915,7 +915,7 @@ npm prefix -g
 
 ### `agenticmail: command not found`
 
-Use `npx agenticmail` for one-off usage, or install globally with `npm install -g agenticmail`.
+Use `npx agenticmail` for one-off usage, or install globally with `npm install -g @agenticmail/cli`.
 
 ## License
 
