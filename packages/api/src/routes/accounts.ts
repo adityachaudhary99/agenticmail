@@ -23,17 +23,27 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
 
   // Create account — requires master key
   router.post('/accounts', requireMaster, async (req, res, next) => {
+    // Issue #23 follow-up — `name` was previously destructured INSIDE
+    // the try block, so the catch block referenced an out-of-scope
+    // identifier when building the 409 conflict body. The bundled
+    // dist exposed this as `ReferenceError: name is not defined`
+    // (esbuild renamed the destructured `name` to `name2` to avoid a
+    // collision with the implicit global `name` reference, leaving
+    // the catch's bare `name` resolving to nothing). Hoist the request
+    // fields above the try so the catch can see them, and rename to
+    // `accountName` to make sure no future bundler pass mistakes the
+    // identifier for a global.
+    if (!req.body || typeof req.body !== 'object') {
+      res.status(400).json({ error: 'Request body must be JSON' });
+      return;
+    }
+    const { name: accountName, domain, password, metadata, role, persistent } = req.body;
     try {
-      if (!req.body || typeof req.body !== 'object') {
-        res.status(400).json({ error: 'Request body must be JSON' });
-        return;
-      }
-      const { name, domain, password, metadata, role, persistent } = req.body;
-      if (!name || typeof name !== 'string') {
+      if (!accountName || typeof accountName !== 'string') {
         res.status(400).json({ error: 'name is required and must be a string' });
         return;
       }
-      if (name.length > 64) {
+      if (accountName.length > 64) {
         res.status(400).json({ error: 'name must be 64 characters or fewer' });
         return;
       }
@@ -54,7 +64,7 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
         Object.entries(metadata).filter(([k]) => !k.startsWith('_'))
       ) : undefined;
 
-      const agent = await accountManager.create({ name, domain, password: password || undefined, metadata: cleanMeta, role: role as AgentRole | undefined });
+      const agent = await accountManager.create({ name: accountName, domain, password: password || undefined, metadata: cleanMeta, role: role as AgentRole | undefined });
 
       // Initialize last_activity_at so it's never NULL
       try { db.prepare("UPDATE agents SET last_activity_at = datetime('now') WHERE id = ?").run(agent.id); } catch { /* ignore */ }
@@ -87,7 +97,7 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
           || msg.includes('already exists') || msg.includes('duplicate')
           || msg.includes('fieldAlreadyExists')
           || msg.toLowerCase().includes('alreadyexists')) {
-        res.status(409).json({ error: 'Account already exists', name });
+        res.status(409).json({ error: 'Account already exists', name: accountName });
         return;
       }
       next(err);

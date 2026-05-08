@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.60] - 2026-05-08
+
+### Fixed
+
+- **Duplicate `POST /accounts` regression in 0.5.59** (#23 follow-up,
+  thanks @kn8-codes for the eval re-run). 0.5.59's catch handler
+  referenced a bare `name` identifier when building the 409
+  conflict body, but `name` was destructured *inside* the try
+  block so it was out of scope by the time the catch ran. esbuild
+  papered over this in source-level type-checking by silently
+  resolving the identifier to a global, then renamed the
+  in-scope binding to `name2` to avoid the collision — leaving
+  the catch's bare `name` resolving to nothing at runtime and
+  emitting `ReferenceError: name is not defined`. Hoisted the
+  destructuring above the try block and renamed the binding to
+  `accountName` so the identifier can no longer be confused with
+  a global. Verified end-to-end against a running Express server:
+  duplicate now returns `HTTP 409 {"error":"Account already
+  exists","name":"<name>"}` in ~2 ms.
+- **Storage table create regression in 0.5.59** (#27 follow-up,
+  thanks @kn8-codes). 0.5.59 unquoted SQL function defaults but
+  emitted them bare: `DEFAULT datetime('now')`. SQLite rejects
+  that with `near "(": syntax error` — per the SQLite docs,
+  *"If the DEFAULT value of a column is a non-constant
+  expression, the expression must be enclosed in parentheses"*.
+  `buildColumnDDL` now wraps SQL function calls and `CURRENT_*`
+  keywords in parens (`DEFAULT (datetime('now'))`), matching
+  what `agenticmail_storage_meta` already uses for its own
+  `created_at` / `updated_at` columns. Postgres also accepts the
+  parens form. Verified e2e: `POST /storage/tables` now returns
+  `HTTP 200 {"ok": true, "table": "..."}` for the issue's exact
+  body.
+
+### Process note
+
+Both regressions were original-fix attempts in 0.5.59 that
+compiled cleanly but were never run against a live HTTP server.
+0.5.60 includes a minimal e2e harness (in-memory SQLite +
+stubbed AccountManager + real Express) that exercises the exact
+issue repros against the live source — this lands as part of
+the standing fix-verification routine, not just for this
+release.
+
 ## [0.5.59] - 2026-05-08
 
 ### Fixed

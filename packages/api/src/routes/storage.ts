@@ -57,18 +57,27 @@ function buildColumnDDL(col: ColumnDef, dialect: string): string {
   if (col.default !== undefined) {
     // Issue #27 — when timestamps were auto-added we passed the SQL
     // expression `datetime('now')` (or `NOW()` on Postgres) through
-    // col.default as a string, then this branch quoted it as a
-    // literal: `DEFAULT 'datetime('now')'`. The embedded apostrophe
-    // closed the string early and the SQL parser exploded with
-    // "near 'now': syntax error". Detect SQL function calls and
-    // CURRENT_* keywords and emit them unquoted; everything else
-    // is treated as a literal and gets its apostrophes escaped.
+    // col.default as a string. The original code quoted that string
+    // as a literal: `DEFAULT 'datetime('now')'` — the embedded
+    // apostrophe closed the literal early and SQLite emitted
+    // `near "now": syntax error`.
+    //
+    // 0.5.59 unquoted SQL expressions but produced
+    // `DEFAULT datetime('now')`, which SQLite *also* rejects with
+    // `near "(": syntax error` — per the SQLite docs, "If the
+    // DEFAULT value of a column is a non-constant expression, the
+    // expression must be enclosed in parentheses". Wrap function
+    // calls and CURRENT_* keywords in parens so the DDL is valid
+    // on both SQLite and Postgres (Postgres also accepts
+    // `DEFAULT (NOW())`). Literal string defaults still get their
+    // apostrophes properly escaped (`replace(/'/g, "''")`) so
+    // user-supplied defaults can't break out of the literal.
     let val: string | number | boolean;
     if (typeof col.default === 'string') {
       const trimmed = col.default.trim();
       const isSqlExpr = /\(.*\)/.test(trimmed)
         || /^CURRENT_(?:TIMESTAMP|DATE|TIME)$/i.test(trimmed);
-      val = isSqlExpr ? trimmed : `'${col.default.replace(/'/g, "''")}'`;
+      val = isSqlExpr ? `(${trimmed})` : `'${col.default.replace(/'/g, "''")}'`;
     } else {
       val = col.default;
     }
