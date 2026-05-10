@@ -191,31 +191,93 @@ export async function closeCaches(): Promise<void> {
 export async function findUidByMessageId(
   receiver: MailReceiver,
   messageId: string,
-  maxAttempts = 5,
+  maxAttempts = 8,
 ): Promise<number> {
+  // Issue #32 — 0.5.61's lookup ran with a 2 s budget and used IMAP
+  // header-search exclusively. In practice Stalwart 0.15.5 doesn't
+  // make a freshly delivered internal message visible to header-search
+  // until several seconds after delivery, so the lookup almost always
+  // returned 0 with `uidLookup: 'failed'`. The mail IS in INBOX from
+  // moment one — `GET /mail/inbox` shows it — but Stalwart's search
+  // index lags. Two changes:
+  //
+  //   1. Bigger budget: 8 attempts at 250/500/750/1000/1250/1500/2000ms
+  //      → cap at ~7 s wall-clock, plenty for Stalwart's index to catch
+  //      up while still capping latency for legitimate misses.
+  //   2. Two-prong lookup: try header-search first (fast when it
+  //      works) and fall back to enumerating the last 10 UIDs in INBOX
+  //      and matching their `messageId` envelope field. The fallback
+  //      doesn't depend on the search index — it just walks recent
+  //      mail. nodemailer returns Message-IDs WITH angle brackets
+  //      (`<id@host>`); Stalwart stores the same form, but we
+  //      normalize both sides anyway so an extra/missing pair of
+  //      brackets can't cause a false negative.
+  const target = normalizeMessageId(messageId);
   const client = receiver.getImapClient();
-  for (let i = 0; i < maxAttempts; i++) {
+
+  const tryHeaderSearch = async (): Promise<number> => {
+    const lock = await client.getMailboxLock('INBOX');
     try {
-      const lock = await client.getMailboxLock('INBOX');
-      try {
-        const results = await client.search(
-          { header: ['Message-ID', messageId] },
-          { uid: true },
-        );
-        if (Array.isArray(results) && results.length > 0) {
-          // Most recent match wins (in case the same Message-ID was
-          // delivered twice for any reason).
-          return results[results.length - 1];
-        }
-      } finally {
-        lock.release();
+      const results = await client.search(
+        { header: ['Message-ID', messageId] },
+        { uid: true },
+      );
+      if (Array.isArray(results) && results.length > 0) {
+        return results[results.length - 1];
       }
-    } catch { /* retry */ }
-    if (i < maxAttempts - 1) {
-      await new Promise(r => setTimeout(r, 200 * (i + 1)));
+    } finally {
+      lock.release();
+    }
+    return 0;
+  };
+
+  const tryEnvelopeScan = async (): Promise<number> => {
+    const lock = await client.getMailboxLock('INBOX');
+    try {
+      // Pull the last 10 UIDs by sequence and check their envelopes.
+      const status = await client.status('INBOX', { messages: true });
+      const total = status?.messages ?? 0;
+      if (total === 0) return 0;
+      const start = Math.max(1, total - 9);
+      const range = `${start}:${total}`;
+      let bestUid = 0;
+      for await (const msg of client.fetch(range, { uid: true, envelope: true })) {
+        if (!msg.envelope?.messageId) continue;
+        if (normalizeMessageId(msg.envelope.messageId) === target) {
+          // Keep iterating — we want the highest UID match.
+          if (msg.uid > bestUid) bestUid = msg.uid;
+        }
+      }
+      return bestUid;
+    } finally {
+      lock.release();
+    }
+  };
+
+  // Backoff schedule (ms before attempt 2..N): 250, 500, 750, 1000, 1250, 1500, 2000.
+  const delays = [0, 250, 500, 750, 1000, 1250, 1500, 2000];
+  for (let i = 0; i < maxAttempts; i++) {
+    if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+    try {
+      const headerHit = await tryHeaderSearch();
+      if (headerHit > 0) return headerHit;
+      // Search may not have indexed yet; try the envelope scan.
+      const scanHit = await tryEnvelopeScan();
+      if (scanHit > 0) return scanHit;
+    } catch (err) {
+      // Last-attempt failure surfaces in the route's `console.warn`;
+      // intermediate failures retry silently.
+      if (i === maxAttempts - 1) {
+        console.warn(`[mail] findUidByMessageId attempt ${i + 1} failed for ${messageId}: ${(err as Error).message}`);
+      }
     }
   }
   return 0;
+}
+
+function normalizeMessageId(id: string | undefined): string {
+  if (!id) return '';
+  return id.trim().replace(/^<+|>+$/g, '').toLowerCase();
 }
 
 async function notifyLocalRecipientsOfNewMail(

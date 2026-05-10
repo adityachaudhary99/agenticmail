@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.62] - 2026-05-10
+
+### Fixed
+
+- **SSE `uid: 0` persists for internal `@localhost` delivery in
+  0.5.61** (#32, thanks @kn8-codes). The 0.5.61 lookup ran with a
+  ~2 s budget and used IMAP header-search exclusively. In practice
+  Stalwart 0.15.5 doesn't make a freshly delivered internal message
+  visible to header-search until several seconds after delivery, so
+  the lookup almost always returned 0 with `uidLookup: 'failed'` —
+  even though `GET /mail/inbox` showed the message immediately.
+  `findUidByMessageId` now does a two-prong lookup with a bigger
+  retry budget (8 attempts; cumulative cap ~7 s):
+  1. **Header-search first** (fast when Stalwart's index has caught
+     up; relay-delivered mail almost always hits here on the first
+     try).
+  2. **Envelope scan fallback** — pull the last 10 UIDs in INBOX
+     and match their `messageId` envelope field. Doesn't depend on
+     the search index, just walks recent mail.
+
+  Both prongs run on every attempt. Message-IDs are normalized
+  (angle brackets stripped, lowercased) on both sides so a
+  bracket / case mismatch can't cause a false negative. Verified
+  with eight focused test cases: immediate header hit, header lag
+  with envelope rescue (kn8's case), bracket-stripped storage,
+  uppercase storage, never-found, multi-match (highest UID wins),
+  empty mailbox, mid-retry header recovery.
+
 ## [0.5.61] - 2026-05-09
 
 ### Fixed
