@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.24] - 2026-05-13
+
+### Web UI — Gmail-style redesign, modular JS, proper icon library
+
+Two coordinated changes to `packages/api/public/`:
+
+**1. Layout redesign.** The old three-pane shell (left agents
+sidebar / middle inbox list / right message view) was the same
+shape as 0.8.19's first cut. Replaced with the canonical Gmail
+two-column layout:
+
+- **Top bar** — hamburger, brand, full-width rounded search input
+  with `from:` / `subject:` operators, refresh, account avatar.
+- **Left sidebar** (256 px) — prominent pink Compose button,
+  folder list (Inbox / Starred / Sent / Drafts / All Mail / Spam /
+  Trash) with rounded-right active state and unread count badge.
+- **Content pane** — single area that swaps between list view
+  (Gmail-style 40 px rows: star, dot, from, subject + preview,
+  date) and message view (subject, sender avatar, body, replies)
+  driven by a hash router (`#/inbox`, `#/m/<uid>`).
+- **Compose** — bottom-right popup modal instead of a centred
+  overlay, matching Gmail.
+
+**2. Proper icon library.** Every emoji in the UI has been
+replaced with an inline 24×24 vector glyph. New module
+`js/icons.js` exports an `icon(name, opts)` helper backed by
+Material-Symbols-style paths; SVGs use `fill="currentColor"` so
+a single palette token drives the colour for every glyph in
+context. Hydration walks `[data-icon]` placeholders on load so
+the HTML shell stays declarative.
+
+Glyphs shipped: `menu`, `search`, `refresh`, `close`, `back`,
+`caret`, `compose`, `send`, `reply`, `replyAll`, `mailUnread`,
+`attachment`, `starOutline`, `starFilled`, `inbox`, `sent`,
+`drafts`, `allMail`, `spam`, `trash`, `bow` (brand), `dot`,
+`check`. The favicon is now a vector bow too — the previous
+emoji `<text>` favicon didn't render consistently on Linux /
+Windows / older browsers.
+
+**Modular JS.** The previously-monolithic ~800-line inline
+`<script>` is now 14 ES modules under `public/js/`:
+
+| Module | Responsibility |
+|---|---|
+| `state.js` | Shared mutable state |
+| `api.js` | Authed fetch wrapper |
+| `utils.js` | `escapeHtml`, `stripHtml`, `toast` |
+| `time.js` | `formatDate`, `formatDateFull` |
+| `markdown.js` | XSS-safe markdown renderer |
+| `search.js` | `from:` / `subject:` parser + highlighter |
+| `avatar.js` | Host Claude-mark + colored sub-agent initials |
+| `icons.js` | Inline SVG icon library |
+| `sidebar.js` | Gmail folder list |
+| `list-view.js` | Inbox row renderer |
+| `message-view.js` | Single-message detail |
+| `compose.js` | Bottom-right popup modal |
+| `profile.js` | Top-right account switcher |
+| `sse.js` | Real-time push + browser notifications |
+| `app.js` | Entry, auth, hash router, keyboard shortcuts |
+
+The shell `index.html` shrank from ~1300 lines to ~95.
+
+CSS extracted into a dedicated `styles.css` (591 lines, Gmail
+palette + dark-mode media query). The CLI's `copy-public` build
+step already does `cp -R` so the new `js/` and `styles.css` ship
+out of the box.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.7.8 | 0.7.9 |
+| `@agenticmail/cli` | 0.8.23 | 0.8.24 |
+
+Plugin manifest mirrored to 0.8.24. core / mcp / claudecode /
+openclaw unchanged.
+
 ## [0.8.23] - 2026-05-14
 
 ### Fixed — `PreToolUse:<tool> hook error` on every Claude Code tool call

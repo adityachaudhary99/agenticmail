@@ -23,9 +23,9 @@ It bundles a setup wizard, API server launcher, and a full interactive shell wit
 >
 > Zero prompts, ~2 minutes, fully autonomous. Then tell the user to restart Claude Code. Full agent-facing runbook — including verification, common failures, and "what if Node < 22" — is at [`AGENTS.md`](https://github.com/agenticmail/agenticmail/blob/main/AGENTS.md) in the repo (the [agents.md](https://agents.md) convention).
 
-## ✨ What's new in 0.8.19
+## ✨ What's new in 0.8.24
 
-- **🌐 Gmail-style web UI** — open every agent's inbox in your browser with `agenticmail web`. Three-pane layout, full markdown rendering, real-time SSE updates, compose + reply with the new `wake` parameter as a first-class field.
+- **🌐 Gmail-style web UI, fully redesigned** — `agenticmail web` opens a proper two-column Gmail layout: left sidebar with Compose + folders (Inbox / Starred / Sent / Drafts / All Mail / Spam / Trash), content pane that swaps between list view (40 px Gmail-style rows) and message view via a hash router (`#/inbox`, `#/m/<uid>`). Every emoji replaced with an inline 24×24 vector icon library. Modular ES module JS under `public/js/` (14 files). Search supports `from:` / `subject:` operators, real-time SSE updates, browser notifications, full markdown rendering, compose + reply with `wake` as a first-class field.
 - **`wake: ["alice", "bob"]`** on `send_email` / `reply_email` / `forward_email` / `template_send` / `manage_drafts(send)` tells the dispatcher to give a Claude turn only to named agents — the biggest token saver on large threads.
 - **`[FINAL]` / `[DONE]` / `[CLOSED]` / `[WRAP]` in a subject** closes a thread — the dispatcher stops waking workers on any further reply to it.
 - **`check_activity` MCP tool** — see which agents the dispatcher has woken right now and how long they've been running.
@@ -120,7 +120,7 @@ All commands are available via `agenticmail <command>` or `npx @agenticmail/cli@
 | `agenticmail setup` | **Run the setup wizard.** Walks you through system checks, account creation, service startup, email connection, phone number setup, and OpenClaw integration. Safe to re-run anytime. |
 | `agenticmail start` | **Start the server and open the interactive shell.** Ensures Docker is running, Stalwart is up, and the API server is reachable. Automatically installs the auto-start service. |
 | `agenticmail shell` | **Drop into the interactive shell against the already-running server.** Use this when the server is already up (started by `agenticmail start`, `agenticmail bootstrap`, or the auto-start service) and you want to monitor every agent's inbox, send mail on their behalf, watch the dispatcher event feed, or run any of the 44+ shell commands. Exits cleanly with `/exit` — the server keeps running. |
-| `agenticmail web` | 🌐 **Open the lightweight Gmail-style web UI in your browser.** Three-pane layout (agents / inbox / message), real-time SSE updates, full markdown rendering, compose + reply with the `wake` parameter surfaced as a field. Same master key as the API. Available at `http://127.0.0.1:3829/` whenever the API is running. |
+| `agenticmail web` | 🌐 **Open the Gmail-style web UI in your browser.** Two-column layout (sidebar with Compose + folders / content pane), 24×24 vector icons, hash router, real-time SSE updates, full markdown rendering, compose + reply with the `wake` parameter surfaced as a field. Same master key as the API. Available at `http://127.0.0.1:3829/` whenever the API is running. |
 | `agenticmail stop` | **Stop the server.** Kills the background API server process. If auto-start is enabled, it will restart on next boot. |
 | `agenticmail status` | **Show what's running.** Displays Docker, Stalwart, API server, email connection, and auto-start service status. |
 

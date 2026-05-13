@@ -261,12 +261,15 @@ Two surfaces, depending on whether they want **browser** or **terminal**:
 agenticmail web
 ```
 
-Opens a three-pane Gmail-style UI at `http://127.0.0.1:3829/` —
-agents on the left, inbox in the middle, full message with markdown
-rendering on the right. Real-time SSE updates. Compose / reply with
-the `wake` allowlist surfaced as a field. Master-key auth, stored
-in the browser's localStorage. Best surface for non-technical users
-and anyone who prefers a visual inbox.
+Opens the Gmail-style web UI at `http://127.0.0.1:3829/` — left
+sidebar with Compose button + folders (Inbox / Starred / Sent /
+Drafts / All Mail / Spam / Trash), content pane that swaps between
+list view and full-message view via a hash router (`#/inbox`,
+`#/m/<uid>`). 24×24 vector icons throughout. Real-time SSE updates,
+browser notifications, search with `from:` / `subject:` operators,
+markdown rendering, compose / reply with `wake` as a field.
+Master-key auth, stored in the browser's localStorage. Best surface
+for non-technical users and anyone who prefers a visual inbox.
 
 ### Terminal — interactive REPL
 
