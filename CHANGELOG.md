@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.13] - 2026-05-13
+
+### Added — LLM-tolerant input coercion in the MCP server
+
+Host LLMs (Claude Code, ChatGPT, Cursor, Grok, Gemini…) routinely
+serialise structured inputs as strings when calling tools. The most
+common mistakes we see live:
+
+```
+batch_mark_read({ uids: "[1, 2, 3, 4]" })       // array as JSON string
+batch_mark_read({ uids: "1, 2, 3, 4" })         // bare CSV
+send_email({ attachments: '[{"x":1}]' })        // array of objects, JSON string
+manage_drafts({ where: '{"id":"abc"}' })        // object as JSON string
+wait_for_email({ timeout: "120" })              // number as string
+manage_pending({ allowSensitive: "true" })      // boolean as string
+```
+
+Each one of these used to produce a confusing zod `expected X,
+received Y` error that cost the LLM a retry turn for a mistake with
+exactly one correct interpretation. Now they all just work.
+
+New module `packages/mcp/src/coerce.ts` exports four pre-validation
+coercers that run before zod sees the input:
+
+- `coerceToArray(value, itemKind)` — JSON-string arrays, bare CSV
+  (for primitive item types), and single-value-as-string. Refuses to
+  CSV-split if the input starts with `[` and JSON.parse failed (the
+  user clearly meant JSON; let zod produce a clean error).
+- `coerceToObject(value)` — JSON-string objects. Arrays pass through
+  unchanged so `coerceToArray` can handle them.
+- `coerceToNumber(value)` — numeric strings to numbers, with safe
+  pass-through for non-numeric or empty input.
+- `coerceToBoolean(value)` — `"true"` / `"True"` / `"yes"` / `"1"` /
+  `1` → `true`, plus the false equivalents. Anything ambiguous passes
+  through so zod can produce "expected boolean".
+
+All four are wired into `jsonSchemaToZod` via `z.preprocess`, so every
+tool with an array, object, number, or boolean param across all 62
+MCP tools becomes forgiving in one shot. Correct inputs are never
+mutated — pass-through is guaranteed.
+
+25 new tests in `packages/mcp/src/__tests__/coerce.test.ts` lock the
+canonical Claude Code mistake (`batch_mark_read({ uids: "[1,2,3,4]"
+})`) and every other shape against silent regression. Workspace
+total is now 459 passing tests.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/mcp` | 0.7.3 | 0.7.4 |
+| `@agenticmail/cli` | 0.8.12 | 0.8.13 |
+
+Plugin manifest mirrored to 0.8.13. Other packages unchanged.
+
 ## [0.8.12] - 2026-05-13
 
 ### Added — official pink-bow logo across every surface

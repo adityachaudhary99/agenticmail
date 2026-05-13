@@ -8,6 +8,7 @@ import { setTelemetryVersion } from '@agenticmail/core';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { z, type ZodTypeAny } from 'zod';
+import { coerceToArray, coerceToObject, coerceToNumber, coerceToBoolean } from './coerce.js';
 
 setTelemetryVersion('0.5.55');
 
@@ -27,9 +28,12 @@ function jsonSchemaToZod(schema: JsonSchema | undefined, topLevel = false): Reco
   if (schema.type === 'string') {
     result = schema.enum?.length ? z.enum(schema.enum as [string, ...string[]]) : z.string();
   } else if (schema.type === 'number' || schema.type === 'integer') {
-    result = z.number();
+    // Accept stringified numbers — "42" → 42 — because LLM tool-call
+    // surfaces routinely stringify scalars.
+    result = z.preprocess(coerceToNumber, z.number());
   } else if (schema.type === 'boolean') {
-    result = z.boolean();
+    // Accept the dozen ways LLMs spell booleans.
+    result = z.preprocess(coerceToBoolean, z.boolean());
   } else if (schema.type === 'array') {
     // When `items` is missing or empty, default to `z.any()` so the
     // tool still accepts heterogeneous arrays at runtime — several
@@ -40,7 +44,12 @@ function jsonSchemaToZod(schema: JsonSchema | undefined, topLevel = false): Reco
     // upstream — those are now declared per-field in tools.ts so
     // the runtime fallback is just defence-in-depth for new tools.
     const hasItems = !!schema.items && typeof schema.items === 'object' && Object.keys(schema.items).length > 0;
-    result = z.array(hasItems ? jsonSchemaToZod(schema.items, false) as ZodTypeAny : z.any());
+    const inner = z.array(hasItems ? jsonSchemaToZod(schema.items, false) as ZodTypeAny : z.any());
+    // Accept JSON-string arrays + CSV — see coerceToArray for the
+    // failure mode this guards against (batch_mark_read({ uids:
+    // "[1,2,3]" }) being a Claude-Code default mistake).
+    const itemKind = schema.items?.type;
+    result = z.preprocess(v => coerceToArray(v, itemKind), inner);
   } else if (schema.type === 'object') {
     // Free-form object (no declared properties) → z.record(z.any())
     // so callers can pass arbitrary keys. db_admin's `where`,
@@ -48,7 +57,7 @@ function jsonSchemaToZod(schema: JsonSchema | undefined, topLevel = false): Reco
     // them into z.object({}) would reject every real call.
     if (!schema.properties || Object.keys(schema.properties).length === 0) {
       if (topLevel) return {};
-      result = z.record(z.string(), z.any());
+      result = z.preprocess(coerceToObject, z.record(z.string(), z.any()));
     } else {
       const shape: Record<string, ZodTypeAny> = {};
       const required = new Set(schema.required ?? []);
@@ -58,7 +67,7 @@ function jsonSchemaToZod(schema: JsonSchema | undefined, topLevel = false): Reco
         shape[key] = child;
       }
       if (topLevel) return shape;
-      result = z.object(shape);
+      result = z.preprocess(coerceToObject, z.object(shape));
     }
   } else {
     result = z.any();
