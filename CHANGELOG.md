@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.8] - 2026-05-13
+
+### Fixed — zero-wait wake for newly created agents
+
+Before: when the host (Claude Code, ChatGPT, etc.) called
+`create_account` mid-session, the new agent had no dispatcher channel
+until the next poll tick. Even with the polling interval at 5s, mail
+sent to the new agent in those first seconds landed in an inert
+inbox — nobody was listening to wake them. The user-visible symptom
+was "I created Lyra and Zephyr, sent the kickoff email, and nobody
+ever replied".
+
+Fix: **push-based account lifecycle events**.
+
+- **`@agenticmail/api`** gains a new master-auth SSE endpoint
+  `GET /api/agenticmail/system/events` that streams account-lifecycle
+  events. `POST /accounts` and `DELETE /accounts/:id` now publish
+  `account_created` and `account_deleted` events the moment they
+  succeed. The full account record (incl. apiKey) is carried in the
+  `account_created` payload so listeners can act without an extra
+  round trip; the endpoint is master-auth so the apiKey leak is moot.
+
+- **`@agenticmail/claudecode` dispatcher** now subscribes to
+  `/system/events` on start. On `account_created`, the dispatcher
+  opens a per-account SSE channel for the new agent within
+  milliseconds — no polling delay. On `account_deleted`, it tears
+  the channel down immediately. The 30s polling sync stays as a
+  safety net for events lost across reconnects (was 5s, since the
+  push channel makes aggressive polling unnecessary).
+
+Net effect: `create_account → send_email → wake → reply` is now
+end-to-end real-time. The kickoff thread pattern from 0.8.7 actually
+works on agents created in the same session.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api`        | 0.7.2 | 0.7.3 |
+| `@agenticmail/claudecode` | 0.1.6 | 0.1.7 |
+| `@agenticmail/cli`        | 0.8.7 | 0.8.8 |
+
+(`@agenticmail/core` and `@agenticmail/mcp` unchanged — fix is purely
+in the API push channel + dispatcher subscriber.)
+
 ## [0.8.7] - 2026-05-13
 
 The thread-as-workspace release. Multi-agent coordination now mirrors

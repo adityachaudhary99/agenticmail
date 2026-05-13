@@ -3,6 +3,7 @@ import { networkInterfaces } from 'node:os';
 import { createApp, prepareIntegrations } from './app.js';
 import { closeCaches } from './routes/mail.js';
 import { closeAllWatchers } from './routes/events.js';
+import { closeAllSystemEventListeners } from './routes/system-events.js';
 import { startScheduledSender } from './routes/features.js';
 
 // Pre-resolve dynamically-loaded integration packages (e.g. @agenticmail/claudecode)
@@ -110,6 +111,7 @@ async function shutdown() {
   console.log('\nShutting down...');
   if (scheduledTimer) { try { clearInterval(scheduledTimer); } catch { /* ignore */ } }
   try { await closeAllWatchers(); } catch { /* ignore */ }
+  try { closeAllSystemEventListeners(); } catch { /* ignore */ }
   try { await closeCaches(); } catch { /* ignore */ }
   try { await context.gatewayManager.shutdown(); } catch { /* ignore */ }
   server.close(() => process.exit(0));

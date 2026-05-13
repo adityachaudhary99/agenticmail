@@ -155,12 +155,11 @@ function rememberBounded<T>(set: Set<T>, item: T): void {
 }
 
 const DEFAULT_MAX_CONCURRENT = 10;
-// Was 60s. Dropped to 5s so an agent created mid-session via MCP
-// `create_account` gets an SSE channel within seconds — otherwise the
-// caller's `call_agent` / `send_email` to a brand-new agent will hang
-// for up to a minute before any worker is awake to drain it. The
-// /accounts call is cheap (one HTTP GET, small JSON).
-const DEFAULT_SYNC_INTERVAL_MS = 5_000;
+// Polling is now a safety net behind the push-based /system/events
+// stream — newly-created accounts are picked up within milliseconds via
+// SSE, not via this poll. 30s is a generous fallback that covers cases
+// where /system/events isn't available (older API) or briefly dropped.
+const DEFAULT_SYNC_INTERVAL_MS = 30_000;
 const DEFAULT_RECONNECT_BASE_MS = 2_000;
 const DEFAULT_RECONNECT_MAX_MS = 60_000;
 
@@ -380,6 +379,7 @@ export class Dispatcher {
 
   private channels = new Map<string, ChannelState>(); // keyed by account.id
   private accountSyncTimer: ReturnType<typeof setInterval> | null = null;
+  private systemChannelController: AbortController | null = null;
   private running = 0;
   private waiters: Array<() => void> = [];
   private stopped = false;
@@ -405,12 +405,21 @@ export class Dispatcher {
     this.accountSyncTimer = setInterval(() => {
       this.syncAccounts().catch(err => this.log('warn', `[dispatcher] account sync failed: ${err}`));
     }, this.syncIntervalMs);
+    // Subscribe to system-level account-lifecycle events so new accounts
+    // get an SSE channel within MILLISECONDS of `create_account`, not at
+    // the next poll tick. The polling above stays as a safety net for
+    // events lost across reconnects.
+    void this.runSystemChannel();
   }
 
   async stop(): Promise<void> {
     this.stopped = true;
     if (this.accountSyncTimer) clearInterval(this.accountSyncTimer);
     this.accountSyncTimer = null;
+    if (this.systemChannelController) {
+      try { this.systemChannelController.abort(); } catch { /* ignore */ }
+      this.systemChannelController = null;
+    }
     for (const ch of this.channels.values()) {
       ch.stopping = true;
       ch.controller?.abort();
@@ -526,6 +535,117 @@ export class Dispatcher {
       this.log('info', `[dispatcher] opening SSE for "${account.name}" (${account.email})`);
       void this.runChannel(ch);
     }
+  }
+
+  /**
+   * Subscribe to the API's master-scoped system events SSE.
+   *
+   * Pushes from /system/events arrive as JSON-per-frame just like the
+   * per-account stream:
+   *   { type: "connected" }
+   *   { type: "account_created", account: { id, name, email, apiKey, ... } }
+   *   { type: "account_deleted", accountId, name }
+   *
+   * On `account_created` we eagerly open a per-account SSE channel using
+   * the apiKey carried in the event payload — no extra round trip, the
+   * channel is live within milliseconds of the POST /accounts response.
+   *
+   * Reconnect with the same exponential backoff scheme as per-account
+   * channels. If the API is older and doesn't expose /system/events
+   * (404), we log once and stop trying — polling-only fallback still
+   * works.
+   */
+  private async runSystemChannel(): Promise<void> {
+    let backoff = this.reconnectBaseMs;
+    let giveUp = false;
+    while (!this.stopped && !giveUp) {
+      this.systemChannelController = new AbortController();
+      try {
+        const url = `${this.cfg.apiUrl.replace(/\/$/, '')}/api/agenticmail/system/events`;
+        const res = await this.fetchImpl(url, {
+          headers: {
+            'Authorization': `Bearer ${this.cfg.masterKey}`,
+            'Accept': 'text/event-stream',
+          },
+          signal: this.systemChannelController.signal,
+        });
+        if (res.status === 404) {
+          this.log('warn', '[dispatcher] /system/events not available on this API — falling back to polling-only account discovery (please upgrade @agenticmail/api to >=0.7.3)');
+          giveUp = true;
+          break;
+        }
+        if (!res.ok || !res.body) {
+          throw new Error(`system/events HTTP ${res.status}`);
+        }
+        backoff = this.reconnectBaseMs; // healthy stream — reset backoff
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (!this.stopped) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let boundary: number;
+          while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+            const frame = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+            for (const line of frame.split('\n')) {
+              if (!line.startsWith('data: ')) continue;
+              try {
+                const event = JSON.parse(line.slice(6));
+                this.handleSystemEvent(event);
+              } catch { /* skip malformed frame */ }
+            }
+          }
+        }
+      } catch (err) {
+        if (this.stopped) break;
+        this.log('warn', `[dispatcher] system-events stream error: ${(err as Error).message}; reconnecting in ${backoff}ms`);
+      }
+      if (this.stopped || giveUp) break;
+      await sleep(backoff);
+      backoff = Math.min(backoff * 2, this.reconnectMaxMs);
+    }
+  }
+
+  /** Apply an account-lifecycle event from /system/events. */
+  private handleSystemEvent(event: Record<string, unknown>): void {
+    const type = typeof event.type === 'string' ? event.type : '';
+    if (type === 'account_created' && event.account && typeof event.account === 'object') {
+      const account = event.account as AgenticMailAccount;
+      if (!account.id || !account.name || !account.apiKey) {
+        this.log('warn', '[dispatcher] account_created event missing required fields; ignoring');
+        return;
+      }
+      if (!this.shouldWatch(account)) {
+        this.log('info', `[dispatcher] account_created "${account.name}" — skipping (bridge/role excluded)`);
+        return;
+      }
+      if (this.channels.has(account.id)) return; // already watching
+      const ch: ChannelState = {
+        account,
+        controller: null,
+        stopping: false,
+        backoffMs: this.reconnectBaseMs,
+        seenUids: new Set(),
+        seenTaskIds: new Set(),
+        suppressTaskMailUntilMs: 0,
+      };
+      this.channels.set(account.id, ch);
+      this.log('info', `[dispatcher] account_created "${account.name}" (${account.email}) — opening SSE channel immediately`);
+      void this.runChannel(ch);
+      return;
+    }
+    if (type === 'account_deleted' && typeof event.accountId === 'string') {
+      const ch = this.channels.get(event.accountId);
+      if (!ch) return;
+      ch.stopping = true;
+      try { ch.controller?.abort(); } catch { /* ignore */ }
+      this.channels.delete(event.accountId);
+      this.log('info', `[dispatcher] account_deleted "${ch.account.name}" — closed SSE channel`);
+      return;
+    }
+    // type === 'connected' or unknown — no action
   }
 
   /** Watch one account's SSE stream forever; reconnect with backoff on drop. */

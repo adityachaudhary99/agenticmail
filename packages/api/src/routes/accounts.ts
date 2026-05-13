@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { AGENT_ROLES, AgentDeletionService, type AccountManager, type AgentRole, type AgenticMailConfig, type Database } from '@agenticmail/core';
 import { requireMaster, requireAgent, requireAuth } from '../middleware/auth.js';
+import { pushSystemEvent } from './system-events.js';
 
 /** Strip internal metadata fields (prefixed with _) from agent responses */
 function sanitizeAgent(agent: any): any {
@@ -74,6 +75,22 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
       if (shouldPersist) {
         try { db.prepare('UPDATE agents SET persistent = 1 WHERE id = ?').run(agent.id); } catch { /* ignore if column missing */ }
       }
+
+      // Fire-and-forget: broadcast to system-event listeners so the
+      // @agenticmail/claudecode dispatcher (or any other tool watching
+      // /system/events) can react WITHOUT waiting for its polling tick.
+      // This is what makes "Claude Code creates Lyra → immediately sends
+      // her mail → Lyra wakes" work with zero seconds of dead time.
+      //
+      // The full account record is published deliberately — the endpoint
+      // is master-auth, so anyone reading the stream already has the keys.
+      try {
+        pushSystemEvent({
+          type: 'account_created',
+          account: sanitizeAgent(agent),
+        });
+      } catch { /* never let observer failures kill the create */ }
+
       res.status(201).json(sanitizeAgent(agent));
     } catch (err) {
       const msg = (err as Error).message ?? '';
@@ -276,10 +293,17 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
       const reason = (req.query.reason as string) || undefined;
       const deletedBy = (req.query.deletedBy as string) || 'api';
 
+      // Capture name BEFORE the deletion so the system-event payload
+      // can carry it for downstream listeners that key off names.
+      const deletingAgent = allAgents.find(a => a.id === req.params.id);
+
       if (archive) {
         const report = await deletionService.archiveAndDelete(req.params.id, { deletedBy, reason });
         // Return summary without full email bodies
         const { emails: _emails, ...summary } = report;
+        try {
+          pushSystemEvent({ type: 'account_deleted', accountId: req.params.id, name: deletingAgent?.name });
+        } catch { /* ignore */ }
         res.json(summary);
       } else {
         const deleted = await accountManager.delete(req.params.id);
@@ -287,6 +311,9 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
           res.status(404).json({ error: 'Agent not found' });
           return;
         }
+        try {
+          pushSystemEvent({ type: 'account_deleted', accountId: req.params.id, name: deletingAgent?.name });
+        } catch { /* ignore */ }
         res.status(204).send();
       }
     } catch (err) {
