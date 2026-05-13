@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.16] - 2026-05-13
+
+### Added — comprehensive markdown rendering in email bodies
+
+The shell's `/read` view now turns the markdown agents write into
+proper terminal styling. Two specific problems addressed:
+
+1. **Multi-level quote chains rendered as literal `>>>>` on every line
+   of a deep quoted block.** Replaced with a depth-colored vertical-
+   bar stripe (`▎`) per level: cyan / magenta / yellow / dim.
+2. **Bare markdown shapes (`**bold**`, `` `code` ``, etc.) showed up
+   as literal asterisks and backticks in the body.** Now rendered
+   with proper ANSI.
+
+Coverage added (matches what agents actually write):
+
+- Inline: `**bold**`, `__bold__`, `*italic*`, `_italic_`, `***both***`,
+  `` `inline code` ``, `~~strike~~`, `==highlight==`, `[text](url)`,
+  `<https://auto-link>`, `![alt](url)` → `[🖼 alt] (url)`, HTML
+  entities (`&amp;` → `&`, `&lt;`, etc.)
+- Block: `#` to `######` headings, `-`/`*`/`+` bullets, numbered
+  lists, task lists `- [ ]` / `- [x]` with strikethrough on done,
+  GFM tables (separator becomes a divider, data rows get cyan pipes
+  with markdown rendered inside cells), `---` horizontal rules,
+  ` ``` ` fenced code blocks (content NOT processed as markdown,
+  rendered in cyan with a `▾ lang` header), indented code blocks
+  (4-space indent).
+
+Quote handling:
+
+- Quote prefix on each line replaced with one `▎` stripe per depth.
+  Cyan for depth 1, magenta for 2, yellow for 3, dim for 4+.
+- Tolerates both `> >` (spaced) and `>>` (packed) styles.
+- Markdown still renders inside quoted content.
+
+Implementation:
+
+- New module `agenticmail/src/ui/markdown.ts` (~290 lines) with a
+  stateful `createMarkdownLineRenderer()` factory so fenced code
+  blocks track across the line-by-line streaming render.
+- Targeted ANSI resets (`\x1b[22m`, `\x1b[23m`, etc.) instead of the
+  universal `\x1b[0m` so an outer wrapper (e.g. quote-stripe) doesn't
+  get clobbered by inner markdown resets.
+- 28 new tests in `markdown.test.ts` plus 2 new tests for the deep
+  quote stripe in `email-card.test.ts`.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/cli` | 0.8.15 | 0.8.16 |
+
+Plugin manifest mirrored to 0.8.16. Other packages unchanged.
+
 ## [0.8.15] - 2026-05-13
 
 ### Fixed — interactive shell crashed on startup with `c.pinkBg is not a function`

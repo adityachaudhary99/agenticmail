@@ -31,10 +31,15 @@
  */
 
 import { formatEmailDate } from './time-format.js';
+import { createMarkdownLineRenderer } from './markdown.js';
 
-// --- ANSI helpers (copied minimally so this module has no dependency on
-//     shell.ts's `c` table; the shell can keep evolving without dragging
-//     the email view with it). -----------------------------------------
+// --- ANSI helpers --------------------------------------------------------
+//
+// Declared up here (above any module-level use) so the quote-stripe color
+// table at the top of the file can reference them without hitting a
+// temporal-dead-zone error. Copied minimally so this module has no
+// dependency on shell.ts's `c` table; the shell can keep evolving without
+// dragging the email view with it.
 
 const ESC = '\x1b[';
 const RESET = `${ESC}0m`;
@@ -42,6 +47,7 @@ const RESET = `${ESC}0m`;
 const ansi = {
   reset: RESET,
   bold: (s: string) => `${ESC}1m${s}${RESET}`,
+  italic: (s: string) => `${ESC}3m${s}${RESET}`,
   dim: (s: string) => `${ESC}90m${s}${RESET}`,
   cyan: (s: string) => `${ESC}36m${s}${RESET}`,
   magenta: (s: string) => `${ESC}35m${s}${RESET}`,
@@ -53,6 +59,141 @@ const ansi = {
   // and light terminals.
   pink: (s: string) => `${ESC}38;5;205m${s}${RESET}`,
 };
+
+// --- Quoted-reply rendering ----------------------------------------------
+
+/**
+ * Match the "On <date>, <sender> wrote:" attribution that AgenticMail's
+ * reply_email handler (and most mail clients) emit at the top of each
+ * quoted block. `<date>` is whatever `Date#toISOString()` produced when
+ * the reply was sent, so we get an unambiguous ISO 8601 timestamp that
+ * we can re-render in the reader's local timezone.
+ *
+ * Tolerates any number of leading `> ` quote prefixes so the same line
+ * matches whether it sits at quote depth 0, 1, or 2.
+ *
+ * Capture groups:
+ *   1: leading `> ` chain (may be empty)
+ *   2: ISO date string
+ *   3: sender (email, name, or "name <email>")
+ */
+const ON_WROTE_RE = /^((?:>\s*)*)On (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z), (.+?) wrote:$/;
+
+/**
+ * Split a line into its leading `>`-prefix and the remaining content.
+ *
+ * Handles both styles email tools produce:
+ *   "> hello"         → depth 1
+ *   "> > hello"       → depth 2 (spaces between markers)
+ *   ">>>> hello"      → depth 4 (no spaces)
+ *   "> >> hello"      → depth 3 (mixed)
+ *
+ * Returns the depth (count of `>` markers) plus the bare content with
+ * the prefix stripped. The card renderer renders the prefix as a
+ * colored vertical-bar stripe; we don't preserve the literal `>` chain
+ * because rendering `>>>>` on every line of a deep quote is noisy.
+ */
+function splitQuotePrefix(line: string): { depth: number; content: string } {
+  let i = 0;
+  let depth = 0;
+  while (i < line.length) {
+    if (line[i] === '>') {
+      depth++;
+      i++;
+      // Tolerate any number of spaces between `>` markers — both
+      // `> > foo` and `>> foo` are the same depth-2 quote.
+      while (i < line.length && line[i] === ' ') i++;
+    } else {
+      break;
+    }
+  }
+  return { depth, content: line.slice(i) };
+}
+
+/**
+ * Build the visual stripe that replaces the raw `>` chain on a quoted
+ * line. Each level is one narrow vertical-bar character, colored by
+ * depth so the eye can quickly see "this is a reply-of-a-reply".
+ *
+ * The depth-color cycle:
+ *   1  cyan
+ *   2  magenta
+ *   3  yellow
+ *   4+ dim
+ *
+ * One trailing space separates the stripe from the content so prose
+ * doesn't run into the bars.
+ */
+const QUOTE_COLORS: Array<(s: string) => string> = [
+  ansi.cyan,
+  ansi.magenta,
+  ansi.yellow,
+];
+function renderQuoteStripe(depth: number): string {
+  if (depth <= 0) return '';
+  const bars: string[] = [];
+  for (let i = 0; i < depth; i++) {
+    const color = QUOTE_COLORS[i] ?? ansi.dim;
+    bars.push(color('▎'));
+  }
+  return bars.join('') + ' ';
+}
+
+/**
+ * Render one body line with quote-depth aware coloring, markdown
+ * formatting on the content, and ISO-to-local rewriting on attribution
+ * headers. `mdRenderer` is the shared stateful renderer so fenced code
+ * blocks track across calls.
+ *
+ * Layout per line:
+ *
+ *   <dimmed `>` prefix><markdown-rendered content>
+ *
+ * The `>` chain itself is dimmed so the eye reads it as a quote stripe.
+ * The content runs through the full markdown pipeline (bold, italic,
+ * inline code, lists, headings, fenced code, links, strikethrough).
+ *
+ * Attribution lines (`On <ISO>, X wrote:`) are detected first and
+ * rendered as a dim italic section break with the date rewritten to
+ * the reader's local time. They are NOT run through markdown — they
+ * are pure structure, not content.
+ */
+function renderBodyLine(
+  line: string,
+  now: Date,
+  mdRenderer: ReturnType<typeof createMarkdownLineRenderer>,
+): string {
+  // Empty / whitespace-only lines: pass through untouched so the blank
+  // lines between paragraphs stay blank.
+  if (line.trim() === '') return line;
+
+  // Translate "On <ISO>, ... wrote:" attribution headers in any quote depth.
+  const m = line.match(ON_WROTE_RE);
+  if (m) {
+    const prefixRaw = m[1] ?? '';
+    const iso = m[2];
+    const sender = m[3];
+    const parsed = new Date(iso);
+    const dateStr = Number.isNaN(parsed.getTime())
+      ? iso
+      : formatEmailDate(parsed, now);
+    // Convert any leading `>` chain into a depth-colored stripe.
+    const depth = (prefixRaw.match(/>/g) ?? []).length;
+    const stripe = renderQuoteStripe(depth);
+    const inner = `On ${dateStr}, ${sender} wrote:`;
+    return `${stripe}${ansi.dim(ansi.italic(inner))}`;
+  }
+
+  // Strip the `>` chain entirely, replace it with a stripe colored by
+  // depth, and render the content through markdown. This handles every
+  // `>` form — single-marker (`> `), no-space chain (`>>>>`), and the
+  // mixed (`> >> `) variants — into a single visual idiom.
+  const { depth, content } = splitQuotePrefix(line);
+  const rendered = mdRenderer.renderLine(content);
+  if (depth === 0) return rendered;
+  return `${renderQuoteStripe(depth)}${rendered}`;
+}
+
 
 /** Email address representation as it arrives from the API. */
 interface EmailAddress {
@@ -234,8 +375,11 @@ export function renderEmailCard(msg: EmailMessage, opts: RenderOptions = {}): st
   let body = msg.text ?? '';
   if (!body && msg.html) body = stripHtmlForTerminal(msg.html);
   if (body) {
+    // One renderer instance per email so fenced code blocks are
+    // tracked across the whole body, not reset per line.
+    const mdRenderer = createMarkdownLineRenderer();
     for (const line of body.split('\n')) {
-      out.push(`  ${line}`);
+      out.push(`  ${renderBodyLine(line, now, mdRenderer)}`);
     }
   } else {
     out.push(`  ${ansi.dim('(no body content)')}`);
