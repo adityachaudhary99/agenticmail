@@ -30,6 +30,27 @@
  * the system context. Claude can decide to surface it, act on it,
  * or store it for later.
  *
+ * # Two event types, two output schemas
+ *
+ *   - UserPromptSubmit — fires when the user types. Output uses
+ *     `hookSpecificOutput.additionalContext` to inject a system-style
+ *     message before Claude reasons about the prompt.
+ *
+ *   - Stop — fires when Claude was about to stop a turn. THIS is the
+ *     autonomous-mode awareness mechanism. If new mail arrived during
+ *     a long autonomous run (Claude Code running headless for hours
+ *     with no user prompts), Stop fires when Claude is about to stop
+ *     and we return `{decision: 'block', reason: '...'}`. Claude is
+ *     forced to continue, sees the reason as context, and can read
+ *     and respond to the mail before finally stopping.
+ *
+ *     This is the proper fix for the autonomous-mode case we filed
+ *     as a follow-up in 0.8.23. Unlike PreToolUse (whose schema
+ *     does not accept additionalContext, hence the noisy error
+ *     spam in 0.8.22), the Stop hook's `decision: 'block'` is the
+ *     supported supported way to inject context at turn boundaries
+ *     without firing on every single tool call.
+ *
  * # Design constraints
  *
  *   - Must be FAST: this runs on every prompt; >500ms perceived latency
@@ -98,14 +119,14 @@ const HOOK_VERSION = '1';
 const HTTP_TIMEOUT_MS = 2000;
 
 /**
- * Minimum gap between API checks when we're firing on `PreToolUse`.
- * Tool calls can come in tight bursts (Claude reads a file, greps it,
- * reads another, etc.) — without this floor we'd hit the AgenticMail
- * inbox endpoint 10+ times per second during heavy work. 30s is a
- * compromise between freshness and politeness; UserPromptSubmit
- * always bypasses this floor because the user is waiting.
+ * Minimum gap between API checks when we're firing on `Stop`. Stop
+ * fires at every turn boundary during autonomous work — much rarer
+ * than PreToolUse, but a long run can still rack up dozens of them.
+ * 15s is a polite floor that keeps autonomous awareness fresh
+ * without spamming the inbox endpoint. UserPromptSubmit always
+ * bypasses this floor because the user is waiting.
  */
-const PRE_TOOL_USE_THROTTLE_MS = 30_000;
+const STOP_THROTTLE_MS = 15_000;
 
 /**
  * Read stdin and try to parse it as the hook input JSON Claude Code
@@ -177,13 +198,12 @@ async function main(): Promise<void> {
     } catch { /* corrupted cursor → treat as zero, will be rewritten */ }
   }
 
-  // 3a. Rate-limit `PreToolUse` fires — tool calls come in tight
-  //     bursts during autonomous work, and we don't want to hit the
-  //     AgenticMail server on every Read/Grep/Edit. UserPromptSubmit
-  //     is always allowed through (user is waiting).
+  // 3a. Rate-limit `Stop` fires — even at turn boundaries, an
+  //     autonomous session can produce a flurry over short timescales.
+  //     UserPromptSubmit is always allowed through (user is waiting).
   const now = Date.now();
-  if (eventName === 'PreToolUse' && (now - lastCheckedMs) < PRE_TOOL_USE_THROTTLE_MS) {
-    return; // throttled — no output, tool call proceeds normally
+  if (eventName === 'Stop' && (now - lastCheckedMs) < STOP_THROTTLE_MS) {
+    return; // throttled — no output, Claude stops normally
   }
 
   // 4. Pull the bridge inbox. We don't filter on the server side
@@ -214,7 +234,7 @@ async function main(): Promise<void> {
   // on UserPromptSubmit no-news so we don't churn the file on every
   // user keystroke; the throttle only cares about PreToolUse anyway.
   if (newOnes.length === 0) {
-    if (eventName === 'PreToolUse') {
+    if (eventName === 'Stop') {
       try {
         if (!existsSync(dirname(CURSOR_PATH))) mkdirSync(dirname(CURSOR_PATH), { recursive: true });
         writeFileSync(
@@ -265,18 +285,31 @@ async function main(): Promise<void> {
     );
   } catch { /* losing the cursor only means we re-tell on next run — annoying, not broken */ }
 
-  // 8. Emit the hook output. Claude Code reads stdout as JSON and
-  //    routes `additionalContext` into the next prompt. We echo the
-  //    actual event name so Claude Code routes the output correctly
-  //    on each event type (UserPromptSubmit vs PreToolUse — they have
-  //    slightly different output schemas but both honour
-  //    additionalContext).
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: eventName,
-      additionalContext: lines.join('\n'),
-    },
-  }));
+  // 8. Emit the hook output, shaped by event type.
+  //
+  //    - UserPromptSubmit: schema accepts
+  //      `hookSpecificOutput.additionalContext`, which Claude Code
+  //      prepends to the user prompt as system-style context.
+  //
+  //    - Stop: schema accepts `decision: 'block'` + `reason`.
+  //      Returning block forces Claude to continue instead of
+  //      stopping; the `reason` field becomes the next-turn context.
+  //      This is how we make autonomous Claude Code sessions aware
+  //      of new agent mail without the noisy PreToolUse-error spam
+  //      from the 0.8.22 attempt.
+  if (eventName === 'Stop') {
+    process.stdout.write(JSON.stringify({
+      decision: 'block',
+      reason: lines.join('\n'),
+    }));
+  } else {
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: eventName,
+        additionalContext: lines.join('\n'),
+      },
+    }));
+  }
 }
 
 main().catch(() => {

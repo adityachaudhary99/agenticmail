@@ -42,6 +42,9 @@ import type { AgenticMailAccount } from './types.js';
 import { resolveConfig, type ResolveConfigOptions } from './config.js';
 import { listAccounts } from './api.js';
 import { loadPersonaForAgent } from './persona-loader.js';
+import { mkdirSync, createWriteStream, rmSync, type WriteStream } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 
 /** Event shape we accept off the SSE stream. */
 interface SSEEvent {
@@ -349,8 +352,27 @@ const DEFAULT_MAX_WAKES_PER_THREAD = 10;
 const DEFAULT_WAKE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 
 /**
+ * Per-worker observation channel. `runWorker` calls `onMessage` for every
+ * SDK message — assistant text, tool calls, tool results, result frames.
+ * The caller (spawnWorker) wires this to:
+ *   - a per-worker log file at `~/.agenticmail/worker-logs/<id>.log`
+ *   - a heartbeat ticker that POSTs progress to /dispatcher/worker-heartbeat
+ *
+ * Kept generic so tests don't need to mock disk + network to verify the
+ * observation path.
+ */
+export interface WorkerObserver {
+  /** Called once per SDK message. Tag is a short event name. */
+  onMessage(tag: string, summary: string): void;
+}
+
+/**
  * Spawn-and-wait for a worker via the Claude Agent SDK.
  * Drains the query stream, captures the final assistant text, returns it.
+ *
+ * `cwd` (when given) is passed straight through to the SDK so each
+ * worker runs in its own scratch directory — prevents parallel agents
+ * from clobbering each other's output files.
  */
 async function runWorker(
   query: QueryFn,
@@ -363,6 +385,8 @@ async function runWorker(
   mcpEnv: Record<string, string>,
   log: (level: 'info' | 'warn' | 'error', msg: string) => void,
   abortSignal?: AbortSignal,
+  observer?: WorkerObserver,
+  cwd?: string,
 ): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   const opts: Record<string, unknown> = {
     systemPrompt: persona,
@@ -395,23 +419,48 @@ async function runWorker(
     permissionMode: 'bypassPermissions' as const,
     abortController: abortSignal ? wrapSignal(abortSignal) : undefined,
   };
+  // Per-worker scratch dir — prevents parallel workers from clobbering
+  // each other's output files when both run the same Bash one-liner.
+  if (cwd) opts.cwd = cwd;
 
   const collectedText: string[] = [];
   try {
     for await (const msg of query({ prompt: userPrompt, options: opts })) {
       const m = msg as Record<string, unknown>;
-      // We don't need to render messages — just capture final assistant text
-      // for the dispatcher's log. The actual side effects (MCP tool calls
-      // sending mail / submitting task results) happen during iteration.
       if (m.type === 'assistant' && Array.isArray(m.message && (m.message as { content?: unknown[] }).content)) {
         for (const block of (m.message as { content: unknown[] }).content) {
-          const b = block as { type?: string; text?: string };
-          if (b.type === 'text' && typeof b.text === 'string') collectedText.push(b.text);
+          const b = block as { type?: string; text?: string; name?: string; input?: unknown };
+          if (b.type === 'text' && typeof b.text === 'string') {
+            collectedText.push(b.text);
+            if (observer) observer.onMessage('assistant', b.text.slice(0, 240).replace(/\s+/g, ' ').trim());
+          } else if (b.type === 'tool_use' && typeof b.name === 'string') {
+            // Capture tool name + truncated input — the most useful
+            // breadcrumb for "what was Vesper actually doing?"
+            const inputSummary = (() => {
+              try { return JSON.stringify(b.input).slice(0, 200); }
+              catch { return '(uninspectable input)'; }
+            })();
+            if (observer) observer.onMessage('tool_use', `${b.name} ${inputSummary}`);
+          }
+        }
+      } else if (m.type === 'user' && Array.isArray(m.message && (m.message as { content?: unknown[] }).content)) {
+        // Tool results land here. We log the tool name + truncated body.
+        for (const block of (m.message as { content: unknown[] }).content) {
+          const b = block as { type?: string; tool_use_id?: string; content?: unknown };
+          if (b.type === 'tool_result') {
+            const bodyStr = typeof b.content === 'string'
+              ? b.content
+              : Array.isArray(b.content)
+                ? (b.content as Array<{ text?: string }>).map(c => c.text ?? '').join(' ')
+                : '';
+            if (observer) observer.onMessage('tool_result', bodyStr.slice(0, 240).replace(/\s+/g, ' ').trim());
+          }
         }
       }
       // Final result message (SDK emits one when the turn ends).
       if (m.type === 'result' && typeof (m as { result?: string }).result === 'string') {
         collectedText.push((m as { result: string }).result);
+        if (observer) observer.onMessage('result', (m as { result: string }).result.slice(0, 240).replace(/\s+/g, ' ').trim());
       }
     }
     const text = collectedText.join('\n').trim();
@@ -420,6 +469,7 @@ async function runWorker(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log('error', `[dispatcher] worker for "${agent.name}" failed: ${msg}`);
+    if (observer) observer.onMessage('error', msg);
     return { ok: false, error: msg };
   }
 }
@@ -1037,6 +1087,56 @@ export class Dispatcher {
       kind: ctx.kind,
       trigger: { uid: ctx.uid, taskId: ctx.taskId, subject: ctx.subject, from: ctx.from },
     });
+
+    // ─── Per-worker log file ─────────────────────────────────────
+    // Every SDK message (tool call, tool result, assistant chunk)
+    // gets a one-liner appended here, so the host can tail what a
+    // long-running worker is actually doing via tail_worker / GET
+    // /dispatcher/worker-log/<id>. Append-only, never rotated by us
+    // — workers are short-lived in the median case, and the active-
+    // log path is bounded by the registry size.
+    const logsDir = join(homedir(), '.agenticmail', 'worker-logs');
+    try { mkdirSync(logsDir, { recursive: true }); } catch { /* best-effort */ }
+    const logPath = join(logsDir, `${sanitizeId(workerId)}.log`);
+    let logStream: WriteStream | null = null;
+    try { logStream = createWriteStream(logPath, { flags: 'a' }); } catch { /* fail-soft */ }
+    const writeLog = (line: string) => {
+      try { logStream?.write(`[${new Date().toISOString()}] ${line}\n`); } catch { /* ignore */ }
+    };
+    writeLog(`worker_started agent=${account.name} kind=${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}${ctx.taskId ? ' task=' + ctx.taskId : ''}`);
+
+    // ─── Per-worker scratch cwd ─────────────────────────────────
+    // Two parallel workers running the same Bash one-liner against
+    // the same project would clobber each other's output files.
+    // Each worker gets its own scratch dir, advertised via the SDK's
+    // `cwd` option. Cleaned up after the worker finishes.
+    const cwdDir = join(homedir(), '.agenticmail', 'worker-cwds', sanitizeId(workerId));
+    try { mkdirSync(cwdDir, { recursive: true }); } catch { /* fail-soft */ }
+
+    // ─── Observer + heartbeat ───────────────────────────────────
+    // The observer feeds the log file; the heartbeat ticker
+    // tells the API "this worker is still alive, here is the last
+    // thing it did". Heartbeats let `check_activity` show real
+    // progress instead of an opaque "still running" for hours.
+    let turnCount = 0;
+    let lastTool = '';
+    const observer: WorkerObserver = {
+      onMessage: (tag, summary) => {
+        writeLog(`${tag} ${summary}`);
+        if (tag === 'tool_use') { lastTool = summary.split(' ')[0]; turnCount++; }
+      },
+    };
+    const heartbeatHandle = setInterval(() => {
+      this.postActivity('/dispatcher/worker-heartbeat', {
+        workerId,
+        agentName: account.name,
+        lastTool: lastTool || undefined,
+        turnCount,
+      });
+    }, 30_000);
+    // Don't keep the process alive just for heartbeats.
+    (heartbeatHandle as unknown as { unref?: () => void }).unref?.();
+
     try {
       const { body } = loadPersonaForAgent({
         agent: account,
@@ -1056,8 +1156,12 @@ export class Dispatcher {
         this.cfg.mcpArgs,
         mcpEnv,
         this.log,
+        undefined,
+        observer,
+        cwdDir,
       );
     } finally {
+      clearInterval(heartbeatHandle);
       this.releaseSlot();
       // Always post "finished", even on persona-load / slot errors,
       // so the registry doesn't keep the worker pinned indefinitely.
@@ -1065,10 +1169,17 @@ export class Dispatcher {
       const preview = workerResult?.ok
         ? workerResult.text
         : (workerResult ? workerResult.error : 'worker did not start');
+      writeLog(`worker_finished ok=${ok} chars=${preview.length}`);
+      try { logStream?.end(); } catch { /* ignore */ }
+      // Best-effort cwd cleanup. We don't block on failure — if the
+      // worker wrote a 5GB file the user can delete it manually; we
+      // shouldn't crash the dispatcher trying to clean up.
+      try { rmSync(cwdDir, { recursive: true, force: true }); } catch { /* ignore */ }
       this.postActivity('/dispatcher/worker-finished', {
         workerId,
         agentName: account.name,
         ok,
+        turnCount,
         resultPreview: typeof preview === 'string' ? preview.slice(0, 240) : undefined,
       });
     }
@@ -1142,6 +1253,15 @@ export class Dispatcher {
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Filesystem-safe form of a worker id. Worker ids embed `:` and `/`
+ * (account id, kind, uid) which are fine for URLs but not for file
+ * names on every OS — collapse to `_`.
+ */
+function sanitizeId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
 function defaultLog(level: 'info' | 'warn' | 'error', msg: string): void {

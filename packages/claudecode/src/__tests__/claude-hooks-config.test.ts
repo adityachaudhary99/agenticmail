@@ -33,17 +33,60 @@ function readJson(): any {
 }
 
 describe('upsertMailHook', () => {
-  it('creates settings.json with the hook registered on UserPromptSubmit only', () => {
-    // We only register on UserPromptSubmit because PreToolUse rejects
-    // the additionalContext output shape. Registering there in 0.8.22
-    // produced `PreToolUse:tool-name hook error` on every tool call.
+  it('registers on both UserPromptSubmit (interactive) and Stop (autonomous), not PreToolUse', () => {
+    // We register on UserPromptSubmit AND Stop. UserPromptSubmit catches
+    // the interactive case. Stop is the autonomous-mode awareness fix
+    // (long headless runs where no user prompts fire) and returns
+    // `decision: 'block'` + `reason` — the supported output schema for
+    // that event. PreToolUse is intentionally NOT in the set; its
+    // schema rejects additionalContext (that's what produced the noisy
+    // `PreToolUse:tool-name hook error` in 0.8.22).
     const changed = upsertMailHook(settingsPath, 'agenticmail-mail-hook');
     expect(changed).toBe(true);
     const s = readJson();
     expect(s.hooks).toBeDefined();
     expect(s.hooks.UserPromptSubmit).toHaveLength(1);
     expect(s.hooks.UserPromptSubmit[0].hooks[0].command).toBe('agenticmail-mail-hook');
+    expect(s.hooks.Stop).toHaveLength(1);
+    expect(s.hooks.Stop[0].hooks[0].command).toBe('agenticmail-mail-hook');
     expect(s.hooks.PreToolUse).toBeUndefined();
+  });
+
+  it('accepts an absolute-path mail-hook command (0.8.25+ shape)', () => {
+    // 0.8.25 stopped registering the bare `agenticmail-mail-hook` bin
+    // name (it failed silently when the npm global bin dir wasn't on
+    // $PATH) and switched to an absolute `node "..../mail-hook.js"`
+    // form. The marker matcher must recognise this so upsert is
+    // idempotent on a 0.8.25-shaped install.
+    const cmd = 'node "/usr/local/lib/node_modules/@agenticmail/claudecode/dist/mail-hook.js"';
+    upsertMailHook(settingsPath, cmd);
+    const changed = upsertMailHook(settingsPath, cmd);
+    expect(changed).toBe(false);
+    const s = readJson();
+    expect(s.hooks.UserPromptSubmit[0].hooks[0].command).toBe(cmd);
+    expect(s.hooks.Stop[0].hooks[0].command).toBe(cmd);
+  });
+
+  it('heals a 0.8.24-shaped install by upgrading the bare-name command to absolute path', () => {
+    // Simulate an existing 0.8.24 install where the hook is registered
+    // by bare bin name (which is what produced the `command not found`
+    // errors when npm global bin wasn't on $PATH). Upsert with the new
+    // absolute-path form should REPLACE the bare entry, not duplicate.
+    writeFileSync(settingsPath, JSON.stringify({
+      hooks: {
+        UserPromptSubmit: [
+          { matcher: '', hooks: [{ type: 'command', command: 'agenticmail-mail-hook' }] },
+        ],
+      },
+    }));
+    const newCmd = 'node "/abs/path/mail-hook.js"';
+    const changed = upsertMailHook(settingsPath, newCmd);
+    expect(changed).toBe(true);
+    const s = readJson();
+    expect(s.hooks.UserPromptSubmit).toHaveLength(1);
+    expect(s.hooks.UserPromptSubmit[0].hooks[0].command).toBe(newCmd);
+    expect(s.hooks.Stop).toHaveLength(1);
+    expect(s.hooks.Stop[0].hooks[0].command).toBe(newCmd);
   });
 
   it('heals a 0.8.22-style install by removing the leftover PreToolUse entry', () => {

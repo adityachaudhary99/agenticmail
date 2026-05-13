@@ -230,20 +230,23 @@ export async function install(opts: ResolveConfigOptions = {}): Promise<InstallR
   const liveNames = new Set(exposable.map(a => sanitizeSubagentName(a.name)));
   const pruned = pruneStaleSubagentFiles(cfg.agentsDir, cfg, liveNames);
 
-  // 7a. Register the UserPromptSubmit hook so Claude Code wakes up on
-  //     every user prompt and pulls fresh mail from the bridge inbox
-  //     into the next prompt's context. This is what closes the
-  //     "host can't be notified" gap — without the hook, Claude only
-  //     sees agent replies when it (or the user) proactively asks.
+  // 7a. Register the mail hook on UserPromptSubmit + Stop. The hook
+  //     wakes Claude Code on every user prompt (interactive) and
+  //     forces a continue on every turn boundary (autonomous) when
+  //     the bridge inbox has new mail — closing the "host can't be
+  //     notified" gap on both interactive and headless sessions.
   //
-  //     The hook is the `agenticmail-mail-hook` bin from this same
-  //     package, so it resolves via $PATH after the global npm install.
-  //     We deliberately don't use an absolute path: lets the user
-  //     reinstall / upgrade the package without re-running install
-  //     to fix a stale path.
+  //     We use the ABSOLUTE path to the compiled `mail-hook.js` via
+  //     `node` rather than the bare bin name. Earlier versions used
+  //     `agenticmail-mail-hook` (bare PATH lookup), which failed
+  //     silently when the package was installed in a location that
+  //     wasn't on the user's $PATH — producing the noisy
+  //     `Stop hook error: agenticmail-mail-hook: command not found`
+  //     on every turn. Absolute path is resilient to PATH config and
+  //     is auto-refreshed on every install/upgrade.
   let hookChanged = false;
   try {
-    hookChanged = upsertUserPromptSubmitHook(cfg.claudeSettingsPath, 'agenticmail-mail-hook');
+    hookChanged = upsertUserPromptSubmitHook(cfg.claudeSettingsPath, resolveMailHookCommand());
   } catch { /* best-effort — a broken settings.json shouldn't kill the install */ }
 
   // 7. Start the dispatcher under PM2 (best-effort). The dispatcher is
@@ -276,6 +279,27 @@ function resolveDispatcherBinPath(): string {
   // thisFile = ".../@agenticmail/claudecode/dist/install.js"
   const dir = thisFile.slice(0, thisFile.lastIndexOf('/'));
   return `${dir}/dispatcher-bin.js`;
+}
+
+/**
+ * Build the shell command we register in Claude Code's settings.json
+ * for the mail hook.
+ *
+ * Format: `node <abs-path>/mail-hook.js`. Hook commands are evaluated
+ * by /bin/sh inside Claude Code; an absolute path resolved from
+ * `import.meta.url` works regardless of whether the package was
+ * installed globally, npm-linked, run from a workspace, or
+ * extracted from a tarball — none of which guarantee that the bare
+ * `agenticmail-mail-hook` bin name lands on `$PATH`.
+ *
+ * Quoting matters: spaces in the install path (common on macOS
+ * "User Name" homedirs) would otherwise split the command.
+ */
+function resolveMailHookCommand(): string {
+  const thisFile = fileURLToPath(import.meta.url);
+  const dir = thisFile.slice(0, thisFile.lastIndexOf('/'));
+  const hookPath = `${dir}/mail-hook.js`;
+  return `node "${hookPath}"`;
 }
 
 async function startDispatcherForInstall(cfg: ClaudeCodeIntegrationConfig): Promise<{ started: boolean; reason?: string }> {

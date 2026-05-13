@@ -33,9 +33,13 @@
 
 ---
 
-### ✨ What's new in 0.8.24
+### ✨ What's new in 0.8.25
 
-- **Gmail-style web UI, fully redesigned** at `http://127.0.0.1:3829/` — proper two-column layout (left sidebar with Compose + folders, content pane for list / message), 24×24 vector icon library replacing every emoji, modular ES module JS under `public/js/`, hash router (`#/inbox`, `#/m/<uid>`), search with `from:` / `subject:` operators, real-time SSE updates, browser notifications. Run `agenticmail web` to open it.
+- **Workers can now run for hours** — dropped the 30-min hard timeout. Each worker writes a per-turn log at `~/.agenticmail/worker-logs/<id>.log`, posts heartbeats every 30 s, and runs in its own isolated cwd so parallel agents don't clobber each other's output. New MCP tool **`tail_worker`** to read a running worker's log live; `check_activity` now shows last tool used, turn count, and a `stale` flag (no auto-eviction).
+- **Autonomous-mode awareness** — the mail hook now registers on the **Stop** event too. Long headless Claude Code runs (no user prompts firing for hours) finally see teammate replies — the hook returns `decision: 'block'` at turn boundaries when the bridge inbox has new mail, forcing Claude to continue with the new-mail summary in context. Closes the follow-up that 0.8.23 filed.
+- **Fixed `agenticmail-mail-hook: command not found` errors** — hook is now registered with an absolute path resolved at install time. Resilient to any `$PATH` configuration; old installs auto-heal on the next `agenticmail claudecode` run.
+- **Web UI fixes** — `(m.flags ?? []).includes is not a function` crash gone; sidebar folders (Sent / Drafts / Spam / Trash) now load their real IMAP mailboxes instead of all hitting `/mail/inbox`; Cmd+C no longer pops the compose modal; full mobile-responsive layout with an off-canvas sidebar.
+- **Official logos** — Claude starburst (from Wikipedia) and the AgenticMail `@` mark from `branding/` now ship bundled and render as the host avatar + topbar / favicon.
 - **Selective wake** — `wake: ["alice", "bob"]` on `send_email` / `reply_email` / `forward_email` / `template_send` / `manage_drafts(send)` tells the dispatcher to give a Claude turn only to named agents. The other CC'd recipients still receive the mail but stay asleep. Cuts token cost on large threads by ~10× when used.
 - **Thread-close markers** — `[FINAL]`, `[DONE]`, `[CLOSED]`, or `[WRAP]` in a subject tells the dispatcher this thread is done; no more wakes on any reply.
 - **`check_activity` MCP tool** — see which agents the dispatcher has woken right now, how long they've been running, and a preview of recent completions. The answer to "did the agent I just emailed actually start working?"

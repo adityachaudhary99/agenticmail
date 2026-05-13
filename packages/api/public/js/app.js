@@ -104,6 +104,9 @@ function onFolderSelect(folder) {
   renderSidebar(onFolderSelect);
   location.hash = '#/inbox';   // any folder uses the list route
   if (state.selectedAgent) loadList(state.selectedAgent, folder);
+  // On mobile (the only viewport where the sidebar is over-canvas),
+  // close it after a folder pick so the user sees the list.
+  document.getElementById('main')?.classList.remove('sidebar-open');
 }
 
 // ─── Hash router ─────────────────────────────────────────────────────
@@ -119,6 +122,18 @@ function route() {
 window.addEventListener('hashchange', route);
 
 // ─── Top bar wiring ──────────────────────────────────────────────────
+// Hamburger toggles the sidebar on mobile. On desktop the sidebar
+// is always visible; the class only changes anything below 800 px,
+// where the CSS slides it off-canvas by default.
+function toggleSidebar() {
+  const main = document.getElementById('main');
+  main?.classList.toggle('sidebar-open');
+}
+document.getElementById('menu-btn').addEventListener('click', toggleSidebar);
+document.getElementById('sidebar-backdrop').addEventListener('click', () => {
+  document.getElementById('main')?.classList.remove('sidebar-open');
+});
+
 document.getElementById('refresh-btn').addEventListener('click', async () => {
   if (state.selectedAgent) {
     await loadList(state.selectedAgent, state.selectedFolder);
@@ -172,12 +187,18 @@ document.getElementById('search-clear').addEventListener('click', clearSearch);
 //   r  refresh current inbox
 //   c  compose new
 //   /  focus the search box
+//
+// IMPORTANT: every shortcut bails when ANY modifier key is held
+// (Cmd / Ctrl / Alt / Meta) — otherwise Cmd+C "copy" was opening
+// the compose modal, Cmd+R was overriding browser refresh, etc.
+// Plain unmodified single-key shortcuts only.
 document.addEventListener('keydown', e => {
   if (document.getElementById('compose-bg').style.display !== 'none') return;
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;  // never hijack OS shortcuts
   if (e.key === 'r') document.getElementById('refresh-btn').click();
-  if (e.key === 'c') openCompose();
-  if (e.key === '/') {
+  else if (e.key === 'c') openCompose();
+  else if (e.key === '/') {
     e.preventDefault();
     searchInput.focus();
   }

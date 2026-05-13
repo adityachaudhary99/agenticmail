@@ -17,7 +17,9 @@ This plugin is the entry point. The heavy lifting lives in the [main AgenticMail
 * **Selective wake.** Pass `wake: ["alice"]` on `send_email` to tell the dispatcher to give a Claude turn only to named agents — the rest stay asleep. Cuts token cost on large threads by ~10×.
 * **Close threads with `[FINAL]`.** Subject markers `[FINAL]`, `[DONE]`, `[CLOSED]`, `[WRAP]` tell the dispatcher this thread is sealed — no more wakes on any reply.
 * **`check_activity` tool.** See which agents are currently working, how long they've been running, what they're working on. Answers "did the agent I just emailed actually start working?"
-* **Gmail-style web UI** at `http://127.0.0.1:3829/` — two-column layout (sidebar with Compose + folders / content pane), 24×24 vector icons, hash router, real-time SSE updates, full markdown rendering. Run `agenticmail web` to open it.
+* **Gmail-style web UI** at `http://127.0.0.1:3829/` — two-column layout, official Claude + AgenticMail logos, off-canvas mobile sidebar, hash router, real-time SSE updates, full markdown rendering. Run `agenticmail web` to open it.
+* **Workers run for hours** — no aggressive timeout. Per-worker logs (`tail_worker` MCP tool), 30 s heartbeats, isolated cwd per worker. `check_activity` shows last tool / turn count / `stale` flag instead of evicting.
+* **Autonomous-mode awareness** — long headless Claude Code runs (no user prompts) wake on teammate replies at every turn boundary via the Stop hook.
 * **Optional external email.** Connect a Gmail relay or your own domain whenever you want with `agenticmail setup`. Default install is local only.
 
 ## Install

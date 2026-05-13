@@ -5,6 +5,155 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.25] - 2026-05-13
+
+Six-headline release: dispatcher visibility for hour-long workers,
+autonomous-mode awareness on the Stop hook, and a batch of web-UI
+bug fixes the user hit while running it.
+
+### Added — Per-worker logs + heartbeats (long-running worker visibility)
+
+Workers can now run for hours without a timeout. To make that
+tolerable, the dispatcher writes a per-worker log file at
+`~/.agenticmail/worker-logs/<sanitized-id>.log` containing every
+SDK message as a one-liner (tool call, tool result, assistant
+chunk). And every 30 s the dispatcher POSTs a heartbeat to the
+API with the last tool used and a running tool-call count, so
+`check_activity` can show real progress instead of an opaque
+"still running".
+
+The previous 30-minute hard TTL on `active` registry entries is
+gone — long-running workers are no longer auto-evicted. Instead,
+each active entry gets a `stale` flag when its heartbeat hasn't
+moved in 90 s. Stuck-worker detection is now diagnostic, not
+destructive: the host sees the worker, sees `stale=true`, and
+decides what to do.
+
+New surfaces:
+
+- `GET /dispatcher/worker-log/:id?lines=N` — log tail endpoint.
+- `POST /dispatcher/worker-heartbeat` — dispatcher → API.
+- MCP tool **`tail_worker(workerId, lines?)`** — fetch a log tail.
+- `check_activity` output now includes `lastTool`, `turnCount`,
+  duration formatted as `Xh Ym Zs`, and a `stale` indicator.
+
+### Added — Worker cwd isolation
+
+Each spawned worker gets a fresh scratch directory at
+`~/.agenticmail/worker-cwds/<id>/`, advertised to the SDK via the
+`cwd` option. Solves the "two parallel agents called the same
+Bash one-liner and clobbered each other's output files" race
+that surfaced in real multi-agent sessions. The dir is cleaned up
+when the worker finishes (best-effort; a worker that wrote a
+huge file does not crash the dispatcher trying to delete it).
+
+### Added — Autonomous-mode awareness via Stop hook
+
+The 0.8.23 release left "autonomous-mode awareness" filed as a
+follow-up: long-running headless Claude Code sessions (no user
+prompts firing for hours) never saw teammate replies because
+`UserPromptSubmit` never fires.
+
+Fixed in this release by registering the mail hook on the **Stop**
+event in addition to UserPromptSubmit. Stop fires at every natural
+turn boundary; the hook returns `{decision: 'block', reason: '...'}`
+when the bridge has unread mail, which forces Claude to continue
+instead of stopping and surfaces the new-mail summary in the
+reason. This is the schema-correct supported way to inject
+context at turn boundaries — unlike the 0.8.22 PreToolUse attempt,
+which used the wrong output shape and produced the noisy
+`PreToolUse:<tool> hook error` spam.
+
+### Fixed — Hook bin resolution (`command not found` errors)
+
+Previous versions registered the hook as the bare bin name
+`agenticmail-mail-hook`, relying on the npm global bin dir being
+on the user's `$PATH`. When it wasn't (which happens routinely
+with non-default npm prefixes, nvm, asdf, etc.), Claude Code
+logged `Stop hook error: agenticmail-mail-hook: command not found`
+on every turn.
+
+Fixed by resolving the absolute path to `mail-hook.js` via
+`import.meta.url` at install time and registering the hook as
+`node "/abs/.../mail-hook.js"`. Resilient to any `$PATH`
+configuration. The marker matcher accepts both the old bare-name
+form and the new absolute-path form, so upgrades auto-heal old
+installs on the next `agenticmail claudecode` run.
+
+### Fixed — Web UI: `(m.flags ?? []).includes is not a function`
+
+The IMAP layer sometimes returns `flags` as an object map
+(`{Seen: true}`) instead of an array of strings. The web UI
+called `.includes()` unconditionally and crashed the list with
+"includes is not a function". Added a defensive `flagsHas()`
+helper that coerces either shape before checking membership.
+
+### Fixed — Web UI: every folder loaded `/mail/inbox`
+
+The sidebar's Sent / Drafts / Spam / Trash / All Mail folders all
+hit `GET /mail/inbox` regardless of which folder you clicked —
+the loader ignored the selected folder id. Added a folder→IMAP
+endpoint map that routes to `/mail/folders/<Name>` for non-inbox
+folders and uses `/mail/inbox` only for Inbox. Starred remains a
+client-side `\Flagged` filter over the inbox listing
+(Gmail-style).
+
+### Fixed — Web UI: Cmd+C opened the compose modal
+
+The keyboard-shortcut handler matched single-letter keys
+(`r`, `c`, `/`) without checking modifier keys. Hitting Cmd+C to
+copy text would trigger the `c` branch and pop the compose modal
+open. Now bails out the moment any modifier (Cmd / Ctrl / Alt /
+Meta) is held — single-key shortcuts only.
+
+### Added — Mobile-responsive web UI
+
+Below 800 px the layout collapses to a proper mobile experience:
+
+- Sidebar slides over content (off-canvas) from the left;
+  hamburger button in the top bar toggles it; a backdrop closes
+  it on tap.
+- List rows lose the from column and fold the sender into the
+  preview row, with 56 px row heights for touch targets.
+- Message view loses its 800 px content cap; padding tightens.
+- Compose modal goes full-screen instead of a tiny bottom-right
+  popup nobody could type into.
+- Search input shortens; refresh icon hides; brand name shrinks.
+
+### Changed — Branding: official logos
+
+- **AgenticMail logo** — the `@` rounded-square mark from
+  `branding/logo-400.png` is now bundled at
+  `/branding/agenticmail-logo.png` and used as the topbar brand,
+  auth-card heading, and favicon.
+- **Claude logo** — the official Claude starburst mark
+  (extracted from the public Wikipedia SVG, `cls-2` orange path
+  in `#d97757`) is now bundled at `/branding/claude-mark.svg`
+  and used for the bridge agent's avatar.
+
+The stylised SVG approximation from 0.8.24 is gone. Hosts that
+care about brand fidelity get the real marks; the only thing the
+UI does on top is overlay a small green verified-tick on the
+bridge avatar.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.7.9 | 0.7.11 |
+| `@agenticmail/mcp` | 0.7.7 | 0.7.8 |
+| `@agenticmail/claudecode` | 0.1.13 | 0.1.14 |
+| `@agenticmail/cli` | 0.8.24 | 0.8.25 |
+
+Plugin manifest mirrored to 0.8.25. core / openclaw unchanged.
+
+### Tests
+
+108 claudecode tests pass (was 106, +2 net):
+
+- `accepts an absolute-path mail-hook command (0.8.25+ shape)`
+- `heals a 0.8.24-shaped install by upgrading the bare-name command to absolute path`
+
 ## [0.8.24] - 2026-05-13
 
 ### Web UI — Gmail-style redesign, modular JS, proper icon library

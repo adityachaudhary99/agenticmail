@@ -823,8 +823,20 @@ export const toolDefinitions = [
     },
   },
   {
+    name: 'tail_worker',
+    description: 'Tail the log of a running (or recently-finished) dispatcher worker. Use this when check_activity shows a worker has been running a long time or is marked stale, and you want to see what it is actually doing — every tool call, tool result, and assistant chunk is logged as a one-liner. Returns the last N lines (default 80). The workerId comes from check_activity output. Requires master key.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        workerId: { type: 'string', description: 'Worker id from check_activity output.' },
+        lines: { type: 'number', description: 'How many trailing log lines to return. Default 80, max 1000.' },
+      },
+      required: ['workerId'],
+    },
+  },
+  {
     name: 'check_activity',
-    description: 'Check which agents are currently being woken by the dispatcher (right now or in the last 2 minutes). Use this when you sent mail to a teammate and want to know if they have actually started working, or to audit the live multi-agent state. Returns active workers with the agent name, what triggered the wake (mail UID + subject, or task id), how long they have been running, and a preview of the most recent finished work. Requires master key — the host session has it; subagents normally do not.',
+    description: 'Check which agents are currently being woken by the dispatcher. Use this when you sent mail to a teammate and want to know if they have actually started working, or to audit the live multi-agent state. Returns active workers with the agent name, what triggered the wake (mail UID + subject, or task id), how long they have been running, the most recent tool they invoked, how many tool calls they have made, a `stale` flag (true if the dispatcher has not heartbeated in 90s+), and a preview of recently-finished work. Workers may run for hours — there is no auto-eviction; staleness is just a hint. Requires master key.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -2289,6 +2301,15 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
       throw new Error('Invalid action. Use: list_inactive, cleanup, or set_persistent');
     }
 
+    case 'tail_worker': {
+      if (!args.workerId) throw new Error('workerId is required');
+      const lines = typeof args.lines === 'number' ? args.lines : 80;
+      const r = await apiRequest('GET', `/dispatcher/worker-log/${encodeURIComponent(String(args.workerId))}?lines=${lines}`, undefined, true);
+      if (!r?.tail || !Array.isArray(r.tail)) return `No log found for worker ${args.workerId}.`;
+      if (r.tail.length === 0) return `Worker ${args.workerId} has no log entries yet.`;
+      return `Worker ${args.workerId} log (last ${r.lines} of ${r.bytes} bytes):\n${r.tail.join('\n')}`;
+    }
+
     case 'check_activity': {
       // Endpoint requires master key. We hit it via apiRequest's master
       // path (the 4th arg = `useMasterKey` opt-in), same as cleanup_agents.
@@ -2302,13 +2323,22 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
         if (filterAgent) return `No dispatcher activity for "${args.agent}" right now or in the last 2 minutes. Either the agent has not been woken on this thread yet, the dispatcher is not running, or mail to them is still in flight.`;
         return 'No dispatcher activity right now or in the last 2 minutes. If you just sent mail and expected an agent to wake, give it a moment — the dispatcher subscribes to /system/events for sub-second wake. If nothing happens for 30s, check that the dispatcher process is running (`pm2 list`) and that the recipient is a real local agent (`list_agents`).';
       }
+      const fmtDur = (ms: number) => {
+        if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
+        if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m${Math.floor((ms % 60_000) / 1000)}s`;
+        return `${Math.floor(ms / 3_600_000)}h${Math.floor((ms % 3_600_000) / 60_000)}m`;
+      };
       const fmt = (w: any, prefix: string) => {
-        const dur = w.durationMs ? `${(w.durationMs / 1000).toFixed(1)}s` : '?';
+        const dur = w.durationMs ? fmtDur(w.durationMs) : '?';
         const trig = w.trigger?.subject ? ` — ${String(w.trigger.subject).slice(0, 60)}` : w.trigger?.taskId ? ` — task ${String(w.trigger.taskId).slice(0, 8)}` : '';
         const from = w.trigger?.from ? ` (from ${w.trigger.from})` : '';
         const preview = w.resultPreview ? `\n      → ${String(w.resultPreview).slice(0, 140).replace(/\s+/g, ' ').trim()}` : '';
-        const status = w.endedAtMs ? (w.ok === false ? 'failed' : 'finished') : 'running';
-        return `  ${prefix} ${w.agentName} [${w.kind}] ${status} ${dur}${trig}${from}${preview}`;
+        let status = w.endedAtMs ? (w.ok === false ? 'failed' : 'finished') : 'running';
+        if (!w.endedAtMs && w.stale) status = 'running (stale heartbeat)';
+        const turns = !w.endedAtMs && typeof w.turnCount === 'number' ? ` · ${w.turnCount} tool calls` : '';
+        const tool = !w.endedAtMs && w.lastTool ? ` · last tool: ${w.lastTool}` : '';
+        const idHint = !w.endedAtMs ? `\n      id: ${w.workerId}  (use tail_worker for the log)` : '';
+        return `  ${prefix} ${w.agentName} [${w.kind}] ${status} ${dur}${turns}${tool}${trig}${from}${preview}${idHint}`;
       };
       const lines: string[] = [];
       if (activeList.length > 0) {

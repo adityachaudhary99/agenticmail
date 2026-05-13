@@ -38,8 +38,22 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-/** Stable identifying marker for the hook entry we own. */
-const AGENTICMAIL_HOOK_MARKER = 'agenticmail-mail-hook';
+/**
+ * Identify a hook command as ours. We accept BOTH historical forms so
+ * upgrades from any prior version converge to the current shape:
+ *
+ *   - `agenticmail-mail-hook`            — bare bin name (0.8.22-0.8.24)
+ *   - `node "...mail-hook.js"`           — absolute path (0.8.25+)
+ *
+ * The absolute-path form fixes the `command not found` errors that
+ * fired on every Stop / UserPromptSubmit hook when the npm global bin
+ * dir wasn't on the user's $PATH. The marker matches either substring
+ * so old installs auto-heal to the new shape on the next upsert.
+ */
+function isAgenticMailHookCommand(command: string): boolean {
+  if (typeof command !== 'string') return false;
+  return command.includes('agenticmail-mail-hook') || command.includes('mail-hook.js');
+}
 
 interface ClaudeHookCommand {
   type: 'command';
@@ -54,6 +68,7 @@ interface ClaudeHookRule {
 interface ClaudeSettingsShape {
   hooks?: {
     UserPromptSubmit?: ClaudeHookRule[];
+    Stop?: ClaudeHookRule[];
     PreToolUse?: ClaudeHookRule[];
     [event: string]: ClaudeHookRule[] | undefined;
   };
@@ -63,35 +78,35 @@ interface ClaudeSettingsShape {
 /**
  * Hook events the AgenticMail mail-hook is registered on.
  *
- * We only register on **UserPromptSubmit** because that is the only
- * Claude Code hook event whose output schema accepts
- * `hookSpecificOutput.additionalContext` for context injection.
+ * Two events, each with a schema-correct output shape:
  *
- * # Why not PreToolUse too?
+ *   - **UserPromptSubmit** — fires on every user prompt in the
+ *     interactive REPL. Output uses
+ *     `hookSpecificOutput.additionalContext` to inject a
+ *     "you have new mail" preamble before Claude reasons about
+ *     the user's prompt. Catches the interactive case.
  *
- * Earlier (0.8.22) we tried to register on `PreToolUse` as well — the
- * idea being to wake Claude during autonomous runs (where there are
- * no user prompts for hours, just tool calls). The intent was right
- * but the implementation was wrong: `PreToolUse`'s output schema
- * expects `permissionDecision` / `permissionDecisionReason`, not
- * `additionalContext`. Claude Code accordingly logged
- * `PreToolUse:Read hook error` on every tool call. Functional but
- * noisy and ugly.
+ *   - **Stop** — fires when Claude was about to end a turn. Output
+ *     uses `decision: 'block'` + `reason` to force Claude to
+ *     continue when there's unread bridge mail. This is the
+ *     **autonomous-mode awareness** mechanism — long-running
+ *     Claude Code sessions (headless or remotely-controlled)
+ *     where `UserPromptSubmit` never fires now still wake on
+ *     teammate replies at every natural turn boundary.
  *
- * Autonomous-mode awareness is a real and worthwhile feature, but it
- * needs a different mechanism than re-using the UserPromptSubmit
- * hook. Until that's designed properly, we only register on the one
- * event whose schema matches what we're trying to do.
+ * Both event types are supported by Claude Code's hook system and
+ * use the supported output schema for that event — no
+ * "PreToolUse:Read hook error" spam like 0.8.22.
  *
  * # Why HOOK_EVENTS_TO_REMOVE is a superset
  *
- * Anyone who installed 0.8.22 has a PreToolUse entry already in
- * their settings.json — we need `removeMailHook` to clean that up
- * during upgrade, even though we no longer add it. So the remove
- * walker iterates a superset that includes the historical events.
+ * Anyone who installed 0.8.22 has a leftover `PreToolUse` entry in
+ * their settings.json — `removeMailHook` walks a removal superset
+ * that includes historical events so upgrades clean themselves up
+ * automatically.
  */
-const HOOK_EVENTS_TO_REGISTER = ['UserPromptSubmit'] as const;
-const HOOK_EVENTS_TO_REMOVE = ['UserPromptSubmit', 'PreToolUse'] as const;
+const HOOK_EVENTS_TO_REGISTER = ['UserPromptSubmit', 'Stop'] as const;
+const HOOK_EVENTS_TO_REMOVE = ['UserPromptSubmit', 'Stop', 'PreToolUse'] as const;
 type HookEvent =
   | typeof HOOK_EVENTS_TO_REGISTER[number]
   | typeof HOOK_EVENTS_TO_REMOVE[number];
@@ -170,7 +185,7 @@ function removeOneEvent(
   const list = hooks[event] ?? [];
   if (list.length === 0) return false;
   const filtered = list.filter(rule =>
-    !rule.hooks?.some(h => typeof h.command === 'string' && h.command.includes(AGENTICMAIL_HOOK_MARKER)),
+    !rule.hooks?.some(h => isAgenticMailHookCommand(h.command)),
   );
   if (filtered.length === list.length) return false;
   if (filtered.length === 0) delete hooks[event];
@@ -186,7 +201,7 @@ function upsertOneEvent(
   const list = hooks[event] ?? [];
 
   const isOurs = (rule: ClaudeHookRule): boolean =>
-    rule.hooks?.some(h => typeof h.command === 'string' && h.command.includes(AGENTICMAIL_HOOK_MARKER)) ?? false;
+    rule.hooks?.some(h => isAgenticMailHookCommand(h.command)) ?? false;
 
   const desired: ClaudeHookRule = {
     matcher: '',  // empty = match every fire of this event

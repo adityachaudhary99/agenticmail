@@ -16,7 +16,13 @@ Agent { subagent_type: "agenticmail-fola", prompt: "draft a reply to my last ema
 
 This package is to Claude Code what `@agenticmail/openclaw` is to OpenClaw: an integration package that wires AgenticMail into the host AI runtime. It mirrors that package's layout 1:1, so if you know one, you know the other.
 
-## ✨ What's new in 0.1.11
+## ✨ What's new in 0.1.14
+
+- **Workers run for hours** — dropped the 30-min hard timeout. Per-worker log file at `~/.agenticmail/worker-logs/<id>.log` capturing every SDK tool call + result + assistant chunk as a one-liner. Heartbeats POSTed to the API every 30 s so `check_activity` sees real progress. Per-worker scratch cwd at `~/.agenticmail/worker-cwds/<id>/` prevents parallel agents from clobbering each other's output. Tail via the new MCP tool `tail_worker`.
+- **Autonomous-mode awareness via Stop hook** — the mail hook now registers on the **Stop** Claude Code event too. Long headless runs (no user prompts) finally see teammate replies: when bridge mail is unread at a turn boundary, the hook returns `{decision: 'block', reason: '...'}`, forcing Claude to continue with the new-mail summary in context. This is the schema-correct supported way to inject context at Stop, unlike the 0.8.22 PreToolUse attempt.
+- **Hook bin resolved with absolute path** — previously the hook was registered as the bare bin name `agenticmail-mail-hook`, which produced `command not found` errors when the npm global bin dir wasn't on `$PATH`. Now resolved via `import.meta.url` at install time and registered as `node "/abs/.../mail-hook.js"`. Old bare-name installs auto-heal on the next `agenticmail claudecode` run.
+
+## ✨ Earlier — 0.1.11
 
 - **Selective wake** — when the sender sets `wake: ["alice", "bob"]` on `send_email` / `reply_email`, the dispatcher gives a Claude turn only to listed agents. CC'd-but-not-listed agents still receive the mail in their inbox but stay asleep. Single biggest token saver on multi-agent threads.
 - **Thread-close markers** — `[FINAL]`, `[DONE]`, `[CLOSED]`, `[WRAP]` in a subject. The dispatcher stops waking workers on any further reply to that thread. Closes the "no native done signal" gap from the 5-agent stress test.

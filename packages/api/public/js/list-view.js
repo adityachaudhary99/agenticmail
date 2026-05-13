@@ -8,6 +8,44 @@ import { apiGet } from './api.js';
 import { FOLDERS } from './sidebar.js';
 import { icon } from './icons.js';
 
+/**
+ * Defensive flag check. The API's IMAP layer returns `flags` as an
+ * array of strings most of the time (`['\\Seen', '\\Flagged']`) but
+ * some envelopes come back with a Set-like serialisation or even an
+ * object map. Without this guard, calling `.includes()` on a non-
+ * array crashed the list with "(m.flags ?? []).includes is not a
+ * function". Coerce everything we don't recognise to an empty list.
+ */
+function flagsHas(flags, name) {
+  if (Array.isArray(flags)) return flags.includes(name);
+  if (flags && typeof flags === 'object') {
+    // `{Seen: true, Flagged: false}` shape — try both with and
+    // without the leading backslash since callers can mean either.
+    const key = name.replace(/^\\/, '');
+    return flags[name] === true || flags[key] === true;
+  }
+  return false;
+}
+
+// Map sidebar folder ids to the actual IMAP folder names the API
+// expects on `/mail/folders/:folder`. `inbox` is special — the API
+// has a dedicated `/mail/inbox` endpoint with extra enrichment, so
+// we use that. Other folders go through the generic listing.
+//
+// Stalwart uses the standard IMAP names: INBOX, Sent, Drafts, Junk
+// Mail (a.k.a. "Spam"), Trash. We use the canonical IMAP capitalisation.
+const FOLDER_TO_IMAP = {
+  inbox:   { endpoint: '/mail/inbox' },
+  sent:    { endpoint: '/mail/folders/Sent' },
+  drafts:  { endpoint: '/mail/folders/Drafts' },
+  spam:    { endpoint: '/mail/folders/Junk%20Mail' },
+  trash:   { endpoint: '/mail/folders/Trash' },
+  all:     { endpoint: '/mail/folders/All%20Mail' },
+  // Starred is not a folder — it's the IMAP \Flagged flag, surfaced
+  // by client-side filtering over the inbox listing (Gmail-style).
+  starred: { endpoint: '/mail/inbox', clientFilter: 'flagged' },
+};
+
 export async function loadList(agent, folder) {
   const root = document.getElementById('content');
   root.innerHTML = `
@@ -17,17 +55,19 @@ export async function loadList(agent, folder) {
     </div>
     <div class="list-rows" id="list-rows"><div class="empty">Loading…</div></div>
   `;
+  const route = FOLDER_TO_IMAP[folder] ?? FOLDER_TO_IMAP.inbox;
   try {
-    // Public API today only exposes the inbox listing. Other folders
-    // fall through to the inbox endpoint and apply a client-side
-    // shape (e.g. starred = flag filter). When the API grows
-    // per-mailbox listing we'll route based on `folder` here.
-    const data = await apiGet('/mail/inbox?limit=50&offset=0', { agentKey: agent.apiKey });
+    const sep = route.endpoint.includes('?') ? '&' : '?';
+    const data = await apiGet(`${route.endpoint}${sep}limit=50&offset=0`, { agentKey: agent.apiKey });
     state.messages = data.messages ?? [];
     renderList();
   } catch (err) {
-    document.getElementById('list-rows').innerHTML =
-      `<div class="empty">Failed to load: ${escapeHtml(err.message)}</div>`;
+    // Empty folder is a normal state; "no such folder" lands here
+    // too. Show a friendly empty message rather than a raw HTTP error.
+    const msg = String(err.message ?? err);
+    document.getElementById('list-rows').innerHTML = msg.includes('404')
+      ? `<div class="empty">${escapeHtml(folderTitle(folder))} is empty.</div>`
+      : `<div class="empty">Failed to load: ${escapeHtml(msg)}</div>`;
   }
 }
 
@@ -45,8 +85,10 @@ export function renderList() {
 
   // Client-side folder filtering for the folders the API doesn't
   // distinguish for us yet. Starred uses the IMAP \Flagged flag.
+  // Flags may come back as an array OR an object map ({Seen: true})
+  // depending on the IMAP path — always coerce before .includes().
   if (state.selectedFolder === 'starred') {
-    filtered = filtered.filter(m => (m.flags ?? []).includes('\\Flagged'));
+    filtered = filtered.filter(m => flagsHas(m.flags, '\\Flagged'));
   }
 
   const hlTerm = filters?.subject || filters?.from || filters?.text || '';
@@ -70,8 +112,8 @@ export function renderList() {
   }
 
   root.innerHTML = filtered.map(m => {
-    const unread = !(m.flags ?? []).includes('\\Seen');
-    const starred = (m.flags ?? []).includes('\\Flagged');
+    const unread = !flagsHas(m.flags, '\\Seen');
+    const starred = flagsHas(m.flags, '\\Flagged');
     const fromAddr = m.from?.[0]?.address ?? '?';
     const fromName = m.from?.[0]?.name || fromAddr;
     const subject = m.subject ?? '(no subject)';

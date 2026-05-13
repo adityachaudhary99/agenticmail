@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AgenticMail</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ec4899'%3E%3Cpath d='M12 12c-2-3-5-5-8-5-1 0-2 1-2 2s1 2 2 2c2 0 4 1 5 2-1 1-3 2-5 2-1 0-2 1-2 2s1 2 2 2c3 0 6-2 8-5 2 3 5 5 8 5 1 0 2-1 2-2s-1-2-2-2c-2 0-4-1-5-2 1-1 3-2 5-2 1 0 2-1 2-2s-1-2-2-2c-3 0-6 2-8 5zm0 2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z'/%3E%3C/svg%3E" />
+<link rel="icon" type="image/png" href="/branding/agenticmail-logo.png" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
 <!-- ─── Auth gate (shown until master key is entered) ────────────── -->
 <div id="auth" class="auth-gate">
   <div class="auth-card">
-    <h1><span data-icon="bow" data-icon-size="28"></span> AgenticMail</h1>
+    <h1><img src="/branding/agenticmail-logo.png" alt="AgenticMail" class="brand-logo" /> AgenticMail</h1>
     <p>Enter your master key to sign in. The key is stored locally in your browser; we never send it anywhere except to <span class="mono" id="auth-api-url"></span>.</p>
     <div id="auth-err" class="auth-err" style="display:none"></div>
     <input id="auth-key" type="password" placeholder="mk_…" autocomplete="off" autofocus />
@@ -27,7 +27,7 @@
   <header class="topbar">
     <button class="menu-btn" id="menu-btn" title="Menu" data-icon="menu"></button>
     <div class="brand">
-      <span class="brand-bow" data-icon="bow" data-icon-size="28"></span>
+      <img src="/branding/agenticmail-logo.png" alt="AgenticMail" class="brand-logo" />
       <span class="brand-name">AgenticMail</span>
     </div>
     <div class="search-container">
@@ -52,8 +52,9 @@
   </header>
 
   <!-- Sidebar + content -->
-  <div class="main">
-    <aside class="sidebar">
+  <div class="main" id="main">
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <aside class="sidebar" id="sidebar">
       <button class="compose-btn" id="compose-btn">
         <span class="compose-icon" data-icon="compose" data-icon-size="22"></span>
         <span class="compose-text">Compose</span>

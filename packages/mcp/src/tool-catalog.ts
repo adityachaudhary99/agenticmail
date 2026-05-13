@@ -65,6 +65,11 @@ export const TOOL_SETS = {
     // "did the agent I just emailed actually start working?" without
     // having to wait for a reply or send an acknowledgment.
     'check_activity',
+    // tail_worker complements check_activity: when a worker has been
+    // running a long time or shows up as stale, tail_worker gives you
+    // the running log of what it actually did — every tool call, every
+    // result. Paired with check_activity so they ship in the same tier.
+    'tail_worker',
     'check_tasks',
   ],
 

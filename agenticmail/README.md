@@ -23,9 +23,14 @@ It bundles a setup wizard, API server launcher, and a full interactive shell wit
 >
 > Zero prompts, ~2 minutes, fully autonomous. Then tell the user to restart Claude Code. Full agent-facing runbook — including verification, common failures, and "what if Node < 22" — is at [`AGENTS.md`](https://github.com/agenticmail/agenticmail/blob/main/AGENTS.md) in the repo (the [agents.md](https://agents.md) convention).
 
-## ✨ What's new in 0.8.24
+## ✨ What's new in 0.8.25
 
-- **🌐 Gmail-style web UI, fully redesigned** — `agenticmail web` opens a proper two-column Gmail layout: left sidebar with Compose + folders (Inbox / Starred / Sent / Drafts / All Mail / Spam / Trash), content pane that swaps between list view (40 px Gmail-style rows) and message view via a hash router (`#/inbox`, `#/m/<uid>`). Every emoji replaced with an inline 24×24 vector icon library. Modular ES module JS under `public/js/` (14 files). Search supports `from:` / `subject:` operators, real-time SSE updates, browser notifications, full markdown rendering, compose + reply with `wake` as a first-class field.
+- **⏱ Workers can run for hours** — no aggressive timeout. Per-worker logs at `~/.agenticmail/worker-logs/`, heartbeats every 30 s, isolated cwd per worker. New MCP tool `tail_worker` reads the running log; `check_activity` shows last tool, turn count, and a `stale` flag instead of evicting long-running workers.
+- **🤖 Autonomous-mode awareness via Stop hook** — long headless Claude Code runs now see teammate replies at every turn boundary. Closes the follow-up from 0.8.23.
+- **🩹 Hook bin resolution fixed** — `agenticmail-mail-hook: command not found` errors gone; the hook is registered with an absolute path resolved at install time. Old installs auto-heal on the next `agenticmail claudecode`.
+- **🐛 Web UI bug sweep** — flags-`.includes`-not-a-function crash, sidebar folders all hitting `/mail/inbox`, Cmd+C opening compose: all fixed.
+- **📱 Mobile-responsive web UI** — off-canvas sidebar with hamburger toggle, full-screen compose, list rows that fold sender into the preview, message view that drops the desktop content cap.
+- **🎀 Official logos** — Claude starburst (Wikipedia) + AgenticMail `@` mark replace the placeholder glyphs everywhere.
 - **`wake: ["alice", "bob"]`** on `send_email` / `reply_email` / `forward_email` / `template_send` / `manage_drafts(send)` tells the dispatcher to give a Claude turn only to named agents — the biggest token saver on large threads.
 - **`[FINAL]` / `[DONE]` / `[CLOSED]` / `[WRAP]` in a subject** closes a thread — the dispatcher stops waking workers on any further reply to it.
 - **`check_activity` MCP tool** — see which agents the dispatcher has woken right now and how long they've been running.

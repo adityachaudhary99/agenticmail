@@ -1,16 +1,17 @@
 // Agent identity + avatar helpers.
 //
 // The bridge agent (default name "claudecode") is the host's identity
-// inside AgenticMail. We render it with a stylised Claude-asterisk
-// mark and a green verified-tick so the host inbox is recognisable at
-// a glance vs. teammate sub-agents.
-//
-// We deliberately do NOT embed Anthropic's actual trademarked Claude
-// logo here — reproducing it pixel-for-pixel in third-party software
-// has licensing implications. The stylised approximation conveys
-// the same identity cue without the trademark concern.
+// inside AgenticMail. We render it with the OFFICIAL Claude starburst
+// mark (sourced from the public Wikipedia SVG, served as a static
+// asset under /branding/claude-mark.svg) and a green verified-tick so
+// the host inbox is recognisable at a glance vs. teammate sub-agents.
 import { escapeHtml } from './utils.js';
 import { icon } from './icons.js';
+
+// Official Claude mark, served as a static asset under /branding/.
+// Using <img src=...> rather than inlining the path keeps the SVG
+// out of every avatar render and lets the browser cache the asset.
+const CLAUDE_MARK_URL = '/branding/claude-mark.svg';
 
 export function isBridgeAgent(agent) {
   if (!agent) return false;
@@ -31,14 +32,10 @@ function avatarColorFor(name) {
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
 }
 
-const CLAUDE_MARK_SVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-  <path d="M12 1.5 L13.2 8.6 L19.5 6.6 L15 12 L19.5 17.4 L13.2 15.4 L12 22.5 L10.8 15.4 L4.5 17.4 L9 12 L4.5 6.6 L10.8 8.6 Z"/>
-</svg>`;
-
 export function avatarHtml(agent, size = '') {
   const cls = `avatar ${size}`.trim();
   if (isBridgeAgent(agent)) {
-    return `<span class="${cls} avatar-host">${CLAUDE_MARK_SVG}<span class="avatar-check">${icon('check', { size: 10 })}</span></span>`;
+    return `<span class="${cls} avatar-host"><img src="${CLAUDE_MARK_URL}" alt="Claude" class="avatar-img" /><span class="avatar-check">${icon('check', { size: 10 })}</span></span>`;
   }
   const initial = (agent.name ?? '?').slice(0, 1).toUpperCase();
   const color = avatarColorFor(agent.name ?? '');
