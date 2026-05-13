@@ -67,12 +67,88 @@ function jsonSchemaToZod(schema: JsonSchema | undefined, topLevel = false): Reco
   return schema.description ? result.describe(schema.description) : result;
 }
 
+/**
+ * Server-level instructions, sent on `initialize` to every connecting client
+ * (Claude Code, ChatGPT, Cursor, Grok, Aider, custom MCP hosts — anyone).
+ *
+ * This is the ONLY surface guaranteed to be in the host LLM's context the
+ * first time it touches AgenticMail. Every other piece of guidance (tool
+ * descriptions, subagent persona files, README) only fires once the LLM is
+ * already mid-task. The single most common mistake we keep seeing in the
+ * wild is the host session reflexively spawning a native sub-agent / tool
+ * to ROLEPLAY AS the AgenticMail agents it just created — instead of
+ * trusting AgenticMail's own RPC + dispatcher to wake the real agents.
+ * So we lead with that, in provider-agnostic language.
+ */
+const SERVER_INSTRUCTIONS = [
+  '🎀 AgenticMail — multi-agent email + SMS infrastructure.',
+  '',
+  'AgenticMail agents are NOT prompts you wrap around your host\'s native',
+  'sub-agent tool. Each AgenticMail agent is a persistent identity with its',
+  'own inbox, API key, persona, and audit trail. Address other agents through',
+  'AgenticMail\'s own primitives below — never roleplay them inside your host.',
+  '',
+  'How to coordinate work between agents — the right way:',
+  '',
+  '1. List or create the agents you need (`list_agents`, `create_account`).',
+  '2. Send them work using ONE of:',
+  '     • `call_agent({ target, task, payload?, timeout? })` — SYNCHRONOUS RPC.',
+  '         Fires a structured task at the target agent and waits for their',
+  '         result. The target processes the task as themselves (under their',
+  '         own identity and mailbox) and the structured result returns into',
+  '         your call. Use this when you need an answer back.',
+  '     • `send_email({ to: "<name>@localhost", ... })` or',
+  '       `message_agent({ agent, subject, text })` — ASYNCHRONOUS.',
+  '         Mail lands in their inbox; they process it on their own schedule',
+  '         and may reply by email. Use this for fire-and-forget handoffs.',
+  '3. Read replies with `list_inbox` + `read_email`, or `search_emails`.',
+  '',
+  'What NOT to do (regardless of host — Claude Code, ChatGPT, Cursor, Grok, …):',
+  '',
+  '✗ Do NOT spawn a native sub-agent / sub-task / parallel-thinking tool of',
+  '  your host and instruct it to "act as Lyra" / "write as Orion". That',
+  '  produces output under YOUR identity, never reaches the named agent\'s',
+  '  inbox, and bypasses their persona, signatures, outbound guard, and',
+  '  audit trail. The real agent has not actually thought anything.',
+  '✗ Do NOT compose an agent\'s reply yourself in the host session and then',
+  '  `send_email` it on their behalf. Let `call_agent` (or an email handoff)',
+  '  produce the reply from the real agent.',
+  '✗ Do NOT pass `_account: "<other-agent>"` to act AS another agent. That',
+  '  falsifies the From: header. Use `call_agent` to delegate instead.',
+  '',
+  'How the wake-up actually happens (host-dependent — best-effort):',
+  '  - With the Claude Code integration installed, a dispatcher daemon',
+  '    auto-wakes the target agent as a Claude Code subagent when mail',
+  '    arrives or `call_agent` fires.',
+  '  - With other MCP hosts (no dispatcher), `send_email` / `message_agent`',
+  '    still deliver the mail; a human or another scheduled process picks',
+  '    it up later. `call_agent` will still queue the task and return its',
+  '    result once any worker (yourself, a cron, another agent) processes',
+  '    it — see `check_tasks` / `claim_task` / `submit_result`.',
+  '  Either way, the RIGHT primitives from your side are the same:',
+  '  call_agent / send_email / message_agent. Never roleplay.',
+  '',
+  'Identity & `_account`:',
+  '  Every tool call accepts an optional `_account: "<your-agent-name>"` to',
+  '  scope the call to a specific agent. From the HOST session, omit it to',
+  '  use bridge identity, or pass it to read/write a specific agent\'s',
+  '  mailbox directly. From inside an agent\'s own context, ALWAYS pass',
+  '  `_account: "<self>"`.',
+  '',
+  'Tool surface: ~62 tools across email, SMS, contacts, drafts, templates,',
+  'rules, tags, search, scheduling, RPC. Only ~10 are pre-loaded; the rest',
+  'are reachable via `request_tools` (discover) + `invoke` (call).',
+].join('\n');
+
 function createMcpServer(): McpServer {
-  const server = new McpServer({
-    name: '🎀 AgenticMail',
-    version: '0.2.27',
-    description: '🎀 AgenticMail — Email infrastructure for AI agents. By Ope Olatunji (https://github.com/agenticmail/agenticmail)',
-  } as any);
+  const server = new McpServer(
+    {
+      name: '🎀 AgenticMail',
+      version: '0.2.29',
+      description: '🎀 AgenticMail — Email infrastructure for AI agents. By Ope Olatunji (https://github.com/agenticmail/agenticmail)',
+    } as any,
+    { instructions: SERVER_INSTRUCTIONS },
+  );
 
   // Register tools.
   //

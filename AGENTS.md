@@ -64,7 +64,72 @@ in `~/.claude.json` takes effect.
 
 ---
 
-## 2. If the user asks you to set up the Claude Code integration
+## 2. If the user asks you to use AgenticMail for multi-agent coordination
+
+**This is the single most-misused thing in this codebase.** Read carefully.
+The rule below is provider-agnostic — it applies whether your host is
+Claude Code, ChatGPT, Cursor, Grok, Aider, or any other MCP client.
+
+AgenticMail agents are **persistent identities with their own inboxes,
+API keys, personas, and audit trails**. Address them through AgenticMail's
+own primitives — never through your host's native sub-agent / sub-task
+tool with a "you are <name>" prompt.
+
+### Right way
+
+```
+1. list_agents()                          // discover who exists, or...
+2. create_account({ name: "Lyra", ... })  // ...spawn fresh identities
+3. call_agent({ target: "Lyra", task: "design the game brief" })
+   // → Lyra processes the task as herself (real identity + mailbox),
+   //   structured result returns into your call.
+4. call_agent({ target: "Orion", task: "implement: <Lyra's brief>" })
+5. Read final artefacts via list_inbox / read_email if needed.
+```
+
+For fire-and-forget handoffs, swap `call_agent` for `send_email` or
+`message_agent` — mail lands in their inbox and they reply on their own
+schedule. Use `wait_for_email` if you need to block until they respond.
+
+### Wrong way (do not do this — regardless of host)
+
+```
+✗ create_account({ name: "Lyra" })
+✗ <host>.spawn_sub_agent({ prompt: "You are Lyra the designer..." })
+✗ send_email({ from: bridge, to: "orion@localhost",
+               text: "<the brief your native sub-agent wrote>" })
+```
+
+That spawns a generic sub-agent under YOUR identity (no Lyra persona,
+no Lyra mailbox, no audit trail) and then forges mail "from" Lyra. The
+AgenticMail agent named "Lyra" never actually thought anything — you
+just used her name as a label on a manually-shuttled message.
+
+### Why this matters
+
+- AgenticMail's RPC pipeline (`call_agent`) and the optional dispatcher
+  daemon are what give each agent real, isolated identity. Bypassing
+  them and roleplaying inside your host throws away every benefit:
+  per-agent signatures, per-agent outbound guard, persona consistency,
+  searchable history, and per-agent rate / cost tracking.
+- With the Claude Code integration installed, a dispatcher process
+  subscribes to each agent's inbox and auto-wakes them under your
+  existing Claude OAuth — zero extra cost vs. a native sub-agent.
+  Without that integration (other MCP hosts), `call_agent` still
+  queues the task and `send_email` still delivers; whatever worker
+  your environment provides processes them as the target agent.
+- Never pass `_account: "<other-agent>"` from the host to "act as"
+  another agent. That falsifies the `From:` header. Use `call_agent`.
+
+### TL;DR rule
+
+> If the human says "have agent A coordinate with agent B", reach for
+> `call_agent` / `send_email` / `message_agent`. Never reach for your
+> host's native sub-agent tool with a roleplay prompt.
+
+---
+
+## 3. If the user asks you to set up the Claude Code integration
 
 If AgenticMail is already installed (`agenticmail --version` works,
 `curl -s http://127.0.0.1:3829/api/agenticmail/health` returns 200):
@@ -89,7 +154,7 @@ To remove: `agenticmail claudecode --remove`.
 
 ---
 
-## 3. If the user asks "what is AgenticMail" / "what does it do"
+## 4. If the user asks "what is AgenticMail" / "what does it do"
 
 It's a self-hosted email + SMS platform for AI agents. Each agent
 gets a real email address, an inbox, and an API key. Agents email
@@ -105,7 +170,7 @@ user's existing Claude Code OAuth — no separate Anthropic key needed).
 
 ---
 
-## 4. If the user asks you to verify it's working
+## 5. If the user asks you to verify it's working
 
 ```bash
 agenticmail status                   # service health
@@ -124,7 +189,7 @@ default — or whatever default agent the bootstrap created).
 
 ---
 
-## 5. If something goes wrong
+## 6. If something goes wrong
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
@@ -137,7 +202,7 @@ default — or whatever default agent the bootstrap created).
 
 ---
 
-## 6. Repository layout (for agents modifying the code)
+## 7. Repository layout (for agents modifying the code)
 
 | Path | What it is |
 |---|---|
@@ -148,7 +213,7 @@ default — or whatever default agent the bootstrap created).
 | `packages/openclaw/` | `@agenticmail/openclaw` — OpenClaw runtime integration. Older code path, still pinned to `@agenticmail/core@^0.5`. |
 | `agenticmail/` | `@agenticmail/cli` — the user-facing `agenticmail` binary. Imports from `@agenticmail/api`, exposes `setup`, `bootstrap`, `start`, `claudecode`, `openclaw`, etc. |
 
-## 7. Build / test / lint commands
+## 8. Build / test / lint commands
 
 ```bash
 npm install                                  # install all workspace deps
@@ -163,7 +228,7 @@ Test counts as of `0.8.2`:
 - `@agenticmail/claudecode`: 75 specs
 - `@agenticmail/mcp`: 8 specs (catalogue audit)
 
-## 8. Conventions to follow when contributing
+## 9. Conventions to follow when contributing
 
 - **ES modules everywhere.** No CommonJS.
 - **Type imports** use `import { type X } from '...'` not `import type X from ...`.
@@ -182,7 +247,7 @@ Test counts as of `0.8.2`:
   `### Added` / `### Changed` / `### Fixed` sections. Update it on
   every release.
 
-## 9. What NOT to do
+## 10. What NOT to do
 
 - **Don't `npm install` random packages** to "fix" something. Most
   things are already wired correctly; if you can't find what you need,
@@ -196,7 +261,7 @@ Test counts as of `0.8.2`:
   before commit, or CI will fail with `EUSAGE`.
 - **Don't skip the CHANGELOG entry** when shipping a release.
 
-## 10. Reference
+## 11. Reference
 
 - `README.md` — top-level overview, Quick Start, full feature list.
 - `agenticmail/README.md` — CLI documentation, every command, every flag.

@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.6] - 2026-05-13
+
+### Added — provider-agnostic "how to coordinate" guidance
+
+The most common failure mode we've observed in the wild: a host LLM
+(Claude Code, ChatGPT, Cursor, Grok, …) creates AgenticMail agents
+correctly, then immediately spawns its OWN native sub-agent tool with
+a "you are <agent-name>" prompt to roleplay them — and finally
+`send_email`s the manually-composed reply on the agent's behalf. The
+named AgenticMail agent never actually thinks anything; their inbox,
+persona, signatures, and outbound guard are all bypassed.
+
+To teach every connecting host this in one shot:
+
+- **`@agenticmail/mcp@0.7.2`** now sends a comprehensive
+  `instructions` field on `initialize`. MCP clients surface this to
+  the LLM as part of the server's introduction, so the rule
+  ("address other agents via `call_agent` / `send_email` /
+  `message_agent` — never roleplay them in your host") lands in
+  context before the LLM picks up any tool.
+- **Tool descriptions** for `list_agents`, `create_account`,
+  `call_agent`, and `message_agent` now explicitly call out the
+  anti-pattern and the correct alternative. Provider-agnostic
+  wording — no hard-coded references to "Claude Code subagents",
+  since the same MCP server is used by every host.
+- **`AGENTS.md`** gains a new top-level section "If the user asks
+  you to use AgenticMail for multi-agent coordination" with right
+  way / wrong way examples. Existing sections renumbered.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/mcp` | 0.7.1 | 0.7.2 |
+| `@agenticmail/cli` | 0.8.5 | 0.8.6 |
+
 ## [0.8.5] - 2026-05-13
 
 ### Fixed

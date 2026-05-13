@@ -454,7 +454,7 @@ export const toolDefinitions = [
   },
   {
     name: 'create_account',
-    description: 'Create a new agent email account (requires master API key)',
+    description: 'Create a new AgenticMail agent (email account + identity + API key + persona derived from role/metadata). Requires master API key. After creation: address them at `<name>@localhost`, delegate work via `call_agent({ target: "<name>", task: ... })`, or hand off via `send_email` / `message_agent`. The new agent acts as themselves — you never need to (and must not) roleplay them inside your host\'s native sub-agent tool.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -575,7 +575,7 @@ export const toolDefinitions = [
   },
   {
     name: 'list_agents',
-    description: 'List all AI agents in the system with their email addresses and roles. Use this to discover which agents you can communicate with via message_agent.',
+    description: 'List all AI agents in the system with their email addresses and roles. Use this to discover which agents you can call via call_agent (sync RPC) or email via send_email / message_agent (async). DO NOT spawn one of your host\'s native sub-agents and roleplay AS these agents — each one is a real identity with its own mailbox; just address them through AgenticMail and let them work as themselves.',
     inputSchema: {
       type: 'object' as const,
       properties: {},
@@ -583,7 +583,7 @@ export const toolDefinitions = [
   },
   {
     name: 'message_agent',
-    description: 'Send a message to another AI agent by name. The message is delivered to their email inbox. Use list_agents first to see available agents. This is the primary way for agents to coordinate and share information with each other.',
+    description: 'Async fire-and-forget: deliver a message to another AI agent\'s inbox. They will process it on their own schedule (immediately if a dispatcher is attached, later otherwise) and may reply by email. Use this for non-blocking handoffs. Prefer `call_agent` when you need a structured reply back. Both flows let the target agent do the work AS THEMSELVES — never roleplay them inside your own host.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -824,7 +824,7 @@ export const toolDefinitions = [
   },
   {
     name: 'call_agent',
-    description: 'Synchronous RPC: assign a task to another agent, notify them via email (wakes wait_for_email), and wait for the result. Times out after specified duration.',
+    description: 'Synchronous RPC to delegate work to another AgenticMail agent. Pipeline: the task is queued in AgenticMail, the target agent processes it AS THEMSELVES (under their real identity, mailbox, persona, and audit trail), and the structured result returns into your call. THIS IS HOW MULTI-AGENT COORDINATION IS SUPPOSED TO WORK from any MCP host. Do not, instead, spawn one of your host\'s native sub-agents and tell it to "act as <target>" — that produces output under your identity, never touches the target\'s inbox, and skips their persona. Times out after the specified duration (default 180s, max 300s).',
     inputSchema: {
       type: 'object' as const,
       properties: {
