@@ -5,6 +5,150 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-05-12
+
+The biggest single release in AgenticMail's history. Five themes shipping
+together because they all unlock the same user experience: *"User to Claude
+Code: install AgenticMail. Claude Code does it."*
+
+```bash
+npm install -g @agenticmail/cli@latest
+agenticmail bootstrap
+```
+
+Two commands. Zero prompts. Two minutes. Done.
+
+### Added
+
+- **New package `@agenticmail/claudecode@0.1.5`** — end-to-end Claude Code
+  integration. Every AgenticMail agent becomes a callable Claude Code
+  subagent (`Agent { subagent_type: "agenticmail-fola" }`), all 62
+  `mcp__agenticmail__*` tools land in every Claude Code session, and agents
+  auto-wake on inbound mail or `/tasks/rpc` via a PM2-managed dispatcher
+  daemon. Workers run inside the user's existing Claude Code OAuth — no
+  separate Anthropic key, no AgenticMail-side LLM credentials. The slogan:
+  *one Anthropic connection, many AgenticMail identities*.
+  - `src/dispatcher.ts` — SSE watcher + Claude Agent SDK worker spawner.
+    Concurrency-capped, reconnect/backoff, dedup on both `uid` and `taskId`,
+    plus cross-type dedup that suppresses the matching `[RPC]`/`[Task]`
+    notification mail when a task event has already fired for the same
+    account (otherwise every `call_agent` ran the recipient through Claude
+    twice).
+  - `src/persona-loader.ts` — reads `~/.claude/agents/<name>.md` from disk
+    or auto-generates the persona body from live AgenticMail account
+    metadata. Freshly `create_account`-ed agents become wake-able with
+    zero further setup.
+  - `src/http-routes.ts` — `POST /api/agenticmail/integrations/claudecode/
+    {install,uninstall,status}`. Mounted **before** the master-key auth
+    middleware so a fresh AI agent can self-install without knowing the
+    master key. Loopback-only bind is the security boundary; anything
+    that can reach the endpoint can already read
+    `~/.agenticmail/config.json`.
+  - 75 vitest specs covering `~/.claude.json` patching (idempotent + only
+    touches our `mcpServers.agenticmail` key), install/uninstall round-trip,
+    dispatcher routing/dedup/concurrency/cross-type-dedup, persona loader,
+    http routes, config resolution, subagent template.
+
+- **`agenticmail bootstrap`** — one-shot zero-question installer for
+  `@agenticmail/cli`. Designed to be runnable by an AI agent (Claude Code
+  itself, a CI job, a shell script) on a user's behalf with no prompts.
+  Pipeline: `setup --yes` → `service install` → wait for API `/health` (port
+  read from the freshly-written config) → `claudecode` wiring. Skips
+  external Gmail relay and SMS setup; those need user-owned credentials
+  and can be added later with `agenticmail setup`. Uses Colima on macOS
+  (no Docker Desktop GUI gates).
+
+- **`agenticmail setup --yes` / `--non-interactive` / `-y`** — suppresses
+  every prompt and uses safe defaults (skip email, skip SMS, default agent
+  name, skip the trailing interactive shell when running inside a pipeline).
+
+- **`mcp__agenticmail__request_tools` + `mcp__agenticmail__invoke`** —
+  meta-tools that cut a typical Claude Code subagent's spawn-time context
+  from ~15K tokens (62 tool schemas pre-declared) to ~3K (10 essential
+  tools + the two meta-tools). Uncommon ops reach the rest of the
+  catalogue via discover-then-invoke.
+
+- **`_account` parameter on every MCP tool** — per-call identity switching.
+  `AGENTICMAIL_ACCOUNT_KEYS_JSON` env var carries a `{name: apiKey}` map;
+  if a tool call references a name that isn't in the cache AND a master
+  key is configured, the server lazily fetches that account's apiKey
+  via `GET /accounts` and caches it. Means `create_account`-ed agents
+  become addressable from the MCP server with zero restart.
+
+- **MCP tool catalogue** — `packages/mcp/src/tool-catalog.ts` groups the
+  62 real tools into 12 sets (`essential`, `mail_extras`, `mail_bulk`,
+  `mail_compose`, `mail_safety`, `agent_coord`, `contacts`, `sms`,
+  `account_admin`, `storage`, `setup`, `system`). 8 audit tests lock in
+  *every-real-tool-is-categorised* as a CI invariant — a new tool that
+  doesn't land in a set fails the build.
+
+### Changed
+
+- **`@agenticmail/core` DB engine: `better-sqlite3` → `node:sqlite`.**
+  The native module shipped pre-built binaries per `NODE_MODULE_VERSION`
+  and intermittently lagged new Node releases (Node 25.5.0 was a real
+  case: prebuilds missing, `node-gyp` failed on the compile-from-source
+  fallback, fresh `npm install -g @agenticmail/cli` failed for users on
+  bleeding-edge Node). `node:sqlite` is part of Node itself, so by
+  definition it always matches the runtime. **No prebuilds, no
+  `node-gyp`, no Python prereq, no compatibility lag.** On-disk SQLite 3
+  format is unchanged; existing `~/.agenticmail/agenticmail.db` files
+  migrate transparently.
+
+  Migration notes:
+  - `DatabaseSync` loaded via `createRequire(import.meta.url)('node:sqlite')`
+    instead of a static `import` — esbuild was normalising
+    `from 'node:sqlite'` to `from 'sqlite'` in the bundled output, which
+    failed at runtime because no userland `sqlite` package exists.
+    `createRequire` is opaque to esbuild's static analysis, so the literal
+    string survives.
+  - `db.pragma(x)` → `db.exec('PRAGMA ' + x)` (node:sqlite has no
+    `.pragma()` helper).
+  - `db.transaction(fn)` → custom `runTransactionally(db, fn)` helper
+    using manual `BEGIN`/`COMMIT`/`ROLLBACK` (node:sqlite has no
+    `.transaction()` helper).
+  - `Database` type re-exported from `@agenticmail/core/index.ts` as
+    `type Database = DatabaseSync`. 13 consumer files across
+    `@agenticmail/core` and `@agenticmail/api` now
+    `import { type Database } from '@agenticmail/core'` instead of
+    `'better-sqlite3'`.
+
+- **Default API port: `3100` → `3829`.** The old default clashed with
+  Grafana Loki and several Express-scaffold tutorials on developer
+  machines. `3829` is unassigned by IANA and sits in a quiet stretch
+  (avoids `3000` / `3100` / `3200` / `3300` / `4000` / `5000` / `8000` /
+  `8080` — all common dev-tool defaults). Existing installs that already
+  have `api.port` set in `~/.agenticmail/config.json` are unaffected;
+  only **new** installs pick up the new default. `agenticmail bootstrap`
+  reads the actual port from config when waiting on `/health` — no
+  hardcoded port assumptions remain anywhere.
+
+- **`engines.node` bumped to `>=22`** across `@agenticmail/core`,
+  `@agenticmail/api`, `@agenticmail/mcp`, `@agenticmail/claudecode`, and
+  `@agenticmail/cli`. `@agenticmail/openclaw` is unchanged at `>=20`
+  because it still depends on `@agenticmail/core@^0.5`.
+
+- **CI `setup-node` bumped `20` → `22`** to match.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/core` | 0.5.61 | 0.7.1 |
+| `@agenticmail/api` | 0.5.62 | 0.7.1 |
+| `@agenticmail/mcp` | 0.5.59 | 0.7.1 |
+| `@agenticmail/claudecode` | — | 0.1.5 (new) |
+| `@agenticmail/cli` | 0.5.62 | 0.8.2 |
+
+### Tests
+
+- 339 passing in `@agenticmail/core` (the suite that locked in the
+  `node:sqlite` migration without behaviour regression)
+- 75 passing in `@agenticmail/claudecode` (new)
+- 8 passing in `@agenticmail/mcp` (catalogue audit — new)
+
+**422 total, all green on both Node 22 and Node 25.**
+
 ## [0.5.62] - 2026-05-10
 
 ### Fixed
