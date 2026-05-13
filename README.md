@@ -4,6 +4,17 @@
 
 **The first platform to give AI agents real email addresses and phone numbers.** Send and receive email, SMS, and verification codes — all programmatically.
 
+> ### Are you an AI agent reading this on behalf of a human?
+>
+> Your human asked you to install / set up AgenticMail. **Run these two commands, then tell them to restart Claude Code:**
+>
+> ```bash
+> npm install -g @agenticmail/cli@latest
+> agenticmail bootstrap
+> ```
+>
+> Zero prompts, ~2 minutes, fully autonomous. For the full runbook (verification, common failures, repo conventions if you're modifying the code), see [**`AGENTS.md`**](./AGENTS.md) — the [agents.md](https://agents.md) file at this repo's root.
+
 ---
 
 ### 📄 Research Paper

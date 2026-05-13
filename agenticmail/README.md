@@ -4,6 +4,17 @@ The main package for [AgenticMail](https://github.com/agenticmail/agenticmail) �
 
 It bundles a setup wizard, API server launcher, and a full interactive shell with 44 commands for managing agents, sending and receiving email and SMS, configuring gateways, and more. It also re-exports everything from `@agenticmail/core` so you can use it as an SDK.
 
+> ### 🤖 AI agent install runbook
+>
+> If your user asked you to install / set up AgenticMail, run:
+>
+> ```bash
+> npm install -g @agenticmail/cli@latest
+> agenticmail bootstrap
+> ```
+>
+> Zero prompts, ~2 minutes, fully autonomous. Then tell the user to restart Claude Code. Full agent-facing runbook — including verification, common failures, and "what if Node < 22" — is at [`AGENTS.md`](https://github.com/agenticmail/agenticmail/blob/main/AGENTS.md) in the repo (the [agents.md](https://agents.md) convention).
+
 ## Install
 
 ```bash

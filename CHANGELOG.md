@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2026-05-13
+
+### Added
+
+- **`AGENTS.md`** at the repo root — first-read instructions for AI coding
+  assistants (Claude Code, ChatGPT, Cursor, Aider, Codex, …) following
+  the cross-vendor [agents.md](https://agents.md) convention. Covers the
+  10 most common asks: "install AgenticMail", "set up Claude Code
+  integration", "what is this", "verify it's working", common failures,
+  repo layout, build/test/lint commands, conventions, anti-patterns.
+- **`CLAUDE.md`** at the repo root — Claude-Code-specific stub that
+  points at `AGENTS.md`. Means any Claude Code session opened in this
+  repo gets the install runbook in its context window automatically.
+- **"🤖 AI agent install runbook"** callout block at the top of the
+  main README and the `@agenticmail/cli` npm README so the install
+  instructions are the first thing an AI agent sees when their user
+  says "install AgenticMail" — either from the repo or the npm page.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/cli` | 0.8.2 | 0.8.3 |
+
+(Other packages unchanged.)
+
 ## [0.8.2] - 2026-05-12
 
 The biggest single release in AgenticMail's history. Five themes shipping
