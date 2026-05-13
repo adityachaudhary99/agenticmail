@@ -1,0 +1,10 @@
+{
+  "agenticmail": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@agenticmail/mcp@latest"],
+    "env": {
+      "AGENTICMAIL_API_URL": "http://127.0.0.1:3829"
+    }
+  }
+}
