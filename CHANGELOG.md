@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.23] - 2026-05-14
+
+### Fixed — `PreToolUse:<tool> hook error` on every Claude Code tool call
+
+In 0.8.22 the mail hook was registered on both `UserPromptSubmit` AND
+`PreToolUse`. The intent was right (autonomous Claude Code sessions
+should also wake on agent replies) but the output schema was wrong:
+`PreToolUse` expects `permissionDecision` / `permissionDecisionReason`,
+not the `additionalContext` we emit. Claude Code accordingly logged
+`PreToolUse:<tool> hook error` on every single tool call — noisy and
+ugly, even though tools still ran.
+
+Fix: only register on `UserPromptSubmit` (the one event whose schema
+matches what we're doing). Anyone who installed 0.8.22 has a
+`PreToolUse` rule sitting in their `~/.claude/settings.json` already;
+the new `upsertMailHook` walks a removal-superset that includes
+`PreToolUse` and cleans up that leftover automatically on the next
+`agenticmail claudecode` run. No manual edit needed.
+
+Autonomous-mode awareness (waking Claude on agent mail during long
+runs with no user prompts) was the legitimate motivation for the
+PreToolUse registration. That use case is real and worth solving,
+but it needs a different mechanism than re-using the
+UserPromptSubmit hook. Filed as a follow-up; not in this release.
+
+### Tests
+
+Two new tests cover the heal-on-upgrade path:
+
+- `creates settings.json with the hook registered on UserPromptSubmit only`
+- `heals a 0.8.22-style install by removing the leftover PreToolUse entry`
+- `cleans up a legacy PreToolUse entry from a 0.8.22 install` (uninstall side)
+
+Existing tests updated to reflect single-event registration. **106
+claudecode tests pass** (was 104, +2 net after some restructuring).
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/claudecode` | 0.1.12 | 0.1.13 |
+| `@agenticmail/cli` | 0.8.22 | 0.8.23 |
+
+Plugin manifest mirrored to 0.8.23.
+
 ## [0.8.22] - 2026-05-13
 
 ### Added — `UserPromptSubmit` + `PreToolUse` mail hook (the real wake-up)

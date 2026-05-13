@@ -33,15 +33,38 @@ function readJson(): any {
 }
 
 describe('upsertMailHook', () => {
-  it('creates settings.json with the hook registered on both events', () => {
+  it('creates settings.json with the hook registered on UserPromptSubmit only', () => {
+    // We only register on UserPromptSubmit because PreToolUse rejects
+    // the additionalContext output shape. Registering there in 0.8.22
+    // produced `PreToolUse:tool-name hook error` on every tool call.
     const changed = upsertMailHook(settingsPath, 'agenticmail-mail-hook');
     expect(changed).toBe(true);
     const s = readJson();
     expect(s.hooks).toBeDefined();
     expect(s.hooks.UserPromptSubmit).toHaveLength(1);
-    expect(s.hooks.PreToolUse).toHaveLength(1);
     expect(s.hooks.UserPromptSubmit[0].hooks[0].command).toBe('agenticmail-mail-hook');
-    expect(s.hooks.PreToolUse[0].hooks[0].command).toBe('agenticmail-mail-hook');
+    expect(s.hooks.PreToolUse).toBeUndefined();
+  });
+
+  it('heals a 0.8.22-style install by removing the leftover PreToolUse entry', () => {
+    // Simulate an existing 0.8.22 install with PreToolUse registered.
+    writeFileSync(settingsPath, JSON.stringify({
+      hooks: {
+        UserPromptSubmit: [
+          { matcher: '', hooks: [{ type: 'command', command: 'agenticmail-mail-hook' }] },
+        ],
+        PreToolUse: [
+          { matcher: '', hooks: [{ type: 'command', command: 'agenticmail-mail-hook' }] },
+        ],
+      },
+    }));
+    const changed = upsertMailHook(settingsPath, 'agenticmail-mail-hook');
+    // The UserPromptSubmit entry is identical so no-op there; the
+    // PreToolUse entry should get cleaned up → file changed.
+    expect(changed).toBe(true);
+    const s = readJson();
+    expect(s.hooks.UserPromptSubmit).toHaveLength(1);
+    expect(s.hooks.PreToolUse).toBeUndefined();
   });
 
   it('is idempotent — re-upsert with same command does nothing', () => {
@@ -55,24 +78,30 @@ describe('upsertMailHook', () => {
     const changed = upsertMailHook(settingsPath, '/usr/local/bin/agenticmail-mail-hook');
     expect(changed).toBe(true);
     expect(readJson().hooks.UserPromptSubmit[0].hooks[0].command).toBe('/usr/local/bin/agenticmail-mail-hook');
-    expect(readJson().hooks.PreToolUse[0].hooks[0].command).toBe('/usr/local/bin/agenticmail-mail-hook');
   });
 
   it('preserves user-owned hooks alongside ours', () => {
-    // User has their own typescript-lsp PreToolUse hook.
+    // User has their own typescript-lsp PreToolUse hook and a custom
+    // UserPromptSubmit hook. Both must survive AgenticMail install.
     writeFileSync(settingsPath, JSON.stringify({
       hooks: {
         PreToolUse: [
           { matcher: 'Bash', hooks: [{ type: 'command', command: 'typescript-check' }] },
         ],
+        UserPromptSubmit: [
+          { matcher: '', hooks: [{ type: 'command', command: 'my-custom-prompt-hook' }] },
+        ],
       },
     }));
     upsertMailHook(settingsPath, 'agenticmail-mail-hook');
     const s = readJson();
-    // Both hooks coexist.
-    expect(s.hooks.PreToolUse).toHaveLength(2);
-    expect(s.hooks.PreToolUse.some((r: any) => r.hooks[0].command === 'typescript-check')).toBe(true);
-    expect(s.hooks.PreToolUse.some((r: any) => r.hooks[0].command === 'agenticmail-mail-hook')).toBe(true);
+    // User's PreToolUse hook still there, untouched.
+    expect(s.hooks.PreToolUse).toHaveLength(1);
+    expect(s.hooks.PreToolUse[0].hooks[0].command).toBe('typescript-check');
+    // User's UserPromptSubmit hook coexists with ours.
+    expect(s.hooks.UserPromptSubmit).toHaveLength(2);
+    expect(s.hooks.UserPromptSubmit.some((r: any) => r.hooks[0].command === 'my-custom-prompt-hook')).toBe(true);
+    expect(s.hooks.UserPromptSubmit.some((r: any) => r.hooks[0].command === 'agenticmail-mail-hook')).toBe(true);
   });
 
   it('preserves unrelated top-level settings keys', () => {
@@ -95,8 +124,27 @@ describe('upsertMailHook', () => {
 });
 
 describe('removeMailHook', () => {
-  it('removes our hook from both events and cleans up empty branches', () => {
+  it('removes our hook and cleans up empty branches', () => {
     upsertMailHook(settingsPath, 'agenticmail-mail-hook');
+    const changed = removeMailHook(settingsPath);
+    expect(changed).toBe(true);
+    const s = readJson();
+    expect(s.hooks).toBeUndefined();
+  });
+
+  it('cleans up a legacy PreToolUse entry from a 0.8.22 install', () => {
+    // Simulate a leftover 0.8.22-shape install that current install
+    // would have healed. Uninstall must also strip it.
+    writeFileSync(settingsPath, JSON.stringify({
+      hooks: {
+        UserPromptSubmit: [
+          { matcher: '', hooks: [{ type: 'command', command: 'agenticmail-mail-hook' }] },
+        ],
+        PreToolUse: [
+          { matcher: '', hooks: [{ type: 'command', command: 'agenticmail-mail-hook' }] },
+        ],
+      },
+    }));
     const changed = removeMailHook(settingsPath);
     expect(changed).toBe(true);
     const s = readJson();

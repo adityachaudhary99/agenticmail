@@ -61,25 +61,40 @@ interface ClaudeSettingsShape {
 }
 
 /**
- * Hook events we register the AgenticMail mail-hook on. Two events
- * because Claude Code can be in two distinct modes:
+ * Hook events the AgenticMail mail-hook is registered on.
  *
- *   - **UserPromptSubmit** — fires when the user types a prompt. Catches
- *     mail in the time-between-turns case. The lightest, most natural
- *     wake point — user is interacting, the hook context lands cleanly.
+ * We only register on **UserPromptSubmit** because that is the only
+ * Claude Code hook event whose output schema accepts
+ * `hookSpecificOutput.additionalContext` for context injection.
  *
- *   - **PreToolUse** — fires before every tool call. Catches mail
- *     during *autonomous* runs where Claude is working for minutes
- *     or hours without a user typing (think: long agentic build,
- *     remote-control via API, scheduled run). Without this, an
- *     autonomous Claude session would never see sub-agent replies
- *     until the user came back and typed something.
+ * # Why not PreToolUse too?
  *
- *     The hook is rate-limited internally to one API check per 30s
- *     so a burst of tool calls doesn't hammer the AgenticMail server.
+ * Earlier (0.8.22) we tried to register on `PreToolUse` as well — the
+ * idea being to wake Claude during autonomous runs (where there are
+ * no user prompts for hours, just tool calls). The intent was right
+ * but the implementation was wrong: `PreToolUse`'s output schema
+ * expects `permissionDecision` / `permissionDecisionReason`, not
+ * `additionalContext`. Claude Code accordingly logged
+ * `PreToolUse:Read hook error` on every tool call. Functional but
+ * noisy and ugly.
+ *
+ * Autonomous-mode awareness is a real and worthwhile feature, but it
+ * needs a different mechanism than re-using the UserPromptSubmit
+ * hook. Until that's designed properly, we only register on the one
+ * event whose schema matches what we're trying to do.
+ *
+ * # Why HOOK_EVENTS_TO_REMOVE is a superset
+ *
+ * Anyone who installed 0.8.22 has a PreToolUse entry already in
+ * their settings.json — we need `removeMailHook` to clean that up
+ * during upgrade, even though we no longer add it. So the remove
+ * walker iterates a superset that includes the historical events.
  */
-const HOOK_EVENTS = ['UserPromptSubmit', 'PreToolUse'] as const;
-type HookEvent = typeof HOOK_EVENTS[number];
+const HOOK_EVENTS_TO_REGISTER = ['UserPromptSubmit'] as const;
+const HOOK_EVENTS_TO_REMOVE = ['UserPromptSubmit', 'PreToolUse'] as const;
+type HookEvent =
+  | typeof HOOK_EVENTS_TO_REGISTER[number]
+  | typeof HOOK_EVENTS_TO_REMOVE[number];
 
 function readSettings(path: string): ClaudeSettingsShape {
   if (!existsSync(path)) return {};
@@ -129,12 +144,38 @@ export function upsertMailHook(path: string, command: string): boolean {
   if (!settings.hooks) settings.hooks = {};
 
   let changed = false;
-  for (const event of HOOK_EVENTS) {
+
+  // Add to the supported event(s).
+  for (const event of HOOK_EVENTS_TO_REGISTER) {
     if (upsertOneEvent(settings.hooks, event, command)) changed = true;
+  }
+
+  // Clean up any historical event registrations that aren't in the
+  // current supported set — this is what heals existing 0.8.22
+  // installs when the user upgrades, removing their broken PreToolUse
+  // entry without forcing a manual uninstall+reinstall.
+  for (const event of HOOK_EVENTS_TO_REMOVE) {
+    if ((HOOK_EVENTS_TO_REGISTER as readonly string[]).includes(event)) continue;
+    if (removeOneEvent(settings.hooks, event)) changed = true;
   }
 
   if (changed) writeSettings(path, settings);
   return changed;
+}
+
+function removeOneEvent(
+  hooks: NonNullable<ClaudeSettingsShape['hooks']>,
+  event: HookEvent,
+): boolean {
+  const list = hooks[event] ?? [];
+  if (list.length === 0) return false;
+  const filtered = list.filter(rule =>
+    !rule.hooks?.some(h => typeof h.command === 'string' && h.command.includes(AGENTICMAIL_HOOK_MARKER)),
+  );
+  if (filtered.length === list.length) return false;
+  if (filtered.length === 0) delete hooks[event];
+  else hooks[event] = filtered;
+  return true;
 }
 
 function upsertOneEvent(
@@ -183,20 +224,8 @@ export function removeMailHook(path: string): boolean {
   if (!settings.hooks) return false;
 
   let changed = false;
-  for (const event of HOOK_EVENTS) {
-    const list = settings.hooks[event] ?? [];
-    if (list.length === 0) continue;
-    const filtered = list.filter(rule =>
-      !rule.hooks?.some(h => typeof h.command === 'string' && h.command.includes(AGENTICMAIL_HOOK_MARKER)),
-    );
-    if (filtered.length === list.length) continue; // nothing to remove for this event
-
-    if (filtered.length === 0) {
-      delete settings.hooks[event];
-    } else {
-      settings.hooks[event] = filtered;
-    }
-    changed = true;
+  for (const event of HOOK_EVENTS_TO_REMOVE) {
+    if (removeOneEvent(settings.hooks, event)) changed = true;
   }
 
   // Tidy up: drop the empty hooks key if nothing's left.
