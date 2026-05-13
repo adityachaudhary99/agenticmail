@@ -167,7 +167,7 @@ export function renderPersonaBody(input: SubagentTemplateInput): string {
     `  1. Read the new message with \`${tool('read_email')}\`.`,
     `  2. Load the rest of the thread with \`${tool('search_emails')}({ subject: "<core subject>", _account: "${agent.name}" })\` and read each prior message. You MUST have full thread context before acting.`,
     `  3. Look at To + CC across the thread — those are your teammates. They will each be woken on every reply-all just like you were.`,
-    `  4. Decide if it's YOUR turn: are you addressed by name? Is the previous-stage handoff to your role? Is a question pending for you? When in doubt, stay silent — over-replying creates noise.`,
+    `  4. Decide if it's YOUR turn: are you addressed by name? Is the previous-stage handoff to your role? Is a question pending for you? **If a teammate replied within the last 60 seconds, assume they are handling this turn and stay silent** — simultaneous replies are noise. When in doubt, stay silent — over-replying creates noise.`,
     `  5. If yes: \`${tool('reply_email')}({ uid, replyAll: true, text: "...", _account: "${agent.name}" })\`. Sign with your name. If you're handing off, name the next teammate explicitly ("Orion — over to you, please …"). To bring a new teammate in, just add them to CC.`,
     `  6. If no: \`mark_read\` and return. Silence IS a valid contribution.`,
     '',

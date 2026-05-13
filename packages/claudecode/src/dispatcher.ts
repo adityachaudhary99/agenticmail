@@ -100,6 +100,20 @@ export interface DispatcherOptions extends ResolveConfigOptions {
   sseReconnectBaseMs?: number;
   /** Max backoff between SSE reconnect attempts. Default 60s. */
   sseReconnectMaxMs?: number;
+  /**
+   * Max times a single agent is woken on the same thread before the
+   * circuit breaker trips. Default 10. Protects against reply loops,
+   * storms when many agents share a thread, and stuck agents that
+   * keep replying without making progress. Per-(agent, thread).
+   */
+  maxWakesPerThread?: number;
+  /**
+   * Window (ms) for the per-thread wake counter. Default 24h. The
+   * counter resets after this period elapses since the FIRST wake in
+   * the window — wall-clock-relative, not sliding, so a runaway
+   * thread stays muted for the full period (which is what we want).
+   */
+  wakeWindowMs?: number;
   /** Override the Claude Agent SDK `query` function. Used by tests. */
   querySdk?: QueryFn;
   /** Override the global `fetch`. Used by tests. */
@@ -107,6 +121,8 @@ export interface DispatcherOptions extends ResolveConfigOptions {
   /** Override the global EventSource. Optional — we don't use EventSource
    *  by default (fetch + reader is simpler). */
   log?: (level: 'info' | 'warn' | 'error', msg: string) => void;
+  /** Override Date.now() — tests use this to advance the budget clock. */
+  nowMs?: () => number;
 }
 
 /** Minimal Claude Agent SDK query signature we use. */
@@ -190,6 +206,83 @@ function isTaskNotificationSubject(subject: string | undefined): boolean {
   }
   return false;
 }
+
+/**
+ * Normalise a subject into a thread identifier.
+ *
+ * Why subject and not Message-ID/References: the event payload carries
+ * the subject without us having to fetch the email body. Subject-based
+ * threading is what every mail client uses for "grouped by conversation"
+ * views, and for the agent-coordination case ("Re: Build a small game")
+ * it is accurate in practice. We accept the edge case where two
+ * unrelated threads share an identical subject — that costs at worst a
+ * dropped wake or a slightly fast-tripped circuit breaker, never silent
+ * data corruption.
+ *
+ * Strips leading `Re:`, `Fwd:`, `Re[3]:`, etc. (repeatedly, case-
+ * insensitive). Returns the lowercased, trimmed remainder. An empty or
+ * missing subject hashes to '' — the wake-budget code treats that as
+ * "no thread context" and falls back to the per-agent default budget.
+ */
+function threadIdFromSubject(subject: string | undefined): string {
+  if (!subject) return '';
+  let s = subject.trim();
+  // Re: / Fwd: / Fw: with optional [N] count, repeated.
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const next = s.replace(/^(re|fwd?|fw)(\[\d+\])?:\s*/i, '');
+    if (next === s) break;
+    s = next;
+  }
+  return s.toLowerCase().trim();
+}
+
+/**
+ * Wake-budget circuit breaker.
+ *
+ * # The failure modes we're guarding against
+ *
+ * Three real concerns from production multi-agent coordination:
+ *
+ *   1. **Reply loops.** Agent A replies-all → agents B/C/D wake → one
+ *      of them replies-all → A wakes again on its own thread → ad
+ *      infinitum. Without a brake this burns tokens forever.
+ *
+ *   2. **Storms.** 10 agents CC'd on the same thread = every reply
+ *      wakes 9 workers. Most "stay silent" but each still costs one
+ *      Claude turn. We let this work naturally up to a point, but
+ *      cap the absolute number per (agent, thread).
+ *
+ *   3. **Stuck agents.** One agent keeps replying without progress.
+ *      Per-(agent, thread) cap catches this even if the persona-level
+ *      "stay silent unless it's your turn" rule fails.
+ *
+ * # Design
+ *
+ * One entry per (account.id, threadId) tuple. Each entry tracks how
+ * many times we've spawned a worker for that combination, plus the
+ * timestamp of the first wake in the current window. When the count
+ * hits `maxWakesPerThread`, further wakes for that pair are dropped
+ * with a log line — until the window expires and the entry resets.
+ *
+ * The window is wall-clock-relative (not sliding) which is the cheap-
+ * and-good-enough trade-off: a thread that maxes out at minute 0 of a
+ * 24h window stays muted for the full 24h. That's the right behaviour
+ * — if a thread is generating runaway wakes, we WANT it muted for a
+ * long time, not for the agent to be re-wakeable as soon as its 24h
+ * window slides past oldest entry.
+ *
+ * The store is bounded by periodic GC (every wake we sweep entries
+ * older than the window). Set growth is therefore proportional to
+ * unique active threads in the window, not total history.
+ */
+interface WakeBudgetEntry {
+  count: number;
+  firstWakeAtMs: number;
+}
+
+const DEFAULT_MAX_WAKES_PER_THREAD = 10;
+const DEFAULT_WAKE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 
 /**
  * Spawn-and-wait for a worker via the Claude Agent SDK.
@@ -311,6 +404,10 @@ function newMailPrompt(agent: AgenticMailAccount, event: SSEEvent): string {
     `     - You were directly asked a question and nobody has answered yet.`,
     `   No if:`,
     `     - The current ask is targeted at a teammate (their turn, not yours).`,
+    `     - **A teammate replied within the last 60 seconds.** They are likely`,
+    `       already handling this turn; jumping in creates simultaneous replies`,
+    `       and confusion. Assume good faith and stay silent unless their reply`,
+    `       was clearly off-target.`,
     `     - You have nothing substantive to add right now.`,
     `   When in doubt, stay silent — over-replying creates noise. Better to let`,
     `   the right teammate take the turn than to step on theirs.`,
@@ -390,6 +487,16 @@ export class Dispatcher {
   private waiters: Array<() => void> = [];
   private stopped = false;
 
+  /**
+   * Wake-budget store, keyed by `${accountId}::${threadId}`. See the
+   * comment block on WakeBudgetEntry for the failure modes this guards.
+   * Pruned opportunistically on each lookup — no separate timer.
+   */
+  private wakeBudget = new Map<string, WakeBudgetEntry>();
+  private maxWakesPerThread: number;
+  private wakeWindowMs: number;
+  private now: () => number;
+
   constructor(opts: DispatcherOptions = {}) {
     this.cfg = resolveConfig(opts);
     this.maxConcurrent = opts.maxConcurrentWorkers ?? DEFAULT_MAX_CONCURRENT;
@@ -399,9 +506,65 @@ export class Dispatcher {
     this.query = opts.querySdk ?? defaultQuery();
     this.fetchImpl = opts.fetchImpl ?? globalThis.fetch;
     this.log = opts.log ?? defaultLog;
+    this.maxWakesPerThread = opts.maxWakesPerThread ?? DEFAULT_MAX_WAKES_PER_THREAD;
+    this.wakeWindowMs = opts.wakeWindowMs ?? DEFAULT_WAKE_WINDOW_MS;
+    this.now = opts.nowMs ?? Date.now;
 
     if (!this.cfg.masterKey) {
       throw new Error('Dispatcher requires AgenticMail master key. Run `agenticmail setup` first.');
+    }
+  }
+
+  /**
+   * Charge one wake against the (agent, thread) budget. Returns true
+   * if the wake should proceed, false if the circuit breaker is open.
+   *
+   * Empty threadId means "no thread context" (a fresh standalone email
+   * with no Subject — rare); we always allow those since there is no
+   * thread to runaway on.
+   */
+  private chargeWake(accountId: string, threadId: string): { ok: boolean; count?: number; mutedUntilMs?: number } {
+    if (!threadId) return { ok: true };
+    const key = `${accountId}::${threadId}`;
+    const now = this.now();
+    let entry = this.wakeBudget.get(key);
+    if (entry && now - entry.firstWakeAtMs >= this.wakeWindowMs) {
+      // Window expired — reset.
+      entry = undefined;
+      this.wakeBudget.delete(key);
+    }
+    if (!entry) {
+      entry = { count: 1, firstWakeAtMs: now };
+      this.wakeBudget.set(key, entry);
+      this.maybePruneWakeBudget(now);
+      return { ok: true, count: 1 };
+    }
+    if (entry.count >= this.maxWakesPerThread) {
+      return {
+        ok: false,
+        count: entry.count,
+        mutedUntilMs: entry.firstWakeAtMs + this.wakeWindowMs,
+      };
+    }
+    entry.count++;
+    return { ok: true, count: entry.count };
+  }
+
+  /**
+   * Drop wake-budget entries that have aged out of their window.
+   *
+   * Called inline from chargeWake, but at most once per ~1024 inserts so
+   * the cost stays bounded. We don't need a separate timer because the
+   * Map only grows on real wakes (capped by maxWakesPerThread per pair),
+   * and the prune is O(n) over the current entries — cheap enough.
+   */
+  private wakeBudgetInsertsSinceLastPrune = 0;
+  private maybePruneWakeBudget(now: number): void {
+    this.wakeBudgetInsertsSinceLastPrune++;
+    if (this.wakeBudgetInsertsSinceLastPrune < 1024) return;
+    this.wakeBudgetInsertsSinceLastPrune = 0;
+    for (const [k, v] of this.wakeBudget) {
+      if (now - v.firstWakeAtMs >= this.wakeWindowMs) this.wakeBudget.delete(k);
     }
   }
 
@@ -455,6 +618,21 @@ export class Dispatcher {
         return;
       }
       if (ch) rememberBounded(ch.seenUids, event.uid);
+
+      // Wake-budget circuit breaker. Caps per-(agent, thread) wakes so a
+      // runaway thread (reply loop, simultaneous-turn storm, stuck
+      // agent) can't burn unbounded Claude turns. See WakeBudgetEntry
+      // and chargeWake for the full design rationale.
+      const threadId = threadIdFromSubject(subject);
+      const verdict = this.chargeWake(account.id, threadId);
+      if (!verdict.ok) {
+        const minutesUntil = verdict.mutedUntilMs
+          ? Math.max(0, Math.round((verdict.mutedUntilMs - this.now()) / 60_000))
+          : 0;
+        this.log('warn', `[dispatcher] wake-budget exhausted for "${account.name}" on thread "${threadId}" (count=${verdict.count}, cap=${this.maxWakesPerThread}); muted for ~${minutesUntil}min. uid=${event.uid}, subject="${subject ?? ''}"`);
+        return;
+      }
+
       await this.spawnWorker(account, newMailPrompt(account, event), { kind: 'new-mail', uid: event.uid });
       return;
     }

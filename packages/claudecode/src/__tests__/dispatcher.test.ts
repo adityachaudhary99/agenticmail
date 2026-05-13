@@ -113,6 +113,70 @@ describe('Dispatcher.handleEvent — new-mail routing', () => {
   });
 });
 
+describe('Dispatcher.handleEvent — wake-budget circuit breaker', () => {
+  it('caps wakes per (agent, thread) so reply loops cannot run forever', async () => {
+    // Same subject, different UIDs → all hit the same threadId. Cap at 3
+    // for a clean assertion; default is 10 in production.
+    const { d, sdk } = makeDispatcher({}, { maxWakesPerThread: 3 });
+    for (let uid = 1; uid <= 10; uid++) {
+      await d.handleEvent(FOLA, {
+        type: 'new', uid,
+        from: 'orion@localhost',
+        subject: uid === 1 ? 'Build a game' : 'Re: Build a game',
+      });
+    }
+    // Exactly 3 spawns — the 4th through 10th are budget-rejected.
+    expect(sdk.calls).toHaveLength(3);
+  });
+
+  it('treats Re: prefixes as the same thread (subject normalisation)', async () => {
+    const { d, sdk } = makeDispatcher({}, { maxWakesPerThread: 2 });
+    await d.handleEvent(FOLA, { type: 'new', uid: 1, from: 'a', subject: 'Project Acme' });
+    await d.handleEvent(FOLA, { type: 'new', uid: 2, from: 'a', subject: 'Re: Project Acme' });
+    await d.handleEvent(FOLA, { type: 'new', uid: 3, from: 'a', subject: 'Re[2]: Project Acme' });
+    // Cap is 2 so the third (still the same thread) drops.
+    expect(sdk.calls).toHaveLength(2);
+  });
+
+  it('different threads have independent budgets', async () => {
+    const { d, sdk } = makeDispatcher({}, { maxWakesPerThread: 2 });
+    await d.handleEvent(FOLA, { type: 'new', uid: 1, from: 'a', subject: 'Topic A' });
+    await d.handleEvent(FOLA, { type: 'new', uid: 2, from: 'a', subject: 'Re: Topic A' });
+    await d.handleEvent(FOLA, { type: 'new', uid: 3, from: 'a', subject: 'Re: Topic A' }); // dropped
+    await d.handleEvent(FOLA, { type: 'new', uid: 4, from: 'a', subject: 'Topic B' });   // different thread, allowed
+    await d.handleEvent(FOLA, { type: 'new', uid: 5, from: 'a', subject: 'Re: Topic B' }); // allowed
+    expect(sdk.calls).toHaveLength(4);
+  });
+
+  it('resets the budget after the wake window expires', async () => {
+    let fakeNow = 1_000_000;
+    const { d, sdk } = makeDispatcher({}, {
+      maxWakesPerThread: 2,
+      wakeWindowMs: 60_000,
+      nowMs: () => fakeNow,
+    });
+    await d.handleEvent(FOLA, { type: 'new', uid: 1, from: 'a', subject: 'Topic' });
+    await d.handleEvent(FOLA, { type: 'new', uid: 2, from: 'a', subject: 'Re: Topic' });
+    await d.handleEvent(FOLA, { type: 'new', uid: 3, from: 'a', subject: 'Re: Topic' }); // capped
+    expect(sdk.calls).toHaveLength(2);
+    // Fast-forward beyond the window — counter resets.
+    fakeNow += 60_001;
+    await d.handleEvent(FOLA, { type: 'new', uid: 4, from: 'a', subject: 'Re: Topic' });
+    expect(sdk.calls).toHaveLength(3);
+  });
+
+  it('skipping subject (empty thread context) bypasses the budget', async () => {
+    // No subject = no thread = no loop risk. We never want to penalise
+    // legitimate standalone emails just because a noisy thread elsewhere
+    // tripped its own circuit breaker.
+    const { d, sdk } = makeDispatcher({}, { maxWakesPerThread: 1 });
+    for (let uid = 1; uid <= 5; uid++) {
+      await d.handleEvent(FOLA, { type: 'new', uid, from: 'x', subject: '' });
+    }
+    expect(sdk.calls).toHaveLength(5);
+  });
+});
+
 describe('Dispatcher.handleEvent — task routing', () => {
   it('spawns a worker on task assignment with a claim+submit prompt', async () => {
     const { d, sdk } = makeDispatcher();

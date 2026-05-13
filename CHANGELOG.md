@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.10] - 2026-05-13
+
+### Added — reliability circuit breakers
+
+Feedback from a real multi-agent coordination session flagged three
+unresolved failure modes for the thread-as-workspace pattern:
+
+  1. **Reply loops** — agent A replies-all → B/C/D wake → one of them
+     replies → A wakes on the chain → ad infinitum, burning tokens.
+  2. **Simultaneous turn-taking** — two agents both wake on the same
+     message and both decide "it's my turn", producing duplicate /
+     conflicting replies that confuse the thread.
+  3. **10+ agent storms** — every reply wakes 9 workers; even when most
+     stay silent, each wake costs one Claude turn.
+
+This release lands the safety rails to make those failures cost-
+bounded and recoverable.
+
+- **Per-(agent, thread) wake-budget circuit breaker** in the dispatcher.
+  Caps how many times a single agent can be woken on the same thread
+  inside a window (default: 10 wakes per 24h, configurable via
+  `maxWakesPerThread` / `wakeWindowMs`). When the cap is hit, further
+  wakes for that pair are dropped with a `warn`-level log line until
+  the window expires. Per-agent, per-thread — so a noisy thread can't
+  poison unrelated work for the same agent, and a runaway agent can't
+  poison unrelated threads. Subject-based threading: `Build a game`,
+  `Re: Build a game`, and `Re[3]: Build a game` all share one budget.
+
+- **Persona-level "recent reply" check.** When deciding whether it's
+  their turn, agents are now explicitly told: *"If a teammate replied
+  within the last 60 seconds, assume they are handling this turn and
+  stay silent — simultaneous replies are noise."* This shifts most
+  cases of (2) and (3) into a deliberate stay-silent path *before*
+  a Claude turn even runs. Updated in both the dispatcher wake prompt
+  and the resident subagent persona body.
+
+These two together cover the failure modes without breaking the natural
+"send one email, watch them work" UX. Reasonable defaults; both knobs
+overridable via `DispatcherOptions`.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/claudecode` | 0.1.8 | 0.1.9 |
+| `@agenticmail/cli`        | 0.8.9 | 0.8.10 |
+
+(`core`, `api`, `mcp` unchanged.)
+
 ## [0.8.9] - 2026-05-13
 
 ### Changed — agents can now do real work, not just paste source code into emails
