@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.9] - 2026-05-13
+
+### Changed — agents can now do real work, not just paste source code into emails
+
+Before: AgenticMail agents were locked to MCP-only tools. Both the
+dispatcher's `allowedTools` and the subagent `.md`'s `tools:` frontmatter
+explicitly denied them Read / Write / Edit / Bash / Glob / Grep /
+WebFetch / WebSearch / NotebookEdit. The persona body told them
+"You are operating an email account, not a developer environment."
+
+That was the wrong design. AgenticMail agents run as Claude Code
+subagents under the host's OAuth — there is no security reason to
+keep them away from the filesystem and shell, and the work humans
+delegate to them ("implement this", "run these tests", "fetch this
+URL", "refactor this file") demands those tools. The restriction
+turned every "Zephyr, implement the game" into "Zephyr pastes 41
+lines of Python into an email body and the human copy-pastes it
+back out". Defeats the point of having agents.
+
+Now:
+
+- **Dispatcher workers spawn with no `allowedTools` restriction.**
+  The Claude Agent SDK falls through to its defaults — every built-in
+  tool plus every MCP tool the dispatcher passes via `mcpServers`.
+- **Subagent `.md` frontmatter no longer pins a `tools:` whitelist.**
+  Claude Code grants direct `Agent { subagent_type: ... }` invocations
+  the full host toolset.
+- **Personas tell agents to USE native tools for actual deliverables.**
+  Write the file, run the test, fetch the URL. The mail thread is for
+  coordination ("shipped at `./void_fall.py`, runs with `python3
+  void_fall.py`"); the filesystem is for deliverables.
+- **Wake prompt updated** with the same instruction so dispatcher-
+  spawned workers get it on every wake.
+
+Outbound mail safety is unchanged — AgenticMail's outbound guard still
+holds HIGH-severity sends for owner approval regardless of how rich the
+surrounding toolset is.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/claudecode` | 0.1.7 | 0.1.8 |
+| `@agenticmail/cli`        | 0.8.8 | 0.8.9 |
+
+(`@agenticmail/core`, `@agenticmail/api`, `@agenticmail/mcp` unchanged.)
+
 ## [0.8.8] - 2026-05-13
 
 ### Fixed — zero-wait wake for newly created agents

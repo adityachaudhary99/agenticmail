@@ -102,15 +102,14 @@ describe('Dispatcher.handleEvent — new-mail routing', () => {
     expect(mcpServers.agenticmail.env.AGENTICMAIL_API_KEY).toBeUndefined();
   });
 
-  it('restricts allowedTools to the MCP toolbelt only (no Bash / Read / Edit)', async () => {
+  it('does NOT pass allowedTools — workers inherit the full native + MCP toolset', async () => {
+    // Earlier versions of the dispatcher locked workers to MCP-only
+    // tools. That turned "implement this game" into "paste source code
+    // into an email body" because workers had no Read/Write/Bash/etc.
+    // Omitting allowedTools lets the SDK grant the full toolset.
     const { d, sdk } = makeDispatcher();
     await d.handleEvent(FOLA, { type: 'new', uid: 1 });
-    const allowed = sdk.calls[0].options.allowedTools as string[];
-    for (const t of allowed) {
-      expect(t.startsWith('mcp__agenticmail__')).toBe(true);
-    }
-    // Coordination primitive must be present.
-    expect(allowed).toContain('mcp__agenticmail__call_agent');
+    expect(sdk.calls[0].options.allowedTools).toBeUndefined();
   });
 });
 

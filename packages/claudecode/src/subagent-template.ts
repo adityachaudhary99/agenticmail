@@ -1,46 +1,8 @@
-/**
- * Curated set of `mcp__agenticmail__*` tool names that get pre-loaded into
- * every subagent's tool surface via the `tools:` frontmatter whitelist.
- *
- * Why a curated subset instead of "all 62 tools"?
- *   - 62 tool schemas = ~10K tokens of context per subagent spawn.
- *   - 90% of typical operations need ~6 of those tools.
- *   - Anything outside the curated set is still reachable via the
- *     `request_tools` + `invoke` meta-tools (which ARE always pre-loaded).
- *
- * Keep the list small and focused on universal operations — every entry
- * here costs tokens at every spawn. New tools added to AgenticMail
- * should generally go under request_tools, NOT in this list, unless
- * they really are something every agent needs immediately.
- *
- * Mirrors (manually — there's no compile-time link) the `essential` set
- * in @agenticmail/mcp's tool-catalog.ts. If you change one, change the
- * other.
- */
-const ESSENTIAL_TOOL_NAMES = [
-  'whoami',
-  'list_inbox',
-  'read_email',
-  'send_email',
-  'reply_email',
-  'search_emails',
-  'list_agents',
-  'message_agent',
-  // call_agent is the one-shot RPC primitive — sync request, sync answer.
-  // For multi-step coordination use the thread pattern (send_email with
-  // CC + reply_email with replyAll) instead.
-  'call_agent',
-  // wait_for_email is the thread-coordination primitive: block until a
-  // specific reply lands in your inbox (filter by from / subject /
-  // inReplyTo / participants). Essential for delegate-then-wait flows;
-  // making subagents discover it via request_tools would be a usability
-  // disaster for the most common coordination pattern.
-  'wait_for_email',
-  'check_tasks',
-  // Meta-tools — these unlock the other ~50 tools on demand.
-  'request_tools',
-  'invoke',
-] as const;
+// The subagent .md frontmatter no longer pins a `tools:` whitelist —
+// see the comment block on `renderSubagentMarkdown` below for why. With
+// `tools:` omitted, Claude Code grants the subagent the full host
+// toolset (every native tool + every MCP tool), which is what they need
+// to actually do the work humans delegate to them.
 
 /**
  * Generates the markdown content for one Claude Code subagent file.
@@ -176,14 +138,15 @@ export function renderPersonaBody(input: SubagentTemplateInput): string {
     '',
     '## Operating instructions',
     '',
-    `You start every session with a small **pre-loaded** set of MCP tools (the ones listed in your frontmatter). Everything else AgenticMail offers — signatures, drafts, templates, SMS, bulk mail ops, folders, scheduling, spam tools, setup wizards, account admin — is reachable through the two **meta-tools** that are always pre-loaded:`,
+    `You have access to TWO complementary toolsets:`,
     '',
-    `- \`${tool('request_tools')}\` — Returns a text catalogue of unloaded tools. Use with \`query="signature"\` to filter, or \`sets=["sms", "mail_extras"]\` to scope to specific categories.`,
-    `- \`${tool('invoke')}\` — Calls any AgenticMail tool by name with structured args. Example: \`${tool('invoke')}({ tool: "manage_signatures", args: { action: "create", name: "default", body: "—\\n${agent.name}" }, _account: "${agent.name}" })\`.`,
+    `1. **AgenticMail MCP tools** (\`${tool('*')}\`) — your mailbox, contacts, tasks, signatures, drafts, SMS, agent coordination. The full ~62-tool surface; the most common ones (\`${tool('list_inbox')}\`, \`${tool('send_email')}\`, \`${tool('reply_email')}\`, \`${tool('search_emails')}\`, \`${tool('call_agent')}\`, \`${tool('wait_for_email')}\`, …) are pre-loaded. Anything else is reachable via the meta-tools \`${tool('request_tools')}\` (discover) + \`${tool('invoke')}\` (call by name).`,
     '',
-    `**On EVERY tool call you make — pre-loaded OR via \`invoke\` — you MUST pass \`_account: "${agent.name}"\`.** This tells the MCP server to authenticate as you, not as the integration's bridge identity. Without it, you'd be reading the bridge's empty inbox instead of your own, sending mail from the wrong address, and bypassing your owner's expectation that the agent named "${agent.name}" did the work.`,
+    `2. **Native Claude Code tools** — Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch, NotebookEdit, and friends. The same toolset the host session has. Use them when the work actually involves files, code, the shell, or the web — DO NOT paste source code into an email when you could write the file yourself and tell the team "shipped to ./void_fall.py, runs with python3 void_fall.py". You are a real agent doing real work, not a paste-buffer.`,
     '',
-    `Pre-loaded examples:`,
+    `**On EVERY MCP call you make — pre-loaded OR via \`invoke\` — you MUST pass \`_account: "${agent.name}"\`.** This tells the MCP server to authenticate as you, not as the integration's bridge identity. Without it, you'd be reading the bridge's empty inbox instead of your own, sending mail from the wrong address, and bypassing your owner's expectation that the agent named "${agent.name}" did the work. Native tools (Read/Write/Bash/etc.) don't need \`_account\` — they're not MCP.`,
+    '',
+    `Common MCP examples:`,
     '',
     '```',
     `${tool('list_inbox')}({ _account: "${agent.name}", limit: 10 })`,
@@ -224,14 +187,16 @@ export function renderPersonaBody(input: SubagentTemplateInput): string {
     '',
     '## What you can do',
     '',
-    `Anything an AgenticMail account can do. The full toolbelt covers email (send/read/reply/forward/search/move/mark/tag/folder), contacts, drafts, templates, signatures, scheduling rules, spam, pending-approval, SMS (send/receive/voice), task coordination (check/claim/submit/call other agents), and your own metadata. If a tool you need isn't in your pre-loaded list, call \`${tool('request_tools')}\` first to find it, then \`${tool('invoke')}\` it. Never ask for permission to use a tool — just use it.`,
+    `Anything a real Claude Code agent can do, scoped to your AgenticMail identity. That means: every email / SMS / contacts / drafts / templates / signatures / rules / spam / tasks operation via MCP, AND every file / shell / search / web operation via native tools. If the work involves code — write the file, run it, debug it, commit it. If the work involves research — fetch the URLs, read the pages, summarise. Reply by email when you have something to TELL the team; do the actual WORK with native tools.`,
+    '',
+    `If a specific AgenticMail tool isn't already loaded, call \`${tool('request_tools')}\` to find it, then \`${tool('invoke')}\` to call it. Never ask for permission to use a tool — just use it.`,
     '',
     '## Hard rules',
     '',
-    `- **Always pass \`_account: "${agent.name}"\`** on every \`${tool('*')}\` call.`,
-    `- **Do NOT use generic Claude Code tools** (Read, Edit, Write, Bash, Glob, Grep, WebFetch, etc.). You are operating an email account, not a developer environment. The user's filesystem is none of your business; your "workspace" is your mailbox.`,
+    `- **Always pass \`_account: "${agent.name}"\`** on every \`${tool('*')}\` MCP call. (Native tools — Read/Write/Bash/etc. — don't need it.)`,
+    `- **Do real work with the right tool.** If a teammate asks you to implement something, write the file with Write or Edit — do not paste source code into an email body and call it done. The mail thread is for coordination ("shipped at \`./void_fall.py\`, runs with \`python3 void_fall.py\`, here's a 2-line summary"); the filesystem is for deliverables.`,
     `- **Do not invent email content.** If you didn't read a real message, do not summarise one. If you don't know the answer, check your inbox / contacts / tasks first.`,
-    `- **Do not impersonate other agents.** You are ${agent.name}, and only ${agent.name}. If the user asks you to also do something as "writer" or "researcher", suggest that they call those agents directly (via \`Agent { subagent_type: "agenticmail-<name>" }\` in the host session) — don't pass \`_account: "writer"\` to act as writer; that would falsify the From: header in any outgoing mail.`,
+    `- **Do not impersonate other agents.** You are ${agent.name}, and only ${agent.name}. If the user asks you to also do something as "writer" or "researcher", suggest that they call those agents directly — don't pass \`_account: "writer"\` to act as writer; that would falsify the From: header in any outgoing mail.`,
     `- **Respect outbound guard.** If a send is blocked by the AgenticMail outbound guard, tell the user in plain English — recipient, subject, the specific warnings — and ask them to approve. Do NOT rewrite the email to evade detection.`,
     '',
     '## Output style',
@@ -248,20 +213,33 @@ export function renderPersonaBody(input: SubagentTemplateInput): string {
  * real work using MCP tools scoped to its own account.
  */
 export function renderSubagentMarkdown(input: SubagentTemplateInput): string {
-  const { name, agent, mcpServerName } = input;
-  const tool = (n: string) => `mcp__${mcpServerName}__${n}`;
+  const { name, agent } = input;
   const description = describeAgent(agent);
 
-  // Curated tool whitelist — pre-loaded at spawn. Anything else (manage_
-  // signatures, sms_voice, batch_*, the setup wizards, …) is reachable via
-  // `request_tools` + `invoke` on demand.
-  const allowedTools = ESSENTIAL_TOOL_NAMES.map(n => tool(n)).join(', ');
-
+  // No `tools:` frontmatter field.
+  //
+  // Earlier versions pinned `tools:` to the AgenticMail MCP whitelist
+  // ("operate your inbox, do not touch the filesystem"). That was the
+  // wrong design — AgenticMail agents run under the host Claude Code
+  // session's OAuth, and the work humans delegate to them (write a
+  // file, run tests, edit code, fetch a URL) demands the full native
+  // toolset. Restricting them to MCP-only turned "Zephyr implements
+  // the game" into "Zephyr pastes source code into an email and the
+  // human copy-pastes it back out". Defeats the point.
+  //
+  // Omitting `tools:` from the frontmatter makes Claude Code grant the
+  // subagent the same toolset the host session has — every native tool
+  // (Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch,
+  // NotebookEdit, …) plus every MCP tool the host knows about
+  // (including AgenticMail's). That is what we want.
+  //
+  // Outbound mail safety: still enforced by AgenticMail's own outbound
+  // guard inside the MCP server (HIGH-severity sends held for owner
+  // approval, regardless of how rich the surrounding toolset is).
   const frontmatter = [
     '---',
     `name: ${name}`,
     `description: ${yamlQuote(description)}`,
-    `tools: ${allowedTools}`,
     `model: inherit`,
     `# managed-by: ${MANAGED_BY_MARKER}`,
     `# agenticmail-agent-id: ${agent.id}`,

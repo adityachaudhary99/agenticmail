@@ -216,25 +216,25 @@ async function runWorker(
         env: mcpEnv,
       },
     },
-    // Restrict to MCP tools only — workers should never reach for
-    // Bash / Read / Edit / etc. Listing them avoids accidental leakage.
-    allowedTools: [
-      `mcp__${mcpServerName}__whoami`,
-      `mcp__${mcpServerName}__list_inbox`,
-      `mcp__${mcpServerName}__read_email`,
-      `mcp__${mcpServerName}__send_email`,
-      `mcp__${mcpServerName}__reply_email`,
-      `mcp__${mcpServerName}__search_emails`,
-      `mcp__${mcpServerName}__list_agents`,
-      `mcp__${mcpServerName}__message_agent`,
-      `mcp__${mcpServerName}__call_agent`,
-      `mcp__${mcpServerName}__wait_for_email`,
-      `mcp__${mcpServerName}__check_tasks`,
-      `mcp__${mcpServerName}__claim_task`,
-      `mcp__${mcpServerName}__submit_result`,
-      `mcp__${mcpServerName}__request_tools`,
-      `mcp__${mcpServerName}__invoke`,
-    ],
+    // No `allowedTools` restriction.
+    //
+    // Earlier versions of the dispatcher locked workers to MCP-only tools
+    // ("you operate an email account, not a developer environment"). That
+    // was the wrong design: AgenticMail agents are real Claude Code
+    // subagents running under the host's OAuth, and the work humans
+    // delegate to them (write code, run tests, do research, edit files)
+    // demands the full native toolset (Read, Write, Edit, Bash, Glob,
+    // Grep, WebFetch, WebSearch, NotebookEdit, …). Restricting them
+    // turned "Zephyr implements the game" into "Zephyr emails source
+    // code as plaintext and the human has to copy-paste it" — which
+    // defeats the point of having agents in the first place.
+    //
+    // Omitting allowedTools lets the SDK fall through to its defaults
+    // (all built-in tools + every tool exposed by the MCP servers we
+    // declare above). Outbound mail is still guarded by AgenticMail's
+    // own outbound guard (HIGH-severity sends held for owner approval)
+    // and the worker is sandboxed by Claude Code's permission system
+    // just like any other subagent.
     permissionMode: 'bypassPermissions' as const,
     abortController: abortSignal ? wrapSignal(abortSignal) : undefined,
   };
@@ -315,8 +315,14 @@ function newMailPrompt(agent: AgenticMailAccount, event: SSEEvent): string {
     `   When in doubt, stay silent — over-replying creates noise. Better to let`,
     `   the right teammate take the turn than to step on theirs.`,
     ``,
-    `5. **If it's your turn — reply-all so the whole thread sees it.**`,
-    `   reply_email({ uid: ${uid ?? '<uid>'}, replyAll: true, text: "...", _account: "${agent.name}" })`,
+    `5. **If it's your turn — do the actual work, THEN reply-all about it.**`,
+    `   You have full native tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch,`,
+    `   WebSearch, NotebookEdit, etc. If the task is "implement X", write the file`,
+    `   with Write or Edit and verify with Bash — do NOT paste source code into an`,
+    `   email body and call it shipped. The thread is for COORDINATION ("done,`,
+    `   see ./foo.py, runs with \`python3 foo.py\`"); the filesystem is for`,
+    `   DELIVERABLES. Then:`,
+    `     reply_email({ uid: ${uid ?? '<uid>'}, replyAll: true, text: "...", _account: "${agent.name}" })`,
     `   Sign with your name. Be substantive but concise. If you are handing off`,
     `   to the next teammate, name them explicitly in your reply ("Orion — over to you, please …").`,
     ``,
