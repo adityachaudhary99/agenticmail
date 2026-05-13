@@ -299,13 +299,18 @@ export const toolDefinitions = [
   },
   {
     name: 'forward_email',
-    description: 'Forward an email to another recipient. Outbound guard applies — HIGH severity content is held for review.',
+    description: 'Forward an email to another recipient. Outbound guard applies — HIGH severity content is held for review. Pass `wake` to limit which local recipients get a Claude turn from the dispatcher when this forward lands.',
     inputSchema: {
       type: 'object' as const,
       properties: {
         uid: { type: 'number', description: 'UID of the email to forward' },
         to: { type: 'string', description: 'Recipient to forward to' },
         text: { type: 'string', description: 'Additional message (optional)' },
+        wake: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional. Names of the agents who should get a Claude turn when the forward lands. Pass `[]` to deliver silently. Omit to wake everyone CC\'d.',
+        },
       },
       required: ['uid', 'to'],
     },
@@ -406,7 +411,7 @@ export const toolDefinitions = [
   },
   {
     name: 'manage_drafts',
-    description: 'List, create, update, send, or delete drafts',
+    description: 'List, create, update, send, or delete drafts. On send, you can pass `wake` to limit which local recipients get a Claude turn — same semantics as send_email.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -415,6 +420,11 @@ export const toolDefinitions = [
         to: { type: 'string', description: 'Recipient (for create/update)' },
         subject: { type: 'string', description: 'Subject (for create/update)' },
         text: { type: 'string', description: 'Body text (for create/update)' },
+        wake: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional, for action=send. Names of the agents who should get a Claude turn when the drafted mail lands. Pass `[]` to deliver silently. Omit to wake everyone CC\'d.',
+        },
       },
       required: ['action'],
     },
@@ -772,6 +782,11 @@ export const toolDefinitions = [
         variables: { type: 'object', description: 'Variables to substitute: { name: "Alice" }' },
         cc: { type: 'string', description: 'CC recipients' },
         bcc: { type: 'string', description: 'BCC recipients' },
+        wake: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional. Names of the agents who should get a Claude turn when this template-rendered mail lands. Pass `[]` to deliver silently. Omit to wake everyone CC\'d.',
+        },
       },
       required: ['id', 'to'],
     },
@@ -1449,6 +1464,10 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
           encoding: 'base64',
         }));
       }
+      // Pass-through wake allowlist — same semantics as send_email.
+      if (args.wake !== undefined) {
+        fwdSendBody.wake = args.wake;
+      }
 
       const fwdResult = await apiRequest('POST', '/mail/send', fwdSendBody);
 
@@ -1552,7 +1571,9 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
       }
       if (args.action === 'send') {
         if (!args.id) throw new Error('id is required');
-        const r = await apiRequest('POST', `/drafts/${args.id}/send`);
+        const draftSendBody: Record<string, unknown> = {};
+        if (args.wake !== undefined) draftSendBody.wake = args.wake;
+        const r = await apiRequest('POST', `/drafts/${args.id}/send`, draftSendBody);
         return `Draft sent. Message ID: ${r?.messageId ?? 'unknown'}`;
       }
       if (args.action === 'delete') {
@@ -2208,9 +2229,15 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
     }
 
     case 'template_send': {
-      const result = await apiRequest('POST', `/templates/${args.id}/send`, {
+      // Same wake semantics as send_email — forward as-is and let the
+      // API route normalise it. The templates endpoint reuses the same
+      // /mail/send path under the hood so the X-AgenticMail-Wake header
+      // + SSE wakeAllowlist plumbing all just works.
+      const templateBody: Record<string, unknown> = {
         to: args.to, variables: args.variables, cc: args.cc, bcc: args.bcc,
-      });
+      };
+      if (args.wake !== undefined) templateBody.wake = args.wake;
+      const result = await apiRequest('POST', `/templates/${args.id}/send`, templateBody);
       return `Template email sent. Message ID: ${result?.messageId ?? 'unknown'}`;
     }
 

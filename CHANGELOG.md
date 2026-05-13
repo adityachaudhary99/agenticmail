@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.18] - 2026-05-13
+
+### Fixed — wake-list audit: every send path now wired
+
+After 0.8.17 introduced selective wake on `send_email`, an audit
+surfaced four send paths that were either missing the `wake` parameter
+entirely or silently dropping it. All four fixed in this release.
+
+| Send path | Status before | Status after |
+|---|---|---|
+| `send_email` → `POST /mail/send` | wake ✓, header ✓, SSE ✓ | unchanged |
+| `reply_email` → `POST /mail/send` | wake ✓, header ✓ (via send), SSE ✓ (via send) | unchanged |
+| **`forward_email` → `POST /mail/send`** | wake ✗ | wake ✓ (now plumbed) |
+| **`template_send` → `POST /templates/:id/send`** | wake ✗, no SSE push at all | wake ✓, SSE push added |
+| **`manage_drafts(send)` → `POST /drafts/:id/send`** | wake ✗, no SSE push at all | wake ✓, SSE push added |
+| **`POST /mail/pending/:id/approve`** (held-mail approval) | wake dropped on round-trip | wake persisted in `pending_outbound.mail_options.wakeList`, restored on approve, propagated to SSE |
+
+### New helpers in `packages/api/src/routes/mail.ts`
+
+Extracted shared primitives so every send path uses the same logic:
+
+- `normalizeWakeList(value)` — accept string-or-array, lowercase,
+  strip @localhost, drop empties. Returns `undefined` (= "wake all
+  CC'd") or a normalised string[] (empty = "wake nobody").
+- `wakeHeaders(list)` — produce the `{ 'X-AgenticMail-Wake': '...' }`
+  outgoing header map.
+- `pushLocalRecipientWakes` — re-export of the SSE notifier so the
+  templates and drafts routes can use the same primitive as
+  `/mail/send` instead of bypassing the dispatcher entirely.
+
+### Templates & drafts SSE push
+
+A pre-existing gap (not new in this release): the templates and
+drafts routes sent mail via SMTP but never pushed SSE events to local
+recipients. Local-to-local mail sent through those routes relied on
+IMAP IDLE delivery before the InboxWatcher saw it — seconds, not
+milliseconds. Both routes now push directly, matching the v0.8.x
+zero-wait wake behaviour of `/mail/send`.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.7.5 | 0.7.6 |
+| `@agenticmail/mcp` | 0.7.6 | 0.7.7 |
+| `@agenticmail/cli` | 0.8.17 | 0.8.18 |
+
+Plugin manifest mirrored to 0.8.18. `@agenticmail/core` and
+`@agenticmail/claudecode` unchanged.
+
 ## [0.8.17] - 2026-05-13
 
 ### Added — selective wake (the single biggest token saver on large threads)

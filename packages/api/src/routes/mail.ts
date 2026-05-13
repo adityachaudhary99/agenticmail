@@ -280,6 +280,39 @@ function normalizeMessageId(id: string | undefined): string {
   return id.trim().replace(/^<+|>+$/g, '').toLowerCase();
 }
 
+/**
+ * Normalise a `wake` value (string or string[]) into the canonical
+ * lowercased bare-name list the SSE event and the X-AgenticMail-Wake
+ * header expect. Returns undefined if the input is undefined/null, so
+ * callers can distinguish "wake all CC'd" (undefined) from "wake nobody"
+ * (empty array) cleanly.
+ *
+ * Exported so the templates route and the pending-approve route can
+ * apply the same normalisation as POST /mail/send.
+ */
+export function normalizeWakeList(value: unknown): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  const strip = (s: string) => s.trim().replace(/@localhost$/i, '').toLowerCase();
+  if (Array.isArray(value)) return value.map(v => strip(String(v))).filter(Boolean);
+  if (typeof value === 'string') return value.split(',').map(strip).filter(Boolean);
+  return undefined;
+}
+
+/**
+ * Build the SMTP `headers` map from a normalised wake list. Centralised
+ * so every send path produces the same header format.
+ */
+export function wakeHeaders(wakeList: string[] | undefined): Record<string, string> {
+  if (wakeList === undefined) return {};
+  return { 'X-AgenticMail-Wake': wakeList.join(', ') };
+}
+
+// Re-export so template + pending-approve routes can push to SSE the
+// same way POST /mail/send does. The fn name signal-bumps that this
+// is the right primitive to use for "I just sent local mail, notify
+// the dispatcher" — not new HTTP plumbing.
+export { notifyLocalRecipientsOfNewMail as pushLocalRecipientWakes };
+
 async function notifyLocalRecipientsOfNewMail(
   accountManager: AccountManager,
   toField: string | string[] | undefined,
@@ -443,7 +476,15 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
           const pendingId = crypto.randomUUID();
           const ownerName = (agent.metadata as Record<string, any>)?.ownerName;
           const fromName = ownerName ? `${agent.name} from ${ownerName}` : agent.name;
-          const mailOptions = { to, subject, text, html, cc, bcc, replyTo, inReplyTo, references, attachments, fromName };
+          // Persist the wake intent so it survives the approval round-trip —
+          // otherwise an outbound-guard-blocked mail loses its wake list
+          // when the owner later approves it, and every CC'd recipient
+          // gets a Claude turn even though the sender wanted just one.
+          const wakeListForPersist = normalizeWakeList(wake);
+          const mailOptions: Record<string, unknown> = {
+            to, subject, text, html, cc, bcc, replyTo, inReplyTo, references, attachments, fromName,
+            ...(wakeListForPersist !== undefined ? { wakeList: wakeListForPersist } : {}),
+          };
 
           db.prepare(
             `INSERT INTO pending_outbound (id, agent_id, mail_options, warnings, summary) VALUES (?, ?, ?, ?, ?)`,
@@ -527,29 +568,10 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
       const ownerName = (agent.metadata as Record<string, any>)?.ownerName;
       const fromName = ownerName ? `${agent.name} from ${ownerName}` : agent.name;
 
-      // Normalise the wake list. Accepts either an array of names or a
-      // comma-separated string ("alice, bob"). Names with `@localhost`
-      // have the domain stripped so the dispatcher's case-insensitive
-      // name comparison just works. An empty value means "wake nobody";
-      // an absent value (undefined) keeps the default "wake all CC'd"
-      // behaviour for backwards compatibility.
-      let wakeList: string[] | undefined;
-      if (Array.isArray(wake)) {
-        wakeList = wake.map(w => String(w).trim().replace(/@localhost$/i, '').toLowerCase()).filter(Boolean);
-      } else if (typeof wake === 'string') {
-        wakeList = wake.split(',').map(w => w.trim().replace(/@localhost$/i, '').toLowerCase()).filter(Boolean);
-      }
-
-      // Set the X-AgenticMail-Wake header on the outgoing mail. This is
-      // the wire signal — the SSE notifier also reads `wakeList` directly
-      // (faster path, no IMAP fetch needed), but the header is the
-      // authoritative source if a future consumer needs to read it from
-      // the message itself (e.g. dispatcher reconnects and processes
-      // backlog mail via IMAP IDLE).
-      const customHeaders: Record<string, string> = {};
-      if (wakeList !== undefined) {
-        customHeaders['X-AgenticMail-Wake'] = wakeList.join(', ');
-      }
+      // Normalise the wake list and build the outgoing header in one
+      // place — every send path uses the same primitives.
+      const wakeList = normalizeWakeList(wake);
+      const customHeaders = wakeHeaders(wakeList);
 
       const mailOpts = {
         to, subject, text, html, cc, bcc, replyTo, inReplyTo, references, attachments, fromName,
@@ -1260,6 +1282,18 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
         }
       }
 
+      // Restore the X-AgenticMail-Wake header from the persisted wakeList
+      // so approval doesn't strip the sender's wake intent. Without this,
+      // an outbound-guard-blocked mail would lose its wake hint when the
+      // owner approves it, and every CC'd recipient would get a Claude
+      // turn even though the sender wanted just one.
+      const persistedWakeList: string[] | undefined = Array.isArray(mailOpts.wakeList) ? mailOpts.wakeList : undefined;
+      if (persistedWakeList !== undefined) {
+        mailOpts.headers = { ...(mailOpts.headers ?? {}), ...wakeHeaders(persistedWakeList) };
+        // The stored field isn't part of the SMTP message shape, scrub it.
+        delete mailOpts.wakeList;
+      }
+
       const password = getAgentPassword(agent);
 
       // Send via gateway or local SMTP
@@ -1279,9 +1313,12 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
         const sender = getSender(agent.stalwartPrincipal, agent.email, password, config);
         const result = await sender.send(mailOpts);
         saveSentCopy(agent.stalwartPrincipal, password, config, result.raw);
-        // Issue #24 — same direct-SSE bypass as POST /mail/send (see comment there).
+        // Issue #24 — same direct-SSE bypass as POST /mail/send (see
+        // comment there). Pass the persisted wake list so dispatcher
+        // sees the same allowlist it would have seen on the original
+        // pre-approval send.
         notifyLocalRecipientsOfNewMail(
-          accountManager, mailOpts.to, mailOpts.cc, mailOpts.bcc, agent, mailOpts.subject, result.messageId, config,
+          accountManager, mailOpts.to, mailOpts.cc, mailOpts.bcc, agent, mailOpts.subject, result.messageId, config, persistedWakeList,
         ).catch((err) => {
           console.warn(`[mail] Internal SSE notify (approve) failed: ${(err as Error).message}`);
         });

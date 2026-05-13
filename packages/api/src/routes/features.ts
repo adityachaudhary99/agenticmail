@@ -8,7 +8,7 @@ import {
   type GatewayManager,
 } from '@agenticmail/core';
 import { requireAgent } from '../middleware/auth.js';
-import { getAgentPassword } from './mail.js';
+import { getAgentPassword, normalizeWakeList, wakeHeaders, pushLocalRecipientWakes } from './mail.js';
 
 /**
  * Parse a schedule time string. Supports:
@@ -219,6 +219,12 @@ export function createFeatureRoutes(
       if (!draft.to_addr) { res.status(400).json({ error: 'Draft has no recipient' }); return; }
 
       const agent = req.agent!;
+      // Drafts don't persist a wake list (the schema predates the
+      // feature) so the caller can pass `wake` at send time on the
+      // POST body. Same normalisation + header plumbing as elsewhere.
+      const wakeList = normalizeWakeList(req.body?.wake);
+      const customHeaders = wakeHeaders(wakeList);
+
       const mailOpts = {
         to: draft.to_addr,
         subject: draft.subject || '(no subject)',
@@ -228,6 +234,7 @@ export function createFeatureRoutes(
         bcc: draft.bcc || undefined,
         inReplyTo: draft.in_reply_to || undefined,
         references: draft.refs ? JSON.parse(draft.refs) : undefined,
+        ...(Object.keys(customHeaders).length > 0 ? { headers: customHeaders } : {}),
       };
 
       // Try gateway first
@@ -251,6 +258,13 @@ export function createFeatureRoutes(
       try {
         const result = await sender.send(mailOpts);
         db.prepare('DELETE FROM drafts WHERE id = ?').run(draft.id);
+        // Same SSE push as /mail/send so dispatcher wake gating applies
+        // to drafts too.
+        pushLocalRecipientWakes(
+          accountManager, mailOpts.to, mailOpts.cc, mailOpts.bcc, agent, mailOpts.subject, result.messageId, config, wakeList,
+        ).catch((err) => {
+          console.warn(`[drafts] SSE notify failed: ${(err as Error).message}`);
+        });
         res.json(result);
       } finally {
         sender.close();
@@ -447,20 +461,28 @@ export function createFeatureRoutes(
     try {
       const template = db.prepare('SELECT * FROM templates WHERE id = ? AND agent_id = ?').get(req.params.id, req.agent!.id) as any;
       if (!template) { res.status(404).json({ error: 'Template not found' }); return; }
-      const { to, variables, cc, bcc } = req.body || {};
+      const { to, variables, cc, bcc, wake } = req.body || {};
       if (!to) { res.status(400).json({ error: 'to is required' }); return; }
 
       const applyVars = (text: string, vars: Record<string, string>): string =>
         text.replace(/\{\{(\w+)\}\}/g, (m, key) => vars[key] ?? m);
 
+      // Normalise wake the same way POST /mail/send does so template-
+      // sent mail behaves identically to a direct send for dispatcher
+      // wake gating.
+      const wakeList = normalizeWakeList(wake);
+      const customHeaders = wakeHeaders(wakeList);
+
       const vars: Record<string, string> = variables && typeof variables === 'object' ? variables : {};
+      const renderedSubject = applyVars(template.subject || '(no subject)', vars);
       const mailOpts = {
         to,
-        subject: applyVars(template.subject || '(no subject)', vars),
+        subject: renderedSubject,
         text: template.text_body ? applyVars(template.text_body, vars) : undefined,
         html: template.html_body ? applyVars(template.html_body, vars) : undefined,
         cc: cc || undefined,
         bcc: bcc || undefined,
+        ...(Object.keys(customHeaders).length > 0 ? { headers: customHeaders } : {}),
       };
 
       const agent = req.agent!;
@@ -476,6 +498,15 @@ export function createFeatureRoutes(
       });
       try {
         const result = await sender.send(mailOpts);
+        // Push SSE wake events to local recipients with the same
+        // wake-allowlist semantics as POST /mail/send. Without this,
+        // template-sent mail would only wake recipients through IMAP
+        // IDLE — slower, and impossible to gate per-recipient.
+        pushLocalRecipientWakes(
+          accountManager, to, cc, bcc, agent, renderedSubject, result.messageId, config, wakeList,
+        ).catch((err) => {
+          console.warn(`[templates] SSE notify failed: ${(err as Error).message}`);
+        });
         res.json(result);
       } finally {
         sender.close();
