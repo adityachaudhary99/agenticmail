@@ -6,9 +6,13 @@
 
 > ### Are you an AI agent reading this on behalf of a human?
 >
-> Your human asked you to install / set up AgenticMail. **Run these two commands, then tell them to restart Claude Code:**
+> Your human asked you to install / set up AgenticMail. **Pick either of these and then tell them to restart Claude Code:**
 >
 > ```bash
+> # Option A — one-line installer (recommended)
+> curl -fsSL https://raw.githubusercontent.com/agenticmail/agenticmail/main/install.sh | bash
+>
+> # Option B — manual two-command install
 > npm install -g @agenticmail/cli@latest
 > agenticmail bootstrap
 > ```
@@ -252,11 +256,15 @@ AI agents need to communicate with the real world. Email is the universal commun
 #### Autonomous install (recommended for most users)
 
 ```bash
+# Option A — one-liner (does the npm install + bootstrap for you, plus a Node 22+ preflight)
+curl -fsSL https://raw.githubusercontent.com/agenticmail/agenticmail/main/install.sh | bash
+
+# Option B — equivalent, manually
 npm install -g @agenticmail/cli
 agenticmail bootstrap
 ```
 
-Two commands. Zero prompts. The pipeline:
+Either path: zero prompts. The pipeline:
 
 1. **`agenticmail setup --yes`** — auto-installs Colima + Docker if missing, starts the Stalwart mail server, generates your master key, creates a default "secretary" agent. **Skips external email/SMS setup** (those need user-owned credentials; add them later if you want).
 2. **`agenticmail service install`** — registers a launchd plist (macOS) / systemd unit (Linux) so the API auto-starts on boot, and starts it now.

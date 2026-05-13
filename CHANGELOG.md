@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2026-05-12
+
+### Added
+
+- **`install.sh` — one-line curl-bash installer** at the repo root.
+  Hosted at `https://raw.githubusercontent.com/agenticmail/agenticmail/main/install.sh`,
+  so any user (or AI agent) can install AgenticMail with a single line:
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/agenticmail/agenticmail/main/install.sh | bash
+  ```
+
+  The script:
+  - Detects OS (macOS / Linux) and package manager (brew / apt / dnf / yum / pacman)
+  - Preflights Node.js 22+ and prints platform-specific upgrade instructions
+    (`brew install node@22`, `nvm install 22`, NodeSource curl-pipe, etc.) if missing
+  - Runs `npm install -g @agenticmail/cli@latest` then `agenticmail bootstrap`
+  - Supports `--dry-run` (print commands without executing) and
+    `--no-bootstrap` (install the CLI only)
+  - `set -euo pipefail`, no destructive ops, prints every command before running it
+
+  Manual two-command install (`npm install -g @agenticmail/cli@latest && agenticmail bootstrap`)
+  is still the documented fallback and does the exact same thing under the hood.
+
+### Changed
+
+- **README, `agenticmail/README.md`, and `AGENTS.md`** all now lead with
+  *both* install paths (curl-bash + manual) side-by-side. AI agents reading
+  `AGENTS.md` are instructed to default to the curl path unless it's blocked.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/cli` | 0.8.3 | 0.8.4 |
+
+(Other packages unchanged.)
+
 ## [0.8.3] - 2026-05-13
 
 ### Added
@@ -18,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`CLAUDE.md`** at the repo root — Claude-Code-specific stub that
   points at `AGENTS.md`. Means any Claude Code session opened in this
   repo gets the install runbook in its context window automatically.
-- **"🤖 AI agent install runbook"** callout block at the top of the
+- **"AI agent install runbook"** callout block at the top of the
   main README and the `@agenticmail/cli` npm README so the install
   instructions are the first thing an AI agent sees when their user
   says "install AgenticMail" — either from the repo or the npm page.

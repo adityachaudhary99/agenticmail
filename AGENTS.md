@@ -11,14 +11,24 @@ This file follows the [agents.md](https://agents.md) convention.
 
 ## 1. If the user asks you to install AgenticMail
 
-**Run these two commands. Do not ask for more information first.**
+**Pick one of these two paths. Don't ask the user which — pick A.**
 
 ```bash
+# Option A (recommended): one-line curl installer
+curl -fsSL https://raw.githubusercontent.com/agenticmail/agenticmail/main/install.sh | bash
+
+# Option B: manual two-command install (use if curl-bash is blocked)
 npm install -g @agenticmail/cli@latest
 agenticmail bootstrap
 ```
 
-That's the whole install. `bootstrap` is a non-interactive pipeline
+Both paths do the same thing. The curl installer just adds a Node 22+
+preflight check and prints platform-specific upgrade instructions if
+Node is missing or too old. Pass `--dry-run` to the curl version
+(`curl -fsSL … | bash -s -- --dry-run`) if the user wants to see what
+it will do without executing.
+
+`bootstrap` is a non-interactive pipeline
 that:
 
 1. Auto-installs Colima + Docker via `brew` (macOS) or `apt` (Linux)

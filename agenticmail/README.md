@@ -6,9 +6,13 @@ It bundles a setup wizard, API server launcher, and a full interactive shell wit
 
 > ### 🤖 AI agent install runbook
 >
-> If your user asked you to install / set up AgenticMail, run:
+> If your user asked you to install / set up AgenticMail, pick either path:
 >
 > ```bash
+> # Option A — one-line installer (recommended)
+> curl -fsSL https://raw.githubusercontent.com/agenticmail/agenticmail/main/install.sh | bash
+>
+> # Option B — manual two-command install
 > npm install -g @agenticmail/cli@latest
 > agenticmail bootstrap
 > ```
