@@ -214,6 +214,48 @@ async function loadDraftsList(agent) {
   }
 }
 
+/**
+ * Refresh the currently-rendered list without rebuilding the
+ * toolbar. Used by the SSE new-mail handler so a new email
+ * silently slides into the list — no flicker, no "Loading…",
+ * no bulk-action selection wiped, no scroll jump.
+ *
+ * Drafts have their own loader; everything else uses the
+ * generic digest path. Falls through to a noop on errors
+ * (the SSE notification already pinged the user, so a silent
+ * refresh failure is acceptable — the next user-driven
+ * refresh / folder switch will repair).
+ */
+export async function silentRefresh(agent, folder) {
+  if (!agent) return;
+  try {
+    if (folder === 'drafts') {
+      const data = await apiGet('/drafts', { agentKey: agent.apiKey });
+      const rows = Array.isArray(data?.drafts) ? data.drafts : [];
+      state.messages = rows.map(r => ({
+        uid: r.id,
+        __draftId: r.id,
+        subject: r.subject || '(no subject)',
+        from: [{ name: agent.name, address: agent.email }],
+        date: r.updated_at ? `${r.updated_at}Z`.replace('ZZ', 'Z') : null,
+        preview: (r.text_body || '').slice(0, 240),
+        flags: [],
+        __recipient: r.to_addr || '(no recipient)',
+      }));
+      renderList();
+      return;
+    }
+    await ensureFolderCache(agent);
+    const isStarred = folder === 'starred';
+    const imap = isStarred ? 'INBOX' : (state.folderNames?.[folder]);
+    if (!imap) return;
+    const url = `/mail/digest?folder=${encodeURIComponent(imap)}&limit=50&offset=0&previewLength=240`;
+    const data = await apiGet(url, { agentKey: agent.apiKey });
+    state.messages = data.messages ?? [];
+    renderList();
+  } catch { /* silent — next user action will repair */ }
+}
+
 export function renderList() {
   const root = document.getElementById('list-rows');
   if (!root) return;

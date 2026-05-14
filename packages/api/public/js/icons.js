@@ -47,6 +47,13 @@ const PATHS = {
   // ─── Status / dots ──────────────────────────────────────────────
   dot:     'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
   check:   'M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z',
+  // Material-style notifications bell — used for the sound-on
+  // state. Off uses the same path with a diagonal slash overlay
+  // applied via CSS (.icon-svg.off → ::after rule in styles.css).
+  soundOn:  'M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z',
+  // Bell with a slash through it (off state). Single-path so the
+  // icon hot-swaps cleanly without dependency on overlay rules.
+  soundOff: 'M16.27 19.27 18 21l-1.27 1.27-1.45-1.45A1.98 1.98 0 0 1 14 22h-4a2 2 0 0 1-2-2h4a2 2 0 0 0 .27-.27L3 9.46 4.27 8.19 16.27 19.27zM18 16v-5a6 6 0 0 0-4.5-5.81V5a1.5 1.5 0 0 0-3 0v.19a6 6 0 0 0-2.16.91L18 16z',
 };
 
 export function icon(name, opts = {}) {

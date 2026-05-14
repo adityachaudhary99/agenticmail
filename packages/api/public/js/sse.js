@@ -1,13 +1,16 @@
 // Real-time mail delivery via Server-Sent Events. Every agent gets
 // its own subscription; the dispatcher pushes a `new` event per
 // arrived message. We fan that out to:
-//   1. List view — reload if it's the active inbox (instant ping)
+//   1. List view — silent in-place refresh (no flicker, no scroll
+//      jump, no bulk-selection wipe) if it's the active inbox
 //   2. Profile dropdown — bump the per-agent unread counter
 //   3. Browser notification — system ping when the tab is in the background
+//   4. Soft chime (toggleable) when sound is enabled
 import { state, API_URL } from './state.js';
 import { toast } from './utils.js';
 import { renderProfile } from './profile.js';
-import { loadList } from './list-view.js';
+import { silentRefresh } from './list-view.js';
+import { playNotificationSound } from './sound.js';
 
 export function subscribeToAllAgents() {
   // Tear down previous controllers (called on agent-list refresh).
@@ -49,10 +52,22 @@ async function handleSseEvent(agent, event) {
 
   const isOpen = state.selectedAgent?.id === agent.id;
   if (isOpen) {
-    await loadList(agent, state.selectedFolder);
+    // Silent in-place refresh — re-fetches the list digest and
+    // re-renders ONLY the rows div. Toolbar (select-all, refresh,
+    // bulk-actions) is untouched; existing row checkboxes survive;
+    // scroll position is preserved by the browser since we replace
+    // only the inner content. No "Loading…" flicker.
+    await silentRefresh(agent, state.selectedFolder);
     state.unread[agent.id] = 0;   // user is looking — clear badge
     renderProfile();
   }
+
+  // Soft chime — respects the user's sound toggle. Plays for every
+  // arrival regardless of whether the tab is focused, because that
+  // is the whole point of the chime (a foregrounded tab still
+  // benefits from the audible ping when the user's attention is
+  // elsewhere on screen).
+  playNotificationSound();
 
   fireBrowserNotification(agent, event, isOpen);
 

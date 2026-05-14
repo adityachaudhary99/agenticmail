@@ -159,6 +159,10 @@ a { color: var(--accent-strong); }
   color: var(--ink-soft); font-size: 18px;
 }
 .icon-btn:hover { background: var(--bg-hover); }
+/* Sound-toggle state colours. On = brand pink (alive); off = muted
+   so the button reads as "currently silent". */
+#sound-toggle-btn.sound-on { color: var(--pink); }
+#sound-toggle-btn.sound-off { color: var(--muted); }
 
 /* ─── Profile (top right) ─────────────────────────────────────────── */
 .profile-trigger {

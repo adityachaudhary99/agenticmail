@@ -15,6 +15,7 @@ import { openMessage } from './message-view.js';
 import { populateComposeFrom, openCompose, openDraft, closeCompose, discardCompose, sendCompose } from './compose.js';
 import { subscribeToAllAgents, maybeRequestNotificationPermission } from './sse.js';
 import { icon } from './icons.js';
+import { isSoundEnabled, setSoundEnabled, playNotificationSound } from './sound.js';
 
 // Hydrate every `data-icon="name"` placeholder in the static HTML
 // with the corresponding inline SVG. Done once on load so we don't
@@ -187,6 +188,27 @@ document.getElementById('menu-btn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebar-backdrop').addEventListener('click', () => {
   document.getElementById('main')?.classList.remove('sidebar-open');
 });
+
+// Sound toggle. Stateful icon button — bell (on) / bell-slash (off).
+// Clicking flips the preference (persisted to localStorage by the
+// sound module), updates the icon, and plays a single test chime
+// on transitions to ON so the user hears what they just enabled.
+function renderSoundToggle() {
+  const btn = document.getElementById('sound-toggle-btn');
+  if (!btn) return;
+  const on = isSoundEnabled();
+  btn.innerHTML = icon(on ? 'soundOn' : 'soundOff', { size: 18 });
+  btn.title = on ? 'Notification sound: on (click to mute)' : 'Notification sound: off (click to enable)';
+  btn.classList.toggle('sound-on', on);
+  btn.classList.toggle('sound-off', !on);
+}
+document.getElementById('sound-toggle-btn')?.addEventListener('click', () => {
+  const next = !isSoundEnabled();
+  setSoundEnabled(next);
+  renderSoundToggle();
+  if (next) playNotificationSound();   // sample the chime on enable
+});
+renderSoundToggle();
 
 document.getElementById('refresh-btn').addEventListener('click', async () => {
   if (state.selectedAgent) {

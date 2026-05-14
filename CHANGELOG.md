@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-05-14
+
+### Fixed — Inbox flickered on every new arrival
+
+The SSE handler called `loadList()` on every new-mail event for the active agent, which blanked the rows with "Loading…" and rebuilt the toolbar — every arrival felt like a page refresh, scroll jumped, selection was wiped, bulk-action toolbar disappeared.
+
+Added a new `silentRefresh(agent, folder)` export in `js/list-view.js` that re-fetches the digest in the background and re-renders **only** the `.list-rows` content. The toolbar, select-all state, per-row checkboxes, and scroll position are untouched. The new email slides into the list silently.
+
+### Added — Soft chime notification + toggle
+
+Web Audio API synthesises a 220 ms two-note chime (E5 → A5) on every new mail. No external asset; nothing in `branding/` to maintain. Plays regardless of tab focus — that's the point.
+
+Toggle button in the topbar (between refresh and the avatar) flips it on/off. Preference persists in `localStorage` under `agenticmail.notif.soundEnabled`. Two icon states (`soundOn` bell pink / `soundOff` bell-slash muted). Clicking the toggle to ON plays a sample chime so the user hears what they just enabled.
+
+Browser autoplay policy may mute the very first chime after a fresh page load if the user hasn't interacted yet; subsequent arrivals work normally. The user toggle is always respected.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.9.2 | 0.9.3 |
+| `@agenticmail/cli` | 0.9.2 | 0.9.3 |
+
+Plugin manifest mirrored to 0.9.3. core / mcp / claudecode unchanged.
+
 ## [0.9.2] - 2026-05-14
 
 ### Fixed — `reply_email({ replyAll: true })` dumped everyone on `To:`
