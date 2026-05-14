@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+# Opt in to Node.js 24 for every JavaScript action that hasn't shipped a
+# Node-24-native release yet (some @v5 actions still run on Node 20
+# internally). GitHub will deprecate Node 20 in actions on 2026-06-02;
+# this env makes the deprecation warning go away today and gives us
+# advance warning if any action breaks. Remove once GitHub flips the
+# runner default.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
