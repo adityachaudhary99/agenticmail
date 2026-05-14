@@ -12,6 +12,7 @@
 // reflects what the agent is doing right now.
 
 import { onSystemEvent } from './system-stream.js';
+import { state, API_URL } from './state.js';
 
 const BADGE_CONTAINER_ID = 'activity-badges';
 
@@ -93,6 +94,32 @@ function handleEvent(event) {
 }
 
 /**
+ * One-shot backfill: pull the dispatcher's currently-active workers
+ * so the badges appear IMMEDIATELY on page load if anything is in
+ * flight. Without this, the user only sees badges when the next
+ * worker_heartbeat / worker_started event fires — which can be up
+ * to 30 s away (heartbeat cadence), or never if the worker happens
+ * to finish first.
+ *
+ * Failures here are silent — the SSE stream is the source of truth
+ * for subsequent updates and will paint badges as events arrive.
+ */
+async function backfillActiveWorkers() {
+  try {
+    const res = await fetch(`${API_URL}/api/agenticmail/dispatcher/activity`, {
+      headers: { Authorization: `Bearer ${state.masterKey}` },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const active = Array.isArray(data?.active) ? data.active : [];
+    for (const w of active) {
+      if (w?.workerId) workers.set(w.workerId, w);
+    }
+    render();
+  } catch { /* silent — SSE will repaint as events come in */ }
+}
+
+/**
  * Subscribe to worker_* events on the shared /system/events stream.
  * Idempotent — safe to call after agent-list refresh.
  */
@@ -103,6 +130,12 @@ export function subscribeToActivity() {
   unsubWorkerStarted   = onSystemEvent('worker_started',   handleEvent);
   unsubWorkerHeartbeat = onSystemEvent('worker_heartbeat', handleEvent);
   unsubWorkerFinished  = onSystemEvent('worker_finished',  handleEvent);
+  // Paint whatever's already running BEFORE the first SSE event
+  // arrives. Without this, an in-flight worker stays invisible
+  // until its next heartbeat (~30 s) or until it finishes (which
+  // then never paints since worker_finished just removes the
+  // badge that never showed up).
+  backfillActiveWorkers();
 }
 
 // Tiny HTML escapers (kept local to avoid an import cycle).

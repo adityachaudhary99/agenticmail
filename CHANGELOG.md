@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.11] - 2026-05-14
+
+### Fixed — Activity badges invisible until next worker event fires
+
+User report: *"on the web UI I can't see the agent status anymore."*
+
+The activity-badge stream only carries `worker_started` /
+`worker_heartbeat` / `worker_finished` events — it doesn't replay
+currently-active workers when the UI connects. So when the user
+opened the page while an agent was already mid-turn, the badge
+stayed invisible until either:
+
+  - the worker's next heartbeat fired (cadence: ~30 s), OR
+  - the worker finished (in which case `worker_finished` just
+    removes the badge that never appeared in the first place).
+
+For short-lived wakes the badge never showed up at all, even though
+the worker was clearly running per `pm2 logs`.
+
+**Fix:** on `subscribeToActivity()`, do a one-shot GET against
+`/dispatcher/activity` (which returns the current active-worker
+list) and seed the workers map BEFORE the SSE feed takes over.
+Badges paint immediately on page load if anything is in flight;
+the SSE stream then handles all updates from that point forward.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.9.8 | 0.9.9 |
+| `@agenticmail/cli` | 0.9.10 | 0.9.11 |
+
 ## [0.9.10] - 2026-05-14
 
 ### Fixed — Back button from message detail left the message view stuck on screen
