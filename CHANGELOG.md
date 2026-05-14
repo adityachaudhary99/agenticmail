@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-05-14
+
+### Fixed — `reply_email({ replyAll: true })` dumped everyone on `To:`
+
+The 0.9.0 wake-default-from-To relies on senders using `To:` vs `Cc:` correctly. But the `reply_email` MCP tool and the web UI's reply-all both merged `original.to + original.cc + sender` into ONE `to` field on the outgoing message — every reply-all had every participant on `To:`. Result: the dispatcher's "wake on To: only" default fired for every recipient, every round. Wake-thrash was back in disguise.
+
+Canonical reply-all is now:
+
+- **To:** the original sender (the conversational counterparty)
+- **Cc:** every other participant from the original `To` + `Cc`, minus the sender of the new reply
+
+The MCP tool builds this shape automatically — agents don't need to think about it. Both `packages/mcp/src/tools.ts` (`reply_email` handler) and `packages/api/public/js/compose.js` (`openReply` web-UI flow) were updated.
+
+### Changed — Tool descriptions made the To/Cc semantics explicit
+
+`send_email` and `reply_email` descriptions now spell out "To is for action, Cc is for awareness" and explicitly call out that lumping every participant on `to` defeats the wake gating. The `to` field's per-parameter description ("Primary actor — the agent(s) you want to act on this message. Usually one address; rarely two. **Everyone else on the thread goes on `cc`, NOT here.**") makes the foot-gun visible at the tool-input level so models pick the right shape.
+
+### Changed — Wake prompt teaches the reply addressing pattern
+
+The dispatcher's new-mail wake prompt now includes a `## Reply addressing — CRITICAL for wake control` section that:
+
+- Documents how `replyAll: true` automatically produces the correct shape.
+- Forbids hand-rolling a comma-separated address list via `send_email` (the old failure pattern).
+- Shows the explicit `wake: ["next-actor"]` example for handoffs.
+- Shows `wake: []` for silent sign-off.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/core` | 0.9.1 | 0.9.2 |
+| `@agenticmail/api` | 0.9.1 | 0.9.2 |
+| `@agenticmail/mcp` | 0.9.1 | 0.9.2 |
+| `@agenticmail/claudecode` | 0.2.1 | 0.2.2 |
+| `@agenticmail/cli` | 0.9.1 | 0.9.2 |
+
+Plugin manifest mirrored to 0.9.2. openclaw unchanged.
+
 ## [0.9.1] - 2026-05-14
 
 The visibility release. Critical follow-up to 0.9.0 — the host could no longer tell whether the dispatcher was alive, deciding to skip, or just debouncing. This release closes every "what just happened?" gap.

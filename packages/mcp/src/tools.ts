@@ -179,11 +179,11 @@ async function apiRequest<T extends ApiResponse = ApiJsonObject>(method: string,
 export const toolDefinitions = [
   {
     name: 'send_email',
-    description: 'Send an email from the agent\'s mailbox. Supports multiple recipients on To and CC (comma-separated). The PRIMARY primitive for multi-agent coordination. WAKE SEMANTICS (changed in 0.9.0): by default only local @localhost recipients on `To:` get a Claude wake; CC\'d local agents receive the mail but don\'t wake — they see it on their next natural wake (replies addressed to them, or a future inbox check). This mirrors the email convention "To is for action, CC is for awareness" and prevents wake-thrash on multi-CC threads. To override: pass `wake: ["alice","bob"]` to wake specific agents regardless of To/CC position, or `wake: "all"` to opt back into the pre-0.9.0 "wake every CC\'d recipient" behaviour. Pass `wake: []` to deliver silently with no wakes at all. External emails are scanned for sensitive content; HIGH severity detections are BLOCKED for owner approval.',
+    description: 'Send an email from the agent\'s mailbox. The PRIMARY primitive for multi-agent coordination. **Use `to` and `cc` as the email standard intends** — `to` is the actor(s) the message is addressed to (one or two recipients in most cases); `cc` is everyone else on the thread for awareness. Lumping every participant on `to` is wrong and defeats the wake gating. WAKE SEMANTICS (0.9.0+): by default only local @localhost recipients on `to:` get a Claude wake; CC\'d local agents receive the mail but don\'t wake — they see it on their next natural wake. To override: pass `wake: ["alice","bob"]` for specific agents regardless of To/CC, or `wake: "all"` for the pre-0.9.0 "wake every recipient" behaviour, or `wake: []` to deliver silently. External emails are scanned for sensitive content; HIGH severity detections are BLOCKED for owner approval.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        to: { type: 'string', description: 'Recipient email address(es). For multi-agent threads, put the primary actor here and CC the rest. Comma-separated supported.' },
+        to: { type: 'string', description: 'Primary actor — the agent(s) you want to act on this message. Usually one address; rarely two. **Everyone else on the thread goes on `cc`, NOT here.** Lumping all participants on `to` defeats the wake gating: every local @localhost recipient on `to` gets a Claude turn, so a 5-agent thread = 5 Claude turns per round. Comma-separated supported but use sparingly.' },
         subject: { type: 'string', description: 'Email subject line' },
         text: { type: 'string', description: 'Plain text body' },
         html: { type: 'string', description: 'HTML body (optional)' },
@@ -278,7 +278,7 @@ export const toolDefinitions = [
   },
   {
     name: 'reply_email',
-    description: 'Reply to an email. Fetches the original message, auto-fills To, Subject (Re:), In-Reply-To, and References, then sends with quoted body. **For multi-agent thread coordination, pass `replyAll: true`** so every CC\'d participant sees your contribution and stays in context — that is how the thread-as-workspace pattern works. **Pass `wake` to name only the next actor(s)** so the dispatcher gives a Claude turn only to them; everyone else still receives the mail but stays asleep. Outbound guard applies — HIGH severity content is held for review.',
+    description: 'Reply to an email. Fetches the original message, auto-fills To, Subject (Re:), In-Reply-To, and References, then sends with quoted body. **For multi-agent thread coordination, pass `replyAll: true`** — the original sender lands on To: (so they wake, by default), every other thread participant lands on Cc: (so they see it without waking). This is the correct shape; the tool builds it for you. **Pass `wake` to override** the default wake target (e.g. you want to wake a specific CC\'d participant). Outbound guard applies — HIGH severity content is held for review.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -1451,15 +1451,44 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
       if (original.messageId) refs.push(original.messageId);
       const quotedBody = (original.text || '').split('\n').map((l: string) => `> ${l}`).join('\n');
       const fullText = `${args.text}\n\nOn ${original.date}, ${replyTo} wrote:\n${quotedBody}`;
-      let to = replyTo;
+
+      // Reply addressing.
+      //
+      // PRE-0.9.2 BUG: replyAll merged original.to + original.cc +
+      // sender into a single `to` field. Every reply-all dumped all
+      // participants on `To:`, which defeated 0.9.0's wake-default-
+      // from-To (everyone was on To, so everyone woke).
+      //
+      // Canonical reply-all is To: the previous actor (replyTo);
+      // Cc: everyone else, minus the new sender themselves. This
+      // way the dispatcher's "wake on To only" default fires
+      // exactly one Claude turn (the previous actor) per round,
+      // and everyone on the thread still sees the message.
+      //
+      // We can't know our own outgoing `from` here (the API will
+      // fill it from the authed agent), so we strip it server-side
+      // via the sender-self-loop guard. Best-effort de-self here
+      // is harmless extra hygiene.
+      let to: string = replyTo;
+      let cc: string | undefined;
       if (args.replyAll) {
-        const allTo = [...(original.to || []), ...(original.cc || [])].map((a: any) => a.address).filter(Boolean);
-        to = [replyTo, ...allTo].filter((v: string, i: number, a: string[]) => v && a.indexOf(v) === i).join(', ');
+        const norm = (a: { address?: string } | string) =>
+          (typeof a === 'string' ? a : a?.address ?? '').trim().toLowerCase();
+        const replyToLower = norm(replyTo);
+        const others = [...(original.to || []), ...(original.cc || [])]
+          .map((a: { address?: string }) => a?.address)
+          .filter((v): v is string => !!v)
+          .filter((v) => norm(v) !== replyToLower)
+          // Deduplicate while preserving order.
+          .filter((v, i, a) => a.findIndex((x) => norm(x) === norm(v)) === i);
+        to = replyTo;
+        cc = others.length > 0 ? others.join(', ') : undefined;
       }
 
       const replySendBody: Record<string, unknown> = {
         to, subject, text: fullText, html: args.html,
         inReplyTo: original.messageId, references: refs,
+        ...(cc !== undefined ? { cc } : {}),
       };
       // Forward the wake allowlist down the same path send_email uses.
       // The /mail/send route normalises and translates it into the

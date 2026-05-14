@@ -57,15 +57,31 @@ export function openReply(replyAll) {
     `Reply${replyAll ? ' all' : ''}: ${msg.subject ?? '(no subject)'}`;
   document.getElementById('compose-from').value = state.selectedAgent.id;
   const fromAddr = msg.from?.[0]?.address ?? '';
+  // Reply-all addressing.
+  //
+  // Canonical reply-all puts the previous actor on To: and everyone
+  // else on Cc:. The earlier code merged To+Cc+sender into a single
+  // `to` field, which (combined with 0.9.0's wake-default-from-To)
+  // produced wake-thrash again — every recipient was on To so
+  // every recipient woke. The split below restores the intended
+  // wake semantics: only the previous actor wakes by default;
+  // everyone else gets CC awareness.
   let toAddr = fromAddr;
+  let ccAddr = '';
   if (replyAll) {
-    const all = [fromAddr, ...(msg.to ?? []).map(a => a.address), ...(msg.cc ?? []).map(a => a.address)]
-      .filter(Boolean).filter((v, i, a) => a.indexOf(v) === i)
-      .filter(addr => addr !== state.selectedAgent.email);
-    toAddr = all.join(', ');
+    const me = (state.selectedAgent.email ?? '').toLowerCase();
+    const senderLower = fromAddr.toLowerCase();
+    const others = [...(msg.to ?? []), ...(msg.cc ?? [])]
+      .map(a => a.address)
+      .filter(Boolean)
+      .map(a => a.toLowerCase())
+      .filter(a => a !== senderLower && a !== me)
+      .filter((v, i, a) => a.indexOf(v) === i);
+    toAddr = fromAddr;
+    ccAddr = others.join(', ');
   }
   document.getElementById('compose-to').value = toAddr;
-  document.getElementById('compose-cc').value = '';
+  document.getElementById('compose-cc').value = ccAddr;
   document.getElementById('compose-wake').value = '';
   document.getElementById('compose-subject').value =
     (msg.subject ?? '').startsWith('Re:') ? msg.subject : `Re: ${msg.subject ?? ''}`;
