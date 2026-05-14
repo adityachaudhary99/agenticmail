@@ -881,7 +881,7 @@ export const toolDefinitions = [
   },
   {
     name: 'call_agent',
-    description: 'Synchronous RPC to delegate work to another AgenticMail agent. Pipeline: the task is queued in AgenticMail, the target agent processes it AS THEMSELVES (under their real identity, mailbox, persona, and audit trail), and the structured result returns into your call. THIS IS HOW MULTI-AGENT COORDINATION IS SUPPOSED TO WORK from any MCP host. Do not, instead, spawn one of your host\'s native sub-agents and tell it to "act as <target>" — that produces output under your identity, never touches the target\'s inbox, and skips their persona. Times out after the specified duration (default 180s, max 300s).',
+    description: 'Synchronous RPC to delegate work to another AgenticMail agent. Pipeline: the task is queued in AgenticMail, the target agent processes it AS THEMSELVES (under their real identity, mailbox, persona, and audit trail), and the structured result returns into your call. THIS IS HOW MULTI-AGENT COORDINATION IS SUPPOSED TO WORK from any MCP host. Do not, instead, spawn one of your host\'s native sub-agents and tell it to "act as <target>" — that produces output under your identity, never touches the target\'s inbox, and skips their persona. Pass outputSchema to require a structured deliverable shape: the API validates the worker\'s submit_result against the schema and rejects mismatches with validator errors, so the worker can retry with a correct shape rather than returning free-form prose. Times out after the specified duration (default 180s, max 300s).',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -889,6 +889,7 @@ export const toolDefinitions = [
         task: { type: 'string', description: 'Task description' },
         payload: { type: 'object', description: 'Additional data' },
         timeout: { type: 'number', description: 'Max seconds to wait (default: 180, max: 300)' },
+        outputSchema: { type: 'object', description: 'Optional JSON Schema (draft-7 subset: type, required, properties, items, enum, additionalProperties, minLength/maxLength, minimum/maximum) describing the shape submit_result must conform to. The worker sees the schema in the wake prompt and the API validates on submission.' },
       },
       required: ['target', 'task'],
     },
@@ -2383,6 +2384,10 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
         assignee: args.target,
         taskType: 'rpc',
         payload: { task: args.task, ...(args.payload || {}) },
+        // Pass outputSchema through verbatim. The API persists it
+        // and renders it into the worker's wake prompt; validation
+        // happens server-side on submit_result.
+        ...(args.outputSchema ? { outputSchema: args.outputSchema } : {}),
       });
       if (!created?.id) throw new Error('Failed to create task');
       const taskId = created.id;

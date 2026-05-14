@@ -4,7 +4,7 @@ import { escapeHtml, stripHtml, toast } from './utils.js';
 import { formatDateFull } from './time.js';
 import { renderMarkdown } from './markdown.js';
 import { avatarHtml } from './avatar.js';
-import { apiGet, apiPost } from './api.js';
+import { apiGet, apiPost, apiDelete } from './api.js';
 import { openReply } from './compose.js';
 import { loadList } from './list-view.js';
 import { icon } from './icons.js';
@@ -19,6 +19,8 @@ export async function openMessage(uid) {
       <button class="icon-btn" id="msg-reply" title="Reply">${icon('reply')}</button>
       <button class="icon-btn" id="msg-reply-all" title="Reply all">${icon('replyAll')}</button>
       <button class="icon-btn" id="msg-unread" title="Mark unread">${icon('mailUnread')}</button>
+      <button class="icon-btn" id="msg-spam" title="Report spam">${icon('spam')}</button>
+      <button class="icon-btn" id="msg-delete" title="Delete">${icon('trash')}</button>
       <div class="toolbar-spacer"></div>
     </div>
     <div class="message-view"><div class="empty">Loading…</div></div>
@@ -27,6 +29,8 @@ export async function openMessage(uid) {
   document.getElementById('msg-reply').addEventListener('click', () => openReply(false));
   document.getElementById('msg-reply-all').addEventListener('click', () => openReply(true));
   document.getElementById('msg-unread').addEventListener('click', () => markUnread());
+  document.getElementById('msg-spam').addEventListener('click', () => markSpam());
+  document.getElementById('msg-delete').addEventListener('click', () => deleteMessage());
 
   try {
     const msg = await apiGet(`/mail/messages/${uid}`, { agentKey: state.selectedAgent.apiKey });
@@ -83,5 +87,42 @@ async function markUnread() {
     await loadList(state.selectedAgent, state.selectedFolder);
   } catch (err) {
     toast(`Failed: ${err.message}`, true);
+  }
+}
+
+/**
+ * Move the open message to the Junk Mail folder (IMAP). The API
+ * route is POST /mail/messages/:uid/spam — it does the move +
+ * flags the message so future scans treat it as known spam.
+ */
+async function markSpam() {
+  if (!state.currentMessage || !state.selectedAgent) return;
+  if (!confirm('Report this message as spam? It will be moved to the Junk folder.')) return;
+  try {
+    await apiPost(`/mail/messages/${state.currentMessage.uid}/spam`, {}, { agentKey: state.selectedAgent.apiKey });
+    toast('Reported as spam.');
+    location.hash = `#/folder/${state.selectedFolder ?? 'inbox'}`;
+    await loadList(state.selectedAgent, state.selectedFolder);
+  } catch (err) {
+    toast(`Spam failed: ${err.message}`, true);
+  }
+}
+
+/**
+ * Delete the open message. DELETE /mail/messages/:uid moves it
+ * to the IMAP \Deleted state (Stalwart auto-expunges on server
+ * config, otherwise it stays in Trash). Confirm before firing
+ * since this is destructive.
+ */
+async function deleteMessage() {
+  if (!state.currentMessage || !state.selectedAgent) return;
+  if (!confirm('Delete this message?')) return;
+  try {
+    await apiDelete(`/mail/messages/${state.currentMessage.uid}`, { agentKey: state.selectedAgent.apiKey });
+    toast('Deleted.');
+    location.hash = `#/folder/${state.selectedFolder ?? 'inbox'}`;
+    await loadList(state.selectedAgent, state.selectedFolder);
+  } catch (err) {
+    toast(`Delete failed: ${err.message}`, true);
   }
 }

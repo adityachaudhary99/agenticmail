@@ -4,6 +4,7 @@ import { MailSender, type AccountManager, type AgenticMailConfig, type Database 
 import { requireAgent, requireAuth, touchActivity } from '../middleware/auth.js';
 import { pushEventToAgent, broadcastEvent } from './events.js';
 import { getAgentPassword } from './mail.js';
+import { validate as validateSchema, type Schema } from '../lib/schema-validator.js';
 
 // Promise-based RPC completion notification — resolves the long-poll instantly
 // when the target agent submits the task result, instead of relying on polling.
@@ -15,11 +16,20 @@ export function createTaskRoutes(db: Database, accountManager: AccountManager, c
   // Assign a task to another agent
   router.post('/tasks/assign', requireAuth, async (req, res, next) => {
     try {
-      const { assignee, taskType, payload, expiresInSeconds } = req.body || {};
+      const { assignee, taskType, payload, expiresInSeconds, outputSchema } = req.body || {};
       if (!assignee) { res.status(400).json({ error: 'assignee (agent name) is required' }); return; }
 
       const target = await accountManager.getByName(assignee);
       if (!target) { res.status(404).json({ error: `Agent "${assignee}" not found` }); return; }
+
+      // Optional JSON Schema for the deliverable shape. We persist
+      // it verbatim and validate `submit_result` against it later.
+      // Reject obviously-malformed schemas up front so the worker
+      // doesn't start a task it can never satisfy.
+      if (outputSchema !== undefined && (typeof outputSchema !== 'object' || outputSchema === null)) {
+        res.status(400).json({ error: 'outputSchema must be a JSON Schema object' });
+        return;
+      }
 
       const assignerId = req.agent?.id ?? 'master';
       const id = uuidv4();
@@ -28,16 +38,25 @@ export function createTaskRoutes(db: Database, accountManager: AccountManager, c
         : null;
 
       db.prepare(
-        'INSERT INTO agent_tasks (id, assigner_id, assignee_id, task_type, payload, expires_at) VALUES (?, ?, ?, ?, ?, ?)'
-      ).run(id, assignerId, target.id, taskType || 'generic', JSON.stringify(payload || {}), expiresAt);
+        'INSERT INTO agent_tasks (id, assigner_id, assignee_id, task_type, payload, expires_at, output_schema) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(id, assignerId, target.id, taskType || 'generic', JSON.stringify(payload || {}), expiresAt,
+        outputSchema ? JSON.stringify(outputSchema) : null);
 
       // Always auto-spawn an agent to process the task.
       // Push an RPC-style task event — this is the same event format that call_agent uses,
       // which OpenClaw hooks pick up to automatically spawn an agent session.
       const taskDescription = payload?.task || payload?.description || JSON.stringify(payload || {});
+      // If the assigner attached a schema, render it into the wake
+      // prompt so the worker sees up-front what shape the result
+      // must take. Worker that returns a free-form string when an
+      // object was requested gets a 400 on submit_result with the
+      // validator errors so it can retry with the right shape.
+      const schemaSection = outputSchema
+        ? `\n\nYour submit_result MUST conform to this JSON Schema:\n\`\`\`json\n${JSON.stringify(outputSchema, null, 2)}\n\`\`\`\nThe API will reject a non-conformant result with the validator errors so you can retry.`
+        : '';
       const spawnEvent = {
         type: 'task', taskId: id, taskType: 'rpc',
-        task: `You have a pending task (ID: ${id}). Check your pending tasks, claim it, process it, and submit the result.\n\nType: ${taskType || 'generic'}\nTask: ${taskDescription}`,
+        task: `You have a pending task (ID: ${id}). Check your pending tasks, claim it, process it, and submit the result.\n\nType: ${taskType || 'generic'}\nTask: ${taskDescription}${schemaSection}`,
         assignee: target.name, from: req.agent?.name ?? 'system',
       };
       if (!pushEventToAgent(target.id, spawnEvent)) {
@@ -116,6 +135,30 @@ export function createTaskRoutes(db: Database, accountManager: AccountManager, c
   router.post('/tasks/:id/result', requireAgent, async (req, res, next) => {
     try {
       const { result } = req.body || {};
+
+      // Schema validation. If the assigner attached an outputSchema
+      // when creating the task, the result must match it before we
+      // mark the task completed. Validation errors come back as a
+      // 400 with a flat error list — workers re-read the task,
+      // see the errors, and retry with a corrected shape rather
+      // than the task hanging forever.
+      const taskRow = db.prepare('SELECT output_schema FROM agent_tasks WHERE id = ?').get(req.params.id) as { output_schema?: string } | undefined;
+      if (taskRow?.output_schema) {
+        let schema: Schema | undefined;
+        try { schema = JSON.parse(taskRow.output_schema) as Schema; } catch { /* stored schema is corrupt — skip validation */ }
+        if (schema) {
+          const errors = validateSchema(result, schema);
+          if (errors.length > 0) {
+            res.status(400).json({
+              error: 'Result does not match the task outputSchema',
+              schemaErrors: errors,
+              hint: 'Retry submit_result with a value matching the schema. Use GET /tasks/:id to re-read the schema.',
+            });
+            return;
+          }
+        }
+      }
+
       const resultJson = JSON.stringify(result ?? null);
       const dbResult = db.prepare(
         "UPDATE agent_tasks SET status = 'completed', result = ?, completed_at = datetime('now') WHERE id = ? AND status = 'claimed'"
@@ -315,8 +358,10 @@ function parseTask(row: any): any {
   if (!row) return null;
   let payload: any = {};
   let result: any = null;
+  let outputSchema: any = null;
   try { payload = JSON.parse(row.payload); } catch { payload = row.payload; }
   try { result = row.result ? JSON.parse(row.result) : null; } catch { result = row.result; }
+  try { outputSchema = row.output_schema ? JSON.parse(row.output_schema) : null; } catch { outputSchema = null; }
   return {
     id: row.id,
     assignerId: row.assigner_id,
@@ -330,5 +375,6 @@ function parseTask(row: any): any {
     claimedAt: row.claimed_at,
     completedAt: row.completed_at,
     expiresAt: row.expires_at,
+    outputSchema,
   };
 }

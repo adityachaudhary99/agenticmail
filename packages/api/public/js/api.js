@@ -23,3 +23,27 @@ export async function apiPost(path, body, opts = {}) {
   if (!r.ok) throw new Error(`${r.status} ${path}`);
   return await r.json();
 }
+
+export async function apiPut(path, body, opts = {}) {
+  const r = await fetch(`${API_URL}/api/agenticmail${path}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${opts.agentKey ?? state.masterKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  return await r.json();
+}
+
+export async function apiDelete(path, opts = {}) {
+  const r = await fetch(`${API_URL}/api/agenticmail${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${opts.agentKey ?? state.masterKey}` },
+  });
+  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  // DELETE may return 204 No Content — guard against empty body.
+  const text = await r.text();
+  return text ? JSON.parse(text) : { ok: true };
+}

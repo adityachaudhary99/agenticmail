@@ -16,7 +16,24 @@ Agent { subagent_type: "agenticmail-fola", prompt: "draft a reply to my last ema
 
 This package is to Claude Code what `@agenticmail/openclaw` is to OpenClaw: an integration package that wires AgenticMail into the host AI runtime. It mirrors that package's layout 1:1, so if you know one, you know the other.
 
-## ✨ What's new in 0.1.14
+## ✨ What's new in 0.1.17
+
+- **⏱ Compact-and-continue (0.1.17)** — workers can now run across multiple SDK turns when one isn't enough to finish a task. `runWorker` is wrapped by `runWorkerWithCompaction`, which on a context-overflow error (`prompt is too long`, `context_length_exceeded`, etc.) synthesises a breadcrumb checkpoint from the captured tool-call log + last assistant text, builds a continuation prompt prefixed with "Resuming after context reset / do NOT redo these steps", and loops. Capped at 4 iterations by default so cost is bounded; on cap exhaustion the worker exits with `compaction budget exhausted` so the host sees what happened.
+- **🪝 Mail-hook resolves with absolute path (0.1.16)** — the hook command registered in `~/.claude/settings.json` is now `node "<abs-path>/mail-hook.js"` instead of the bare bin name. `import.meta.url` + a 3-step filesystem probe (`dist/` sibling → `dist/` alongside `src/` → `../dist/`) handle both published builds and dev checkouts (`tsx`-loaded `src/install.ts` no longer points at a non-existent `src/mail-hook.js`). The `command not found` and `MODULE_NOT_FOUND` errors are gone. Existing installs auto-heal on the next `agenticmail claudecode` run because the upserter rewrites the command with the freshly-resolved path.
+- **📨 Stop hook output rewritten (0.1.15 / 0.1.16)** — the Stop hook's `reason` is printed to the user in the transcript. The original text was written assuming only the model would see it; phrases like "you do NOT need to ping the user" and "surface them to the user" read as awkward instruction-leakage. New shape:
+  ```
+  🎀 New AgenticMail (bridge inbox) — N messages since the last check:
+
+    · UID 2 — vesper · Re: Audit assignment…
+      > <up to 180 chars of preview body>
+
+  Full body: mcp__agenticmail__read_email. Reply: mcp__agenticmail__reply_email (replyAll: true).
+  ```
+  Same body for both UserPromptSubmit and Stop. Hard wall-time bound (1.5 s global timeout, 800 ms per fetch) and proper stdin listener cleanup so the hook never holds the harness REPL.
+- **🤖 Autonomous-mode awareness via Stop hook (0.1.14)** — the mail hook now registers on `Stop` in addition to `UserPromptSubmit`. Long headless Claude Code runs (no user prompts firing for hours) finally see teammate replies: when bridge mail is unread at a turn boundary, the hook returns `{decision: 'block', reason: '…'}` forcing Claude to continue with the new-mail summary in context. This is the schema-correct supported way to inject context at Stop, unlike the 0.8.22 PreToolUse attempt which used the wrong output shape.
+- **📥 Long-running workers (0.1.14)** — dropped the 30-min hard timeout. Per-worker log file at `~/.agenticmail/worker-logs/<id>.log` capturing every SDK tool call / result / assistant chunk. 30 s heartbeats POSTed to the API so `check_activity` shows real progress. Per-worker scratch cwd at `~/.agenticmail/worker-cwds/<id>/` prevents parallel agents from clobbering each other's output. Tail via the MCP `tail_worker` tool.
+
+## ✨ Earlier — 0.1.14
 
 - **Workers run for hours** — dropped the 30-min hard timeout. Per-worker log file at `~/.agenticmail/worker-logs/<id>.log` capturing every SDK tool call + result + assistant chunk as a one-liner. Heartbeats POSTed to the API every 30 s so `check_activity` sees real progress. Per-worker scratch cwd at `~/.agenticmail/worker-cwds/<id>/` prevents parallel agents from clobbering each other's output. Tail via the new MCP tool `tail_worker`.
 - **Autonomous-mode awareness via Stop hook** — the mail hook now registers on the **Stop** Claude Code event too. Long headless runs (no user prompts) finally see teammate replies: when bridge mail is unread at a turn boundary, the hook returns `{decision: 'block', reason: '...'}`, forcing Claude to continue with the new-mail summary in context. This is the schema-correct supported way to inject context at Stop, unlike the 0.8.22 PreToolUse attempt.

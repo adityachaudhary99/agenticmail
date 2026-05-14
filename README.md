@@ -33,7 +33,15 @@
 
 ---
 
-### ✨ What's new in 0.8.29
+### ✨ What's new in 0.8.31
+
+- **Compact-and-continue** — workers can now run across multiple SDK turns. On a context-overflow error the dispatcher synthesises a breadcrumb checkpoint from the captured log, builds a "resuming after context reset" continuation prompt, and loops (capped at 4 iterations).
+- **Typed task contracts** — `call_agent` / `POST /tasks/assign` accept an `outputSchema` (JSON Schema, draft-7 subset). `submit_result` validates against it; mismatches return 400 with the validator errors so the worker can retry with a corrected shape.
+- **Delete + Move-to-Spam buttons** in the message view; **Compose auto-saves to Drafts** every 2s.
+- **`All Mail` folder hides itself** on servers that don't have one (Stalwart, most non-Gmail). Select-all checkbox now wires through.
+- **Logo background stripped** — bow PNG is now RGBA with proper transparency.
+
+### ✨ Earlier — 0.8.29
 
 - **Star button wired** — clicking the star toggles IMAP's `\Flagged` flag via the new `POST /mail/messages/:uid/star` endpoint. Backed by `MailReceiver.setStarred` in `@agenticmail/core`. Optimistic UI; revert on failure.
 - **Gmail-compact list UX** — single 36 px rows (was 64 px stacked), subject + preview on one truncated line separated by an em-dash, leading checkbox column, sticky list-toolbar with select-all + refresh + count. Same layout for every folder.

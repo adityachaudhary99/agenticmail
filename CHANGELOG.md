@@ -5,6 +5,77 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.31] - 2026-05-14
+
+Big release: the two long-queued features (compact-and-continue + typed task contracts) plus a sweep of web-UI fixes the user hit while running 0.8.30.
+
+### Added — Compact-and-continue across context limit
+
+Workers can now run across multiple SDK turns when one turn isn't enough to finish a task. `runWorker` is wrapped by a new `runWorkerWithCompaction` loop that:
+
+1. Runs a worker turn.
+2. If it succeeds (worker exited naturally via submit_result / reply_email / graceful end), returns.
+3. If it fails with a context-overflow error (`prompt is too long`, `context_length_exceeded`, etc.), synthesises a **breadcrumb checkpoint** from the captured tool-call log + last assistant text, builds a continuation prompt prefixed with "Resuming after context reset / do NOT redo these steps", and loops.
+4. Caps at 4 iterations (configurable) — enough for a multi-hour task across context resets, low enough to bound runaway cost.
+
+Failure mode if the worker never finishes: returns `compaction budget exhausted` after the iteration cap. No infinite-spend risk.
+
+Test: `compact-and-continue: retries with a checkpoint after a context-overflow error` mocks an SDK that throws on call 1 and succeeds on call 2; asserts the second prompt contains the resume marker.
+
+### Added — Typed task contracts (JSON-Schema-validated `submit_result`)
+
+`POST /tasks/assign` and `call_agent` now accept an optional `outputSchema` field (JSON Schema, draft-7 subset). When attached:
+
+- The schema is persisted on the task row (`agent_tasks.output_schema`, new column via migration `014_task_output_schema.sql`).
+- The worker's wake prompt includes the schema verbatim with a "your submit_result MUST conform to this" preamble.
+- `POST /tasks/:id/result` validates the result against the schema before accepting. Mismatches return 400 with a flat `schemaErrors: [{ path, message }]` list so the worker can re-read the task and retry with a corrected shape rather than the task hanging.
+
+Validator is a hand-rolled draft-7 subset in `packages/api/src/lib/schema-validator.ts` covering `type`, `required`, `properties`, `items`, `enum`, `additionalProperties: false`, `minLength`/`maxLength`, `minimum`/`maximum`. Unsupported keywords are ignored rather than crashing. 12 unit tests.
+
+Tasks without an `outputSchema` keep the v0.8.x behaviour (accept anything) — fully back-compat.
+
+### Added — Delete + Move-to-Spam in the message view
+
+Two buttons on the open-message toolbar:
+
+- **Spam icon** → `POST /mail/messages/:uid/spam` (moves to Junk + flags as known spam). Confirms before firing.
+- **Trash icon** → `DELETE /mail/messages/:uid`. Confirms before firing.
+
+Both routes existed in the API already; the UI just never surfaced them.
+
+### Added — Compose auto-saves to Drafts
+
+Typing in the compose modal now triggers a debounced 2 s save to `POST /drafts` on first edit and `PUT /drafts/:id` on subsequent edits. The draft id lives in `state.composeDraftId`. On send, the draft is deleted after the message goes out (no orphan rows). On modal close without send, the draft stays in Drafts so the user can pick it back up. Compose footer shows a small "Saved to Drafts" status next to the Send button.
+
+### Fixed — `No All Mail folder on this server`
+
+`All Mail` is a Gmail-only virtual folder. Stalwart and most other IMAP servers don't have an equivalent. The sidebar entry was always visible regardless, leading to a dead-end empty state. Now the entry is marked `requiresDiscovery: true` and gets hidden when the per-agent folder cache doesn't match a real IMAP folder. Folder discovery now runs on agent switch (before the first sidebar render) so the hide rule has the cache to consult.
+
+### Fixed — Select-all checkbox in the list toolbar
+
+The checkbox in the list toolbar was rendered but had no listener. Now toggles every visible row's checkbox. Bulk-action toolbar isn't shipped yet, but the selection state is wired so the moment it lands the checkbox does what it should.
+
+### Changed — AgenticMail logo has its white background stripped
+
+The 0.8.26 logo PNG was sourced from a screenshot with a white background baked in (RGB, no alpha). On a dark sidebar / topbar that white box was visible around the bow. Re-processed the source with ImageMagick (`-fuzz 8% -transparent white -alpha set`) to make the surroundings transparent (now RGBA). Brand logo, auth-card heading, and favicon all pick up the new asset.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/core` | 0.7.3 | 0.7.4 |
+| `@agenticmail/api` | 0.7.15 | 0.7.16 |
+| `@agenticmail/mcp` | 0.7.8 | 0.7.9 |
+| `@agenticmail/claudecode` | 0.1.16 | 0.1.17 |
+| `@agenticmail/cli` | 0.8.30 | 0.8.31 |
+
+Plugin manifest mirrored to 0.8.31. openclaw unchanged.
+
+### Tests
+
+- 109 claudecode tests pass (was 108, +1 for compaction).
+- 12 new schema-validator tests in `@agenticmail/api`.
+
 ## [0.8.30] - 2026-05-14
 
 ### Changed — Centered search bar + centered message reading column

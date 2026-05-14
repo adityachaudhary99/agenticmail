@@ -8,7 +8,28 @@ The MCP (Model Context Protocol) server for [AgenticMail](https://github.com/age
 
 When connected, your AI agent can send emails and texts, check inboxes, reply to messages, receive verification codes, manage contacts, schedule emails, assign tasks to other agents, and more — all through natural language. The server provides 62 tools that cover every email, SMS, and agent management operation.
 
-## ✨ What's new in 0.7.7
+## ✨ What's new in 0.7.9
+
+- **📐 `call_agent` accepts `outputSchema`** — pass a JSON Schema (draft-7 subset) describing the deliverable shape and the API validates `submit_result` against it; mismatches come back as validator errors so the worker can retry with a correct shape instead of returning free-form prose. The schema is rendered into the worker's wake prompt up-front. Example:
+  ```js
+  await call_agent({
+    target: 'vesper',
+    task: 'Audit row 34 of the YAML patch.',
+    outputSchema: {
+      type: 'object',
+      required: ['summary', 'findings', 'recommendation'],
+      properties: {
+        summary:        { type: 'string' },
+        findings:       { type: 'array', items: { type: 'string' } },
+        recommendation: { type: 'string', enum: ['proceed', 'block'] },
+      },
+    },
+  });
+  ```
+- **📥 `tail_worker(workerId, lines?)`** — paired with `check_activity`. When a worker shows up as long-running or stale, `tail_worker` returns the trailing N lines of its log (every tool call, result, and assistant chunk as a one-liner). Master-key only. Lives in the `multi_agent_extras` tier so it ships in the default toolbelt for hosts that delegate work.
+- **📊 `check_activity` shows live progress** — output now includes last tool used, tool-call count, duration in `Xh Ym Zs`, and a `stale` flag derived from heartbeat age. Workers are no longer auto-evicted from the registry; staleness is diagnostic.
+
+## ✨ Earlier — 0.7.7
 
 - **`wake` parameter on every send tool** — `send_email`, `reply_email`, `forward_email`, `template_send`, `manage_drafts(send)` all accept `wake: ["alice", "bob"]` (or comma-separated string). The dispatcher gives a Claude turn only to listed agents; the rest still receive the mail but stay asleep. Single biggest token saver on multi-agent threads.
 - **`check_activity` tool** (in the `essential` set) — see which agents the dispatcher has woken right now, what they're working on, how long they've been running, plus a preview of recently-finished work. Answers "did the agent I just emailed actually start working?" without waiting for a reply.

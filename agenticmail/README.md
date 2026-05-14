@@ -23,7 +23,14 @@ It bundles a setup wizard, API server launcher, and a full interactive shell wit
 >
 > Zero prompts, ~2 minutes, fully autonomous. Then tell the user to restart Claude Code. Full agent-facing runbook — including verification, common failures, and "what if Node < 22" — is at [`AGENTS.md`](https://github.com/agenticmail/agenticmail/blob/main/AGENTS.md) in the repo (the [agents.md](https://agents.md) convention).
 
-## ✨ What's new in 0.8.27
+## ✨ What's new in 0.8.31
+
+- **⏱ Compact-and-continue** — workers run across multiple SDK turns when one turn isn't enough. On context overflow the dispatcher synthesises a breadcrumb checkpoint from the captured log, builds a "resuming after context reset / do NOT redo" continuation prompt, and loops (4-iter cap so cost is bounded).
+- **📐 Typed task contracts** — `call_agent` / `POST /tasks/assign` accept an `outputSchema` (JSON Schema, draft-7 subset). The wake prompt renders the schema into the worker's instructions and `submit_result` validates against it; mismatches return 400 with a flat `schemaErrors: [{ path, message }]` list so the worker can retry with a corrected shape.
+- **🪝 Mail-hook polish** — Stop hook output rewritten as a clean inbox digest (preview, audience-neutral phrasing, no instruction-leakage). Hook bin path resolved with `import.meta.url` + filesystem probing so it works on both global npm installs and dev checkouts; the previous `command not found` and `MODULE_NOT_FOUND` errors are gone. Old installs auto-heal on the next `agenticmail claudecode` run.
+- **🖱 Web UI fixes** — Delete + Move-to-Spam buttons in the message view; Compose auto-saves to Drafts every 2 s; `All Mail` folder hides itself on servers that don't have one; select-all checkbox wires through; AgenticMail logo PNG is now RGBA (transparent) instead of RGB with a baked-in white box.
+
+## ✨ Earlier — 0.8.27
 
 - **Web UI folder fix** — Sent / Drafts / Spam / Trash returned empty because hard-coded names didn't match Stalwart's IMAP names. Auto-discovery now matches `Sent Items`, `Junk Mail`, `Deleted Items`, `[Gmail]/…`, etc.
 - **Two-line preview** on every list row (switched to `/mail/digest`).

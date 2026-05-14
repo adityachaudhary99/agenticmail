@@ -10,7 +10,7 @@ import { apiGet } from './api.js';
 import { isBridgeAgent } from './avatar.js';
 import { renderProfile, toggleProfileMenu, closeProfileMenu } from './profile.js';
 import { renderSidebar } from './sidebar.js';
-import { loadList, renderList, clearSearch } from './list-view.js';
+import { loadList, renderList, clearSearch, ensureFolderCache } from './list-view.js';
 import { openMessage } from './message-view.js';
 import { populateComposeFrom, openCompose, closeCompose, sendCompose } from './compose.js';
 import { subscribeToAllAgents, maybeRequestNotificationPermission } from './sse.js';
@@ -96,6 +96,15 @@ async function selectAgent(agent) {
   state.selectedAgent = agent;
   state.selectedUid = null;
   state.currentMessage = null;
+  // Reset the per-agent folder cache so a fresh discovery runs
+  // against the new agent's IMAP. Otherwise switching to an
+  // account that uses different folder names (e.g. Gmail relay
+  // vs vanilla Stalwart) keeps the previous cache.
+  state.folderNames = {};
+  // Discover folders BEFORE the first sidebar render so the
+  // `requiresDiscovery` hide-rule (All Mail on non-Gmail servers)
+  // has the cache to consult. Falls back to defaults on failure.
+  await ensureFolderCache(agent);
   renderSidebar(onFolderSelect);
   renderProfile();
   await loadList(agent, state.selectedFolder);

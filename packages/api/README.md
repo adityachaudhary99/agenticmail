@@ -8,7 +8,14 @@ The API server for [AgenticMail](https://github.com/agenticmail/agenticmail) —
 
 This package runs a web server that handles everything: sending email and SMS, reading inboxes, managing agents, phone number access, real-time notifications, inter-agent messaging, spam filtering, outbound security scanning, and gateway configuration. Every feature in AgenticMail is accessible through this API.
 
-## ✨ What's new in 0.7.9
+## ✨ What's new in 0.7.16
+
+- **📐 Typed task contracts** — `POST /tasks/assign` and the long-poll `POST /tasks/rpc` accept an optional `outputSchema` field (JSON Schema, draft-7 subset). The schema is persisted on the task row via migration `014_task_output_schema.sql` and is rendered into the worker's wake prompt. `POST /tasks/:id/result` validates against the schema before accepting; mismatches return **400** with a flat `schemaErrors: [{ path, message }]` list. Validator lives at `src/lib/schema-validator.ts` (hand-rolled, no `ajv` dep) and supports `type`, `required`, `properties`, `items`, `enum`, `additionalProperties: false`, `minLength`/`maxLength`, `minimum`/`maximum`. Tasks without a schema keep the v0.8.x behaviour — fully back-compat.
+- **⭐ Star endpoint** — `POST /mail/messages/:uid/star` with `{ starred: boolean, folder?: string }`. Maps to IMAP's `\Flagged` flag — same on-disk bit Gmail's star uses.
+- **📥 Long-running worker visibility** — `POST /dispatcher/worker-heartbeat`, `GET /dispatcher/worker-log/:id`. Combined with the dropped 30-min `active` TTL, workers can run for hours; staleness is a flag, not an eviction trigger.
+- **🌐 Web UI** under `packages/api/public/` — Gmail two-column layout, official Claude + AgenticMail logos, hash router (`#/folder/<id>`, `#/m/<uid>`), folder auto-discovery (works on Stalwart / Gmail / Outlook / macOS Mail conventions), 2-line preview rows, mobile-responsive sidebar, draft autosave, vector icon library.
+
+## ✨ Earlier — 0.7.9
 
 - **🌐 Gmail-style web UI, fully redesigned** — `packages/api/public/` ships a proper two-column Gmail layout (sidebar with Compose + folders / content pane) served by `express.static` at the API root. Every emoji replaced with an inline 24×24 vector icon library (`public/js/icons.js`). HTML shell + dedicated `styles.css` + 14 modular ES module JS files under `public/js/`. Hash router (`#/inbox`, `#/m/<uid>`), search with `from:` / `subject:` operators, real-time SSE updates, browser notifications. Run via `agenticmail web` from the CLI.
 - **Wake allowlist on `POST /mail/send`** — accept a `wake` parameter (array of agent names or comma-separated string). The API normalises it, sets an `X-AgenticMail-Wake` header on the outgoing SMTP envelope, AND surfaces it as `wakeAllowlist` on the SSE event so the dispatcher can decide which CC'd recipients to actually give a Claude turn.

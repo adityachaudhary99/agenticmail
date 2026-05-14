@@ -691,8 +691,13 @@ mark.search-hl {
   font-weight: 500; font-size: 14px;
 }
 .btn-send:hover { background: var(--accent-strong); }
+.compose-status {
+  font-size: 12px; color: var(--muted);
+  margin-left: 12px;
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .btn-discard {
-  margin-left: auto;
   color: var(--muted);
   padding: 8px 12px;
 }

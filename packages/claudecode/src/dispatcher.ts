@@ -367,6 +367,114 @@ export interface WorkerObserver {
 }
 
 /**
+ * Compact-and-continue: drive a worker across multiple SDK turns
+ * when one turn isn't enough to finish (context overflow, natural
+ * pause + continuation marker, etc.). Each iteration:
+ *
+ *   1. Run `runWorker` with the current prompt.
+ *   2. If it succeeds (worker exited naturally — likely after
+ *      submit_result, reply_email, or a graceful end), return.
+ *   3. If it fails with a context-overflow error AND we have
+ *      budget left, synthesize a checkpoint from the captured
+ *      log lines + last assistant text, build a continuation
+ *      prompt, and loop.
+ *   4. If iterations are exhausted, return the last failure.
+ *
+ * Iteration cap defaults to 4 — enough for a worker to finish a
+ * multi-hour task across context resets, low enough to bound
+ * runaway cost. Override per worker via the env knob.
+ *
+ * NOTE: this only addresses the case where ONE query() hits the
+ * model's context limit mid-conversation. Workers that genuinely
+ * never end (no submit_result, no mail send) still loop until
+ * the iteration cap; no infinite-spend hazard, just a graceful
+ * abort with a clear "compaction budget exhausted" reason.
+ */
+async function runWorkerWithCompaction(
+  query: QueryFn,
+  persona: string,
+  initialPrompt: string,
+  agent: AgenticMailAccount,
+  mcpServerName: string,
+  mcpCommand: string,
+  mcpArgs: string[],
+  mcpEnv: Record<string, string>,
+  log: (level: 'info' | 'warn' | 'error', msg: string) => void,
+  observer: WorkerObserver,
+  cwd: string,
+  maxIterations = 4,
+): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+  let prompt = initialPrompt;
+  let lastResult: { ok: true; text: string } | { ok: false; error: string } | null = null;
+  /** Rolling capture of tool calls + their truncated results for
+   *  the continuation prompt. We don't keep the full conversation —
+   *  just enough breadcrumbs so the next-turn worker knows what's
+   *  already been done. */
+  const breadcrumbs: string[] = [];
+  const captureObserver: WorkerObserver = {
+    onMessage(tag, summary) {
+      observer.onMessage(tag, summary);
+      if (tag === 'tool_use') breadcrumbs.push(`✓ ${summary}`);
+      else if (tag === 'tool_result') breadcrumbs.push(`  → ${summary}`);
+    },
+  };
+
+  for (let iter = 0; iter < maxIterations; iter++) {
+    if (iter > 0) {
+      log('info', `[dispatcher] compaction iter ${iter + 1}/${maxIterations} for "${agent.name}"`);
+    }
+    lastResult = await runWorker(
+      query, persona, prompt, agent,
+      mcpServerName, mcpCommand, mcpArgs, mcpEnv,
+      log, undefined, captureObserver, cwd,
+    );
+    if (lastResult.ok) return lastResult;
+    if (!isContextOverflowError(lastResult.error)) return lastResult;
+    if (iter === maxIterations - 1) {
+      return { ok: false, error: `compaction budget exhausted (${maxIterations} iters): ${lastResult.error}` };
+    }
+    // Build a continuation prompt. The checkpoint is a terse list
+    // of what's been done so far + the original task, with an
+    // explicit instruction not to redo the completed steps.
+    const checkpoint = breadcrumbs.slice(-40).join('\n');  // cap at 40 most recent
+    prompt = [
+      initialPrompt,
+      '',
+      '## Resuming after context reset',
+      '',
+      'You hit the model context limit on the previous turn. Here is a',
+      'breadcrumb of what you already accomplished in that turn —',
+      'do NOT redo any of these steps:',
+      '',
+      checkpoint || '(no breadcrumbs captured)',
+      '',
+      'Continue from where you left off. If you have already produced',
+      'the final deliverable on the previous turn (e.g. submit_result,',
+      'reply_email), do nothing this turn and end cleanly.',
+    ].join('\n');
+    log('info', `[dispatcher] context overflow on "${agent.name}" — compacting (${breadcrumbs.length} breadcrumbs)`);
+  }
+  return lastResult ?? { ok: false, error: 'worker did not run' };
+}
+
+/**
+ * True when the SDK error message looks like the model hit its
+ * context window. We match conservatively (substring patterns) —
+ * Anthropic's error string is "prompt is too long: ... tokens..."
+ * but a future SDK might phrase it differently, so we also match
+ * common synonyms.
+ */
+function isContextOverflowError(msg: string): boolean {
+  const m = msg.toLowerCase();
+  return m.includes('prompt is too long')
+      || m.includes('context_length_exceeded')
+      || m.includes('context length exceeded')
+      || m.includes('max tokens')
+      || m.includes('maximum context')
+      || m.includes('token limit');
+}
+
+/**
  * Spawn-and-wait for a worker via the Claude Agent SDK.
  * Drains the query stream, captures the final assistant text, returns it.
  *
@@ -1146,7 +1254,7 @@ export class Dispatcher {
       });
       this.log('info', `[dispatcher] waking "${account.name}" — ${ctx.kind}${ctx.taskId ? ' ' + ctx.taskId : ctx.uid ? ' uid=' + ctx.uid : ''}`);
       const mcpEnv = await this.buildMcpEnv();
-      workerResult = await runWorker(
+      workerResult = await runWorkerWithCompaction(
         this.query,
         body,
         prompt,
@@ -1156,7 +1264,6 @@ export class Dispatcher {
         this.cfg.mcpArgs,
         mcpEnv,
         this.log,
-        undefined,
         observer,
         cwdDir,
       );

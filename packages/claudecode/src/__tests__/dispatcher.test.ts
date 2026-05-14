@@ -102,6 +102,49 @@ describe('Dispatcher.handleEvent — new-mail routing', () => {
     expect(mcpServers.agenticmail.env.AGENTICMAIL_API_KEY).toBeUndefined();
   });
 
+  it('compact-and-continue: retries with a checkpoint after a context-overflow error', async () => {
+    // Mock SDK that throws "prompt is too long" on the first call,
+    // succeeds on the second. The dispatcher should observe the
+    // failure, build a continuation prompt, and call SDK again.
+    const calls: Array<{ prompt: string }> = [];
+    let attempt = 0;
+    const query: QueryFn = (params) => {
+      const promptStr = params.prompt as string;
+      calls.push({ prompt: promptStr });
+      attempt++;
+      if (attempt === 1) {
+        return (async function* () {
+          // Emit one fake tool_use so the breadcrumb capture has
+          // something to fold into the continuation prompt.
+          yield {
+            type: 'assistant',
+            message: { content: [{ type: 'tool_use', name: 'Read', input: { path: '/x' } }] },
+          };
+          throw new Error('prompt is too long: 200000 tokens > 200000 max');
+        })();
+      }
+      return (async function* () {
+        yield { type: 'assistant', message: { content: [{ type: 'text', text: 'done' }] } };
+      })();
+    };
+    const d = new Dispatcher({
+      masterKey: 'mk_test',
+      apiUrl: 'http://127.0.0.1:3200',
+      agentsDir: '/tmp/agents-do-not-exist-' + Math.random(),
+      querySdk: query,
+      fetchImpl: vi.fn() as unknown as typeof fetch,
+      log: () => {},
+    });
+    await d.handleEvent(FOLA, { type: 'new', uid: 7, from: 'a', subject: 'big task' });
+    expect(calls).toHaveLength(2);
+    // Second call's prompt must contain the resume marker so we know
+    // it's a continuation, not a duplicate first-turn spawn.
+    expect(calls[1].prompt).toContain('Resuming after context reset');
+    expect(calls[1].prompt).toContain('do NOT redo');
+    // First call's prompt must NOT contain the marker (sanity).
+    expect(calls[0].prompt).not.toContain('Resuming after context reset');
+  });
+
   it('does NOT pass allowedTools — workers inherit the full native + MCP toolset', async () => {
     // Earlier versions of the dispatcher locked workers to MCP-only
     // tools. That turned "implement this game" into "paste source code

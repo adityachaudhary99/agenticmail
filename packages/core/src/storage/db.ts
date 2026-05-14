@@ -357,6 +357,17 @@ CREATE INDEX IF NOT EXISTS idx_pending_outbound_agent ON pending_outbound(agent_
 ALTER TABLE pending_outbound ADD COLUMN notification_message_id TEXT;
 CREATE INDEX IF NOT EXISTS idx_pending_notification ON pending_outbound(notification_message_id);
 `,
+  '014_task_output_schema.sql': `
+-- Typed task contracts: when an assigner cares about the shape of the
+-- deliverable, they can attach a JSON Schema describing what
+-- submit_result must look like. The API validates against it before
+-- accepting the result, so workers can't return free-form prose when
+-- a structured object was requested.
+--
+-- Column is optional; NULL means "no schema, accept anything" (the
+-- v0.8.x behaviour, fully back-compat).
+ALTER TABLE agent_tasks ADD COLUMN output_schema TEXT;
+`,
 };
 
 function runMigrations(database: Database): void {

@@ -19,7 +19,9 @@ This plugin is the entry point. The heavy lifting lives in the [main AgenticMail
 * **`check_activity` tool.** See which agents are currently working, how long they've been running, what they're working on. Answers "did the agent I just emailed actually start working?"
 * **Gmail-style web UI** at `http://127.0.0.1:3829/` — two-column layout, official Claude + AgenticMail logos, off-canvas mobile sidebar, hash router, real-time SSE updates, full markdown rendering. Run `agenticmail web` to open it.
 * **Workers run for hours** — no aggressive timeout. Per-worker logs (`tail_worker` MCP tool), 30 s heartbeats, isolated cwd per worker. `check_activity` shows last tool / turn count / `stale` flag instead of evicting.
-* **Autonomous-mode awareness** — long headless Claude Code runs (no user prompts) wake on teammate replies at every turn boundary via the Stop hook.
+* **Compact-and-continue.** When a worker hits the model context limit, the dispatcher synthesises a breadcrumb checkpoint from the captured tool-call log, builds a "resuming after context reset / do NOT redo" continuation prompt, and restarts the worker. Capped at 4 iterations so cost stays bounded; multi-hour tasks now span context resets cleanly.
+* **Typed task contracts.** `call_agent` accepts an `outputSchema` (JSON Schema, draft-7 subset). The schema is rendered into the worker's wake prompt and `submit_result` validates against it; non-conformant results come back as validator errors so the worker retries with a corrected shape instead of returning free-form prose.
+* **Autonomous-mode awareness via Stop hook.** Long headless Claude Code runs (no user prompts firing for hours) wake on teammate replies at every turn boundary. When the bridge inbox has unread mail, the hook returns `decision: 'block'` with a clean digest as the reason, forcing Claude to continue with the new mail in context. The hook command is registered with an absolute path resolved at install time so it works regardless of `$PATH` config.
 * **Optional external email.** Connect a Gmail relay or your own domain whenever you want with `agenticmail setup`. Default install is local only.
 
 ## Install

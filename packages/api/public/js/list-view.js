@@ -97,6 +97,15 @@ export async function loadList(agent, folder) {
     <div class="list-rows" id="list-rows"><div class="empty">Loading…</div></div>
   `;
   document.getElementById('list-refresh-btn')?.addEventListener('click', () => loadList(agent, folder));
+  // Select-all toggles every visible row checkbox. We don't currently
+  // expose a bulk-action toolbar (delete/archive/move) yet, so this
+  // is purely a visual selection state for now — but wiring it
+  // means it works the moment a bulk-action surface lands.
+  document.getElementById('list-select-all-input')?.addEventListener('change', (e) => {
+    const checked = e.target.checked;
+    document.querySelectorAll('#list-rows .row-check input[type=checkbox]')
+      .forEach(cb => { cb.checked = checked; });
+  });
   await ensureFolderCache(agent);
 
   // Resolve the real IMAP folder. Starred reuses INBOX + a client-

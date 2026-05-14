@@ -10,7 +10,12 @@ This is the foundation layer that everything else builds on. If the API server, 
 
 Every other AgenticMail package depends on this one.
 
-## ✨ What's new in 0.7.2
+## ✨ What's new in 0.7.4
+
+- **⭐ `MailReceiver.setStarred(uid, starred, mailbox?)`** — toggles IMAP's `\Flagged` flag via `messageFlagsAdd` / `messageFlagsRemove`. Same on-disk bit Gmail's star uses. Underpins the new `POST /mail/messages/:uid/star` route in `@agenticmail/api`.
+- **📐 Task `output_schema` column** — migration `014_task_output_schema.sql` adds an optional `output_schema TEXT` column to `agent_tasks`. Stores the assigner-supplied JSON Schema for typed task contracts. `NULL` means "no schema, accept anything", fully back-compat with the v0.8.x task model.
+
+## ✨ Earlier — 0.7.2
 
 - **`list_inbox` / `inbox_digest` consistency fix** — `MailReceiver.listEnvelopes` no longer trusts the stale cached `mailbox.exists` count and early-returns empty when an internal mail just landed. `getMailboxInfo` now issues an IMAP `NOOP` to refresh state before reading `client.mailbox`. `SEARCH` is the authoritative source; `list_inbox` and `inbox_digest` now agree.
 - **Custom outgoing headers** — the `headers` field on `SendMailOptions` is fully plumbed through to nodemailer, so callers (the API, the MCP server) can set `X-AgenticMail-Wake` and other custom headers for downstream consumers to read.
