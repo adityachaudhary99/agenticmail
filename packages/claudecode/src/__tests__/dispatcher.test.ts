@@ -368,7 +368,11 @@ describe('Dispatcher.handleEvent — selective wake allowlist', () => {
     await d.handleEvent(FOLA, { type: 'new', uid: 1, from: 'x', subject: 'hi' });
     const prompt = sdk.calls[0].prompt as string;
     expect(prompt).toMatch(/wake:/);
-    expect(prompt).toMatch(/dispatcher only/i);
+    // The reply-addressing section (rewritten in 0.9.2) teaches the
+    // explicit-wake pattern. We assert the wake-target idiom appears
+    // somewhere — the exact prose has been reworked several times but
+    // the example `wake: ["next-actor"]` form is the load-bearing bit.
+    expect(prompt).toMatch(/wake:\s*\[/);
   });
 });
 
