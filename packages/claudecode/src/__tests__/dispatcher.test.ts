@@ -221,6 +221,54 @@ describe('Dispatcher.handleEvent — wake-budget circuit breaker', () => {
     }
   });
 
+  it('drops queued wakes for UIDs the worker already read during its turn', async () => {
+    vi.useFakeTimers();
+    try {
+      // 200 ms debounce — long enough that we can land a "new mail"
+      // event in the queue while the first worker is still running.
+      const { d, sdk } = makeDispatcher({}, { wakeCoalesceMs: 200 });
+      // Replace the mock SDK with one that emits a tool_use frame
+      // for read_email(uid=200) — simulating the worker
+      // proactively reading mail that arrived mid-turn.
+      const calls: Array<{ prompt: string }> = [];
+      let attempt = 0;
+      (d as unknown as { query: QueryFn }).query = ((params: Parameters<QueryFn>[0]) => {
+        calls.push({ prompt: params.prompt as string });
+        attempt++;
+        return (async function* () {
+          if (attempt === 1) {
+            yield {
+              type: 'assistant',
+              message: { content: [{ type: 'tool_use', name: 'mcp__agenticmail__read_email', input: { uid: 200, _account: 'Fola' } }] },
+            };
+          }
+          yield { type: 'assistant', message: { content: [{ type: 'text', text: 'done' }] } };
+        })();
+      }) as QueryFn;
+      // Pre-populate the channel so handleEvent sees an existing channel.
+      (d as unknown as { channels: Map<string, unknown> }).channels.set(FOLA.id, {
+        account: FOLA, controller: null, stopping: false, backoffMs: 0,
+        seenUids: new Set(), seenTaskIds: new Set(), suppressTaskMailUntilMs: 0,
+      });
+      // First event lands → leading-edge fires immediately.
+      await d.handleEvent(FOLA, { type: 'new', uid: 100, from: 'orion', subject: 'Audit plan' });
+      // Second event for UID 200 lands mid-turn → goes into the
+      // coalesce queue (subsequent burst event on same thread).
+      vi.advanceTimersByTime(20);
+      await d.handleEvent(FOLA, { type: 'new', uid: 200, from: 'orion', subject: 'Re: Audit plan' });
+      // Worker finished (the first call's async iterator drained
+      // synchronously here). Dedup logic should have dropped 200
+      // from the queue because the worker `read_email`'d it.
+      await vi.advanceTimersByTimeAsync(250);
+      // Exactly ONE call — leading-edge fired for 100; trailing
+      // wake for 200 dropped via digest dedup.
+      expect(calls).toHaveLength(1);
+      expect(calls[0].prompt).toContain('UID: 100');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('coalesces 30s default has zero perceived latency for a lone reply (leading-edge fires immediately)', async () => {
     // Regression test for 0.9.1: the user's complaint that "dispatcher
     // is silent for 30 s after a wake" was the trailing-edge-only

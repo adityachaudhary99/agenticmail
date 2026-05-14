@@ -1676,10 +1676,39 @@ export class Dispatcher {
     let turnCount = 0;
     let lastTool = '';
     let lastUsage: string | undefined;
+    /**
+     * UIDs the worker explicitly consumed via `read_email` during
+     * this turn. At end of turn we use this to dedupe the
+     * dispatcher's coalesce queue: if the worker proactively
+     * read mail UID 43 while running, the queued wake for 43
+     * (which arrived as an SSE event mid-turn) is dropped — the
+     * agent already handled it. Without this, the agent would
+     * spawn again and re-process the same mail.
+     *
+     * We also seed the channel's `seenUids` from this set so a
+     * subsequent SSE replay (e.g. IMAP IDLE reconnect) of the
+     * same UID stays deduped.
+     */
+    const digestedUids = new Set<number>();
     const observer: WorkerObserver = {
       onMessage: (tag, summary) => {
         writeLog(`${tag} ${summary}`);
-        if (tag === 'tool_use') { lastTool = summary.split(' ')[0]; turnCount++; }
+        if (tag === 'tool_use') {
+          lastTool = summary.split(' ')[0];
+          turnCount++;
+          // Detect explicit consumption of a mail UID. Tool
+          // tracking is by string-match on the dispatcher log
+          // line; brittle in theory, but the read_email tool
+          // input shape (`{"uid":<n>,"_account":"..."}`) has
+          // been stable across the entire 0.x line. If the MCP
+          // tool name ever changes, this regex needs updating
+          // — captured here in one place rather than scattered.
+          const m = /read_email\b[^}]*"uid"\s*:\s*(\d+)/.exec(summary);
+          if (m) {
+            const uid = parseInt(m[1], 10);
+            if (Number.isFinite(uid) && uid > 0) digestedUids.add(uid);
+          }
+        }
         // Hold onto the latest usage line so the worker-finished
         // event can forward it to check_activity.
         if (tag === 'usage') lastUsage = summary;
@@ -1729,11 +1758,37 @@ export class Dispatcher {
     } finally {
       clearInterval(heartbeatHandle);
       this.releaseSlot();
-      // Release the per-agent serial lock so any queued wakes for
-      // this agent (from coalesce-trailing-edge fires or fresh SSE
-      // arrivals during the run) can spawn next. CRITICAL that this
-      // happens in `finally` — a thrown spawn must not leave the
-      // agent permanently locked.
+      // Dedupe the coalesce queue against UIDs the worker just
+      // explicitly handled. If Vesper proactively `read_email`'d
+      // UID 43 while running and a wake for UID 43 was queued
+      // mid-turn, drop it — spawning again would have her re-read
+      // her own already-actioned mail.
+      //
+      // Also seed the channel's seenUids so a future SSE replay
+      // for the same UID (IMAP IDLE reconnect, push retry) stays
+      // deduped without firing a fresh worker.
+      if (digestedUids.size > 0) {
+        const prefix = `${account.id}::`;
+        for (const [key, entry] of this.wakeCoalesce.entries()) {
+          if (!key.startsWith(prefix)) continue;
+          const before = entry.events.length;
+          entry.events = entry.events.filter(e => !(typeof e.uid === 'number' && digestedUids.has(e.uid)));
+          if (entry.events.length < before) {
+            this.log('info', `[dispatcher] dropped ${before - entry.events.length} queued wake(s) for "${account.name}" — UIDs already digested this turn`);
+          }
+          if (entry.events.length === 0) {
+            try { clearTimeout(entry.timer); } catch { /* ignore */ }
+            this.wakeCoalesce.delete(key);
+          }
+        }
+        const ch = this.channels.get(account.id);
+        if (ch) for (const uid of digestedUids) rememberBounded(ch.seenUids, uid);
+      }
+      // Release the per-agent serial lock so any remaining queued
+      // wakes for this agent (true new mail that did NOT get
+      // digested during the run) can spawn next. CRITICAL that
+      // this happens in `finally` — a thrown spawn must not leave
+      // the agent permanently locked.
       try { releaseAgentLock(); } catch { /* ignore */ }
       // Always post "finished", even on persona-load / slot errors,
       // so the registry doesn't keep the worker pinned indefinitely.

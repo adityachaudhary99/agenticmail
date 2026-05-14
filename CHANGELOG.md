@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-05-14
+
+### Fixed — Don't re-wake an agent for mail it already read in-line
+
+When an in-flight worker proactively calls `read_email(uid)` for a UID that arrived mid-turn (e.g. it checked `list_inbox` after sending a reply and saw a new arrival), the dispatcher used to also fire its own queued wake for the same UID after the worker finished — duplicate work, duplicate Claude turn, duplicate reply on the thread.
+
+**Fix:** the per-worker observer now tracks every UID the worker passed to `read_email` via a regex on the captured `tool_use` log line. At end-of-turn, before releasing the per-agent serial lock:
+
+1. Scan the coalesce queue for this agent — drop any pending events whose `uid` is in the digested set.
+2. Seed those UIDs into the channel's `seenUids` set so a future SSE replay (IMAP IDLE reconnect, push retry) stays deduped without firing a fresh worker.
+
+Empty coalesce entries are cleaned up so the queue doesn't accumulate dead keys.
+
+Test: `drops queued wakes for UIDs the worker already read during its turn` mocks an SDK that emits a `tool_use` frame for `mcp__agenticmail__read_email({uid: 200})`, lands UID 200 in the coalesce queue mid-turn, advances past the debounce window, and asserts only ONE spawn fires (the leading-edge wake on UID 100). The queued 200 is dropped because the worker handled it.
+
+Pattern symmetry: this mirrors how Claude Code's harness handles user-typed messages mid-turn — the messages queue, but the harness deduplicates against what the model already saw. The agent harness is the user-facing version of the same idea; AgenticMail's dispatcher is now the agent-facing version.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.9.4 | 0.9.5 |
+| `@agenticmail/claudecode` | 0.2.3 | 0.2.4 |
+| `@agenticmail/cli` | 0.9.4 | 0.9.5 |
+
+Plugin manifest mirrored to 0.9.5. core / mcp unchanged.
+
+### Tests
+
+113 claudecode tests pass (was 112, +1 for the dedup test).
+
 ## [0.9.4] - 2026-05-14
 
 ### Added — Per-agent serialization + crash hardening
