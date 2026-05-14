@@ -37,11 +37,31 @@ async function main(): Promise<void> {
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 
-  // Unhandled rejections inside the dispatcher's internal loops are
-  // already caught and logged. Surface anything else (e.g. SDK import
-  // failures at bin startup) so PM2 can decide to restart.
+  // CRITICAL: the dispatcher must NEVER crash on a single bad
+  // event. Two guards:
+  //
+  // 1. unhandledRejection — a stray promise without a .catch()
+  //    (e.g. a transient fetch failure deep in the SSE reader
+  //    that bypassed our try/catch). We log + survive.
+  //
+  // 2. uncaughtException — a synchronous throw from third-party
+  //    code (ImapFlow, the SDK, etc.). Without this guard Node
+  //    would terminate the process and PM2 would restart it,
+  //    causing the broadcast-crash failure mode the user
+  //    reported: 50 simultaneous wakes hit one bad codepath
+  //    and the whole dispatcher dies. With it, the dispatcher
+  //    logs the error and keeps running.
+  //
+  // We do NOT process.exit() in either handler — the dispatcher
+  // is a long-lived daemon and the safer default is to absorb
+  // the error and continue. If something is structurally
+  // broken (config drift, master-key revoked), the operator
+  // will see the repeated log lines and restart manually.
   process.on('unhandledRejection', (reason) => {
-    console.error('[dispatcher-bin] unhandledRejection:', reason);
+    console.error('[dispatcher-bin] unhandledRejection (continuing):', reason);
+  });
+  process.on('uncaughtException', (err) => {
+    console.error('[dispatcher-bin] uncaughtException (continuing):', err);
   });
 
   await dispatcher.start();

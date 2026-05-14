@@ -107,9 +107,19 @@ export async function loadList(agent, folder) {
       </div>
       <div class="list-toolbar-spacer"></div>
       <span class="count-text" id="list-count"></span>
+      <button class="icon-btn pager-btn" id="pager-prev" title="Newer" data-icon="back"></button>
+      <button class="icon-btn pager-btn" id="pager-next" title="Older"></button>
     </div>
     <div class="list-rows" id="list-rows"><div class="empty">Loading…</div></div>
   `;
+  // Pager buttons. "Newer" goes back to a lower offset (closer to
+  // the head of the inbox); "Older" advances to higher offsets.
+  // Each handler clamps to valid bounds and refetches via loadList
+  // with the new offset preserved in state.pagination.
+  document.getElementById('pager-next').innerHTML = icon('back', { size: 18 });
+  document.getElementById('pager-next').style.transform = 'rotate(180deg)';
+  document.getElementById('pager-prev')?.addEventListener('click', () => goToPage(agent, folder, -1));
+  document.getElementById('pager-next')?.addEventListener('click', () => goToPage(agent, folder, +1));
   document.getElementById('list-refresh-btn')?.addEventListener('click', () => loadList(agent, folder));
   document.getElementById('list-select-all-input')?.addEventListener('change', (e) => {
     const checked = e.target.checked;
@@ -152,9 +162,18 @@ export async function loadList(agent, folder) {
     // Previously we used `/mail/inbox` (no preview) and `/mail/
     // folders/:folder` (no preview, wrong folder names), which left
     // every row stuck on subject + sender alone.
-    const url = `/mail/digest?folder=${encodeURIComponent(imap)}&limit=50&offset=0&previewLength=240`;
+    const { offset, limit } = state.pagination;
+    const url = `/mail/digest?folder=${encodeURIComponent(imap)}&limit=${limit}&offset=${offset}&previewLength=240`;
     const data = await apiGet(url, { agentKey: agent.apiKey });
     state.messages = data.messages ?? [];
+    // The digest endpoint returns `total` — use it for the pager.
+    // Fall back to (offset + page-size) when missing so the
+    // pager still functions in a degraded "we don't know the
+    // upper bound" mode (Next stays enabled until a fetch
+    // returns a short page).
+    state.pagination.total = typeof data?.total === 'number'
+      ? data.total
+      : (state.messages.length === limit ? offset + limit + 1 : offset + state.messages.length);
     renderList();
   } catch (err) {
     const msg = String(err.message ?? err);
@@ -188,7 +207,11 @@ function folderTitle(folder) {
 async function loadDraftsList(agent) {
   try {
     const data = await apiGet('/drafts', { agentKey: agent.apiKey });
-    const rows = Array.isArray(data?.drafts) ? data.drafts : [];
+    const all = Array.isArray(data?.drafts) ? data.drafts : [];
+    const { offset, limit } = state.pagination;
+    // Drafts come from SQL as a single list; paginate client-side.
+    const rows = all.slice(offset, offset + limit);
+    state.pagination.total = all.length;
     state.messages = rows.map(r => ({
       // We store the draft id under `uid` so renderList +
       // click handlers can use the same field. Drafts also
@@ -215,6 +238,25 @@ async function loadDraftsList(agent) {
 }
 
 /**
+ * Advance the pager by one page in the given direction (-1 newer,
+ * +1 older). Clamps to valid bounds, then triggers loadList for the
+ * fresh offset. Bound to the prev/next toolbar buttons.
+ */
+function goToPage(agent, folder, direction) {
+  const { offset, limit, total } = state.pagination;
+  const next = offset + direction * limit;
+  if (next < 0) return;                      // already at newest
+  if (next >= total && direction > 0) return; // already at oldest
+  state.pagination.offset = Math.max(0, next);
+  // Scroll to top so the user lands on the first row of the new
+  // page rather than at the bottom of where the previous page
+  // ended.
+  const rows = document.getElementById('list-rows');
+  if (rows) rows.scrollTop = 0;
+  loadList(agent, folder);
+}
+
+/**
  * Refresh the currently-rendered list without rebuilding the
  * toolbar. Used by the SSE new-mail handler so a new email
  * silently slides into the list — no flicker, no "Loading…",
@@ -229,9 +271,12 @@ async function loadDraftsList(agent) {
 export async function silentRefresh(agent, folder) {
   if (!agent) return;
   try {
+    const { offset, limit } = state.pagination;
     if (folder === 'drafts') {
       const data = await apiGet('/drafts', { agentKey: agent.apiKey });
-      const rows = Array.isArray(data?.drafts) ? data.drafts : [];
+      const all = Array.isArray(data?.drafts) ? data.drafts : [];
+      state.pagination.total = all.length;
+      const rows = all.slice(offset, offset + limit);
       state.messages = rows.map(r => ({
         uid: r.id,
         __draftId: r.id,
@@ -249,9 +294,12 @@ export async function silentRefresh(agent, folder) {
     const isStarred = folder === 'starred';
     const imap = isStarred ? 'INBOX' : (state.folderNames?.[folder]);
     if (!imap) return;
-    const url = `/mail/digest?folder=${encodeURIComponent(imap)}&limit=50&offset=0&previewLength=240`;
+    const url = `/mail/digest?folder=${encodeURIComponent(imap)}&limit=${limit}&offset=${offset}&previewLength=240`;
     const data = await apiGet(url, { agentKey: agent.apiKey });
     state.messages = data.messages ?? [];
+    state.pagination.total = typeof data?.total === 'number'
+      ? data.total
+      : (state.messages.length === limit ? offset + limit + 1 : offset + state.messages.length);
     renderList();
   } catch { /* silent — next user action will repair */ }
 }
@@ -295,8 +343,23 @@ export function renderList() {
   } else if (hintEl) {
     hintEl.classList.remove('show');
   }
+  // Gmail-style "X-Y of Z" pager label + button enable/disable.
+  // We show the current PAGE range against the server-reported
+  // total, not just the filtered window — pagination is page-
+  // level; search is row-level filtering within the current page.
   const countEl = document.getElementById('list-count');
-  if (countEl) countEl.textContent = `${filtered.length} of ${state.messages.length}`;
+  const { offset, limit, total } = state.pagination;
+  const pageStart = state.messages.length > 0 ? offset + 1 : 0;
+  const pageEnd = offset + state.messages.length;
+  if (countEl) {
+    countEl.textContent = total > 0
+      ? `${pageStart}–${pageEnd} of ${total}`
+      : (state.messages.length > 0 ? `${pageStart}–${pageEnd}` : '0');
+  }
+  const prevBtn = document.getElementById('pager-prev');
+  const nextBtn = document.getElementById('pager-next');
+  if (prevBtn) prevBtn.disabled = offset <= 0;
+  if (nextBtn) nextBtn.disabled = pageEnd >= total || state.messages.length < limit;
 
   if (filtered.length === 0) {
     root.innerHTML = q

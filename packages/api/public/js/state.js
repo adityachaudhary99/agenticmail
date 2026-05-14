@@ -24,6 +24,16 @@ export const state = {
    * showed.
    */
   folderNames: {},             // { [sidebarId]: imapFolderName }
+  /**
+   * Pagination state for the currently-rendered list. `offset` is
+   * the index of the FIRST message in the current view; `limit` is
+   * the page size; `total` is the server-reported total count for
+   * the folder (or the local row count for drafts). Reset to
+   * offset=0 on folder switch + agent switch; preserved across
+   * silent SSE refreshes so a new arrival doesn't yank the user
+   * back to page 1.
+   */
+  pagination: { offset: 0, limit: 50, total: 0 },
 };
 
 export const API_URL = window.location.origin;

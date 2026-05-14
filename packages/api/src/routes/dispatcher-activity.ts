@@ -265,6 +265,16 @@ export function createDispatcherActivityRoutes(): Router {
     existing.lastHeartbeatMs = Date.now();
     if (typeof body.lastTool === 'string') existing.lastTool = body.lastTool;
     if (typeof body.turnCount === 'number') existing.turnCount = body.turnCount;
+    // Broadcast the live worker state so the web UI can render
+    // real-time activity badges ("vesper editing code", "orion
+    // reading mail", etc.) — the 30 s heartbeat cadence sets
+    // the badge refresh rate.
+    try {
+      pushSystemEvent({
+        type: 'worker_heartbeat',
+        worker: { ...existing },
+      });
+    } catch { /* listener failures must not block the dispatcher */ }
     res.json({ ok: true });
   });
 

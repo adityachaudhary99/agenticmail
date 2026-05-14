@@ -14,6 +14,7 @@ import { loadList, renderList, clearSearch, ensureFolderCache } from './list-vie
 import { openMessage } from './message-view.js';
 import { populateComposeFrom, openCompose, openDraft, closeCompose, discardCompose, sendCompose } from './compose.js';
 import { subscribeToAllAgents, maybeRequestNotificationPermission } from './sse.js';
+import { subscribeToActivity } from './activity-badges.js';
 import { icon } from './icons.js';
 import { isSoundEnabled, setSoundEnabled, playNotificationSound } from './sound.js';
 
@@ -98,6 +99,11 @@ async function bootstrap() {
     renderProfile();
     populateComposeFrom();
     subscribeToAllAgents();
+    // Real-time worker activity badges. Master-key-scoped SSE on
+    // /system/events; the dispatcher's worker_started /
+    // worker_heartbeat / worker_finished events drive the badge
+    // rendering. Idempotent — safe to call after bootstrap reruns.
+    subscribeToActivity();
     maybeRequestNotificationPermission();
     // Initial route: if the URL already has a hash (e.g. a refresh
     // on /#/folder/sent), respect it; otherwise default to inbox.
@@ -122,6 +128,8 @@ async function selectAgent(agent) {
   // account that uses different folder names (e.g. Gmail relay
   // vs vanilla Stalwart) keeps the previous cache.
   state.folderNames = {};
+  // Reset pagination — each inbox starts at page 1.
+  state.pagination = { offset: 0, limit: 50, total: 0 };
   // Discover folders BEFORE the first sidebar render so the
   // `requiresDiscovery` hide-rule (All Mail on non-Gmail servers)
   // has the cache to consult. Falls back to defaults on failure.
@@ -170,6 +178,10 @@ function route() {
   const folder = folderMatch ? folderMatch[1] : 'inbox';
   if (state.selectedFolder !== folder) {
     state.selectedFolder = folder;
+    // Reset pagination on every folder switch — a fresh folder
+    // starts at page 1. Preserved across silent SSE refreshes so
+    // a new arrival doesn't yank the user back from page 3.
+    state.pagination = { offset: 0, limit: 50, total: 0 };
     renderSidebar(onFolderSelect);
   }
   if (state.selectedAgent) loadList(state.selectedAgent, folder);

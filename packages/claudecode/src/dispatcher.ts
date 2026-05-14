@@ -232,7 +232,22 @@ function rememberBounded<T>(set: Set<T>, item: T): void {
   }
 }
 
-const DEFAULT_MAX_CONCURRENT = 10;
+/**
+ * Global concurrency cap — total workers running simultaneously
+ * across the whole dispatcher. Bumped from 10 → 50 in 0.9.4 now
+ * that the per-agent serialization below guarantees we never
+ * fan out N concurrent workers FOR THE SAME AGENT (which was
+ * the actual crash mode at broadcast-to-everyone scale).
+ *
+ * A 5-agent thread with wake:'all' under the old cap would
+ * spawn 5 simultaneous workers — fine. With 50 agents and a
+ * 50-recipient broadcast it would spawn 10 immediately + queue
+ * 40 globally, choking through 5 batches. Per-agent
+ * serialization + this higher cap mean 50 distinct agents can
+ * run in parallel and each agent's own queue serialises any
+ * burst on that agent.
+ */
+const DEFAULT_MAX_CONCURRENT = 50;
 // Polling is now a safety net behind the push-based /system/events
 // stream — newly-created accounts are picked up within milliseconds via
 // SSE, not via this poll. 30s is a generous fallback that covers cases
@@ -1604,6 +1619,14 @@ export class Dispatcher {
 
   /** Acquire a concurrency slot, run a worker, release the slot. */
   private async spawnWorker(account: AgenticMailAccount, prompt: string, ctx: { kind: string; uid?: number; taskId?: string; subject?: string; from?: string }): Promise<void> {
+    // Per-agent serialization gate. If another worker is mid-flight
+    // for the SAME agent, this await chains onto its tail and we
+    // resume after it finishes. Prevents two simultaneous Vesper
+    // workers from racing on the same IMAP connection, the same
+    // thread cache, and the same agent memory file. The gate fires
+    // BEFORE the global concurrency slot acquisition so the slot
+    // budget is only paid by workers that will actually run now.
+    const releaseAgentLock = await this.acquireAgentSerial(account.id);
     await this.acquireSlot();
     // Generate a stable id BEFORE the try so the finally block can
     // post a matching finished event even if persona load throws.
@@ -1706,6 +1729,12 @@ export class Dispatcher {
     } finally {
       clearInterval(heartbeatHandle);
       this.releaseSlot();
+      // Release the per-agent serial lock so any queued wakes for
+      // this agent (from coalesce-trailing-edge fires or fresh SSE
+      // arrivals during the run) can spawn next. CRITICAL that this
+      // happens in `finally` — a thrown spawn must not leave the
+      // agent permanently locked.
+      try { releaseAgentLock(); } catch { /* ignore */ }
       // Always post "finished", even on persona-load / slot errors,
       // so the registry doesn't keep the worker pinned indefinitely.
       const ok = workerResult?.ok === true;
@@ -1828,6 +1857,41 @@ export class Dispatcher {
     this.running--;
     const next = this.waiters.shift();
     if (next) next();
+  }
+
+  /**
+   * Per-agent serialization. At most ONE worker runs for any
+   * given agent at a time. When a new wake fires for an agent
+   * whose worker is still running, the new wake's spawnWorker
+   * waits on the prior worker's tail before proceeding.
+   *
+   * This is the fix for the "dispatcher crashed when sender
+   * broadcast to a 5-CC thread" failure mode: under the old
+   * design, 5 emails landing for vesper-on-3-different-threads
+   * in the same second spawned 5 simultaneous vesper workers,
+   * each opening its own IMAP connection, each calling the
+   * SDK, racing on the same inbox cache. With this gate they
+   * queue tail-to-head and run sequentially.
+   *
+   * `nextRun` is a chained promise: each new spawn calls
+   * `then()` on the previous tail so the order is preserved.
+   * When the chain resolves to a no-op (empty queue), the
+   * entry is garbage-collected from the map so memory stays
+   * bounded at #active-agents.
+   */
+  private agentSerial = new Map<string, Promise<unknown>>();
+  private async acquireAgentSerial(agentId: string): Promise<() => void> {
+    const prev = this.agentSerial.get(agentId);
+    let release!: () => void;
+    const next = new Promise<void>(resolve => { release = resolve; });
+    this.agentSerial.set(agentId, prev ? prev.then(() => next).catch(() => next) : next);
+    if (prev) await prev.catch(() => {});  // swallow upstream failures
+    return () => {
+      release();
+      // Best-effort cleanup: if the current tail is the one we
+      // just released, drop the entry so the map doesn't grow.
+      if (this.agentSerial.get(agentId) === next) this.agentSerial.delete(agentId);
+    };
   }
 }
 

@@ -164,6 +164,61 @@ a { color: var(--accent-strong); }
 #sound-toggle-btn.sound-on { color: var(--pink); }
 #sound-toggle-btn.sound-off { color: var(--muted); }
 
+/* ─── Activity badges (live worker status) ───────────────────────
+   One pill per active dispatcher worker. Populated by SSE on the
+   `worker_started` / `worker_heartbeat` / `worker_finished`
+   events. Each badge shows the agent's initial + name + a short
+   verb derived from the worker's `lastTool`. The green dot
+   gently pulses so the row reads as "alive" rather than static. */
+.activity-badges {
+  display: flex; align-items: center; gap: 6px;
+  max-width: 480px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-right: 4px;
+}
+.activity-badges::-webkit-scrollbar { display: none; }
+.activity-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px 4px 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  cursor: default;
+}
+.activity-badge:hover { background: var(--bg-hover); }
+.activity-badge .badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #34a853;          /* live-green */
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.5);
+  animation: activity-pulse 2s infinite;
+}
+@keyframes activity-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(52, 168, 83, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0); }
+}
+.activity-badge .badge-initial {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--pink); color: white;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0;
+}
+.activity-badge .badge-name { font-weight: 500; color: var(--ink); }
+.activity-badge .badge-status { color: var(--muted); }
+.activity-badge .badge-status::before { content: '· '; opacity: .6; }
+
+/* Mobile — hide badges on narrow viewports; they fold to the
+   topbar's account avatar dropdown anyway. */
+@media (max-width: 800px) {
+  .activity-badges { display: none; }
+}
+
 /* ─── Profile (top right) ─────────────────────────────────────────── */
 .profile-trigger {
   width: 40px; height: 40px; border-radius: 50%;
@@ -421,6 +476,19 @@ a { color: var(--accent-strong); }
 .list-toolbar-spacer { flex: 1; }
 .list-toolbar .count-text {
   font-size: 12px; color: var(--muted);
+  margin-right: 8px;
+}
+/* Gmail-style pager. Buttons inherit .icon-btn styling; disabled
+   state mutes the colour so the user can tell at a glance whether
+   prev/next is available without trying to click. */
+.pager-btn {
+  width: 32px; height: 32px;
+  color: var(--ink-soft);
+}
+.pager-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--ink); }
+.pager-btn:disabled {
+  color: var(--line);
+  cursor: default;
 }
 
 /* Bulk-action toolbar — appears between select-all and refresh

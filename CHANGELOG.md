@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-05-14
+
+### Added — Per-agent serialization + crash hardening
+
+Two dispatcher robustness wins for broadcast-to-everyone bursts:
+
+**Per-agent serialization.** At most ONE worker runs for any given agent at a time. When 5 emails for Vesper arrive in the same second (broadcast on a 5-CC thread), the dispatcher serialises them: first wake fires, subsequent wakes wait on a per-agent promise chain (`Map<agentId, Promise>`) and run sequentially once the prior worker finishes. Stops the failure mode where simultaneous Vesper workers raced on the same IMAP connection / thread cache / agent memory file and crashed the dispatcher.
+
+**Global concurrency cap bumped from 10 → 50.** Now safe because the per-agent gate prevents any single agent from monopolizing slots — 50 distinct agents can run in parallel without one agent fanning out into 5 of them.
+
+**Process-level crash guards.** `dispatcher-bin.ts` now installs both `unhandledRejection` and `uncaughtException` handlers that LOG and CONTINUE rather than terminating. A bad event (e.g. malformed SSE frame, transient ImapFlow throw, third-party panic) used to take the whole daemon down — now it's a log line, the dispatcher keeps running. No process.exit() from either handler. Operator can still see structurally-broken state in the logs and restart manually if needed.
+
+### Added — Pagination on every folder
+
+Every list view now has Prev / Next buttons + a Gmail-style **"X–Y of Z"** count in the toolbar. Page size is 50; offset persists in `state.pagination` and resets to 0 on folder switch + agent switch.
+
+- IMAP folders (inbox / sent / drafts (IMAP) / spam / trash / archive / all): server-side via `/mail/digest?offset=` & `&limit=` (the endpoint already returned `total`; we wire it through).
+- Drafts (SQL): client-side slicing of the `/drafts` list — same UX, no extra round trips.
+- Preserved across silent SSE refreshes — a new arrival doesn't yank the user back from page 3.
+- Prev disabled at offset 0; Next disabled when the current page is the last (either `pageEnd >= total` or the fetched page is shorter than `limit`).
+
+### Added — Real-time worker activity badges
+
+Between the search bar and the notification bell, one pill per active dispatcher worker shows what each agent is doing right now:
+
+```
+[🟢 V Vesper · editing code]  [🟢 O Orion · reading mail]  [🟢 A Atlas · running shell]
+```
+
+The pulsing green dot reads as "alive." Friendly status verbs are derived from the worker's `lastTool`:
+
+| Tool | Status |
+|---|---|
+| Read / read_email | reading |
+| Write / Edit | writing/editing code |
+| Bash | running shell |
+| Grep / Glob | searching |
+| WebFetch / WebSearch | fetching/searching web |
+| send_email / reply_email | sending mail / replying |
+| call_agent | delegating |
+| submit_result | finishing |
+| save_thread_memory | saving memory |
+| _anything else_ | working |
+
+The API now pushes a `worker_heartbeat` event to `/system/events` on every dispatcher heartbeat (was only emitting `worker_started` / `worker_finished` before). The new `js/activity-badges.js` module subscribes with the master key, maintains a `Map<workerId, state>`, and re-renders on every event. Update cadence = heartbeat cadence (30 s).
+
+Badges hide on narrow viewports (<800 px).
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.9.3 | 0.9.4 |
+| `@agenticmail/claudecode` | 0.2.2 | 0.2.3 |
+| `@agenticmail/cli` | 0.9.3 | 0.9.4 |
+
+Plugin manifest mirrored to 0.9.4. core / mcp unchanged.
+
 ## [0.9.3] - 2026-05-14
 
 ### Fixed — Inbox flickered on every new arrival
