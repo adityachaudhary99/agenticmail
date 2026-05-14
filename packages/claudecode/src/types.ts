@@ -13,6 +13,10 @@ export interface AgenticMailAccount {
   apiKey: string;
   role?: string;
   metadata?: Record<string, unknown>;
+  /** Per-agent wake preference. When false, the dispatcher
+   *  drops wakes where this agent was on Cc/Bcc but not To,
+   *  regardless of the sender's wake list. Defaults to true. */
+  wakeOnCc?: boolean;
 }
 
 /** Resolved configuration for everything the package does. */

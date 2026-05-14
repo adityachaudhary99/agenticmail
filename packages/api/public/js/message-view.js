@@ -50,10 +50,21 @@ function renderMessage(msg) {
   if (!view) return;
   const fromAddr = msg.from?.[0]?.address ?? '?';
   const fromName = msg.from?.[0]?.name || fromAddr;
-  const toStr = (msg.to ?? []).map(a => a.name ? `${a.name} <${a.address}>` : a.address).join(', ') || '?';
-  const ccStr = (msg.cc ?? []).map(a => a.address).join(', ');
   const senderPseudo = { name: fromName };  // for avatar generation
   const bodyText = msg.text ?? stripHtml(msg.html ?? '');
+
+  // Build separate To / Cc / Bcc lines so the user can actually
+  // tell who was on the action list vs CC'd for awareness. The
+  // previous renderer concatenated everything onto one "to" line.
+  const formatAddr = (a) => a?.name && a.name !== a.address
+    ? `${a.name} <${a.address}>`
+    : (a?.address ?? '');
+  const renderAddrRow = (label, list, cls) => {
+    if (!Array.isArray(list) || list.length === 0) return '';
+    const rendered = list.map(formatAddr).filter(Boolean).map(escapeHtml).join(', ');
+    if (!rendered) return '';
+    return `<div class="message-recipient-row ${cls}"><span class="message-recipient-label">${label}</span><span class="message-recipient-list">${rendered}</span></div>`;
+  };
 
   const attachmentsHtml = (msg.attachments ?? []).length > 0
     ? `<div class="message-attachments">${msg.attachments.map((a, i) =>
@@ -75,7 +86,9 @@ function renderMessage(msg) {
             <span class="name">${escapeHtml(fromName)}</span>
             <span class="addr">&lt;${escapeHtml(fromAddr)}&gt;</span>
           </div>
-          <div class="message-to">to ${escapeHtml(toStr)}${ccStr ? `, cc ${escapeHtml(ccStr)}` : ''}</div>
+          ${renderAddrRow('To', msg.to, 'message-to')}
+          ${renderAddrRow('Cc', msg.cc, 'message-cc')}
+          ${renderAddrRow('Bcc', msg.bcc, 'message-bcc')}
         </div>
         <div class="message-date">${escapeHtml(formatDateFull(msg.date))}</div>
       </div>

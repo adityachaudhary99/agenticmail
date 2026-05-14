@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-05-14
+
+The visibility release. Critical follow-up to 0.9.0 — the host could no longer tell whether the dispatcher was alive, deciding to skip, or just debouncing. This release closes every "what just happened?" gap.
+
+### Fixed — Lone wakes no longer suffer 30 s debounce delay
+
+0.9.0's wake coalescing was pure trailing-edge debounce: every wake (including a single isolated reply) waited the full 30 s before firing. From the host's perspective the dispatcher looked dead for half a minute after every send.
+
+Rewritten as **leading-edge fire + trailing-edge debounce**:
+
+- First event for a `(agent, thread)` fires **immediately** — zero perceived latency on a lone reply.
+- Subsequent events within the 30 s window queue onto a debounce timer that fires once at the trailing edge with the burst as a coalesced batch.
+- So a burst of 4 quick replies now produces 2 wakes (one immediate + one coalesced for the remaining 3), not 1 wake delayed by 30 s and not 4 separate wakes.
+
+This addresses the reported symptom "host sends to sub-agent, dispatcher doesn't wake them" — the dispatcher WAS going to wake, it was just sitting in the debounce queue. Now it fires the leading-edge wake immediately.
+
+### Fixed — `deriveDefaultWakeList` display-name regex
+
+When the sender's `to` field used display-name addressing (`"Vesper <vesper@localhost>"`), the `endsWith('@localhost')` check saw `vesper <vesper@localhost>` (ends with `>`, not `@localhost`) and skipped the recipient. The implicit allowlist returned `undefined` and fell through to "no allowlist → everyone wakes" — which masked the bug in many cases but produced inconsistent semantics. Fix: extract the bare address **before** the endsWith check.
+
+### Added — Dispatcher process heartbeat + activity visibility
+
+The host can now answer "is the dispatcher even running?" without `pm2 list` or guessing. Five new visibility surfaces:
+
+1. **Process heartbeat.** The dispatcher posts to `/dispatcher/process-heartbeat` every 30 s (plus once on `start()`) with its alive-state: `uptimeMs`, active channels, coalesce queue size, currently-running workers, max concurrency. The API folds this into `GET /dispatcher/activity` as a `dispatcher: { state: 'alive'|'unhealthy'|'missing', ... }` block. State transitions:
+   - `alive` — heartbeat is < 90 s old (default healthy)
+   - `unhealthy` — heartbeat is > 90 s old (dispatcher is up but unresponsive)
+   - `missing` — never seen a heartbeat (dispatcher down or pre-0.9.1)
+
+2. **Skipped-wake ring buffer.** Every filter decision that drops a wake now posts to `/dispatcher/worker-skipped` with a reason: `thread-closed`, `allowlist-excluded`, `wake-on-cc`, `budget-exhausted` (more landing in 0.9.2). `check_activity` surfaces a `skipped` block listing the last 100 (capped to 5 min) so the host can answer "why didn't Vesper wake?" in one query.
+
+3. **Worker-queued notifications.** When a wake is appended to the coalesce queue (subsequent burst events), the dispatcher posts to `/dispatcher/worker-queued` with `fireAtMs` so the host can see the pending fire time.
+
+4. **Compaction iteration hooks** (foundation laid; surfaces in `tail_worker` as the SDK emits the `result` frame with `usage`). Next release will surface `compactionIteration: N/4` directly in `check_activity`.
+
+5. **Context-budget telemetry per worker** (already in this release). `check_activity` shows the SDK-reported usage line on finished workers: `⚡ in=12450 out=890 cacheR=8200 cacheW=4250 cost=$0.0312`. The `cacheR` token count is 0.9.0's wake-context layer working — prior thread context that didn't need to be re-tokenised.
+
+### Added — Per-agent `wake_on_cc: false` flag
+
+Account-level preference. When the agent is registered with `wake_on_cc: false`, the dispatcher **skips every wake** where this agent was on Cc/Bcc but NOT on To, regardless of the sender's wake list. The intended use: "coder" / "silent observer" agents that should only wake when explicitly named on To.
+
+- **Migration**: `016_agent_wake_on_cc.sql` adds an `INTEGER NOT NULL DEFAULT 1` column. Existing accounts default to true (current behaviour preserved).
+- **API**: `PATCH /accounts/:id/wake-on-cc` body `{ wakeOnCc: boolean }`. Master-key scoped.
+- **SSE wire format**: events now carry a per-recipient `wasOnTo` boolean so the dispatcher can honor the preference without re-parsing addresses.
+- **Skipped path**: dispatcher posts `worker-skipped: wake-on-cc` when filtering, so the host sees the decision.
+
+### Added — Web UI distinguishes To / Cc / Bcc properly
+
+The message detail view used to lump every recipient under a single `to:` line. Now renders three separate labeled rows (`To:`, `Cc:`, `Bcc:`) with proper alignment, only showing fields that have recipients. Existing CSS extended with `.message-recipient-row` + per-field colour treatment.
+
+### Added — `docs/wake-patterns.md`
+
+New documentation page covering every wake pattern: sender-side `wake` argument shapes, the per-agent `wake_on_cc` preference, coalescing semantics, and five recommended patterns (designer→coder handoff, rotating actors, silent observers, broadcast, audit log).
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/core` | 0.9.0 | 0.9.1 |
+| `@agenticmail/api` | 0.9.0 | 0.9.1 |
+| `@agenticmail/mcp` | 0.9.0 | 0.9.1 |
+| `@agenticmail/claudecode` | 0.2.0 | 0.2.1 |
+| `@agenticmail/cli` | 0.9.0 | 0.9.1 |
+
+Plugin manifest mirrored to 0.9.1. openclaw unchanged.
+
+### Tests
+
+- 112 claudecode tests (was 111, +1 leading-edge coalesce + 1 lone-reply zero-latency regression test).
+- 362 core tests (was 339, +23 threading layer from 0.9.0).
+- 12 schema-validator tests pass.
+
 ## [0.9.0] - 2026-05-14
 
 The wake-context release. Three substantial changes that take a real bite out of multi-agent thread cost:

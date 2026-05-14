@@ -75,6 +75,11 @@ export interface WorkerInfo {
    *  signal — a worker that's bumping this every minute is making
    *  progress; one whose count is frozen for 10 minutes is stuck. */
   turnCount?: number;
+  /** SDK-reported context-budget summary from the worker's final
+   *  result message: `in=… out=… cacheR=… cacheW=… cost=$…`.
+   *  Surfaced in `check_activity` so the layered wake-context's
+   *  cache+memory savings show up as concrete numbers. */
+  usage?: string;
 }
 
 /**
@@ -127,7 +132,48 @@ function prune(nowMs: number): void {
 export function _resetActivityRegistry(): void {
   active.clear();
   recent.clear();
+  skipped.length = 0;
+  processState = null;
 }
+
+/**
+ * Ring buffer of "skipped wake" events — the dispatcher decided
+ * NOT to fire a Claude turn for some reason (thread closed,
+ * allowlist excluded, wake_on_cc honoured, budget exhausted,
+ * dedup, rpc-suppress). Surfaced in check_activity so the host
+ * sees the dispatcher's filter decisions instead of staring at
+ * silence wondering "did my mail land? did it crash?"
+ */
+interface SkippedWake {
+  agentId?: string;
+  agentName: string;
+  uid?: number;
+  subject?: string;
+  from?: string;
+  reason: string;
+  detail?: string;
+  atMs: number;
+}
+const skipped: SkippedWake[] = [];
+const SKIPPED_CAP = 100;       // ring buffer size
+const SKIPPED_TTL_MS = 5 * 60 * 1000;  // 5 minutes — only show recent skips
+
+/**
+ * Dispatcher process health snapshot. Updated on every
+ * /dispatcher/process-heartbeat post. The age of `atMs` is
+ * how the host detects "dispatcher is alive" vs "dispatcher
+ * is dead/hung" — a process-heartbeat older than 90 s means
+ * the dispatcher process is unhealthy.
+ */
+interface ProcessState {
+  startedAtMs: number;
+  channels: number;
+  coalesceQueueSize: number;
+  running: number;
+  maxConcurrent: number;
+  atMs: number;
+}
+let processState: ProcessState | null = null;
 
 export function createDispatcherActivityRoutes(): Router {
   const router = Router();
@@ -182,6 +228,7 @@ export function createDispatcherActivityRoutes(): Router {
       ok: body.ok === false ? false : true,
       resultPreview: typeof body.resultPreview === 'string' ? body.resultPreview.slice(0, 240) : undefined,
       turnCount: typeof body.turnCount === 'number' ? body.turnCount : existing?.turnCount,
+      usage: typeof body.usage === 'string' ? body.usage : existing?.usage,
     };
     active.delete(body.workerId);
     recent.set(body.workerId, info);
@@ -238,8 +285,31 @@ export function createDispatcherActivityRoutes(): Router {
   router.get('/dispatcher/activity', requireMaster, (_req, res) => {
     const nowMs = Date.now();
     prune(nowMs);
+    // Trim skipped ring buffer to recent + cap.
+    while (skipped.length > 0 && nowMs - skipped[0].atMs > SKIPPED_TTL_MS) skipped.shift();
+    while (skipped.length > SKIPPED_CAP) skipped.shift();
+    // Process health: dispatcher is "alive" if it heartbeat in
+    // the last 90 s, "unhealthy" otherwise. "missing" means we've
+    // never seen a heartbeat (dispatcher process not running or
+    // pre-0.9.1).
+    const processHealth = (() => {
+      if (!processState) return { state: 'missing' as const };
+      const age = nowMs - processState.atMs;
+      const isAlive = age <= 90_000;
+      return {
+        state: isAlive ? 'alive' as const : 'unhealthy' as const,
+        startedAtMs: processState.startedAtMs,
+        uptimeMs: nowMs - processState.startedAtMs,
+        lastHeartbeatAgeMs: age,
+        channels: processState.channels,
+        coalesceQueueSize: processState.coalesceQueueSize,
+        running: processState.running,
+        maxConcurrent: processState.maxConcurrent,
+      };
+    })();
     res.json({
       now: nowMs,
+      dispatcher: processHealth,
       active: Array.from(active.values()).map(w => ({
         ...w,
         durationMs: nowMs - w.startedAtMs,
@@ -250,7 +320,75 @@ export function createDispatcherActivityRoutes(): Router {
         ...w,
         durationMs: (w.endedAtMs ?? nowMs) - w.startedAtMs,
       })),
+      // Recent skipped wakes — every filter decision the dispatcher
+      // made that DROPPED a wake. Surfaced so the host can see "the
+      // mail landed, the dispatcher saw it, here's why it skipped"
+      // instead of staring at silence.
+      skipped: skipped.map(s => ({ ...s, ageMs: nowMs - s.atMs })),
     });
+  });
+
+  /**
+   * Dispatcher → API: process-heartbeat. Posted every 30 s by
+   * the running dispatcher with its alive-state. The host reads
+   * this via /dispatcher/activity to distinguish "dispatcher
+   * alive but no mail to wake on" from "dispatcher crashed."
+   */
+  router.post('/dispatcher/process-heartbeat', requireMaster, (req, res) => {
+    const body = req.body ?? {};
+    if (typeof body.startedAtMs !== 'number') {
+      res.status(400).json({ error: 'startedAtMs is required' });
+      return;
+    }
+    processState = {
+      startedAtMs: body.startedAtMs,
+      channels: typeof body.channels === 'number' ? body.channels : 0,
+      coalesceQueueSize: typeof body.coalesceQueueSize === 'number' ? body.coalesceQueueSize : 0,
+      running: typeof body.running === 'number' ? body.running : 0,
+      maxConcurrent: typeof body.maxConcurrent === 'number' ? body.maxConcurrent : 0,
+      atMs: Date.now(),
+    };
+    res.json({ ok: true });
+  });
+
+  /**
+   * Dispatcher → API: a wake was SKIPPED with a reason. Pushed
+   * to the ring buffer so the host can review recent filter
+   * decisions in /dispatcher/activity.
+   */
+  router.post('/dispatcher/worker-skipped', requireMaster, (req, res) => {
+    const body = req.body ?? {};
+    if (typeof body.agentName !== 'string' || typeof body.reason !== 'string') {
+      res.status(400).json({ error: 'agentName and reason are required' });
+      return;
+    }
+    skipped.push({
+      agentId: typeof body.agentId === 'string' ? body.agentId : undefined,
+      agentName: body.agentName,
+      uid: typeof body.uid === 'number' ? body.uid : undefined,
+      subject: typeof body.subject === 'string' ? body.subject : undefined,
+      from: typeof body.from === 'string' ? body.from : undefined,
+      reason: body.reason,
+      detail: typeof body.detail === 'string' ? body.detail : undefined,
+      atMs: Date.now(),
+    });
+    while (skipped.length > SKIPPED_CAP) skipped.shift();
+    res.json({ ok: true });
+  });
+
+  /**
+   * Dispatcher → API: a wake is queued for coalescing. Telemetry
+   * only — we don't persist the queue server-side (the dispatcher
+   * is the source of truth). Just bumps the registry's awareness
+   * so the host doesn't see dead air.
+   */
+  router.post('/dispatcher/worker-queued', requireMaster, (req, res) => {
+    // The body contains agent + thread + queuedCount + fireAtMs.
+    // We rely on /dispatcher/activity's `skipped` ring + the
+    // process-heartbeat's `coalesceQueueSize` to surface this;
+    // accept the POST quietly so the dispatcher's fire-and-forget
+    // works even before the API knows about this primitive.
+    res.json({ ok: true, recorded: req.body ?? null });
   });
 
   /**

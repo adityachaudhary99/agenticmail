@@ -32,6 +32,10 @@ function rowToAgent(row: AgentRow): Agent {
     updatedAt: row.updated_at,
     metadata,
     role: (row.role || 'secretary') as AgentRole,
+    // Old rows (pre-migration-016) have undefined `wake_on_cc`;
+    // treat that as the default-true (respect sender's wake list
+    // as-is). Only explicit 0 disables CC wakes for this agent.
+    wakeOnCc: row.wake_on_cc !== undefined ? row.wake_on_cc !== 0 : true,
   };
 }
 

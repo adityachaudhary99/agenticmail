@@ -188,31 +188,46 @@ describe('Dispatcher.handleEvent — wake-budget circuit breaker', () => {
     expect(sdk.calls).toHaveLength(3);
   });
 
-  it('coalesces a burst of wakes on the same thread into one Claude turn', async () => {
+  it('leading-edge coalesce: first event fires immediately, subsequent events coalesce into a second wake', async () => {
     vi.useFakeTimers();
     try {
-      // 200ms debounce window so we can advance through it without
+      // 200 ms debounce window so we can advance through it without
       // waiting in wall-clock time.
       const { d, sdk } = makeDispatcher({}, { wakeCoalesceMs: 200 });
-      // Three replies on the same thread within ~50 ms (burst).
+      // First event for a new (agent, thread) — should spawn
+      // immediately, no debounce wait.
       await d.handleEvent(FOLA, { type: 'new', uid: 50, from: 'orion', subject: 'Audit plan' });
+      expect(sdk.calls).toHaveLength(1);
+      // Two more events arrive INSIDE the window — they go onto
+      // the queue but do not spawn until the timer fires.
       vi.advanceTimersByTime(20);
       await d.handleEvent(FOLA, { type: 'new', uid: 51, from: 'orion', subject: 'Re: Audit plan' });
       vi.advanceTimersByTime(20);
       await d.handleEvent(FOLA, { type: 'new', uid: 52, from: 'orion', subject: 'Re: Audit plan' });
-      // Nothing has fired yet — still inside the debounce window.
-      expect(sdk.calls).toHaveLength(0);
-      // Crossing the window triggers exactly one coalesced spawn.
-      await vi.advanceTimersByTimeAsync(250);
+      // Still just the leading-edge spawn.
       expect(sdk.calls).toHaveLength(1);
-      // The wake prompt should reference all three UIDs (batch view).
-      expect(sdk.calls[0].prompt).toContain('UID 50');
-      expect(sdk.calls[0].prompt).toContain('UID 51');
-      expect(sdk.calls[0].prompt).toContain('UID 52');
-      expect(sdk.calls[0].prompt).toContain('coalesced');
+      // Crossing the window fires the coalesced trailing wake
+      // covering UIDs 51 and 52 (the leading-edge UID 50 already
+      // ran in the first spawn).
+      await vi.advanceTimersByTimeAsync(250);
+      expect(sdk.calls).toHaveLength(2);
+      expect(sdk.calls[1].prompt).toContain('UID 51');
+      expect(sdk.calls[1].prompt).toContain('UID 52');
+      expect(sdk.calls[1].prompt).toContain('coalesced');
+      // The leading-edge wake did NOT see the later UIDs.
+      expect(sdk.calls[0].prompt).not.toContain('UID 51');
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('coalesces 30s default has zero perceived latency for a lone reply (leading-edge fires immediately)', async () => {
+    // Regression test for 0.9.1: the user's complaint that "dispatcher
+    // is silent for 30 s after a wake" was the trailing-edge-only
+    // implementation. The lone-reply case must spawn synchronously.
+    const { d, sdk } = makeDispatcher({}, { wakeCoalesceMs: 30_000 });
+    await d.handleEvent(FOLA, { type: 'new', uid: 99, from: 'orion', subject: 'Lone reply' });
+    expect(sdk.calls).toHaveLength(1);  // already fired, no waiting
   });
 
   it('injects a "Thread context" block on the second wake of the same thread', async () => {

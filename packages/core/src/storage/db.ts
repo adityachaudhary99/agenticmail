@@ -380,6 +380,15 @@ ALTER TABLE agent_tasks ADD COLUMN output_schema TEXT;
 -- with rows from before this migration.
 ALTER TABLE drafts ADD COLUMN attachments TEXT;
 `,
+  '016_agent_wake_on_cc.sql': `
+-- Per-agent wake preference. When 0, the dispatcher SKIPS this
+-- agent on every CC-only delivery (the agent is on Cc/Bcc but
+-- not To), regardless of what the sender passed as the wake
+-- argument. This is the "coder agent, only wake me when
+-- explicitly named" preference from the wake-thrash feedback.
+-- Defaults to 1 (respect the senders wake list as-is).
+ALTER TABLE agents ADD COLUMN wake_on_cc INTEGER NOT NULL DEFAULT 1;
+`,
 };
 
 function runMigrations(database: Database): void {

@@ -2380,12 +2380,16 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
         const trig = w.trigger?.subject ? ` — ${String(w.trigger.subject).slice(0, 60)}` : w.trigger?.taskId ? ` — task ${String(w.trigger.taskId).slice(0, 8)}` : '';
         const from = w.trigger?.from ? ` (from ${w.trigger.from})` : '';
         const preview = w.resultPreview ? `\n      → ${String(w.resultPreview).slice(0, 140).replace(/\s+/g, ' ').trim()}` : '';
+        // Context-budget telemetry: only present on finished workers
+        // (the SDK emits usage in the result frame at end-of-turn).
+        // Renders as a second line so the row stays scannable.
+        const usage = w.usage ? `\n      ⚡ ${String(w.usage)}` : '';
         let status = w.endedAtMs ? (w.ok === false ? 'failed' : 'finished') : 'running';
         if (!w.endedAtMs && w.stale) status = 'running (stale heartbeat)';
         const turns = !w.endedAtMs && typeof w.turnCount === 'number' ? ` · ${w.turnCount} tool calls` : '';
         const tool = !w.endedAtMs && w.lastTool ? ` · last tool: ${w.lastTool}` : '';
         const idHint = !w.endedAtMs ? `\n      id: ${w.workerId}  (use tail_worker for the log)` : '';
-        return `  ${prefix} ${w.agentName} [${w.kind}] ${status} ${dur}${turns}${tool}${trig}${from}${preview}${idHint}`;
+        return `  ${prefix} ${w.agentName} [${w.kind}] ${status} ${dur}${turns}${tool}${trig}${from}${preview}${usage}${idHint}`;
       };
       const lines: string[] = [];
       if (activeList.length > 0) {

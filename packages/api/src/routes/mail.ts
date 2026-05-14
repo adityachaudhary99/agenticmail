@@ -329,11 +329,17 @@ export function deriveDefaultWakeList(toField: string | string[] | undefined): s
   const arr = Array.isArray(toField) ? toField : String(toField).split(',');
   const localNames: string[] = [];
   for (const raw of arr) {
-    const addr = String(raw).trim().toLowerCase();
-    if (!addr.endsWith('@localhost')) continue;
-    // Strip display name if present: "Foo <foo@localhost>" → "foo"
-    const m = addr.match(/<([^>]+)>/);
-    const bare = m ? m[1].trim() : addr;
+    // Extract the bare address FIRST, before the `endsWith('@localhost')`
+    // check — display-name forms like `"Vesper <vesper@localhost>"`
+    // end with `>`, not `@localhost`, and would otherwise be
+    // skipped entirely. This previously caused `deriveDefaultWakeList`
+    // to return undefined on display-name addressing, falling
+    // through to "no allowlist" → everyone wakes. The new default
+    // semantics need to survive that case.
+    const trimmed = String(raw).trim().toLowerCase();
+    const m = trimmed.match(/<([^>]+)>/);
+    const bare = (m ? m[1] : trimmed).trim();
+    if (!bare.endsWith('@localhost')) continue;
     const name = bare.replace(/@localhost$/i, '');
     if (name) localNames.push(name);
   }
@@ -385,17 +391,32 @@ async function notifyLocalRecipientsOfNewMail(
   };
   push(toField); push(ccField); push(bccField);
 
-  // Extract bare addresses from "Name <addr@host>" or plain "addr@host"
+  // Extract bare addresses from each field SEPARATELY so the SSE
+  // event can carry per-recipient "were you on To, Cc, or Bcc?"
+  // metadata. The dispatcher uses this to honor a recipient's
+  // wake_on_cc:false preference — agents that opt out of CC wakes
+  // only need their `to` check to see "is my address on To?".
   const addrRe = /<([^>]+)>|([^\s,;<>]+@[^\s,;<>]+)/g;
-  const addresses = new Set<string>();
-  for (const entry of collected) {
-    let match: RegExpExecArray | null;
-    addrRe.lastIndex = 0;
-    while ((match = addrRe.exec(entry)) !== null) {
-      const a = (match[1] || match[2] || '').trim().toLowerCase();
-      if (a) addresses.add(a);
+  function extractAddrs(v: string | string[] | undefined): string[] {
+    if (!v) return [];
+    const items = Array.isArray(v) ? v : [v];
+    const out = new Set<string>();
+    for (const entry of items) {
+      let match: RegExpExecArray | null;
+      addrRe.lastIndex = 0;
+      while ((match = addrRe.exec(entry)) !== null) {
+        const a = (match[1] || match[2] || '').trim().toLowerCase();
+        if (a) out.add(a);
+      }
     }
+    return Array.from(out);
   }
+  const toAddrs  = extractAddrs(toField);
+  const ccAddrs  = extractAddrs(ccField);
+  const bccAddrs = extractAddrs(bccField);
+  const addresses = new Set<string>([...toAddrs, ...ccAddrs, ...bccAddrs]);
+  // Convert each to bare local name for the per-recipient check.
+  const toLocalNames = new Set(toAddrs.filter(a => a.endsWith('@localhost')).map(a => a.replace(/@localhost$/i, '')));
 
   const notified = new Set<string>();
   for (const addr of addresses) {
@@ -437,6 +458,12 @@ async function notifyLocalRecipientsOfNewMail(
       }
     }
 
+    // Tell the dispatcher whether THIS recipient was on `To:` or
+    // only on CC/Bcc. Used by the per-agent wake_on_cc preference
+    // (an agent with wake_on_cc:false skips wakes when it's not
+    // on To, regardless of the sender's wake list).
+    const wasOnTo = toLocalNames.has(recipient.name.toLowerCase());
+
     pushEventToAgent(recipient.id, {
       type: 'new',
       uid,
@@ -453,6 +480,10 @@ async function notifyLocalRecipientsOfNewMail(
       // recipients whose name is on the list (or for everyone if the
       // field is absent, preserving the v0.8.x default).
       ...(wakeList !== undefined ? { wakeAllowlist: wakeList } : {}),
+      // Per-recipient "was I on To?" flag for wake_on_cc honoring.
+      // The dispatcher uses this combined with account.wakeOnCc to
+      // decide whether to skip a CC-only delivery.
+      wasOnTo,
     });
   }
 }

@@ -278,6 +278,27 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
     } catch (err) { next(err); }
   });
 
+  /**
+   * Toggle the per-agent wake-on-CC preference.
+   *
+   *   PATCH /accounts/:id/wake-on-cc  body: { wakeOnCc: boolean }
+   *
+   * When false, the dispatcher skips this agent on every CC-only
+   * delivery (it's on Cc / Bcc but NOT on To), regardless of the
+   * sender's `wake` list. Intended for "coder" / "silent observer"
+   * agents that should only wake when explicitly named on To.
+   * Master-key scoped — this is a per-account policy, not
+   * something the agent toggles for itself mid-conversation.
+   */
+  router.patch('/accounts/:id/wake-on-cc', requireMaster, async (req, res, next) => {
+    try {
+      const wakeOnCc = req.body?.wakeOnCc === false ? 0 : 1;
+      const result = db.prepare('UPDATE agents SET wake_on_cc = ? WHERE id = ?').run(wakeOnCc, req.params.id);
+      if (result.changes === 0) { res.status(404).json({ error: 'Agent not found' }); return; }
+      res.json({ ok: true, wakeOnCc: wakeOnCc === 1 });
+    } catch (err) { next(err); }
+  });
+
   // Delete account — requires master key
   // Query params: archive (default true), reason, deletedBy
   router.delete('/accounts/:id', requireMaster, async (req, res, next) => {

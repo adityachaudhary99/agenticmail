@@ -70,6 +70,11 @@ interface SSEEvent {
    * Claude turn. When absent, every CC'd recipient wakes (v0.8.x default).
    */
   wakeAllowlist?: string[];
+  /** Per-recipient "was I on the To field?" flag emitted by the
+   *  API in 0.9.1+. Pairs with the recipient's `wake_on_cc`
+   *  preference: when the agent registered with wake_on_cc:false
+   *  and `wasOnTo !== true`, the dispatcher drops the wake. */
+  wasOnTo?: boolean;
   [key: string]: unknown;
 }
 
@@ -587,9 +592,26 @@ async function runWorker(
         }
       }
       // Final result message (SDK emits one when the turn ends).
-      if (m.type === 'result' && typeof (m as { result?: string }).result === 'string') {
-        collectedText.push((m as { result: string }).result);
-        if (observer) observer.onMessage('result', (m as { result: string }).result.slice(0, 240).replace(/\s+/g, ' ').trim());
+      if (m.type === 'result') {
+        const r = m as {
+          result?: string;
+          usage?: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number };
+          total_cost_usd?: number;
+        };
+        if (typeof r.result === 'string') {
+          collectedText.push(r.result);
+          if (observer) observer.onMessage('result', r.result.slice(0, 240).replace(/\s+/g, ' ').trim());
+        }
+        // Context-budget telemetry. Surface SDK's reported usage so
+        // check_activity / tail_worker can show real token cost
+        // and the cache+memory savings become visible. We emit it
+        // through the observer; spawnWorker forwards it to the
+        // API's worker-finished payload.
+        if (r.usage && observer) {
+          const u = r.usage;
+          const summary = `in=${u.input_tokens ?? 0} out=${u.output_tokens ?? 0} cacheR=${u.cache_read_input_tokens ?? 0} cacheW=${u.cache_creation_input_tokens ?? 0}${typeof r.total_cost_usd === 'number' ? ` cost=$${r.total_cost_usd.toFixed(4)}` : ''}`;
+          observer.onMessage('usage', summary);
+        }
       }
     }
     const text = collectedText.join('\n').trim();
@@ -846,6 +868,14 @@ export class Dispatcher {
   }>();
   private wakeCoalesceMs: number;
 
+  /** Wall-clock timestamp the dispatcher started. Surfaced via
+   *  process-heartbeat so check_activity can show uptime. */
+  private startedAtMs = Date.now();
+  /** Periodic timer that posts a process-heartbeat to the API.
+   *  Without this, a hung dispatcher looks identical to "no
+   *  events to wake on" — the host has no liveness signal. */
+  private processHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor(opts: DispatcherOptions = {}) {
     this.cfg = resolveConfig(opts);
     this.maxConcurrent = opts.maxConcurrentWorkers ?? DEFAULT_MAX_CONCURRENT;
@@ -922,10 +952,38 @@ export class Dispatcher {
 
   async start(): Promise<void> {
     this.log('info', `[dispatcher] starting (maxConcurrent=${this.maxConcurrent}, syncEvery=${this.syncIntervalMs}ms)`);
+    this.startedAtMs = Date.now();
     await this.syncAccounts();
     this.accountSyncTimer = setInterval(() => {
       this.syncAccounts().catch(err => this.log('warn', `[dispatcher] account sync failed: ${err}`));
     }, this.syncIntervalMs);
+    // Process heartbeat — every 30 s the dispatcher posts its
+    // alive-state to the API so check_activity / the new
+    // /dispatcher/diagnostics endpoint can show "dispatcher is
+    // up, watching N channels, queue size M, uptime X." Without
+    // this, a stale dispatcher (crashed / hung) looked identical
+    // to "no mail to wake on" — the host had no signal.
+    this.processHeartbeatTimer = setInterval(() => {
+      this.postActivity('/dispatcher/process-heartbeat', {
+        startedAtMs: this.startedAtMs,
+        uptimeMs: Date.now() - this.startedAtMs,
+        channels: this.channels.size,
+        coalesceQueueSize: this.wakeCoalesce.size,
+        running: this.running,
+        maxConcurrent: this.maxConcurrent,
+      });
+    }, 30_000);
+    (this.processHeartbeatTimer as unknown as { unref?: () => void }).unref?.();
+    // Fire one heartbeat immediately on start so the host sees
+    // "dispatcher is alive" without waiting 30 s.
+    this.postActivity('/dispatcher/process-heartbeat', {
+      startedAtMs: this.startedAtMs,
+      uptimeMs: 0,
+      channels: this.channels.size,
+      coalesceQueueSize: 0,
+      running: 0,
+      maxConcurrent: this.maxConcurrent,
+    });
     // Subscribe to system-level account-lifecycle events so new accounts
     // get an SSE channel within MILLISECONDS of `create_account`, not at
     // the next poll tick. The polling above stays as a safety net for
@@ -937,6 +995,8 @@ export class Dispatcher {
     this.stopped = true;
     if (this.accountSyncTimer) clearInterval(this.accountSyncTimer);
     this.accountSyncTimer = null;
+    if (this.processHeartbeatTimer) clearInterval(this.processHeartbeatTimer);
+    this.processHeartbeatTimer = null;
     if (this.systemChannelController) {
       try { this.systemChannelController.abort(); } catch { /* ignore */ }
       this.systemChannelController = null;
@@ -1013,6 +1073,7 @@ export class Dispatcher {
       // circuit breaker below.
       if (isThreadClosedSubject(subject)) {
         this.log('info', `[dispatcher] thread closed (subject="${subject ?? ''}") — skipping wake for "${account.name}" uid=${event.uid}`);
+        this.postSkipped(account, event, 'thread-closed', `subject contains a thread-close marker: "${subject ?? ''}"`);
         // Drop the per-thread cache + this agent's memory for the
         // closed thread. Other CC'd agents' memories survive — they
         // will fade naturally on their next wake (no cache to load
@@ -1033,7 +1094,27 @@ export class Dispatcher {
       const allowlist = extractWakeAllowlist(event);
       if (!isAgentOnWakeAllowlist(account.name, allowlist)) {
         this.log('info', `[dispatcher] wake allowlist excludes "${account.name}" (list=${JSON.stringify(allowlist)}) — mail delivered, no Claude turn`);
+        this.postSkipped(account, event, 'allowlist-excluded', `wake list ${JSON.stringify(allowlist)} did not include "${account.name}"`);
         return;
+      }
+
+      // Per-agent wake_on_cc preference. When the recipient
+      // registered with `wake_on_cc: false`, any delivery where
+      // they were NOT on the To field (i.e. only on Cc/Bcc) is
+      // silently dropped from the wake path. This is the "I am
+      // a coder; only wake me when explicitly addressed to To"
+      // opt-in from the wake-thrash feedback. We require the
+      // event to carry an explicit `wasOnTo: true` to fire;
+      // ambiguous events (older API versions that don't emit
+      // the field) default to firing, preserving back-compat.
+      const wakeOnCc = (account as { wakeOnCc?: boolean }).wakeOnCc !== false;
+      if (!wakeOnCc) {
+        const wasOnTo = (event as { wasOnTo?: boolean }).wasOnTo === true;
+        if (!wasOnTo) {
+          this.log('info', `[dispatcher] "${account.name}" has wake_on_cc:false and was not on To — mail delivered, no Claude turn (uid=${event.uid})`);
+          this.postSkipped(account, event, 'wake-on-cc', `"${account.name}" has wake_on_cc:false; not on To`);
+          return;
+        }
       }
 
       // Compute the thread id once; it threads through both the
@@ -1340,34 +1421,50 @@ export class Dispatcher {
     }
     const key = `${account.id}::${threadId}`;
     const existing = this.wakeCoalesce.get(key);
-    if (existing) {
-      clearTimeout(existing.timer);
-      existing.events.push(event);
-      existing.timer = setTimeout(() => this.fireCoalescedWake(key), this.wakeCoalesceMs);
-      // Hard cap on debounce extension: a continuous reply stream
-      // could otherwise hold a single coalesced batch open forever.
-      // After 5× the debounce window from the FIRST event, force
-      // the timer to fire even if new events keep arriving. This
-      // is a safety valve; in normal use bursts settle in 1–2
-      // window-widths.
-      const elapsedFromFirst = this.now() - existing.firstScheduledAt;
-      if (elapsedFromFirst > this.wakeCoalesceMs * 5) {
-        clearTimeout(existing.timer);
-        this.fireCoalescedWake(key);
-      }
-      // Don't keep the process alive just for a debounce timer.
-      (existing.timer as unknown as { unref?: () => void }).unref?.();
+    if (!existing) {
+      // FIRST event for this (agent, thread) — fire immediately
+      // (leading-edge). Set a sentinel entry with an empty event
+      // list + a debounce timer; any subsequent events that
+      // arrive within the window get queued onto the entry and
+      // fire as a coalesced batch when the timer expires. This
+      // gives lone replies zero perceived latency while still
+      // collapsing bursts into one extra wake (so 4 quick
+      // replies = first one fires immediately + one coalesced
+      // catch-up wake at the trailing edge, not 4 separate
+      // wakes).
+      const entry = {
+        events: [] as SSEEvent[],         // empty — first event already fired
+        account,
+        threadId,
+        firstScheduledAt: this.now(),
+        timer: setTimeout(() => this.fireCoalescedWake(key), this.wakeCoalesceMs),
+      };
+      (entry.timer as unknown as { unref?: () => void }).unref?.();
+      this.wakeCoalesce.set(key, entry);
+      await this.fireWakeImmediately(account, event, threadId);
       return;
     }
-    const entry = {
-      events: [event],
-      account,
+    // Subsequent event within the window — append + extend timer.
+    clearTimeout(existing.timer);
+    existing.events.push(event);
+    this.postActivity('/dispatcher/worker-queued', {
+      agentName: account.name,
+      agentId: account.id,
       threadId,
-      firstScheduledAt: this.now(),
-      timer: setTimeout(() => this.fireCoalescedWake(key), this.wakeCoalesceMs),
-    };
-    (entry.timer as unknown as { unref?: () => void }).unref?.();
-    this.wakeCoalesce.set(key, entry);
+      queuedCount: existing.events.length,
+      fireAtMs: this.now() + this.wakeCoalesceMs,
+      reason: 'coalescing subsequent burst events',
+    });
+    existing.timer = setTimeout(() => this.fireCoalescedWake(key), this.wakeCoalesceMs);
+    (existing.timer as unknown as { unref?: () => void }).unref?.();
+    // Hard cap on debounce extension — a continuous reply stream
+    // could hold the batch open forever. After 5× the window from
+    // the first event, force the timer to fire.
+    const elapsedFromFirst = this.now() - existing.firstScheduledAt;
+    if (elapsedFromFirst > this.wakeCoalesceMs * 5) {
+      clearTimeout(existing.timer);
+      this.fireCoalescedWake(key);
+    }
   }
 
   /**
@@ -1379,6 +1476,7 @@ export class Dispatcher {
     const verdict = this.chargeWake(account.id, threadId);
     if (!verdict.ok) {
       this.log('warn', `[dispatcher] wake-budget exhausted for "${account.name}" on thread "${threadId}" — dropped uid=${event.uid}`);
+      this.postSkipped(account, event, 'budget-exhausted', `wake budget exhausted for thread "${threadId}" (count=${verdict.count}, cap=${this.maxWakesPerThread})`);
       return;
     }
     await this.spawnWorker(account, newMailPrompt(account, event), {
@@ -1543,10 +1641,14 @@ export class Dispatcher {
     // progress instead of an opaque "still running" for hours.
     let turnCount = 0;
     let lastTool = '';
+    let lastUsage: string | undefined;
     const observer: WorkerObserver = {
       onMessage: (tag, summary) => {
         writeLog(`${tag} ${summary}`);
         if (tag === 'tool_use') { lastTool = summary.split(' ')[0]; turnCount++; }
+        // Hold onto the latest usage line so the worker-finished
+        // event can forward it to check_activity.
+        if (tag === 'usage') lastUsage = summary;
       },
     };
     const heartbeatHandle = setInterval(() => {
@@ -1610,6 +1712,11 @@ export class Dispatcher {
         agentName: account.name,
         ok,
         turnCount,
+        // Context-budget telemetry: the SDK-reported usage line
+        // (input/output/cache tokens + cost). Forwarded so
+        // check_activity can show real cost per worker and the
+        // cache+memory savings vs pre-0.9.0 become measurable.
+        usage: lastUsage,
         resultPreview: typeof preview === 'string' ? preview.slice(0, 240) : undefined,
       });
     }
@@ -1642,6 +1749,38 @@ export class Dispatcher {
         void (result as Promise<unknown>).catch(() => { /* best-effort */ });
       }
     } catch { /* best-effort — never let observer failures touch spawn flow */ }
+  }
+
+  /**
+   * Post a "skipped wake" notification with the reason the
+   * dispatcher decided not to fire a Claude turn. Surfaced in
+   * `check_activity` so the host can see the decision instead
+   * of just observing silence ("did my mail land? did the
+   * dispatcher skip it? is the dispatcher even alive?").
+   *
+   * Reasons cover every filter that drops a wake:
+   *   - thread-closed       — subject had [FINAL]/[DONE]/[CLOSED]/[WRAP]
+   *   - allowlist-excluded  — sender's `wake` list did not include the agent
+   *   - wake-on-cc          — agent registered wake_on_cc:false and was on Cc
+   *   - dedup               — duplicate UID seen recently
+   *   - rpc-suppress        — RPC-notification mail right after a task event
+   *   - budget-exhausted    — per-(agent, thread) wake budget hit the cap
+   */
+  private postSkipped(
+    account: AgenticMailAccount,
+    event: SSEEvent,
+    reason: string,
+    detail: string,
+  ): void {
+    this.postActivity('/dispatcher/worker-skipped', {
+      agentId: account.id,
+      agentName: account.name,
+      uid: event.uid,
+      subject: extractSubject(event),
+      from: extractFrom(event),
+      reason,
+      detail,
+    });
   }
 
   /** Build the env block we pass to the worker's MCP server child process. */

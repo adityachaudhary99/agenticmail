@@ -33,7 +33,19 @@
 
 ---
 
-### ✨ What's new in 0.9.0
+### ✨ What's new in 0.9.1
+
+The visibility release — closes every "what just happened?" gap from 0.9.0.
+
+- **Lone wakes fire immediately.** 0.9.0's debounce window blocked even single replies for 30 s, making the dispatcher look dead. Leading-edge fire + trailing-edge coalesce now: first event for a `(agent, thread)` spawns instantly; bursts within the window collapse into one trailing wake.
+- **Dispatcher process heartbeat.** `check_activity` now shows `dispatcher: { state: 'alive' | 'unhealthy' | 'missing', uptimeMs, channels, coalesceQueueSize, ... }`. The host can finally answer "is the dispatcher up?" in one query.
+- **Skipped-wake ring buffer.** Every filter decision (thread-closed, allowlist-excluded, wake-on-cc, budget-exhausted) is posted with a reason; `check_activity` surfaces the last 100. No more "did my mail land? did it skip?" guessing.
+- **Per-agent `wake_on_cc: false` flag.** Coder agents can register a preference: never wake when only on Cc, regardless of sender. `PATCH /accounts/:id/wake-on-cc`.
+- **Display-name regex fix in `deriveDefaultWakeList`.** Senders using `"Vesper <vesper@localhost>"` form no longer fall through to "no allowlist → wake everyone".
+- **Web UI shows To / Cc / Bcc as separate labeled rows** in the message view (previously lumped under one `to:` line).
+- **`docs/wake-patterns.md`** documents every wake shape + 5 recommended patterns.
+
+### ✨ Earlier — 0.9.0
 
 The wake-context release. Multi-agent thread cost goes from linear-in-thread-length to roughly flat.
 

@@ -583,7 +583,28 @@ mark.search-hl {
 }
 .message-from .name { font-weight: 500; }
 .message-from .addr { color: var(--muted); margin-left: 4px; }
-.message-to { font-size: 12px; color: var(--muted); margin-top: 4px; }
+/* Recipient rows — one per field (To / Cc / Bcc). Renders only
+   when the field is non-empty. The label is a fixed-width tag
+   so the addresses align cleanly across the three rows. */
+.message-recipient-row {
+  display: flex; gap: 6px;
+  font-size: 12px; color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.message-recipient-label {
+  flex: 0 0 28px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: none;
+}
+.message-recipient-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-word;
+}
+.message-cc .message-recipient-label,
+.message-bcc .message-recipient-label { color: var(--muted); }
 .message-date {
   font-size: 12px; color: var(--muted);
   white-space: nowrap;
