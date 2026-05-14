@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.6] - 2026-05-14
+
+### Fixed — Dispatcher crashed on startup with `Dynamic require of "events" is not supported`
+
+Production dispatcher (PM2) was stuck in a crash-loop and silently not waking any agents. `pm2 logs` revealed:
+
+```
+Error: Dynamic require of "events" is not supported
+    at chunk-2ESYSVXG.js:11:9
+    at ../../node_modules/nodemailer/lib/mailer/index.js
+```
+
+**Root cause:** `packages/claudecode/src/dispatcher.ts` imports `ThreadCache`, `AgentMemoryStore`, `threadIdFor`, `normalizeSubject` from `@agenticmail/core` — but `@agenticmail/core` was NOT listed in `packages/claudecode/package.json` dependencies (only `@agenticmail/mcp` and the SDK were). tsup's default behaviour is to externalize listed dependencies and bundle everything else. So core got inlined into claudecode's ESM dist, dragging in core's runtime deps — `nodemailer`, `imapflow`, `mailparser` — all of which are CommonJS packages containing `require("events")`, `require("stream")`, etc. esbuild's ESM output emits those as a `__require()` shim that throws at runtime because ESM has no `require`.
+
+**Fix:** add `@agenticmail/core` to claudecode's `dependencies`. tsup now externalizes it, the bundle no longer contains nodemailer/imapflow/mailparser code, and the dispatcher starts cleanly.
+
+Verification: built bundle dropped from ~15 chunks (multi-MB CJS payloads) to ~9 small chunks. `grep -l nodemailer dist/*.js` is empty. `grep '__require("events")' dist/*.js` is empty.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/claudecode` | 0.2.4 | 0.2.5 |
+| `@agenticmail/cli` | 0.9.5 | 0.9.6 |
+
+Plugin manifest mirrored to 0.9.6. core / mcp / api unchanged (no code changes there).
+
+### Operator note
+
+Upgrade with:
+
+```
+npm install -g @agenticmail/cli@latest
+pm2 restart agenticmail-claudecode-dispatcher
+pm2 logs agenticmail-claudecode-dispatcher --lines 30   # confirm clean start
+```
+
 ## [0.9.5] - 2026-05-14
 
 ### Fixed — Don't re-wake an agent for mail it already read in-line
