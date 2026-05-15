@@ -36,7 +36,20 @@ export async function openMessage(uid) {
   document.getElementById('msg-delete').addEventListener('click', () => deleteMessage());
 
   try {
-    const msg = await apiGet(`/mail/messages/${uid}`, { agentKey: state.selectedAgent.apiKey });
+    // Pass the current folder so the API fetches from the right
+    // mailbox — Spam / Archive / Trash UIDs don't exist in INBOX,
+    // and the API defaults `folder` to INBOX when omitted. Without
+    // this, opening a message from any non-Inbox folder 404'd
+    // with `MESSAGE_NOT_FOUND` because UID N existed in (say) Junk
+    // Mail but the API looked in INBOX.
+    //
+    // We resolve the IMAP folder name via state.folderNames (the
+    // map populated by /mail/folders auto-discovery) so renames
+    // like Stalwart's "Junk Mail" vs "Spam" are handled in one
+    // place. "inbox" maps to "INBOX" by convention.
+    const imap = state.folderNames?.[state.selectedFolder] ?? 'INBOX';
+    const qs = imap && imap !== 'INBOX' ? `?folder=${encodeURIComponent(imap)}` : '';
+    const msg = await apiGet(`/mail/messages/${uid}${qs}`, { agentKey: state.selectedAgent.apiKey });
     state.currentMessage = msg;
     renderMessage(msg);
   } catch (err) {
@@ -220,7 +233,8 @@ function renderThreadQuote(dateRaw, sender, quotedBody) {
 async function markUnread() {
   if (!state.currentMessage || !state.selectedAgent) return;
   try {
-    await apiPost(`/mail/messages/${state.selectedUid}/unseen`, {}, { agentKey: state.selectedAgent.apiKey });
+    const imap = state.folderNames?.[state.selectedFolder] ?? 'INBOX';
+    await apiPost(`/mail/messages/${state.selectedUid}/unseen`, { folder: imap }, { agentKey: state.selectedAgent.apiKey });
     toast('Marked unread.');
     location.hash = `#/folder/${state.selectedFolder ?? 'inbox'}`;
     await loadList(state.selectedAgent, state.selectedFolder);
@@ -262,7 +276,8 @@ async function markSpam() {
   });
   if (!ok) return;
   try {
-    await apiPost(`/mail/messages/${state.selectedUid}/spam`, {}, { agentKey: state.selectedAgent.apiKey });
+    const imap = state.folderNames?.[state.selectedFolder] ?? 'INBOX';
+    await apiPost(`/mail/messages/${state.selectedUid}/spam`, { folder: imap }, { agentKey: state.selectedAgent.apiKey });
     toast('Reported as spam.');
     location.hash = `#/folder/${state.selectedFolder ?? 'inbox'}`;
     await loadList(state.selectedAgent, state.selectedFolder);

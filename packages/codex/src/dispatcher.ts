@@ -1,17 +1,17 @@
 /**
- * AgenticMail → Claude Code event dispatcher.
+ * AgenticMail → OpenAI Codex event dispatcher.
  *
  * Long-lived daemon that bridges AgenticMail's event stream to the
- * Claude Agent SDK. Concretely: subscribes to the master API's SSE
+ * OpenAI Codex SDK. Concretely: subscribes to the master API's SSE
  * stream for every AgenticMail account, and when an event arrives —
  * either a new mail in some agent's inbox, or a task assigned to some
- * agent — it spawns a Claude-powered worker that *is* that agent (same
+ * agent — it spawns a Codex-powered worker that *is* that agent (same
  * persona, same `_account`-scoped MCP toolbelt) and lets it handle the
  * trigger.
  *
  * This is what makes "send an email to fola@localhost and she wakes up
  * and replies" work — without any always-on enterprise runtime, and
- * without an interactive Claude Code session having to be open.
+ * without an interactive Codex session having to be open.
  *
  * # Design notes
  *
@@ -33,8 +33,8 @@
  *     completely host-agnostic.
  *
  *   - Concurrency is capped via a small semaphore (default 10). Beyond
- *     that, wakes queue. This is a hard floor on Anthropic-side cost:
- *     50 simultaneous wakes = 50 simultaneous Claude calls, which the
+ *     that, wakes queue. This is a hard floor on OpenAI-side cost:
+ *     50 simultaneous wakes = 50 simultaneous Codex calls, which the
  *     user is unlikely to want by default.
  *
  *   - Task events get an explicit "claim + submit_result" instruction
@@ -73,7 +73,7 @@ interface SSEEvent {
   /**
    * Optional wake allowlist set by the sender via `send_email({ wake })`.
    * When present, only listed agents (case-insensitive bare name) get a
-   * Claude turn. When absent, every CC'd recipient wakes (v0.8.x default).
+   * Codex turn. When absent, every CC'd recipient wakes (v0.8.x default).
    */
   wakeAllowlist?: string[];
   /** Per-recipient "was I on the To field?" flag emitted by the
@@ -132,13 +132,13 @@ function extractWakeAllowlist(event: SSEEvent): string[] | undefined {
 }
 
 /**
- * Should the dispatcher actually spawn a Claude worker for this
+ * Should the dispatcher actually spawn a Codex worker for this
  * recipient given the wake allowlist on the event?
  *
  *   no allowlist  → yes (preserves the default "wake everyone CC'd" behaviour
  *                   from v0.8.x and earlier)
  *   empty list    → no  (sender deliberately marked the mail as
- *                   "deliver silently — no Claude turns please")
+ *                   "deliver silently — no Codex turns please")
  *   has entries   → yes only if the recipient's name is on the list
  */
 function isAgentOnWakeAllowlist(accountName: string, list: string[] | undefined): boolean {
@@ -170,7 +170,7 @@ export interface DispatcherOptions extends ResolveConfigOptions {
    * thread stays muted for the full period (which is what we want).
    */
   wakeWindowMs?: number;
-  /** Override the Claude Agent SDK `query` function. Used by tests. */
+  /** Override the SDK `query` function. Used by tests. */
   querySdk?: QueryFn;
   /** Override the global `fetch`. Used by tests. */
   fetchImpl?: typeof fetch;
@@ -183,7 +183,7 @@ export interface DispatcherOptions extends ResolveConfigOptions {
    *  Default 30 s — covers a typical "burst of back-to-back
    *  replies in 5–15 s" pattern without making single replies
    *  feel sluggish. Set to 0 to disable coalescing entirely
-   *  (one Claude turn per event, pre-0.9.0 behaviour). */
+   *  (one Codex turn per event, pre-0.9.0 behaviour). */
   wakeCoalesceMs?: number;
   /** Override the ThreadCache disk root. Tests use a tmpdir;
    *  production runs against ~/.agenticmail/thread-cache/. */
@@ -205,7 +205,7 @@ export interface DispatcherOptions extends ResolveConfigOptions {
 }
 
 /**
- * Minimal SDK-query signature we use. The shape matches Claude's
+ * Minimal SDK-query signature we use. The shape historically matched Claude's
  * `@anthropic-ai/claude-agent-sdk` query() for historical reasons —
  * `runWorker` reads frames in that shape and adapter code translates
  * Codex's events into it (see `defaultQuery()` below). Tests can mock
@@ -311,7 +311,7 @@ function isTaskNotificationSubject(subject: string | undefined): boolean {
  * Thread-termination markers the host can put in a subject line to tell
  * the dispatcher "this thread is done — stop waking workers on replies
  * to it". Replies still flow (the mail server doesn't know about this);
- * agents just don't get a Claude turn for them.
+ * agents just don't get a Codex turn for them.
  *
  * The user named this gap directly: "No native 'done' signal — the
  * thread just keeps cascading." Subject prefix is the lightest possible
@@ -373,7 +373,7 @@ function threadIdFromSubject(subject: string | undefined): string {
  *
  *   2. **Storms.** 10 agents CC'd on the same thread = every reply
  *      wakes 9 workers. Most "stay silent" but each still costs one
- *      Claude turn. We let this work naturally up to a point, but
+ *      Codex turn. We let this work naturally up to a point, but
  *      cap the absolute number per (agent, thread).
  *
  *   3. **Stuck agents.** One agent keeps replying without progress.
@@ -539,7 +539,46 @@ function isContextOverflowError(msg: string): boolean {
 }
 
 /**
- * Spawn-and-wait for a worker via the Claude Agent SDK.
+ * True when the SDK error message looks like a provider-side rate
+ * limit (per-minute, per-hour, daily quota, "weekly cap reached" —
+ * all the things that auto-reset on a timer rather than failing
+ * permanently). The dispatcher uses this to decide whether to
+ * defer + retry instead of dropping the wake.
+ *
+ * Match list is deliberately broad so a future SDK can change its
+ * exact phrasing without silently regressing the retry path:
+ *
+ *   - "429"                        — HTTP status
+ *   - "rate limit" / "rate-limit"  — Anthropic + OpenAI common wording
+ *   - "too many requests"          — RFC 6585 §4
+ *   - "quota exceeded" / "quota_exceeded"
+ *   - "usage limit" / "limit reached"
+ *   - "overloaded_error"           — Anthropic-specific
+ *   - "insufficient_quota"         — OpenAI billing-side cap
+ *   - "weekly limit" / "daily limit" — Claude Code / Codex personal
+ *     plans surface these as rate-limit-shaped errors that reset
+ *     on a fixed schedule.
+ */
+function isRateLimitError(msg: string): boolean {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return m.includes('429')
+      || m.includes('rate limit')
+      || m.includes('rate-limit')
+      || m.includes('rate_limit')
+      || m.includes('too many requests')
+      || m.includes('quota exceeded')
+      || m.includes('quota_exceeded')
+      || m.includes('usage limit')
+      || m.includes('limit reached')
+      || m.includes('overloaded_error')
+      || m.includes('insufficient_quota')
+      || m.includes('weekly limit')
+      || m.includes('daily limit');
+}
+
+/**
+ * Spawn-and-wait for a worker via the OpenAI Codex SDK.
  * Drains the query stream, captures the final assistant text, returns it.
  *
  * `cwd` (when given) is passed straight through to the SDK so each
@@ -573,21 +612,22 @@ async function runWorker(
     //
     // Earlier versions of the dispatcher locked workers to MCP-only tools
     // ("you operate an email account, not a developer environment"). That
-    // was the wrong design: AgenticMail agents are real Claude Code
-    // subagents running under the host's OAuth, and the work humans
-    // delegate to them (write code, run tests, do research, edit files)
-    // demands the full native toolset (Read, Write, Edit, Bash, Glob,
-    // Grep, WebFetch, WebSearch, NotebookEdit, …). Restricting them
-    // turned "Zephyr implements the game" into "Zephyr emails source
-    // code as plaintext and the human has to copy-paste it" — which
-    // defeats the point of having agents in the first place.
+    // was the wrong design: AgenticMail agents are real Codex subagents
+    // running under the host's OpenAI auth, and the work humans delegate
+    // to them (write code, run tests, do research, edit files) demands
+    // the full native toolset (Read, Write, Edit, Bash, Glob, Grep,
+    // WebFetch, WebSearch, …). Restricting them turned "Zephyr implements
+    // the game" into "Zephyr emails source code as plaintext and the
+    // human has to copy-paste it" — which defeats the point of having
+    // agents in the first place.
     //
     // Omitting allowedTools lets the SDK fall through to its defaults
     // (all built-in tools + every tool exposed by the MCP servers we
     // declare above). Outbound mail is still guarded by AgenticMail's
     // own outbound guard (HIGH-severity sends held for owner approval)
-    // and the worker is sandboxed by Claude Code's permission system
-    // just like any other subagent.
+    // and the worker is sandboxed by Codex's workspace-write sandbox
+    // (sandboxMode: 'workspace-write' + approvalPolicy: 'never') so
+    // file writes stay within the configured cwd.
     permissionMode: 'bypassPermissions' as const,
     abortController: abortSignal ? wrapSignal(abortSignal) : undefined,
   };
@@ -792,12 +832,12 @@ function newMailPrompt(agent: AgenticMailAccount, event: SSEEvent): string {
     `   (e.g. you are handing off to a different next actor), name them`,
     `   explicitly in the reply body ("Orion — over to you, please…")`,
     `   AND pass \`wake: ["orion"]\` so the dispatcher gives them a`,
-    `   Claude turn instead. Example:`,
+    `   Codex turn instead. Example:`,
     `     reply_email({ uid, replyAll: true, text: "Orion — your turn …",`,
     `                   wake: ["orion"], _account: "${agent.name}" })`,
     `   If nobody specific is next (the work is complete and you're just`,
     `   signing off), pass \`wake: []\` to deliver silently — every`,
-    `   participant still sees the reply, no Claude turn is spawned.`,
+    `   participant still sees the reply, no Codex turn is spawned.`,
     ``,
     `7. **If you need additional help from a teammate not yet on the thread,**`,
     `   include them by CC'ing in your reply-all — DO NOT spin up a separate`,
@@ -915,7 +955,7 @@ export class Dispatcher {
    * each entry holds the pending events + the timer that will
    * fire the spawn. A new event arriving while the entry exists
    * EXTENDS the timer (debounce, not throttle) and appends to
-   * the event list. When the timer fires, a single Claude turn
+   * the event list. When the timer fires, a single Codex turn
    * sees the union of new messages and replies once.
    *
    * Why debounce + not throttle: bursts of replies from one
@@ -932,6 +972,35 @@ export class Dispatcher {
     firstScheduledAt: number;
   }>();
   private wakeCoalesceMs: number;
+
+  /**
+   * In-memory queue of wakes that were deferred because the SDK call
+   * came back with a rate-limit error. Each entry holds a timer + the
+   * attempt count so we can:
+   *
+   *   - clear all pending retries on `stop()` (clean shutdown)
+   *   - cap the per-wake retry budget so a wake that's been failing
+   *     for >24h doesn't sit in the queue forever
+   *
+   * Keyed by `${account.id}:${kind}:${uid|taskId|''}` so a fresh wake
+   * for the same trigger resets the timer rather than stacking.
+   *
+   * Persistence is intentionally NOT done here: on dispatcher
+   * restart, the catch-up scan (`runCatchUp`) re-emits SSE events
+   * for unhandled mail/tasks from where the cursor left off, which
+   * naturally re-fires worker turns — and rate-limit retries
+   * become unnecessary because the SDK call will run when the
+   * dispatcher comes back up (presumably hours later, well past
+   * the rate-limit window).
+   */
+  private deferredRetries = new Map<string, {
+    timer: ReturnType<typeof setTimeout>;
+    attempts: number;
+  }>();
+  /** How long to wait before retrying a rate-limited wake. */
+  private static readonly RATE_LIMIT_RETRY_MS = 60 * 60 * 1000;  // 1 hour
+  /** Stop retrying after this many attempts (~1 day at 1h cadence). */
+  private static readonly RATE_LIMIT_MAX_ATTEMPTS = 24;
 
   /** Wall-clock timestamp the dispatcher started. Surfaced via
    *  process-heartbeat so check_activity can show uptime. */
@@ -1079,6 +1148,14 @@ export class Dispatcher {
     // restart the cache + memory have already absorbed the events.
     for (const entry of this.wakeCoalesce.values()) clearTimeout(entry.timer);
     this.wakeCoalesce.clear();
+    // Drop pending rate-limit retries. The restart's catch-up scan
+    // will re-emit SSE events for any unhandled mail/tasks, which
+    // re-fires worker turns naturally — by then the rate-limit
+    // window has almost certainly cleared.
+    for (const entry of this.deferredRetries.values()) {
+      try { clearTimeout(entry.timer); } catch { /* ignore */ }
+    }
+    this.deferredRetries.clear();
     // Flush any pending cursor updates synchronously so a restart
     // immediately after stop sees the latest lastSeenUid. The
     // debounced timer might not have fired yet.
@@ -1133,7 +1210,7 @@ export class Dispatcher {
       // like the matching `[RPC] / [Task]` notification, drop it. Without
       // this, every call_agent wakes the recipient TWICE — once for the
       // task event, once for the notification email — and runs the agent
-      // through Claude twice per logical RPC.
+      // through Codex twice per logical RPC.
       if (ch
           && Date.now() < ch.suppressTaskMailUntilMs
           && isTaskNotificationSubject(subject)) {
@@ -1169,14 +1246,14 @@ export class Dispatcher {
 
       // Selective-wake allowlist. When the sender included a `wake` list
       // (translated by the API into the `wakeAllowlist` field on the SSE
-      // event), only listed agents get a Claude turn. This is the big
+      // event), only listed agents get a Codex turn. This is the big
       // token-saver on large threads — sender knows who needs to act
       // next, dispatcher trusts it. CC'd-but-not-listed agents still
-      // receive the mail in their inbox; they just don't burn a Claude
+      // receive the mail in their inbox; they just don't burn a Codex
       // turn deciding "not my turn" and going silent.
       const allowlist = extractWakeAllowlist(event);
       if (!isAgentOnWakeAllowlist(account.name, allowlist)) {
-        this.log('info', `[dispatcher] wake allowlist excludes "${account.name}" (list=${JSON.stringify(allowlist)}) — mail delivered, no Claude turn`);
+        this.log('info', `[dispatcher] wake allowlist excludes "${account.name}" (list=${JSON.stringify(allowlist)}) — mail delivered, no Codex turn`);
         this.postSkipped(account, event, 'allowlist-excluded', `wake list ${JSON.stringify(allowlist)} did not include "${account.name}"`);
         return;
       }
@@ -1194,7 +1271,7 @@ export class Dispatcher {
       if (!wakeOnCc) {
         const wasOnTo = (event as { wasOnTo?: boolean }).wasOnTo === true;
         if (!wasOnTo) {
-          this.log('info', `[dispatcher] "${account.name}" has wake_on_cc:false and was not on To — mail delivered, no Claude turn (uid=${event.uid})`);
+          this.log('info', `[dispatcher] "${account.name}" has wake_on_cc:false and was not on To — mail delivered, no Codex turn (uid=${event.uid})`);
           this.postSkipped(account, event, 'wake-on-cc', `"${account.name}" has wake_on_cc:false; not on To`);
           return;
         }
@@ -1207,7 +1284,7 @@ export class Dispatcher {
 
       // Wake coalescing — debounce per (account, thread) so a burst
       // of back-to-back replies on the same thread collapses into
-      // ONE Claude turn. See `scheduleCoalescedWake` for the design
+      // ONE Codex turn. See `scheduleCoalescedWake` for the design
       // rationale; the feedback that motivated this is documented
       // in CHANGELOG 0.9.0 (wake-thrash on multi-CC threads).
       //
@@ -1245,13 +1322,13 @@ export class Dispatcher {
   /**
    * Should the dispatcher own a wake-channel for this account?
    *
-   * We skip the bridge agent (default name "claudecode"). The bridge is
+   * We skip the bridge agent (default name "codex"). The bridge is
    * the host session's own inbox proxy — when mail lands there, the
-   * HOST Claude Code session reads it via MCP (`list_inbox` /
+   * HOST Codex session reads it via MCP (`list_inbox` /
    * `wait_for_email` / `read_email`), NOT via a separately-spawned
    * dispatcher worker. Spawning a worker for the bridge would:
-   *   1. Compete with the host (two Claude instances trying to "be"
-   *      Claude Code, both potentially replying autonomously).
+   *   1. Compete with the host (two Codex instances trying to "be"
+   *      the operator's Codex session, both potentially replying autonomously).
    *   2. Waste tokens — the host is already aware via its MCP polling.
    *   3. Send the bridge into an autonomous loop if it ever replies-all
    *      (because that mail would wake it again, ad infinitum).
@@ -1737,7 +1814,7 @@ export class Dispatcher {
       ? newMailPrompt(entry.account, lastEvent)
       : newMailPromptForBatch(entry.account, entry.events);
     if (entry.events.length > 1) {
-      this.log('info', `[dispatcher] coalesced ${entry.events.length} wakes into one Claude turn for "${entry.account.name}" on thread "${entry.threadId}"`);
+      this.log('info', `[dispatcher] coalesced ${entry.events.length} wakes into one Codex turn for "${entry.account.name}" on thread "${entry.threadId}"`);
     }
     void this.spawnWorker(entry.account, prompt, {
       kind: 'new-mail',
@@ -2029,6 +2106,23 @@ export class Dispatcher {
         ? workerResult.text
         : (workerResult ? workerResult.error : 'worker did not start');
       writeLog(`worker_finished ok=${ok} chars=${preview.length}`);
+      // ─── Rate-limit retry ───────────────────────────────────────
+      // If the SDK came back with a provider-side rate-limit error
+      // (429, weekly cap, quota exceeded, …) defer this wake to
+      // retry in an hour rather than dropping the task. See
+      // scheduleRateLimitRetry() for the budget + cadence rules.
+      if (workerResult && !workerResult.ok && isRateLimitError(workerResult.error)) {
+        this.scheduleRateLimitRetry(account, prompt, ctx, workerResult.error);
+      } else if (workerResult?.ok) {
+        // Clear any prior retry attempts for this trigger — a successful
+        // run means the rate-limit window has cleared.
+        const k = `${account.id}:${ctx.kind}:${ctx.uid ?? ctx.taskId ?? ''}`;
+        const existing = this.deferredRetries.get(k);
+        if (existing) {
+          try { clearTimeout(existing.timer); } catch { /* ignore */ }
+          this.deferredRetries.delete(k);
+        }
+      }
       try { logStream?.end(); } catch { /* ignore */ }
       // Best-effort cwd cleanup. We don't block on failure — if the
       // worker wrote a 5GB file the user can delete it manually; we
@@ -2054,6 +2148,71 @@ export class Dispatcher {
         resultPreview: typeof preview === 'string' ? preview.slice(0, 240) : undefined,
       });
     }
+  }
+
+  /**
+   * Schedule a 1-hour retry for a wake that the SDK rejected with a
+   * rate-limit error. Called from `spawnWorker`'s finally block when
+   * `isRateLimitError(workerResult.error)` is true.
+   *
+   * Behaviour:
+   *
+   *   - First failure → schedule a `setTimeout` for one hour, store
+   *     it under `deferredRetries[<account>:<kind>:<uid|taskId>]`,
+   *     increment the attempts counter.
+   *   - Subsequent rate-limit failures for the same trigger → clear
+   *     the previous timer (a fresh attempt resets the budget window)
+   *     and reschedule, but DO NOT reset attempts — that counter is
+   *     what stops a permanently-throttled account from sitting in
+   *     the queue forever.
+   *   - Once `attempts > RATE_LIMIT_MAX_ATTEMPTS` (~1 day at 1h
+   *     cadence), give up and log. Operator can wake the agent
+   *     manually if the rate-limit was billing-side and got resolved.
+   *   - On dispatcher `stop()`, every pending timer is cleared.
+   *
+   * The retry just calls `spawnWorker` again with the same `prompt`
+   * and `ctx`. The `prompt` is closed over from the original
+   * `fireCoalescedWake` build, so the agent sees the same thread
+   * context, the same new-mail summary, the same handoff target.
+   *
+   * Persistence intentionally NOT here: a restart triggers
+   * `runCatchUp` which re-emits SSE events for unhandled UIDs from
+   * the persisted cursor, which naturally re-fires the worker. By
+   * the time the dispatcher is back up (typically minutes-to-hours
+   * later), the rate-limit window has almost certainly cleared.
+   */
+  private scheduleRateLimitRetry(
+    account: AgenticMailAccount,
+    prompt: string,
+    ctx: { kind: string; uid?: number; taskId?: string; subject?: string; from?: string },
+    errorMsg: string,
+  ): void {
+    const key = `${account.id}:${ctx.kind}:${ctx.uid ?? ctx.taskId ?? ''}`;
+    const existing = this.deferredRetries.get(key);
+    const attempts = (existing?.attempts ?? 0) + 1;
+    if (attempts > Dispatcher.RATE_LIMIT_MAX_ATTEMPTS) {
+      this.log('warn', `[dispatcher] giving up on rate-limited retry for "${account.name}" (${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}) — exhausted ${attempts - 1} attempts over ~${((attempts - 1) * Dispatcher.RATE_LIMIT_RETRY_MS / 3600000).toFixed(0)}h`);
+      this.deferredRetries.delete(key);
+      return;
+    }
+    if (existing) {
+      try { clearTimeout(existing.timer); } catch { /* ignore */ }
+    }
+    const retryAtMs = Date.now() + Dispatcher.RATE_LIMIT_RETRY_MS;
+    const timer = setTimeout(() => {
+      this.deferredRetries.delete(key);
+      if (this.stopped) return;
+      this.log('info', `[dispatcher] retrying rate-limited wake for "${account.name}" (${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}) — attempt ${attempts}/${Dispatcher.RATE_LIMIT_MAX_ATTEMPTS}`);
+      // Re-fire through the same spawn entry point. If the rate
+      // limit is still in effect, the resulting error will land
+      // back here and reschedule for another hour out.
+      void this.spawnWorker(account, prompt, ctx);
+    }, Dispatcher.RATE_LIMIT_RETRY_MS);
+    // Don't keep node alive just for a retry — if the process is idle
+    // otherwise, let it sleep; the timer wakes it when due.
+    (timer as unknown as { unref?: () => void }).unref?.();
+    this.deferredRetries.set(key, { timer, attempts });
+    this.log('warn', `[dispatcher] rate-limit hit for "${account.name}" (${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}) — retry scheduled for ${new Date(retryAtMs).toISOString()} (attempt ${attempts}/${Dispatcher.RATE_LIMIT_MAX_ATTEMPTS}). SDK error: ${errorMsg.slice(0, 200)}`);
   }
 
   /**
@@ -2087,7 +2246,7 @@ export class Dispatcher {
 
   /**
    * Post a "skipped wake" notification with the reason the
-   * dispatcher decided not to fire a Claude turn. Surfaced in
+   * dispatcher decided not to fire a Codex turn. Surfaced in
    * `check_activity` so the host can see the decision instead
    * of just observing silence ("did my mail land? did the
    * dispatcher skip it? is the dispatcher even alive?").

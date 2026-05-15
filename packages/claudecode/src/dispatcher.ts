@@ -528,6 +528,34 @@ function isContextOverflowError(msg: string): boolean {
 }
 
 /**
+ * True when the SDK error message looks like a provider-side rate
+ * limit (per-minute, per-hour, daily quota, "weekly cap reached" —
+ * all the things that auto-reset on a timer rather than failing
+ * permanently). The dispatcher uses this to decide whether to
+ * defer + retry instead of dropping the wake.
+ *
+ * Match list mirrors the codex dispatcher's so a future host-toolkit
+ * refactor can pull this into shared code unchanged.
+ */
+function isRateLimitError(msg: string): boolean {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return m.includes('429')
+      || m.includes('rate limit')
+      || m.includes('rate-limit')
+      || m.includes('rate_limit')
+      || m.includes('too many requests')
+      || m.includes('quota exceeded')
+      || m.includes('quota_exceeded')
+      || m.includes('usage limit')
+      || m.includes('limit reached')
+      || m.includes('overloaded_error')
+      || m.includes('insufficient_quota')
+      || m.includes('weekly limit')
+      || m.includes('daily limit');
+}
+
+/**
  * Spawn-and-wait for a worker via the Claude Agent SDK.
  * Drains the query stream, captures the final assistant text, returns it.
  *
@@ -922,6 +950,18 @@ export class Dispatcher {
   }>();
   private wakeCoalesceMs: number;
 
+  /**
+   * In-memory queue of wakes the SDK rejected with a rate-limit
+   * error. See codex/dispatcher.ts for the full design rationale;
+   * the implementation is byte-for-byte identical here.
+   */
+  private deferredRetries = new Map<string, {
+    timer: ReturnType<typeof setTimeout>;
+    attempts: number;
+  }>();
+  private static readonly RATE_LIMIT_RETRY_MS = 60 * 60 * 1000;  // 1 hour
+  private static readonly RATE_LIMIT_MAX_ATTEMPTS = 24;
+
   /** Wall-clock timestamp the dispatcher started. Surfaced via
    *  process-heartbeat so check_activity can show uptime. */
   private startedAtMs = Date.now();
@@ -1068,6 +1108,12 @@ export class Dispatcher {
     // restart the cache + memory have already absorbed the events.
     for (const entry of this.wakeCoalesce.values()) clearTimeout(entry.timer);
     this.wakeCoalesce.clear();
+    // Drop pending rate-limit retries — the restart's catch-up scan
+    // will re-emit SSE events naturally.
+    for (const entry of this.deferredRetries.values()) {
+      try { clearTimeout(entry.timer); } catch { /* ignore */ }
+    }
+    this.deferredRetries.clear();
     // Flush any pending cursor updates synchronously so a restart
     // immediately after stop sees the latest lastSeenUid. The
     // debounced timer might not have fired yet.
@@ -2019,6 +2065,18 @@ export class Dispatcher {
         ? workerResult.text
         : (workerResult ? workerResult.error : 'worker did not start');
       writeLog(`worker_finished ok=${ok} chars=${preview.length}`);
+      // Rate-limit retry — defer + try again in an hour. See
+      // scheduleRateLimitRetry() for the budget + cadence rules.
+      if (workerResult && !workerResult.ok && isRateLimitError(workerResult.error)) {
+        this.scheduleRateLimitRetry(account, prompt, ctx, workerResult.error);
+      } else if (workerResult?.ok) {
+        const k = `${account.id}:${ctx.kind}:${ctx.uid ?? ctx.taskId ?? ''}`;
+        const existing = this.deferredRetries.get(k);
+        if (existing) {
+          try { clearTimeout(existing.timer); } catch { /* ignore */ }
+          this.deferredRetries.delete(k);
+        }
+      }
       try { logStream?.end(); } catch { /* ignore */ }
       // Best-effort cwd cleanup. We don't block on failure — if the
       // worker wrote a 5GB file the user can delete it manually; we
@@ -2037,6 +2095,41 @@ export class Dispatcher {
         resultPreview: typeof preview === 'string' ? preview.slice(0, 240) : undefined,
       });
     }
+  }
+
+  /**
+   * Schedule a 1-hour retry for a wake that the SDK rejected with a
+   * rate-limit error. See the codex dispatcher's identical method
+   * for the full design rationale — same budget, same cadence,
+   * same in-memory-only state (catch-up scan handles restarts).
+   */
+  private scheduleRateLimitRetry(
+    account: AgenticMailAccount,
+    prompt: string,
+    ctx: { kind: string; uid?: number; taskId?: string; subject?: string; from?: string },
+    errorMsg: string,
+  ): void {
+    const key = `${account.id}:${ctx.kind}:${ctx.uid ?? ctx.taskId ?? ''}`;
+    const existing = this.deferredRetries.get(key);
+    const attempts = (existing?.attempts ?? 0) + 1;
+    if (attempts > Dispatcher.RATE_LIMIT_MAX_ATTEMPTS) {
+      this.log('warn', `[dispatcher] giving up on rate-limited retry for "${account.name}" (${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}) — exhausted ${attempts - 1} attempts over ~${((attempts - 1) * Dispatcher.RATE_LIMIT_RETRY_MS / 3600000).toFixed(0)}h`);
+      this.deferredRetries.delete(key);
+      return;
+    }
+    if (existing) {
+      try { clearTimeout(existing.timer); } catch { /* ignore */ }
+    }
+    const retryAtMs = Date.now() + Dispatcher.RATE_LIMIT_RETRY_MS;
+    const timer = setTimeout(() => {
+      this.deferredRetries.delete(key);
+      if (this.stopped) return;
+      this.log('info', `[dispatcher] retrying rate-limited wake for "${account.name}" (${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}) — attempt ${attempts}/${Dispatcher.RATE_LIMIT_MAX_ATTEMPTS}`);
+      void this.spawnWorker(account, prompt, ctx);
+    }, Dispatcher.RATE_LIMIT_RETRY_MS);
+    (timer as unknown as { unref?: () => void }).unref?.();
+    this.deferredRetries.set(key, { timer, attempts });
+    this.log('warn', `[dispatcher] rate-limit hit for "${account.name}" (${ctx.kind}${ctx.uid ? ' uid=' + ctx.uid : ''}) — retry scheduled for ${new Date(retryAtMs).toISOString()} (attempt ${attempts}/${Dispatcher.RATE_LIMIT_MAX_ATTEMPTS}). SDK error: ${errorMsg.slice(0, 200)}`);
   }
 
   /**

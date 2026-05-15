@@ -5,24 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.28] - 2026-05-15
+
+### Fixed — viewing a message from Spam / Archive / Trash 404'd
+
+After the 0.9.25 `MESSAGE_NOT_FOUND` mapping made the error legible, the underlying bug surfaced clearly: the web UI was calling `GET /mail/messages/:uid` with no `?folder=` query, so the API defaulted to `INBOX` and returned 404 for any message that lived in Spam / Archive / Trash.
+
+`packages/api/public/js/message-view.js::openMessage` now resolves the IMAP folder name from `state.folderNames` (the map populated by `/mail/folders` auto-discovery in 0.9.16) and threads it through as `?folder=<name>`. Also patched the in-view actions (`markUnread`, `markSpam`) to send `folder` in the POST body so they don't silently misfire when the operator runs them from a non-Inbox folder.
+
+Server-side companion: `/mail/messages/:uid/unseen` now honors `req.body.folder` (defaults to INBOX), matching the shape of every other per-message action route.
+
+### Fixed — codex dispatcher logs said "no Claude turn"
+
+The codex dispatcher's log messages and inline comments still read "Claude turn", "spawn a Claude worker", "via the Claude Agent SDK" — fork artifacts from when the package was templated off `@agenticmail/claudecode`. Confusing for codex operators tailing `pm2 logs agenticmail-codex-dispatcher`.
+
+Swept `packages/codex/src/dispatcher.ts`:
+
+- `Claude turn` / `Claude turns` → `Codex turn` / `Codex turns` (12 spots, including the user-visible `[dispatcher] wake allowlist excludes "..." — mail delivered, no Codex turn` log line)
+- `Claude Agent SDK` / `Claude-powered worker` / `interactive Claude Code session` → Codex equivalents
+- The bridge-skip docstring no longer talks about "two Claude instances" — now refers to two Codex sessions
+- `sandboxed by Claude Code's permission system` → `sandboxed by Codex's workspace-write sandbox`
+- `50 simultaneous Claude calls` → `50 simultaneous Codex calls`
+
+Legitimately Claude-named internals **kept**:
+
+- The Codex SDK's event shape adapter (the `Claude-shaped frame` interface) intentionally normalises Codex's `item.started / item.updated / item.completed / turn.*` events into a frame structure that originally matched Claude Agent SDK's, so the wake / coalesce / budget / catch-up code stays host-agnostic. Those references read accurately as a description of an internal interface contract.
+
+### Added — Reinforced handoff guidance in the agent persona
+
+User report: orion replied to a thread saying "Atlas — over to you", but the reply-all kept Vesper on `To:` (since Vesper was the previous sender) and Atlas landed on `Cc:`. Atlas may stay silent assuming another teammate took it, killing the task mid-work.
+
+`reply_email`'s `replyAll: true` preserves the original sender on `To:` by design — that's the right shape for "reply to the thread, everyone sees it". But it means a body-text handoff like "Atlas — over to you" has no machine-readable signal that Atlas is the next assignee.
+
+The `wake` array IS that signal. Strengthened the persona templates in **both** `@agenticmail/claudecode` and `@agenticmail/codex` to make it mandatory:
+
+> **HANDOFFS — read this carefully.** When you're delegating the next step to ONE specific teammate, you MUST pass `wake: ["<their-name>"]` in the same call. Reason: a reply-all keeps the ORIGINAL sender on the `To:` header, NOT your handoff target … `wake: ["atlas"]` is the authoritative signal: only Atlas thinks next, everyone else still receives the mail and stays informed.
+
+Includes worked examples for both single-target handoffs and silent broadcasts (`wake: []`).
+
+### Added — Rate-limit retry: dispatcher backs off + retries hourly instead of dropping the task
+
+User report: when a provider hits a rate limit (per-minute, per-hour, weekly cap, billing-side quota — anything that auto-resets on a timer), the worker turn fails, the wake is consumed, and the task is dropped forever even though the rate-limit window will clear in minutes-to-hours.
+
+Both dispatchers (`@agenticmail/claudecode` + `@agenticmail/codex`) now:
+
+1. Detect rate-limit errors via a broad-match `isRateLimitError(msg)` helper covering Anthropic's `overloaded_error`, OpenAI's `insufficient_quota`, the generic `429` / `rate_limit` / `too many requests`, plus Claude-Code- and Codex-personal-plan-specific `weekly limit` / `daily limit`.
+2. Schedule a `setTimeout` retry **one hour out** from the failure, keyed by `<accountId>:<kind>:<uid|taskId>`.
+3. Re-fire the worker turn through the same `spawnWorker` entry point. If still rate-limited, reschedule for another hour. Successful run clears the retry entry.
+4. Cap at 24 attempts (~24h at hourly cadence) so a permanently-throttled account doesn't sit in the queue forever — operator gets a `warn` log when the budget is exhausted.
+5. `unref()` the timer so retries don't keep node alive on an otherwise idle dispatcher.
+6. Clear every pending retry on `stop()` — the restart's catch-up scan re-emits SSE events from the persisted cursor, which naturally re-fires the worker; persistence here would be redundant.
+
+### Web UI — `markUnread` / `markSpam` toolbar actions now pass the source folder
+
+Companion to the message-detail folder fix above: these actions previously silently misfired when triggered from any non-Inbox folder. Server-side `/mail/messages/:uid/unseen` now honors `req.body.folder` (defaults to INBOX, matching the shape of every other per-message action route).
+
+### Versions
+
+- `@agenticmail/api@0.9.19`
+- `@agenticmail/claudecode@0.2.14`
+- `@agenticmail/codex@0.1.9`
+- `@agenticmail/cli@0.9.28`
+
 ## [0.9.27] - 2026-05-15
 
 ### Fixed — Spam folder always empty even after marking emails as spam
 
-User report: clicking "Spam" in the web UI sidebar always showed `{ "messages": [], "count": 0, "total": 0 }` from `GET /mail/digest?folder=Junk%20Mail`, even though they had explicitly marked emails as spam.
+User report: clicking "Spam" in the web UI sidebar always showed `{ "messages": [], "count": 0, "total": 0 }` even though they had explicitly marked emails as spam.
 
 Two bugs cancelling each other:
 
 1. **`GET /mail/spam` (list)** hard-coded `'Spam'` as the folder name, but Stalwart's default spam folder is `'Junk Mail'`. The list route looked at the wrong folder and silently returned empty.
 2. **`POST /mail/messages/:uid/spam` (mark)** hard-coded `'Spam'` as the destination, creating a duplicate "Spam" folder on first use. Mail went there but the UI never queried it.
 
-Together: user marks an email → it lands in a phantom "Spam" folder → UI's Spam tab queries the correct `"Junk Mail"` (auto-discovered via `/mail/folders` since 0.9.16) → gets nothing back.
-
-Same trick `/mail/messages/:uid/archive` and `/mail/messages/:uid/trash` already use: a `resolveSpamFolder()` helper that looks for the IMAP `\Junk` specialUse marker first, falls back to common names (`Junk Mail` / `Junk` / `Spam`), and creates `"Junk Mail"` if nothing exists. Applied to all three spam routes:
-
-- `GET /mail/spam` — list
-- `POST /mail/messages/:uid/spam` — mark as spam
-- `POST /mail/messages/:uid/not-spam` — unmark + move to INBOX
+Same trick `/mail/messages/:uid/archive` and `/mail/messages/:uid/trash` already use: a `resolveSpamFolder()` helper that auto-discovers via the IMAP `\Junk` specialUse marker, falls back to common names (`Junk Mail` / `Junk` / `Spam`), and creates `"Junk Mail"` if nothing exists. Applied to all three spam routes.
 
 ### Versions
 

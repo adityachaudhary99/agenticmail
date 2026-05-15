@@ -1135,9 +1135,10 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
         res.status(400).json({ error: 'Invalid UID' });
         return;
       }
+      const folder = req.body?.folder || 'INBOX';
       const password = getAgentPassword(agent);
       const receiver = await getReceiver(agent.stalwartPrincipal, password, config);
-      await receiver.markUnseen(uid);
+      await receiver.markUnseen(uid, folder);
       invalidateParsedMessage(agent.id, uid);
       res.json({ ok: true });
     } catch (err) {
