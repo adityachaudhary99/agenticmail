@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.33] - 2026-05-15
+
+### Fixed — handoffs to the host bridge silently dropped the chain
+
+Real production behaviour observed in the Facebook Rebuild thread: sub-agents kept handing off TO the `codex` / `claudecode` bridges with `wake: ["codex"]`, then sat idle for hours. Reason: bridges are filtered by `shouldWatch` because they represent the operator's host session, not an automated worker. The dispatcher never spawns a turn for them. Mail to a bridge only surfaces when the operator's host CLI is actively running (via `Stop` / `UserPromptSubmit` hooks).
+
+Without a running CLI, "Codex — over to you for next steps" = silent dead-end.
+
+### Persona update in both host templates
+
+Added a "Handing off to the host bridge" section that makes the rule explicit:
+
+> The host bridge inboxes belong to the HUMAN OPERATOR's host session, not to an automated worker. The dispatcher DOES NOT spawn worker turns for them — they're surfaced to the operator via host-session hooks (Stop / UserPromptSubmit) when the operator's CLI is actively running. If no host session is open, mail to the bridge sits unread.
+
+Plus five practical rules:
+
+1. Don't use bridge handoffs as a default "punt the baton when you don't know what to do" move
+2. Before handing off to the bridge, ask if a teammate could decide instead
+3. Only escalate to the bridge when genuinely operator-only (billing, scope, architecture)
+4. Mark the subject with `[NEEDS OPERATOR]` or `[BLOCKED]` so notification feeds catch it
+5. `wake: ["claudecode"]` / `wake: ["codex"]` is fine as an intent signal — the dispatcher won't spawn a worker but the web UI's sound + system event still fire
+
+Plus a worked correct example (operator-escalation with the right markers) and a worked WRONG example ("Shipped my slice. Codex — over to you for next steps." with `wake: ["codex"]`) so the model has a concrete contrast.
+
+### Fixed — older thread quotes now show their original To/Cc/Bcc
+
+The 0.9.32 fix added `To:` / `Cc:` / `Bcc:` lines to the quote header that NEW replies carry. Older replies in the inbox don't have those lines in the body, so their thread-quote header was still sender-only.
+
+Fix: `message-view.js::buildAudienceLookup()` now builds a `sender + date → { to, cc, bcc }` map from the surrounding inbox-list messages (`state.messages`). The parser falls back to this lookup when the body doesn't have audience lines, so OLD quotes get their audience backfilled at render time from the sibling messages already in memory.
+
+Match logic:
+
+- Sender match: case-insensitive on the email address.
+- Date match: parse both sides, pick the sibling with closest delta within 2 seconds. Fall back to most-recent-from-that-sender if no close match (handles quote headers that lost timezone info during serialisation).
+
+Result: every quote in every open thread shows audience whether the reply was written before or after 0.9.32.
+
+### Versions
+
+- `@agenticmail/api@0.9.24`
+- `@agenticmail/claudecode@0.2.19`
+- `@agenticmail/codex@0.1.14`
+- `@agenticmail/cli@0.9.33`
+
+Persona update lands on existing subagent files only after running `agenticmail-claudecode install` / `agenticmail-codex install` again — that regenerates every subagent `.md` / `.toml` with the new persona text.
+
 ## [0.9.32] - 2026-05-15
 
 ### Fixed — thread-quote in the web UI was missing original To/Cc/Bcc

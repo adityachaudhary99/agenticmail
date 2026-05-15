@@ -171,7 +171,7 @@ function renderMessage(msg) {
         <div class="message-date">${escapeHtml(formatDateFull(msg.date))}</div>
       </div>
     </div>
-    <div class="message-body">${renderBodyWithThreading(bodyText)}</div>
+    <div class="message-body">${renderBodyWithThreading(bodyText, buildAudienceLookup())}</div>
     ${attachmentsHtml}
   `;
 
@@ -222,7 +222,76 @@ function formatBytes(bytes) {
  *
  * Non-matching prose flows through untouched via `renderMarkdown`.
  */
-function renderBodyWithThreading(src) {
+/**
+ * Build a lookup map from "sender + date" to {to, cc, bcc} so the
+ * thread-quote renderer can backfill audience info on quotes that
+ * pre-date the 0.9.32 reply-builder change (those quotes only have
+ * `On <date>, <addr> wrote:` — no `To:`/`Cc:` follow-up lines).
+ *
+ * Source of truth: `state.messages` — the inbox list view the
+ * operator is currently looking at. Every entry in that list has
+ * `from`, `to`, `cc`, `date`. We hash by lowercase sender address +
+ * date and dedupe via the messageId.
+ *
+ * Returns a function: `(senderAddr, dateStr) → {to, cc, bcc} | null`.
+ * Date matching is fuzzy: we accept any sibling whose date.getTime()
+ * is within 2 seconds of the parsed quote date, since the quote
+ * header serialises the date with second precision and stripped
+ * timezone info.
+ */
+function buildAudienceLookup() {
+  // Defensive: state.messages may be empty if the operator navigated
+  // straight to /#/m/N. Lookup degrades to "no match" — the renderer
+  // falls back to sender-only.
+  const list = Array.isArray(state.messages) ? state.messages : [];
+  if (list.length === 0) return () => null;
+  // Flatten to a normalised array we can scan. Each entry carries
+  // the same shape the renderer expects.
+  const entries = list.map(m => {
+    const fromAddr = (m.from?.[0]?.address ?? '').toLowerCase();
+    const fmtAddrs = (arr) => (Array.isArray(arr) ? arr : [])
+      .map((a) => (typeof a === 'string' ? a : (a?.address ?? '')))
+      .filter(Boolean)
+      .join(', ');
+    return {
+      from: fromAddr,
+      timeMs: m.date ? new Date(m.date).getTime() : NaN,
+      to: fmtAddrs(m.to),
+      cc: fmtAddrs(m.cc),
+      bcc: fmtAddrs(m.bcc),
+    };
+  }).filter(e => e.from && Number.isFinite(e.timeMs));
+  return (senderAddr, dateStr) => {
+    if (!senderAddr || !dateStr) return null;
+    const senderL = senderAddr.toLowerCase();
+    const t = new Date(dateStr).getTime();
+    if (!Number.isFinite(t)) return null;
+    // Match by sender + nearest date within 2 s. Quote headers
+    // typically lose timezone info during render so wall-clock can
+    // shift by hours; the inbox-list date is the canonical UTC.
+    // We prefer the closest match by absolute delta.
+    let best = null;
+    let bestDelta = 2000;  // 2-second tolerance for same-second matches
+    for (const e of entries) {
+      if (e.from !== senderL) continue;
+      const delta = Math.abs(e.timeMs - t);
+      if (delta < bestDelta) { best = e; bestDelta = delta; }
+    }
+    if (!best) {
+      // Fallback: if the date didn't parse close to anything, just
+      // take the most recent message from that sender. Better than
+      // nothing for the common case of a reply to the most recent
+      // prior reply.
+      for (const e of entries) {
+        if (e.from !== senderL) continue;
+        if (!best || e.timeMs > best.timeMs) best = e;
+      }
+    }
+    return best ? { to: best.to, cc: best.cc, bcc: best.bcc } : null;
+  };
+}
+
+function renderBodyWithThreading(src, audienceLookup = null) {
   if (!src) return '<div class="empty">(no body)</div>';
   const lines = src.split('\n');
   const out = [];
@@ -292,13 +361,25 @@ function renderBodyWithThreading(src) {
       }
       break;
     }
-    out.push(renderThreadQuote(dateRaw, sender, quoted.join('\n'), { to: toAddrs, cc: ccAddrs, bcc: bccAddrs }));
+    // Fall back to cross-message lookup if the body didn't carry
+    // audience lines (older replies pre-0.9.32). The lookup uses
+    // the surrounding inbox-list messages to find the original
+    // message by sender + date and lift its To/Cc/Bcc.
+    if (!toAddrs && !ccAddrs && !bccAddrs && typeof audienceLookup === 'function') {
+      const fromLookup = audienceLookup(sender, dateRaw);
+      if (fromLookup) {
+        toAddrs = fromLookup.to;
+        ccAddrs = fromLookup.cc;
+        bccAddrs = fromLookup.bcc;
+      }
+    }
+    out.push(renderThreadQuote(dateRaw, sender, quoted.join('\n'), { to: toAddrs, cc: ccAddrs, bcc: bccAddrs }, audienceLookup));
   }
   flushProse();
   return out.join('');
 }
 
-function renderThreadQuote(dateRaw, sender, quotedBody, audience = {}) {
+function renderThreadQuote(dateRaw, sender, quotedBody, audience = {}, audienceLookup = null) {
   // Try to format the ISO date through the same helper the
   // message header uses; fall back to the raw string on parse fail.
   const friendlyDate = (() => {
@@ -306,7 +387,7 @@ function renderThreadQuote(dateRaw, sender, quotedBody, audience = {}) {
     if (!Number.isNaN(d.getTime())) return formatDateFull(d.toISOString());
     return dateRaw;
   })();
-  const sub = renderBodyWithThreading(quotedBody);  // recurse for nested threads
+  const sub = renderBodyWithThreading(quotedBody, audienceLookup);  // recurse for nested threads
   // Render the optional audience lines (To/Cc/Bcc) inside the
   // thread-quote header so the reader can see who was on the
   // previous round. Missing values are simply omitted — a quote
