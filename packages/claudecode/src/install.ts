@@ -26,7 +26,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync, readFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { safeJoin, tryJoin, PathTraversalError } from '@agenticmail/core';
 import { ensureAccount, listAccounts, checkApiHealth, setAccountRole, setAccountHost } from './api.js';
 import { resolveConfig, type ResolveConfigOptions } from './config.js';
 import { upsertMcpServer, type ClaudeMcpServerEntry } from './claude-config.js';
@@ -43,7 +43,12 @@ import type { AgenticMailAccount, ClaudeCodeIntegrationConfig, InstallResult } f
  * defensive against future schema changes.
  */
 function sanitizeSubagentName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  // Anchored singles instead of `/^-+|-+$/g` — CodeQL flags the
+  // alternation as polynomial on input of all dashes.
+  return name.toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 /**
@@ -155,7 +160,18 @@ function writeSubagentFiles(agentsDir: string, cfg: ClaudeCodeIntegrationConfig,
   const updated: string[] = [];
   for (const agent of agents) {
     const baseName = sanitizeSubagentName(`${cfg.subagentPrefix}${agent.name}`);
-    const filePath = join(agentsDir, `${baseName}.md`);
+    // Defence in depth: even though sanitizeSubagentName strips
+    // path-traversal characters, a compromised master-key session
+    // could in principle craft an account name that survives
+    // sanitisation and resolves outside agentsDir. safeJoin throws
+    // on any path that escapes the agents directory.
+    let filePath: string;
+    try {
+      filePath = safeJoin(agentsDir, `${baseName}.md`);
+    } catch (err) {
+      if (err instanceof PathTraversalError) continue;
+      throw err;
+    }
     const content = renderSubagentMarkdown({
       name: baseName,
       agent,
@@ -199,8 +215,11 @@ function pruneStaleSubagentFiles(
   for (const file of readdirSync(agentsDir)) {
     if (!file.endsWith('.md')) continue;
     if (!file.toLowerCase().startsWith(prefix)) continue;
-    const full = join(agentsDir, file);
-    if (!isOwnedSubagent(full)) continue; // not ours, leave alone
+    // tryJoin returns null on a traversal attempt (e.g. a planted
+    // symlink with `..` segments) — skip silently rather than
+    // unlink outside agentsDir.
+    const full = tryJoin(agentsDir, file);
+    if (!full || !isOwnedSubagent(full)) continue; // not ours, leave alone
     const stem = file.slice(prefix.length, -3); // drop prefix + ".md"
     if (liveAgentNames.has(stem.toLowerCase())) continue;
     try {

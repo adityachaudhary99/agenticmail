@@ -92,12 +92,26 @@ export function parseGoogleVoiceSms(emailBody: string, emailFrom: string): Parse
   if (!emailFrom || typeof emailFrom !== 'string') return null;
 
   const fromLower = emailFrom.toLowerCase();
+  // Extract the domain (everything after the last `@`, before any
+  // trailing `>` from a display-name-wrapped address). Substring
+  // matches alone are bypassable — `voice.google.com.attacker.tld`
+  // would match `includes('voice.google.com')` but is NOT actually
+  // from Google. CodeQL `js/incomplete-url-substring-sanitization`.
+  const atIdx = fromLower.lastIndexOf('@');
+  const domain = atIdx >= 0
+    ? fromLower.slice(atIdx + 1).replace(/[>"'\s].*$/, '')
+    : '';
+  // Accept only addresses whose domain is google.com or a real
+  // subdomain of google.com.
+  const isGoogleDomain = domain === 'google.com' || domain.endsWith('.google.com');
   const isGoogleVoice =
-    fromLower.includes('voice-noreply@google.com') ||
-    fromLower.includes('@txt.voice.google.com') ||
-    fromLower.includes('voice.google.com') ||
-    fromLower.includes('google.com/voice') ||
-    (fromLower.includes('google') && fromLower.includes('voice'));
+    isGoogleDomain && (
+      fromLower.startsWith('voice-noreply@') ||
+      domain === 'txt.voice.google.com' ||
+      domain === 'voice.google.com' ||
+      domain.endsWith('.voice.google.com') ||
+      fromLower.includes('voice')  // looser fallback inside an already-validated google.com
+    );
 
   if (!isGoogleVoice) return null;
 

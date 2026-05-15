@@ -15,7 +15,31 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, resolve, sep } from 'node:path';
+import { homedir, tmpdir } from 'node:os';
+
+/**
+ * Reject any config path that isn't absolute AND under either the
+ * operator's home directory or the OS temp dir. CodeQL boundary
+ * check for `js/path-injection` — see codex/codex-config-toml.ts
+ * for the full design rationale (same idiom, same intent).
+ */
+function assertSafeConfigPath(path: string): void {
+  if (!path || typeof path !== 'string') {
+    throw new Error('claude config path is required');
+  }
+  if (!isAbsolute(path)) {
+    throw new Error(`refusing relative claude config path: ${path}`);
+  }
+  const resolved = resolve(path);
+  const home = resolve(homedir());
+  const tmp = resolve(tmpdir());
+  const insideHome = resolved === home || resolved.startsWith(home + sep);
+  const insideTmp  = resolved === tmp  || resolved.startsWith(tmp + sep);
+  if (!insideHome && !insideTmp) {
+    throw new Error(`refusing claude config write outside of HOME or tmp: ${path}`);
+  }
+}
 
 /** Shape of a single MCP server registration in Claude Code's config. */
 export interface ClaudeMcpServerEntry {
@@ -35,6 +59,7 @@ export interface ClaudeConfigShape {
 }
 
 export function readClaudeConfig(path: string): ClaudeConfigShape {
+  assertSafeConfigPath(path);
   if (!existsSync(path)) return {};
   const raw = readFileSync(path, 'utf-8');
   if (!raw.trim()) return {};
@@ -56,6 +81,7 @@ export function readClaudeConfig(path: string): ClaudeConfigShape {
  * space indent to keep diffs reviewable.
  */
 export function writeClaudeConfig(path: string, config: ClaudeConfigShape): void {
+  assertSafeConfigPath(path);
   const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const text = JSON.stringify(config, null, 2) + '\n';

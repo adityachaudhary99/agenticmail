@@ -55,6 +55,27 @@ function ok(msg: string) { log(`  ${c.green('✓')} ${msg}`); }
 function fail(msg: string) { log(`  ${c.red('✗')} ${msg}`); }
 function info(msg: string) { log(`  ${c.dim(msg)}`); }
 
+/**
+ * Render an api key as `ak_***last4` for terminal display. Used when
+ * listing agents — the operator already has the full key elsewhere
+ * (they created the agent themselves); the listing just needs enough
+ * to tell two agents' keys apart at a glance without leaking either.
+ *
+ * Closes CodeQL `js/clear-text-logging` on the shell's agent-listing
+ * view. For one-time displays right after `/create` we still print
+ * the unmasked key, with an explicit "save this" warning — the
+ * operator needs the literal value to copy into MCP env blocks.
+ */
+function maskApiKey(key: string | undefined): string {
+  if (!key || typeof key !== 'string') return '***';
+  if (key.length <= 8) return '***';
+  // Preserve the `ak_` (or `mk_`) prefix + last 4 chars.
+  const underscore = key.indexOf('_');
+  const prefix = underscore > 0 && underscore <= 4 ? key.slice(0, underscore + 1) : '';
+  const tail = key.slice(-4);
+  return `${prefix}***${tail}`;
+}
+
 /** Extract a useful error message, including the cause if present */
 /** Clean a file path from drag-and-drop or paste: strip quotes, unescape spaces */
 function cleanFilePath(raw: string): string {
@@ -676,7 +697,11 @@ export async function interactiveShell(options: ShellOptions): Promise<void> {
               const displayName = owner ? `${agent.name} from ${owner}` : agent.name;
               const active = currentAgent?.name === agent.name ? c.green(' ◂ active') : '';
               log(`  ${c.cyan(displayName.padEnd(24))} ${c.dim(agent.email || '')}${active}`);
-              log(`  ${' '.repeat(24)} ${c.dim('key:')} ${c.yellow(agent.apiKey?.slice(0, 16) + '...')}`);
+              // Mask the api key: prefix + middle elided + last 4
+               // gives diagnostic context ("which agent's key is this")
+               // without leaking the secret material. CodeQL
+               // `js/clear-text-logging`.
+              log(`  ${' '.repeat(24)} ${c.dim('key:')} ${c.yellow(maskApiKey(agent.apiKey))}`);
               log('');
             }
             if (agents.length > 1) {
@@ -731,7 +756,12 @@ export async function interactiveShell(options: ShellOptions): Promise<void> {
           const created = await createResp.json() as any;
           ok(`Agent ${c.bold('"' + created.name + '"')} created!`);
           log(`    ${c.dim('Email:')} ${c.cyan(created.email || created.subAddress || '')}`);
-          log(`    ${c.dim('Key:')}   ${c.yellow(created.apiKey)}`);
+          // The full key is printed exactly ONCE at creation — the
+          // operator needs the literal value to paste into MCP env
+          // blocks or curl `Authorization` headers. CodeQL
+          // `js/clear-text-logging` is a deliberate exception here.
+          // lgtm[js/clear-text-logging]
+          log(`    ${c.dim('Key:')}   ${c.yellow(created.apiKey)} ${c.dim('(save this — only shown once)')}`);
           log(`    ${c.dim('Role:')}  ${role}`);
           currentAgent = { name: created.name, email: created.email || created.subAddress, apiKey: created.apiKey };
           ok(`Switched to ${c.bold(created.name)}`);
@@ -3264,7 +3294,11 @@ export async function interactiveShell(options: ShellOptions): Promise<void> {
             if (data.agent) {
               ok(`Agent ${c.bold('"' + data.agent.name + '"')} is ready!`);
               log(`    ${c.dim('Email:')} ${c.cyan(data.agent.subAddress)}`);
-              log(`    ${c.dim('Key:')}   ${c.yellow(data.agent.apiKey)}`);
+              // One-time-only display, same exception as the create
+              // flow above. The operator must see the literal key
+              // here to paste it into downstream config.
+              // lgtm[js/clear-text-logging]
+              log(`    ${c.dim('Key:')}   ${c.yellow(data.agent.apiKey)} ${c.dim('(save this — only shown once)')}`);
               currentAgent = { name: data.agent.name, email: data.agent.email || data.agent.subAddress, apiKey: data.agent.apiKey };
             }
             log('');

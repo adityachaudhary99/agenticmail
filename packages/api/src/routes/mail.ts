@@ -415,7 +415,11 @@ export function deriveDefaultWakeList(toField: string | string[] | undefined): s
     // to return undefined on display-name addressing, falling
     // through to "no allowlist" → everyone wakes. The new default
     // semantics need to survive that case.
-    const trimmed = String(raw).trim().toLowerCase();
+    // Cap input length before the angle-bracket extractor — `[^>]+`
+    // is technically polynomial on input that lacks a closing `>`
+    // (CodeQL `js/polynomial-redos`). RFC 5321 caps an address at
+    // 320 chars; 500 is comfortably over the legitimate ceiling.
+    const trimmed = String(raw).slice(0, 500).trim().toLowerCase();
     const m = trimmed.match(/<([^>]+)>/);
     const bare = (m ? m[1] : trimmed).trim();
     if (!bare.endsWith('@localhost')) continue;
@@ -480,7 +484,16 @@ async function notifyLocalRecipientsOfNewMail(
     if (!v) return [];
     const items = Array.isArray(v) ? v : [v];
     const out = new Set<string>();
-    for (const entry of items) {
+    for (const rawEntry of items) {
+      // Cap per-entry length to bound regex backtracking. A To/Cc
+      // header is typically <a few KB even on huge mailing lists;
+      // 10 KB is comfortably above legitimate use. CodeQL
+      // `js/polynomial-redos` flags the unbounded `[^>]+` /
+      // `[^\s,;<>]+` quantifiers; the cap makes the worst case
+      // linear in n.
+      const entry = typeof rawEntry === 'string' && rawEntry.length > 10_000
+        ? rawEntry.slice(0, 10_000)
+        : rawEntry;
       let match: RegExpExecArray | null;
       addrRe.lastIndex = 0;
       while ((match = addrRe.exec(entry)) !== null) {

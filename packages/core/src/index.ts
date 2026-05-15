@@ -93,6 +93,39 @@ export { recordToolCall, setTelemetryVersion, flushTelemetry } from './telemetry
 // Debug
 export { debug, debugWarn } from './debug.js';
 
+// Path-traversal safe filesystem joiner. Used by every host
+// integration (claudecode, codex, …) to bound file operations to an
+// operator-configured base directory. See util/safe-path.ts for the
+// rationale + CodeQL `js/path-injection` mitigation.
+export {
+  safeJoin,
+  tryJoin,
+  assertWithinBase,
+  PathTraversalError,
+  type SafeJoinOptions,
+} from './util/safe-path.js';
+
+// Redact sensitive material from log lines. Master keys and per-agent
+// API keys frequently flow into config objects we log for diagnostics
+// — redactSecret() collapses them to `mk_***` / `ak_***` shape so the
+// log line stays useful for context without leaking the secret.
+export {
+  redactSecret,
+  redactObject,
+  REDACTED,
+} from './util/redact.js';
+
+// SSRF-safe URL validation for the master API base URL — used by
+// every host integration to bound where its fetch requests can go.
+// See util/safe-url.ts for the blocklist (cloud metadata, file://,
+// javascript:, embedded creds) and CodeQL `js/request-forgery`
+// mitigation.
+export {
+  validateApiUrl,
+  buildApiUrl,
+  UnsafeApiUrlError,
+} from './util/safe-url.js';
+
 // Setup & Dependencies
 export { SetupManager, DependencyChecker, DependencyInstaller, ServiceManager, type ServiceStatus, type DependencyStatus, type InstallProgress, type SetupConfig, type SetupResult } from './setup/index.js';
 

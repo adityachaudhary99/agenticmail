@@ -10,30 +10,95 @@ import { loadList } from './list-view.js';
 import { icon } from './icons.js';
 import { confirmModal } from './modal.js';
 
+/**
+ * Render the per-message toolbar based on which folder the operator
+ * is viewing the message in. The default (Inbox / Sent / Starred /
+ * Drafts / All) shows the Gmail-style row: Reply, Reply all, Archive,
+ * Mark unread, Report spam, Delete (= move to Trash).
+ *
+ * Three folders override that row because the default actions don't
+ * make sense once the message is already at its destination:
+ *
+ *   - **Archive**: replace Archive with **Move to Inbox** (unarchive).
+ *     Spam + Delete still apply.
+ *   - **Spam**:    replace Report-spam with **Not spam** (move to Inbox).
+ *     The Archive action is hidden — moving spam to Archive bypasses
+ *     the regular spam-train workflow; if the operator decides it's
+ *     not spam, they want it in Inbox.
+ *   - **Trash**:   replace Archive with **Restore** (move to Inbox).
+ *     Report-spam is hidden — moving trash to Spam is a confusing
+ *     no-op (it's already deleted). Delete now means "delete forever"
+ *     and gets a red title; deleteMessage() already detects the trash
+ *     folder and switches to permanent expunge.
+ *
+ * Reply / Reply-all stay visible everywhere because operators
+ * legitimately reply to messages they've already archived or
+ * triaged into spam.
+ */
+function renderToolbar(folder) {
+  const isArchive = folder === 'archive';
+  const isSpam    = folder === 'spam';
+  const isTrash   = folder === 'trash';
+
+  const buttons = [
+    `<button class="icon-btn" id="msg-back" title="Back to list">${icon('back')}</button>`,
+    `<button class="icon-btn" id="msg-reply" title="Reply">${icon('reply')}</button>`,
+    `<button class="icon-btn" id="msg-reply-all" title="Reply all">${icon('replyAll')}</button>`,
+  ];
+
+  if (isArchive) {
+    buttons.push(`<button class="icon-btn" id="msg-unarchive" title="Move to Inbox">${icon('inbox')}</button>`);
+  } else if (isTrash) {
+    buttons.push(`<button class="icon-btn" id="msg-restore" title="Restore to Inbox">${icon('inbox')}</button>`);
+  } else if (isSpam) {
+    buttons.push(`<button class="icon-btn" id="msg-not-spam" title="Not spam — move to Inbox">${icon('inbox')}</button>`);
+  } else {
+    buttons.push(`<button class="icon-btn" id="msg-archive" title="Archive">${icon('archive')}</button>`);
+  }
+
+  buttons.push(`<button class="icon-btn" id="msg-unread" title="Mark unread">${icon('mailUnread')}</button>`);
+
+  if (!isSpam && !isTrash) {
+    buttons.push(`<button class="icon-btn" id="msg-spam" title="Report spam">${icon('spam')}</button>`);
+  }
+
+  buttons.push(
+    `<button class="icon-btn" id="msg-delete" title="${isTrash ? 'Delete forever' : 'Delete'}">${icon('trash')}</button>`
+  );
+
+  return `<div class="message-toolbar">${buttons.join('\n      ')}<div class="toolbar-spacer"></div></div>`;
+}
+
+/**
+ * Attach a click handler to a toolbar button if (and only if) the
+ * button is currently rendered. Folder-aware toolbars elide some
+ * buttons; calling `addEventListener` on a missing element would
+ * throw and abort the rest of the wiring.
+ */
+function bindIf(id, handler) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', handler);
+}
+
 export async function openMessage(uid) {
   if (!state.selectedAgent) return;
   state.selectedUid = uid;
+  const folder = state.selectedFolder ?? 'inbox';
   const root = document.getElementById('content');
   root.innerHTML = `
-    <div class="message-toolbar">
-      <button class="icon-btn" id="msg-back" title="Back to list">${icon('back')}</button>
-      <button class="icon-btn" id="msg-reply" title="Reply">${icon('reply')}</button>
-      <button class="icon-btn" id="msg-reply-all" title="Reply all">${icon('replyAll')}</button>
-      <button class="icon-btn" id="msg-archive" title="Archive">${icon('archive')}</button>
-      <button class="icon-btn" id="msg-unread" title="Mark unread">${icon('mailUnread')}</button>
-      <button class="icon-btn" id="msg-spam" title="Report spam">${icon('spam')}</button>
-      <button class="icon-btn" id="msg-delete" title="Delete">${icon('trash')}</button>
-      <div class="toolbar-spacer"></div>
-    </div>
+    ${renderToolbar(folder)}
     <div class="message-view"><div class="empty">Loading…</div></div>
   `;
-  document.getElementById('msg-back').addEventListener('click', () => { location.hash = `#/folder/${state.selectedFolder ?? 'inbox'}`; });
-  document.getElementById('msg-reply').addEventListener('click', () => openReply(false));
-  document.getElementById('msg-reply-all').addEventListener('click', () => openReply(true));
-  document.getElementById('msg-archive').addEventListener('click', () => archiveMessage());
-  document.getElementById('msg-unread').addEventListener('click', () => markUnread());
-  document.getElementById('msg-spam').addEventListener('click', () => markSpam());
-  document.getElementById('msg-delete').addEventListener('click', () => deleteMessage());
+  bindIf('msg-back',      () => { location.hash = `#/folder/${folder}`; });
+  bindIf('msg-reply',     () => openReply(false));
+  bindIf('msg-reply-all', () => openReply(true));
+  bindIf('msg-archive',   () => archiveMessage());
+  bindIf('msg-unarchive', () => moveToInbox('unarchive'));
+  bindIf('msg-restore',   () => moveToInbox('restore'));
+  bindIf('msg-not-spam',  () => moveToInbox('not-spam'));
+  bindIf('msg-unread',    () => markUnread());
+  bindIf('msg-spam',      () => markSpam());
+  bindIf('msg-delete',    () => deleteMessage());
 
   try {
     // Pass the current folder so the API fetches from the right
@@ -228,6 +293,37 @@ function renderThreadQuote(dateRaw, sender, quotedBody) {
       <div class="thread-quote-body">${sub}</div>
     </div>
   `;
+}
+
+/**
+ * Move the open message back to INBOX from Archive / Spam / Trash.
+ * Three triggers:
+ *
+ *   - 'unarchive' (from Archive): generic move via /mail/messages/:uid/move
+ *   - 'not-spam'  (from Spam):    /mail/messages/:uid/not-spam (server-side
+ *                                  also clears the spam-train flag)
+ *   - 'restore'   (from Trash):   generic move via /mail/messages/:uid/move
+ *
+ * All three navigate back to the originating folder list afterwards so
+ * the operator sees the row vanish from the view they triggered the
+ * action from. The list refresh is what makes the affordance feel real.
+ */
+async function moveToInbox(reason) {
+  if (!state.currentMessage || !state.selectedAgent) return;
+  try {
+    const imap = state.folderNames?.[state.selectedFolder] ?? 'INBOX';
+    if (reason === 'not-spam') {
+      await apiPost(`/mail/messages/${state.selectedUid}/not-spam`, {}, { agentKey: state.selectedAgent.apiKey });
+      toast('Marked as not spam.');
+    } else {
+      await apiPost(`/mail/messages/${state.selectedUid}/move`, { from: imap, to: 'INBOX' }, { agentKey: state.selectedAgent.apiKey });
+      toast(reason === 'restore' ? 'Restored to Inbox.' : 'Moved to Inbox.');
+    }
+    location.hash = `#/folder/${state.selectedFolder ?? 'inbox'}`;
+    await loadList(state.selectedAgent, state.selectedFolder);
+  } catch (err) {
+    toast(`Move failed: ${err.message}`, true);
+  }
 }
 
 async function markUnread() {

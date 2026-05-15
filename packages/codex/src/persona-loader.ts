@@ -42,7 +42,14 @@ export interface LoadedPersona {
 }
 
 function sanitizeSubagentName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  // Two separate trim regexes instead of a single alternation
+  // (`/^-+|-+$/g`) — the alternation form is polynomial on a string
+  // made entirely of dashes (CodeQL `js/polynomial-redos`), the
+  // anchored singles are linear.
+  return name.toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 /**

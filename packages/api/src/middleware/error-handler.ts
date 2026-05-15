@@ -2,7 +2,13 @@ import type { Request, Response, NextFunction } from 'express';
 
 export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction): void {
   const message = err instanceof Error ? err.message : String(err);
-  console.error(`[ERROR] ${req.method} ${req.path}:`, err instanceof Error ? err.stack || message : message);
+  // Pass method/path as separate arguments rather than concatenating
+  // into the format string. CodeQL `js/tainted-format-string` —
+  // although `console.error` doesn't actually do printf-style
+  // interpretation in Node, putting user input on the LHS of the
+  // call confuses static analyzers and risks regressing if a
+  // future logger replaces console.error.
+  console.error('[ERROR] %s %s:', req.method, req.path, err instanceof Error ? err.stack || message : message);
 
   // Don't send response if headers already sent (e.g., SSE streams)
   if (res.headersSent) return;

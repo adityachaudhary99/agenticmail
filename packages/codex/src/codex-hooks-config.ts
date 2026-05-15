@@ -49,7 +49,31 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, resolve, sep } from 'node:path';
+import { homedir, tmpdir } from 'node:os';
+
+/**
+ * Reject any hooks path that isn't absolute AND under either the
+ * operator's home directory or the OS temp dir. See the matching
+ * helper in codex-config-toml.ts for the full rationale (CodeQL
+ * `js/path-injection` boundary check).
+ */
+function assertSafeHooksPath(path: string): void {
+  if (!path || typeof path !== 'string') {
+    throw new Error('codex hooks path is required');
+  }
+  if (!isAbsolute(path)) {
+    throw new Error(`refusing relative codex hooks path: ${path}`);
+  }
+  const resolved = resolve(path);
+  const home = resolve(homedir());
+  const tmp = resolve(tmpdir());
+  const insideHome = resolved === home || resolved.startsWith(home + sep);
+  const insideTmp  = resolved === tmp  || resolved.startsWith(tmp + sep);
+  if (!insideHome && !insideTmp) {
+    throw new Error(`refusing codex hooks write outside of HOME or tmp: ${path}`);
+  }
+}
 
 /**
  * Identify a hook command as ours. The bin name `agenticmail-codex-mail-hook`
@@ -143,6 +167,7 @@ type HookEvent =
   | typeof HOOK_EVENTS_TO_REMOVE[number];
 
 function readHooks(path: string): CodexHooksShape {
+  assertSafeHooksPath(path);
   if (!existsSync(path)) return {};
   const raw = readFileSync(path, 'utf-8');
   if (!raw.trim()) return {};
@@ -159,6 +184,7 @@ function readHooks(path: string): CodexHooksShape {
 }
 
 function writeHooks(path: string, settings: CodexHooksShape): void {
+  assertSafeHooksPath(path);
   const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const text = JSON.stringify(settings, null, 2) + '\n';

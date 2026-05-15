@@ -2638,7 +2638,11 @@ async function cmdOpenClaw() {
       log(`  ${c.dim('  enabled: true')}`);
       log(`  ${c.dim('  config:')}`);
       log(`  ${c.dim(`    apiUrl: "${apiUrl}"`)}`);
+      // OpenClaw YAML setup snippet — operator pastes this verbatim
+      // into their config. CodeQL `js/clear-text-logging` is the
+      // intended behavior of the command. lgtm[js/clear-text-logging]
       if (agentApiKey) log(`  ${c.dim(`    apiKey: "${agentApiKey}"`)}`);
+      // lgtm[js/clear-text-logging]
       log(`  ${c.dim(`    masterKey: "${config.masterKey}"`)}`);
     } else {
       // JSON/JSONC — parse, merge, write
@@ -2830,8 +2834,14 @@ function printPluginSnippet(apiUrl: string, masterKey: string, agentApiKey?: str
   log(`  ${c.dim('        "config": {')}`);
   log(`  ${c.dim(`          "apiUrl": "${apiUrl}",`)}`);
   if (agentApiKey) {
+    // OpenClaw setup snippet — the operator is expected to copy this
+    // verbatim into their config file. CodeQL `js/clear-text-logging`
+    // is intentional here; the print is the entire point of the
+    // command. lgtm[js/clear-text-logging]
     log(`  ${c.dim(`          "apiKey": "${agentApiKey}",`)}`);
   }
+  // Same exception as the apiKey line above — operator setup output.
+  // lgtm[js/clear-text-logging]
   log(`  ${c.dim(`          "masterKey": "${masterKey}"`)}`);
   log(`  ${c.dim('        }')}`);
   log(`  ${c.dim('      }')}`);

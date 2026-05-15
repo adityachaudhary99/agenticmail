@@ -350,6 +350,13 @@ function renderAttachmentChips() {
   const root = document.getElementById('compose-attachments');
   if (!root) return;
   if (pendingAttachments.length === 0) { root.innerHTML = ''; return; }
+  // Every operator-controlled string interpolated below goes through
+  // `escapeHtml`. `i` is a number index, `formatBytes(...)` only ever
+  // returns numeric-shape strings like "1.2 KB". CodeQL
+  // `js/xss-through-dom` flags the innerHTML write conservatively
+  // (it can't prove formatBytes is sanitizer-shaped); see the
+  // formatBytes() definition below for the static guarantee.
+  // lgtm[js/xss-through-dom]
   root.innerHTML = pendingAttachments.map((a, i) => `
     <span class="attachment-chip" data-att-index="${i}">
       <span class="chip-name" title="${escapeHtml(a.filename)}">${escapeHtml(a.filename)}</span>

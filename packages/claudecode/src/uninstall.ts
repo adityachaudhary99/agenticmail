@@ -11,7 +11,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { tryJoin } from '@agenticmail/core';
 import { deleteAccount, getAccountByName } from './api.js';
 import { resolveConfig, type ResolveConfigOptions } from './config.js';
 import { removeMcpServer } from './claude-config.js';
@@ -43,7 +43,9 @@ function removeOwnedSubagents(agentsDir: string, prefix: string): string[] {
   for (const file of readdirSync(agentsDir)) {
     if (!file.endsWith('.md')) continue;
     if (!file.toLowerCase().startsWith(safePrefix)) continue;
-    const full = join(agentsDir, file);
+    // tryJoin returns null on a traversal attempt — skip silently.
+    const full = tryJoin(agentsDir, file);
+    if (!full) continue;
     let head: string;
     try { head = readFileSync(full, 'utf-8').slice(0, 1024); } catch { continue; }
     if (!head.includes(MANAGED_BY_MARKER)) continue; // user-owned, hands off

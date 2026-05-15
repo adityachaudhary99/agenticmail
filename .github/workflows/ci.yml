@@ -15,6 +15,14 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# Explicit least-privilege permissions. Without this block, GitHub
+# falls back to the repository default — which can be the full-write
+# token. The CI workflow only needs to clone the repo and (on main)
+# upload an artifact; nothing else. CodeQL flagged the missing block
+# under `actions/missing-workflow-permissions`.
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

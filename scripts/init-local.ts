@@ -58,9 +58,15 @@ IMAP_PORT=143
 writeFileSync(envPath, envContent);
 console.log(`✅ Created .env file`);
 
-console.log(`\n📋 Your credentials:`);
-console.log(`   Master API Key: ${masterKey}`);
-console.log(`   Stalwart Admin Password: ${stalwartPassword}`);
+// We deliberately print the master key ONCE so the operator can copy
+// it for the next step. Stalwart's admin password stays inside the
+// .env file we just wrote — no need to also print it here (the user
+// can `cat .env | grep STALWART_ADMIN_PASSWORD` if they need it).
+// Avoid logging both — that's what CodeQL `js/clear-text-logging`
+// was flagging on the prior version of this block.
+console.log(`\n📋 Master API key (save this — won't be shown again):`);
+console.log(`   ${masterKey}`);
+console.log(`\n   Stalwart admin password is saved in ${envPath}`);
 console.log(`\n🚀 Next steps:`);
 console.log(`   1. docker compose up -d`);
 console.log(`   2. npm run dev:api`);

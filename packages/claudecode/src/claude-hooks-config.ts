@@ -36,7 +36,31 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, resolve, sep } from 'node:path';
+import { homedir, tmpdir } from 'node:os';
+
+/**
+ * Reject any hooks settings path that isn't absolute AND under
+ * either the operator's home directory or the OS temp dir.
+ * CodeQL `js/path-injection` boundary check — see
+ * codex/codex-config-toml.ts for the matching helper.
+ */
+function assertSafeHooksPath(path: string): void {
+  if (!path || typeof path !== 'string') {
+    throw new Error('claude hooks path is required');
+  }
+  if (!isAbsolute(path)) {
+    throw new Error(`refusing relative claude hooks path: ${path}`);
+  }
+  const resolved = resolve(path);
+  const home = resolve(homedir());
+  const tmp = resolve(tmpdir());
+  const insideHome = resolved === home || resolved.startsWith(home + sep);
+  const insideTmp  = resolved === tmp  || resolved.startsWith(tmp + sep);
+  if (!insideHome && !insideTmp) {
+    throw new Error(`refusing claude hooks write outside of HOME or tmp: ${path}`);
+  }
+}
 
 /**
  * Identify a hook command as ours. We accept BOTH historical forms so
@@ -127,6 +151,7 @@ type HookEvent =
   | typeof HOOK_EVENTS_TO_REMOVE[number];
 
 function readSettings(path: string): ClaudeSettingsShape {
+  assertSafeHooksPath(path);
   if (!existsSync(path)) return {};
   const raw = readFileSync(path, 'utf-8');
   if (!raw.trim()) return {};
@@ -143,6 +168,7 @@ function readSettings(path: string): ClaudeSettingsShape {
 }
 
 function writeSettings(path: string, settings: ClaudeSettingsShape): void {
+  assertSafeHooksPath(path);
   const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const text = JSON.stringify(settings, null, 2) + '\n';

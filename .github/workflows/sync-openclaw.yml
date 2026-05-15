@@ -10,6 +10,15 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# Least-privilege permissions. The sync job needs to push a branch
+# (`contents: write`) and open a PR (`pull-requests: write`). Nothing
+# else is required. Without this explicit block GitHub falls back to
+# the repository default, which is often broader than this. CodeQL
+# flagged the missing block under `actions/missing-workflow-permissions`.
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest

@@ -102,7 +102,10 @@ testDb.prepare(`INSERT INTO agents (id, name, email, api_key, stalwart_principal
 );
 const agent = testDb.prepare('SELECT * FROM agents WHERE name = ?').get('bot1') as any;
 console.log(`✅ Created agent: ${agent.name} <${agent.email}>`);
-console.log(`   apiKey: ${agent.api_key}`);
+// Avoid logging the raw api key — even though this is a test script
+// with a hardcoded `ak_test123`, the same script gets copied as a
+// template for real diagnostics. Redact instead.
+console.log(`   apiKey: ${typeof agent.api_key === 'string' ? agent.api_key.slice(0, 3) + '_***' : '***'}`);
 console.log(`   metadata: ${agent.metadata}`);
 
 // Test 7: RelayGateway instantiation

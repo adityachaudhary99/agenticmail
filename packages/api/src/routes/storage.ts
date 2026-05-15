@@ -74,7 +74,11 @@ function buildColumnDDL(col: ColumnDef, dialect: string): string {
     // user-supplied defaults can't break out of the literal.
     let val: string | number | boolean;
     if (typeof col.default === 'string') {
-      const trimmed = col.default.trim();
+      // Cap input length before `/\(.*\)/.test` — the unbounded `.*`
+      // is technically polynomial on adversarial input (CodeQL
+      // `js/polynomial-redos`). Column defaults are user-supplied
+      // metadata; 500 chars is well past any legitimate use.
+      const trimmed = col.default.slice(0, 500).trim();
       const isSqlExpr = /\(.*\)/.test(trimmed)
         || /^CURRENT_(?:TIMESTAMP|DATE|TIME)$/i.test(trimmed);
       val = isSqlExpr ? `(${trimmed})` : `'${col.default.replace(/'/g, "''")}'`;

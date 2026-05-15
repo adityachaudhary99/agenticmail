@@ -29,8 +29,8 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync, readFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { safeJoin, tryJoin, PathTraversalError } from '@agenticmail/core';
 import { ensureAccount, listAccounts, checkApiHealth, setAccountRole, setAccountHost } from './api.js';
 import { resolveConfig, type ResolveConfigOptions } from './config.js';
 import {
@@ -53,7 +53,12 @@ import type {
  * Code does, so we normalise defensively.
  */
 function sanitizeSubagentName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  // Two separate anchored trims instead of `/^-+|-+$/g` —
+  // CodeQL `js/polynomial-redos` flags the alternation form.
+  return name.toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 /**
@@ -203,7 +208,18 @@ function writeSubagentFiles(
   const updated: string[] = [];
   for (const agent of agents) {
     const baseName = sanitizeSubagentName(`${cfg.subagentPrefix}${agent.name}`);
-    const filePath = join(agentsDir, `${baseName}.toml`);
+    // Defence in depth: even though sanitizeSubagentName strips
+    // `/`/`..` etc, a compromised master-key session could in
+    // principle craft an account name that survives sanitisation
+    // and resolves outside agentsDir. safeJoin throws on any
+    // resulting path that escapes the agents directory.
+    let filePath: string;
+    try {
+      filePath = safeJoin(agentsDir, `${baseName}.toml`);
+    } catch (err) {
+      if (err instanceof PathTraversalError) continue;
+      throw err;
+    }
     const content = renderSubagentToml({
       name: baseName,
       agent,
@@ -246,8 +262,11 @@ function pruneStaleSubagentFiles(
   for (const file of readdirSync(agentsDir)) {
     if (!file.endsWith('.toml')) continue;
     if (!file.toLowerCase().startsWith(prefix)) continue;
-    const full = join(agentsDir, file);
-    if (!isOwnedSubagent(full)) continue;
+    // tryJoin returns null on any traversal attempt (e.g., a
+    // filesystem symlink someone planted with `..` segments) —
+    // skip silently rather than risk unlinking outside agentsDir.
+    const full = tryJoin(agentsDir, file);
+    if (!full || !isOwnedSubagent(full)) continue;
     const stem = file.slice(prefix.length, -('.toml'.length));
     if (liveAgentNames.has(stem.toLowerCase())) continue;
     try {

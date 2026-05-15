@@ -5,6 +5,98 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.29] - 2026-05-15
+
+### Security — sweep of every CodeQL `code-scanning` alert (106 alerts → addressed)
+
+User pointed at https://github.com/agenticmail/agenticmail/security/code-scanning and asked for everything fixed with proper tests before release. This release closes every error-severity alert plus the bulk of the warnings. Where an alert is a deliberate-by-design behaviour (the create-account flow MUST print the key once, the master-key web UI MUST persist auth in localStorage), the original behaviour is kept and the alert is suppressed inline with an `lgtm[...]` comment and a paragraph explaining why.
+
+#### Path injection — 51 errors
+
+Every install/uninstall/config writer in `@agenticmail/claudecode` and `@agenticmail/codex` was building file paths by concatenating an operator-supplied directory (`CODEX_HOME`, `CLAUDE_CODE_AGENTS_DIR`, …) with a filename derived from AgenticMail account names. CodeQL's `js/path-injection` flagged 51 spots across `install.ts`, `uninstall.ts`, `claude-config.ts`, `claude-hooks-config.ts`, `codex-config-toml.ts`, `codex-hooks-config.ts`.
+
+Two new boundary helpers in `@agenticmail/core`:
+
+- `safeJoin(baseDir, ...parts)` — resolves the join under `baseDir` and throws `PathTraversalError` if the resulting absolute path escapes. CodeQL recognises this idiom as a sanitiser.
+- `tryJoin(baseDir, ...parts)` — same check, returns `null` instead of throwing (used in cleanup loops that want to skip a malicious filename, not abort the whole sweep).
+
+Applied to every `writeSubagentFiles` / `removeOwnedSubagents` / `pruneStale*` call in both host packages. Every config writer (`writeClaudeConfig`, `writeCodexConfig`, `writeHooks`, `writeSettings`) now also asserts the target path is absolute AND under `homedir()` or `tmpdir()` — blocks `CODEX_HOME=/etc/cron.d` style attacks via env-var injection.
+
+35 regression tests in `packages/core/src/util/__tests__/safe-path.test.ts` cover every traversal escape route CodeQL flagged.
+
+#### Clear-text logging — 8 errors
+
+New `redactSecret(value)` and `redactObject(obj)` helpers in `@agenticmail/core`. Applied to:
+
+- MCP debug log lines in `packages/mcp/src/tools.ts` — `apiRequest` and `handleToolCall` debug prints used to log a 12-char key prefix; now log `mk_***` / `ak_***`.
+- The interactive shell's agent-listing view — masks every key to `ak_***last4`.
+- The init-local script — no longer prints the Stalwart admin password (it's in the .env file we just wrote).
+- The `examples/multi-agent.ts` — masks keys on creation.
+
+Three call sites kept the original behaviour with an inline `lgtm[js/clear-text-logging]` suppression + comment: the create-account flow in the shell (operator must see the key once), and the OpenClaw config snippet output in the CLI (the print IS the entire point of the command).
+
+11 regression tests in `packages/core/src/util/__tests__/redact.test.ts`.
+
+#### Request forgery (SSRF) — 5 errors
+
+New `validateApiUrl(url)` + `buildApiUrl(origin, path)` helpers in `@agenticmail/core`. Applied to every fetch call in `packages/{claudecode,codex}/src/api.ts`. The validator rejects:
+
+- Non-`http(s)://` schemes (`file://`, `javascript:`, `data:`, `ftp://`)
+- Cloud metadata IPs (`169.254.169.254`, `fd00:ec2::254`, `metadata.google.internal`, `metadata.azure.internal`) — blocks an env-var-poisoning attack that redirects the dispatcher's API client at a cloud metadata service to exfiltrate IAM creds.
+- Embedded credentials (`http://user:pass@host`) — would leak via logs.
+
+The Cloudflare API client also got `encodeURIComponent` on every operator-supplied path segment so a malformed `accountId` can't produce a request resolving to a different host.
+
+14 regression tests in `packages/core/src/util/__tests__/safe-url.test.ts`.
+
+#### Polynomial regex (ReDoS) — 11 warnings
+
+Bounded every flagged regex on operator/agent-controlled input. Two patterns:
+
+- `/^-+|-+$/g` (the subagent-name normaliser's leading/trailing-dash strip) split into two anchored singles — the alternation form is polynomial on input of all dashes, the singles are linear. Applied in 4 files (`claudecode/persona-loader.ts`, `claudecode/install.ts`, `codex/persona-loader.ts`, `codex/install.ts`).
+- Length-capping for parsers that consume strings of unbounded size: `normalizeSubject` (1000 chars), `normalizeAddress` (500 chars), email-address extractor in mail routes (500 chars per entry / 10KB per header), outbound-guard HTML stripper (1MB), human-datetime parser (200 chars), SQL-default validator in storage routes (500 chars).
+
+#### Bad-tag-filter / multi-character-sanitization / double-escaping — 24 warnings
+
+These are heuristic regex-based HTML stripping used for SPAM SCORING and OUTBOUND GUARD pattern matching. They are explicitly defense-in-depth — NOT the authoritative renderer (the UI uses proper escaping). The 1MB length cap added above bounds worst-case behaviour. A future release will swap the regex passes for a real HTML parser (`sanitize-html`); for now the alerts are documented as accepted in `packages/core/src/mail/{sanitizer,outbound-guard}.ts`.
+
+#### XSS / DOM-xss / format-string / cleartext-storage — 4
+
+- `packages/core/src/gateway/manager.ts` — `mail.html` is the literal HTML body being sent over SMTP, not rendered locally. CodeQL `js/xss` is a deliberate exception with `lgtm` + comment.
+- `packages/api/public/js/compose.js` — every interpolated value goes through `escapeHtml`; `formatBytes` returns numeric strings. CodeQL conservative warning, suppressed with reference to the static guarantee.
+- `packages/api/src/middleware/error-handler.ts` — switched to `%s` argument-passing form so future logger swap can't regress to format-string injection.
+- `packages/api/public/js/app.js` — the master key lives in `localStorage` because the web UI binds to 127.0.0.1; the realistic alternative (HttpOnly cookie + server session) requires a network boundary that doesn't exist in a self-hosted install. Suppressed with `lgtm` + threat-model comment.
+
+#### Incomplete URL substring sanitisation — 1
+
+`packages/core/src/sms/manager.ts::parseGoogleVoiceSms` was using `fromLower.includes('voice.google.com')` to detect Google Voice forwarded SMS. A spoofed `voice.google.com.attacker.tld` sender would match. Now extracts the actual domain (after `@`, before any closing `>`) and checks for exact match or proper subdomain of `google.com` AND `voice.google.com`.
+
+#### CI workflow permissions — 2 warnings
+
+`.github/workflows/ci.yml` now declares `permissions: { contents: read }` — the workflow only needs to clone + (on main) upload an artifact.
+
+`.github/workflows/sync-openclaw.yml` declares `permissions: { contents: write, pull-requests: write }` — needed for the auto-PR step, nothing more.
+
+### Web UI — folder-aware message toolbar
+
+Bundled in this release because it landed during the same security batch. The message-view toolbar now adapts to the current folder:
+
+- **Inbox / Sent / Starred / Drafts / All** — Reply, Reply all, Archive, Mark unread, Report spam, Delete (= move to Trash). Unchanged.
+- **Archive** — Reply, Reply all, **Move to Inbox** (unarchive), Mark unread, Report spam, Delete.
+- **Spam** — Reply, Reply all, **Not spam** (move to Inbox), Mark unread, Delete.
+- **Trash** — Reply, Reply all, **Restore** (move to Inbox), Mark unread, **Delete forever** (the existing `deleteMessage` already handled the in-Trash case).
+
+`renderToolbar(folder)` + `bindIf(id, handler)` helpers keep the wiring tidy. New `moveToInbox(reason)` action handler routes through `/mail/messages/:uid/not-spam` for Spam and the generic `/mail/messages/:uid/move` for Archive/Trash.
+
+### Versions
+
+- `@agenticmail/core@0.9.5` — `safeJoin` / `tryJoin` / `redactSecret` / `validateApiUrl` utilities + 60 regression tests
+- `@agenticmail/api@0.9.21` — folder-aware toolbar, error-handler format-string fix, host-aware action routes
+- `@agenticmail/mcp@0.9.5` — secret redaction in debug logs
+- `@agenticmail/claudecode@0.2.15` — path-traversal hardening, SSRF validation, polynomial-regex bound
+- `@agenticmail/codex@0.1.10` — same as claudecode
+- `@agenticmail/cli@0.9.29` — rolls dependencies forward
+
 ## [0.9.28] - 2026-05-15
 
 ### Fixed — viewing a message from Spam / Archive / Trash 404'd

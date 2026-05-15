@@ -406,7 +406,13 @@ const MEDIUM_RISK_EXTENSIONS = new Set(['.db', '.sqlite', '.sqlite3', '.sql', '.
  *  Tags are removed (not replaced with spaces) to prevent tag-based pattern evasion
  *  like AKI<b>A</b>IOSFODNN7EXAMPLE or 123<span></span>-45-6789. */
 function stripHtmlTags(html: string): string {
-  return html
+  // Cap input length to bound worst-case regex backtracking. 1MB is
+  // well past any realistic email body (SMTP servers typically
+  // reject larger payloads anyway). CodeQL `js/polynomial-redos`
+  // flags the `<style[^>]*>[\s\S]*?<\/style>` style regex; capping
+  // input upfront bounds the worst-case work to O(n) for fixed n.
+  const bounded = html.length > 1_048_576 ? html.slice(0, 1_048_576) : html;
+  return bounded
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<[^>]+>/g, '')

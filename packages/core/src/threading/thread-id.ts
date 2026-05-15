@@ -39,7 +39,12 @@ import { createHash } from 'node:crypto';
 
 /** Strip every leading "Re:", "Fwd:", "Fw:", "Re[2]:" etc. */
 function stripReplyPrefixes(subject: string): string {
-  let s = subject;
+  // Cap input length before regex iteration. The combination of
+  // `\s*` segments inside the prefix matcher is technically
+  // polynomial under adversarial whitespace runs (CodeQL
+  // `js/polynomial-redos`); capping at 1000 chars upfront bounds
+  // the worst-case work to O(n) for fixed n.
+  let s = subject.length > 1000 ? subject.slice(0, 1000) : subject;
   // Repeat until no more prefixes match — handles chained "Re: Fwd: Re: foo"
   for (;;) {
     const next = s.replace(/^\s*(?:re|fwd?|fw)\s*(?:\[\d+\])?\s*:\s*/i, '');
@@ -64,9 +69,14 @@ export function normalizeSubject(subject: string | undefined | null): string {
 
 export function normalizeAddress(addr: string | undefined | null): string {
   if (!addr) return '(unknown)';
+  // Cap input length before the angle-bracket extraction. `[^>]+`
+  // is technically polynomial on input that lacks a closing `>`
+  // (CodeQL `js/polynomial-redos`); 500 chars is well past any
+  // legitimate RFC 5321 address (320 char limit) + display name.
+  const bounded = addr.length > 500 ? addr.slice(0, 500) : addr;
   // Strip angle brackets + display name from "Foo <foo@x>".
-  const m = addr.match(/<([^>]+)>/);
-  const raw = m ? m[1] : addr;
+  const m = bounded.match(/<([^>]+)>/);
+  const raw = m ? m[1] : bounded;
   return raw.trim().toLowerCase();
 }
 

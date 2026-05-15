@@ -6,6 +6,7 @@
  * Claude Code is wired up, so this client deliberately stays tiny.
  */
 
+import { validateApiUrl, buildApiUrl } from '@agenticmail/core';
 import type { AgenticMailAccount } from './types.js';
 
 export class AgenticMailApiError extends Error {
@@ -30,7 +31,13 @@ async function request<T>(apiUrl: string, masterKey: string, path: string, opts:
   if (!masterKey) {
     throw new AgenticMailApiError(0, 'AgenticMail master key is required — could not find one in ~/.agenticmail/config.json.');
   }
-  const url = `${apiUrl.replace(/\/$/, '')}/api/agenticmail${path}`;
+  // Validate + canonicalise the apiUrl so a malicious env var
+   // (e.g. AGENTICMAIL_API_URL=http://169.254.169.254/...) can't
+   // redirect the dispatcher's fetch call at a cloud-metadata
+   // endpoint. validateApiUrl rejects non-http(s) schemes, embedded
+   // credentials, and the known cloud metadata IPs/hostnames.
+   // CodeQL `js/request-forgery`.
+  const url = buildApiUrl(validateApiUrl(apiUrl), `/api/agenticmail${path}`);
   const headers: Record<string, string> = { 'Authorization': `Bearer ${masterKey}` };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
 
@@ -68,7 +75,7 @@ async function request<T>(apiUrl: string, masterKey: string, path: string, opts:
  * Returns the version string from the response.
  */
 export async function checkApiHealth(apiUrl: string): Promise<{ ok: true; version?: string }> {
-  const url = `${apiUrl.replace(/\/$/, '')}/api/agenticmail/health`;
+  const url = buildApiUrl(validateApiUrl(apiUrl), '/api/agenticmail/health');
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
     if (!res.ok) throw new AgenticMailApiError(res.status, `Health check returned HTTP ${res.status}`);

@@ -27,8 +27,13 @@ const researcher = await createAgent('researcher');
 const writer = await createAgent('writer');
 
 console.log('Created agents:');
-console.log(`  researcher: ${researcher.email} (key: ${researcher.apiKey})`);
-console.log(`  writer: ${writer.email} (key: ${writer.apiKey})`);
+// Mask the keys in the printout — the example script holds the
+// originals in `researcher.apiKey` / `writer.apiKey` and uses them
+// directly for the API calls below, so logging the literal value
+// would just be advisory noise. CodeQL `js/clear-text-logging`.
+const mask = (k: string) => k.length > 8 ? `${k.slice(0, 3)}_***${k.slice(-4)}` : '***';
+console.log(`  researcher: ${researcher.email} (key: ${mask(researcher.apiKey)})`);
+console.log(`  writer: ${writer.email} (key: ${mask(writer.apiKey)})`);
 
 // Researcher assigns a task to the writer
 await fetch(`${API_URL}/api/agenticmail/tasks/assign`, {

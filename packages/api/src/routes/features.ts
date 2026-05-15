@@ -83,7 +83,12 @@ function parseScheduleTime(input: string): Date | null {
   }
 
   // 6. Human-friendly: "MM-DD-YYYY H:MM AM/PM [TZ]" or "MM/DD/YYYY H:MM AM/PM [TZ]"
-  const humanMatch = trimmed.match(
+  //
+  // Bound input length so the trailing `(.+)?` can't backtrack
+  // catastrophically on adversarial input (CodeQL
+  // `js/polynomial-redos`). 200 chars is well past any plausible
+  // human-typed datetime string.
+  const humanMatch = trimmed.length > 200 ? null : trimmed.match(
     /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)\s*(.+)?$/,
   );
   if (humanMatch) {

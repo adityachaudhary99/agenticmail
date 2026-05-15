@@ -893,6 +893,15 @@ export class GatewayManager {
       bcc: mail.bcc ? (Array.isArray(mail.bcc) ? mail.bcc.join(', ') : mail.bcc) : undefined,
       subject: mail.subject,
       text: mail.text || undefined,
+      // The `html` field is the literal HTML body of the outbound
+      // mail — by design it is whatever the sender chose to compose.
+      // CodeQL `js/xss` flags this because the value flows from user
+      // input, but nodemailer is the SMTP serializer, not an HTML
+      // renderer; XSS would only occur if the recipient's MUA
+      // executed the body, which is outside our trust boundary.
+      // The outbound-guard (packages/core/src/mail/outbound-guard.ts)
+      // already scores HTML bodies for suspicious patterns at the
+      // pre-send step. lgtm[js/xss]
       html: mail.html || undefined,
       replyTo: mail.replyTo || from,
       inReplyTo: mail.inReplyTo || undefined,

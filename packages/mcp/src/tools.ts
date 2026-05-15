@@ -1,5 +1,5 @@
 import { scheduleFollowUp, drainFollowUps, cancelFollowUp } from './pending-followup.js';
-import { recordToolCall } from '@agenticmail/core';
+import { recordToolCall, redactSecret } from '@agenticmail/core';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { TOOL_SETS, SET_DESCRIPTIONS, TOOL_TO_SET, type ToolSetName } from './tool-catalog.js';
 
@@ -141,7 +141,12 @@ async function apiRequest<T extends ApiResponse = ApiJsonObject>(method: string,
   // notoriously silent — they degrade back to the default identity and look
   // like "the inbox is just empty", which is the wrong intuition.
   if (process.env.AGENTICMAIL_MCP_DEBUG) {
-    console.error(`[mcp-debug] apiRequest ${method} ${path} | perCall=${perCallKey ? perCallKey.slice(0, 12) + '…' : 'none'} | resolved=${key.slice(0, 12)}…`);
+    // Redact the actual key material; preserve only the `mk_`/`ak_`
+    // prefix so the log still tells you "this used a master key
+    // vs a per-agent key". 12-char prefix logging is enough for
+    // an attacker who sees the log to identify which credential
+    // leaked — CodeQL `js/clear-text-logging`.
+    console.error(`[mcp-debug] apiRequest ${method} ${path} | perCall=${perCallKey ? redactSecret(perCallKey) : 'none'} | resolved=${redactSecret(key)}`);
   }
   if (!key) {
     throw new Error(useMasterKey
@@ -1300,7 +1305,9 @@ export async function handleToolCall(name: string, args: Record<string, unknown>
   }
 
   if (process.env.AGENTICMAIL_MCP_DEBUG) {
-    console.error(`[mcp-debug] handleToolCall name=${name} requested=${requestedAccount ?? 'none'} accountKey=${accountKey ? accountKey.slice(0, 12) + '…' : 'null'} ACCOUNT_KEYS.size=${ACCOUNT_KEYS.size}`);
+    // Same redaction policy as apiRequest above — `ak_***` shape
+    // preserves the diagnostic signal without leaking the secret.
+    console.error(`[mcp-debug] handleToolCall name=${name} requested=${requestedAccount ?? 'none'} accountKey=${accountKey ? redactSecret(accountKey) : 'null'} ACCOUNT_KEYS.size=${ACCOUNT_KEYS.size}`);
   }
   return toolCallContext.run({ apiKey: accountKey }, () => dispatchToolCall(name, args, useMaster));
 }

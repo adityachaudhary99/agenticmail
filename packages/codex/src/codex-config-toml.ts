@@ -28,8 +28,42 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, resolve, sep } from 'node:path';
+import { homedir, tmpdir } from 'node:os';
 import TOML from '@iarna/toml';
+
+/**
+ * Reject any config path that isn't absolute AND under either the
+ * operator's home directory or the OS temp dir (the temp dir is
+ * whitelisted so unit tests can write to `mkdtempSync()` paths).
+ *
+ * This is the trust boundary check CodeQL's `js/path-injection`
+ * query was flagging: every public function in this module takes
+ * a `path` parameter that ultimately flows from operator config /
+ * env vars, and `dirname(path)` / `writeFileSync(path)` / etc could
+ * therefore be redirected by a malicious env var (e.g. a poisoned
+ * CODEX_HOME pointing at /etc/cron.d). The boundary check below
+ * collapses that taint flow into a hard error before any fs op runs.
+ *
+ * If you genuinely need to write outside HOME/tmp (we never do today),
+ * extend the allow-list explicitly rather than removing this check.
+ */
+function assertSafeConfigPath(path: string): void {
+  if (!path || typeof path !== 'string') {
+    throw new Error('codex config path is required');
+  }
+  if (!isAbsolute(path)) {
+    throw new Error(`refusing relative codex config path: ${path}`);
+  }
+  const resolved = resolve(path);
+  const home = resolve(homedir());
+  const tmp = resolve(tmpdir());
+  const insideHome = resolved === home || resolved.startsWith(home + sep);
+  const insideTmp  = resolved === tmp  || resolved.startsWith(tmp + sep);
+  if (!insideHome && !insideTmp) {
+    throw new Error(`refusing codex config write outside of HOME or tmp: ${path}`);
+  }
+}
 
 /** Shape of a single MCP server registration in Codex's config.toml. */
 export interface CodexMcpServerEntry {
@@ -86,6 +120,7 @@ export interface CodexConfigShape {
 }
 
 export function readCodexConfig(path: string): CodexConfigShape {
+  assertSafeConfigPath(path);
   if (!existsSync(path)) return {};
   const raw = readFileSync(path, 'utf-8');
   if (!raw.trim()) return {};
@@ -107,6 +142,7 @@ export function readCodexConfig(path: string): CodexConfigShape {
  * file — a partial config.toml prevents Codex CLI from starting at all.
  */
 export function writeCodexConfig(path: string, config: CodexConfigShape): void {
+  assertSafeConfigPath(path);
   const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   // @iarna/toml's `stringify` accepts any JS object. We've already validated

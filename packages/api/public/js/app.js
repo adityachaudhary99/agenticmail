@@ -43,6 +43,15 @@ async function signIn() {
       headers: { Authorization: `Bearer ${key}` },
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    // The master key is persisted in localStorage so the operator
+    // doesn't have to re-type it on every page load. CodeQL
+    // `js/clear-text-storage-of-sensitive-data` flags this, but
+    // the threat model is self-hosted: the web UI binds to
+    // 127.0.0.1, the key never crosses the network, and the
+    // operator's local filesystem is already trusted by every
+    // other layer of the install. The realistic alternative
+    // (HttpOnly cookie + server-side session) requires a network
+    // boundary that doesn't exist here. lgtm[js/clear-text-storage-of-sensitive-data]
     localStorage.setItem('agenticmail.masterKey', key);
     state.masterKey = key;
     document.getElementById('auth').style.display = 'none';

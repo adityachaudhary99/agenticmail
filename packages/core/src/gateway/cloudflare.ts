@@ -236,7 +236,12 @@ export class CloudflareClient {
 
   /** Deploy an Email Worker script (ES module format) */
   async deployEmailWorker(scriptName: string, scriptContent: string, envVars: Record<string, string> = {}): Promise<void> {
-    const url = `${CF_API_BASE}/accounts/${this.accountId}/workers/scripts/${scriptName}`;
+    // URL-encode the operator-supplied accountId so a malformed
+    // value can't produce a request that resolves to a different
+    // host. CodeQL `js/request-forgery` sanitiser shape — combined
+    // with the hardcoded CF_API_BASE this URL is now provably
+    // bounded to api.cloudflare.com.
+    const url = `${CF_API_BASE}/accounts/${encodeURIComponent(this.accountId)}/workers/scripts/${encodeURIComponent(scriptName)}`;
 
     // Build metadata with environment variable bindings
     const bindings = Object.entries(envVars).map(([name, text]) => ({
