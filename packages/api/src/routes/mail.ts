@@ -1315,19 +1315,37 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
   router.post('/mail/batch/move', requireAgent, async (req, res, next) => {
     try {
       const agent = req.agent!;
-      const { uids: rawUids, from: fromFolder, to: toFolder } = req.body || {};
-      const uids = validateUids(rawUids);
+      const body = req.body || {};
+      const uids = validateUids(body.uids);
       if (!uids) {
         res.status(400).json({ error: 'uids must be a non-empty array of positive integers (max 1000)' });
         return;
       }
+      // Accept both naming conventions:
+      //   - `{from, to}` — the original API shape, still used by some
+      //     MCP callers and curl examples.
+      //   - `{folder, toFolder}` — matches the OTHER batch endpoints
+      //     (batch/seen, batch/unseen, batch/archive, batch/trash all
+      //     take `folder` for source), which is what the web UI was
+      //     already sending. Before 0.9.14 the UI sent `{folder,
+      //     toFolder}` but the API only read `{from, to}`, so every
+      //     bulk-move-to-spam silently 400'd with "to (destination
+      //     folder) is required" — the user saw mail vanish from
+      //     INBOX (it didn't actually move) and an empty Spam folder
+      //     because no move happened.
+      const fromFolder = body.from ?? body.folder;
+      const toFolder = body.to ?? body.toFolder;
       if (!toFolder) {
-        res.status(400).json({ error: 'to (destination folder) is required' });
+        res.status(400).json({ error: 'destination folder is required (pass as `to` or `toFolder`)' });
         return;
       }
       const password = getAgentPassword(agent);
       const receiver = await getReceiver(agent.stalwartPrincipal, password, config);
       await receiver.batchMove(uids, fromFolder || 'INBOX', toFolder);
+      // Invalidate cached parsed-message entries for these UIDs — they
+      // just changed folders, the prev cache key (with old folder)
+      // could otherwise serve stale data to a refresh.
+      for (const uid of uids) invalidateParsedMessage(agent.id, uid);
       res.json({ ok: true, moved: uids.length });
     } catch (err) {
       next(err);

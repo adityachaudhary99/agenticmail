@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.14] - 2026-05-15
+
+### Fixed — Moving an email to Spam/Archive: mail disappeared from inbox but never showed in the target
+
+User report: *"when I move an email to spam or archive it doesn't show up there whenever I check."*
+
+Two compounding issues, one in the API and one in the front-end.
+
+### Issue 1: API name mismatch silently 400'd every bulk-move-to-spam
+
+The web UI's `runBulkAction` for the "spam" case posted:
+
+```json
+{ "uids": [...], "folder": "INBOX", "toFolder": "Junk Mail" }
+```
+
+But the API's `POST /mail/batch/move` destructured `{from, to}`,
+not `{folder, toFolder}`. So `toFolder` (the API's local var) was
+`undefined`, the route hit `if (!toFolder)` and returned 400. The
+front-end's `apiPost` did surface a toast but the user often
+missed it amid the "row vanishes from list" optimistic update.
+Net effect: the email APPEARED to move (the list reload no longer
+showed it because we just rebuilt the digest) but it never
+actually changed folders — staying in INBOX with the original
+flags untouched.
+
+Note: the seen/unseen/archive/trash batch endpoints all read
+`folder` from the body. Only `batch/move` used the
+`{from, to}` shape. Inconsistent and easy to miss.
+
+**Fix:** `batch/move` now accepts EITHER shape — `{from, to}` (the
+historical contract, kept for any MCP/curl callers that adopted
+it) OR `{folder, toFolder}` (matches every other batch endpoint
+and is what the UI already sends).
+
+```ts
+const fromFolder = body.from ?? body.folder;
+const toFolder   = body.to   ?? body.toFolder;
+```
+
+Also invalidates the parsed-message cache for the moved UIDs so a
+subsequent refresh doesn't serve stale-folder data from the LRU.
+
+### Issue 2: Folder cache went stale after first-time folder creation
+
+The API auto-creates `Archive` on the first archive operation and
+`Spam` (where missing) on the first spam classification. But the
+web UI's `state.folderNames` cache is populated ONCE at agent
+switch — if Archive didn't exist at that moment, the cache had no
+entry for it, and clicking the Archive sidebar tab showed *"No
+Archive folder on this server."* even though the API had just
+created one.
+
+**Fix:** when `loadList` resolves the IMAP folder name and the
+cache MISSES, force a fresh discovery once before declaring the
+folder absent:
+
+```js
+let imap = isStarred ? 'INBOX' : imapNameFor(folder);
+if (!imap) {
+  state.folderNames = {};
+  await ensureFolderCache(agent);
+  imap = imapNameFor(folder);
+}
+if (!imap) { /* genuinely missing → empty state */ }
+```
+
+Covers both the just-created-Archive case and the
+just-created-Spam case.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/api` | 0.9.10 | 0.9.11 |
+| `@agenticmail/cli` | 0.9.13 | 0.9.14 |
+
 ## [0.9.13] - 2026-05-15
 
 ### Fixed — Wake allowlist silently excluded everyone when sent as a JSON string

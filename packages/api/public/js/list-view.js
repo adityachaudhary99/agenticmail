@@ -157,7 +157,18 @@ export async function loadList(agent, folder) {
   // side flag filter (Gmail convention); other folders need a real
   // mailbox name from the discovery cache.
   const isStarred = folder === 'starred';
-  const imap = isStarred ? 'INBOX' : imapNameFor(folder);
+  let imap = isStarred ? 'INBOX' : imapNameFor(folder);
+  if (!imap) {
+    // The cache was populated at agent-switch time; some folders are
+    // created LATER on demand (the API auto-creates Archive on first
+    // archive, Spam on first report-as-spam). If we don't see the
+    // requested folder in the cache, force a fresh discovery once
+    // before declaring "no such folder" — covers the "moved to
+    // Archive but Archive tab is empty" report.
+    state.folderNames = {};
+    await ensureFolderCache(agent);
+    imap = imapNameFor(folder);
+  }
   if (!imap) {
     document.getElementById('list-rows').innerHTML =
       `<div class="empty"><div class="big">📭</div>No ${escapeHtml(folderTitle(folder))} folder on this server.</div>`;
