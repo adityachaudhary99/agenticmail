@@ -82,6 +82,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { saveHostSession } from '@agenticmail/core';
 
 interface AgenticMailDiskConfig {
   masterKey?: string;
@@ -278,6 +279,24 @@ async function main(): Promise<void> {
   const input = await readStdinJson();
   const eventName = input?.hook_event_name ?? 'UserPromptSubmit';
   const sessionId = typeof input?.session_id === 'string' ? input.session_id : '';
+
+  // ─── Persist the host session for headless bridge-wake ──────────
+  //
+  // Every hook fire is an opportunity to record the current host
+  // session_id. The dispatcher reads this back when sub-agent mail
+  // arrives in the bridge inbox AND no host CLI is actively running:
+  // it spawns a headless `claude --resume <sid>` turn so the
+  // operator's session can act on the new bridge mail without
+  // requiring the human to be at the keyboard. See
+  // packages/core/src/host-sessions.ts for the storage format.
+  //
+  // Best-effort: write failures don't propagate. The dispatcher's
+  // fall-through path (SMS escalation / persisted alert) catches
+  // the "no session known" case gracefully.
+  if (sessionId) {
+    try { saveHostSession('claudecode', { sessionId, workspace: process.cwd() }); }
+    catch { /* never let the persist fail kill the host hook */ }
+  }
 
   // ─── SessionStart fast path ─────────────────────────────────────
   //

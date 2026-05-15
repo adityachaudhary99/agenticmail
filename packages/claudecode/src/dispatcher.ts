@@ -46,7 +46,8 @@ import { DispatcherState } from './dispatcher-state.js';
 import { mkdirSync, createWriteStream, rmSync, type WriteStream } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { ThreadCache, AgentMemoryStore, threadIdFor, normalizeSubject } from '@agenticmail/core';
+import { ThreadCache, AgentMemoryStore, threadIdFor, normalizeSubject, loadHostSession, forgetHostSession } from '@agenticmail/core';
+import { resumeBridgeSession, composeBridgeWakePrompt } from './bridge-wake.js';
 
 /** Event shape we accept off the SSE stream. */
 interface SSEEvent {
@@ -1129,6 +1130,24 @@ export class Dispatcher {
   /** Public for tests — directly hand an event to the routing path. */
   async handleEvent(account: AgenticMailAccount, event: SSEEvent): Promise<void> {
     if (this.stopped) return;
+
+    // Bridge-mail branch — when the event is for OUR own bridge inbox
+    // (claudecode@localhost), route to the headless-resume path
+    // instead of spawnWorker. The bridge is the operator's session
+    // proxy, not an automated worker; we resume the operator's last
+    // session via @anthropic-ai/claude-agent-sdk's `resume` option
+    // rather than spawning a fresh subagent turn. See
+    // packages/claudecode/src/bridge-wake.ts for the SDK call.
+    if (event.type === 'new' && typeof event.uid === 'number'
+        && account.name.toLowerCase() === this.cfg.bridgeAgentName.toLowerCase()) {
+      const ch = this.channels.get(account.id);
+      if (ch?.seenUids.has(event.uid)) return;
+      if (ch) rememberBounded(ch.seenUids, event.uid);
+      this.state.markSeen(account.id, event.uid);
+      void this.handleBridgeMail(account, event);
+      return;
+    }
+
     if (event.type === 'new' && typeof event.uid === 'number') {
       const ch = this.channels.get(account.id);
       if (ch?.seenUids.has(event.uid)) return;
@@ -1298,17 +1317,21 @@ export class Dispatcher {
     const bridgeName = this.cfg.bridgeAgentName.toLowerCase();
     const meta = account.metadata as { bridge?: unknown; host?: unknown } | undefined;
 
-    // (a) This host's own bridge — never watch it; the host's
-    //     interactive REPL drives that inbox via UserPromptSubmit /
-    //     SessionStart hooks. The dispatcher waking on bridge mail
-    //     would compete with the host and burn tokens.
-    if (account.name.toLowerCase() === bridgeName) return false;
+    // (a) This host's OWN bridge — watch it. New since 0.10.0:
+    //     when a sub-agent mails the bridge with `wake: ["claudecode"]`
+    //     we attempt a headless resume of the operator's last session
+    //     via @anthropic-ai/claude-agent-sdk's `resume` option. The
+    //     routing branch sits in handleEvent: if the event is for our
+    //     own bridge it goes to handleBridgeMail instead of the normal
+    //     spawnWorker path, so we don't burn worker turns competing
+    //     with the operator's interactive session. Pre-0.10 this
+    //     returned false and bridge mail just sat until the operator
+    //     opened their CLI.
+    if (account.name.toLowerCase() === bridgeName) return true;
 
-    // (b) ANY account explicitly tagged as a bridge — including OTHER
-    //     hosts' bridges. With multiple host integrations co-installed
-    //     (e.g. claudecode + codex on the same machine), each host
-    //     creates its own bridge. The claudecode dispatcher must NOT
-    //     wake on mail to the codex bridge inbox (and vice versa).
+    // (b) OTHER hosts' bridges (e.g. the codex bridge from this
+    //     claudecode dispatcher's perspective). NEVER touch — that's
+    //     the other host integration's responsibility.
     if (account.role === 'bridge') return false;
     if (meta && meta.bridge === true) return false;
 
@@ -1878,6 +1901,92 @@ export class Dispatcher {
     sections.push('and the newest `lastUid` you have digested. Future wakes on');
     sections.push('this thread will load that memory into context for you.');
     return sections.join('\n');
+  }
+
+  /**
+   * Handle mail that lands in the host's OWN bridge inbox.
+   *
+   * Unlike normal sub-agent wakes (which spawn a fresh worker turn),
+   * bridge wakes resume the operator's last interactive session via
+   * the Claude Agent SDK's `resume` option — keeping the operator's
+   * context intact and avoiding a duplicate "second Claude trying to
+   * be Claude Code". When no fresh session is available (operator
+   * hasn't run `claude` in >24h, or `~/.agenticmail/host-sessions.json`
+   * was wiped), the dispatcher emits an `urgent` system event so the
+   * web UI's notification surface + any future SMS escalation hook
+   * can pick it up. See packages/claudecode/src/bridge-wake.ts.
+   *
+   * Two short-circuits:
+   *   1. If lastSeenMs is within 30s, the operator is actively at the
+   *      keyboard right now — their own UserPromptSubmit / Stop hook
+   *      will surface the mail on their next keystroke. We skip the
+   *      resume entirely to avoid token waste.
+   *   2. If a previous bridge-wake for this same UID is already
+   *      in-flight (same key in `inFlightBridgeWakes`), skip — IMAP
+   *      IDLE replays + SSE reconnects can fire the same event
+   *      twice and we don't want to double-resume.
+   */
+  private inFlightBridgeWakes = new Set<number>();
+  private async handleBridgeMail(account: AgenticMailAccount, event: SSEEvent): Promise<void> {
+    if (typeof event.uid !== 'number') return;
+    if (this.inFlightBridgeWakes.has(event.uid)) return;
+    this.inFlightBridgeWakes.add(event.uid);
+    const startMs = Date.now();
+    const subject = extractSubject(event);
+    const from = extractFrom(event);
+    const preview = (event as { preview?: string }).preview
+      ?? (event.message as { preview?: string } | undefined)?.preview
+      ?? '';
+    try {
+      const saved = loadHostSession('claudecode');
+      if (saved && Date.now() - saved.lastSeenMs < 30_000) {
+        this.log('info', `[bridge-wake] skip — operator is live (lastSeen=${Date.now() - saved.lastSeenMs}ms ago); their hook will surface uid=${event.uid}`);
+        this.postActivity('/dispatcher/bridge-skipped', {
+          uid: event.uid, agentName: account.name, reason: 'operator-live',
+        });
+        return;
+      }
+      if (!saved) {
+        this.log('warn', `[bridge-wake] no fresh Claude Code session recorded — bridge mail uid=${event.uid} cannot resume. Escalating via system-event.`);
+        this.postActivity('/dispatcher/bridge-escalation', {
+          uid: event.uid, agentName: account.name, subject, from, preview,
+          reason: 'no-fresh-session',
+        });
+        return;
+      }
+      const mcpEnv = await this.buildMcpEnv();
+      const prompt = composeBridgeWakePrompt({
+        bridgeName: account.name, uid: event.uid, subject, from, preview,
+      });
+      const result = await resumeBridgeSession(this.query, {
+        bridge: account,
+        sessionId: saved.sessionId,
+        cwd: saved.workspace,
+        prompt,
+        mcpEnv,
+      }, this.log);
+      if (result.ok) {
+        this.postActivity('/dispatcher/bridge-resumed', {
+          uid: event.uid, agentName: account.name, subject, from,
+          durationMs: result.durationMs, resultPreview: result.text?.slice(0, 240),
+        });
+      } else {
+        if (result.error === 'session-expired') {
+          this.log('warn', `[bridge-wake] session expired; forgetting and escalating uid=${event.uid}`);
+          forgetHostSession('claudecode');
+        }
+        this.postActivity('/dispatcher/bridge-escalation', {
+          uid: event.uid, agentName: account.name, subject, from, preview,
+          reason: result.error ?? 'resume-failed',
+          errorMessage: result.errorMessage,
+        });
+      }
+    } catch (err) {
+      this.log('error', `[bridge-wake] uid=${event.uid} threw: ${(err as Error).message}`);
+    } finally {
+      this.inFlightBridgeWakes.delete(event.uid);
+      this.log('info', `[bridge-wake] finished uid=${event.uid} in ${Date.now() - startMs}ms`);
+    }
   }
 
   /** Acquire a concurrency slot, run a worker, release the slot. */

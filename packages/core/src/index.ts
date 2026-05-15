@@ -115,6 +115,22 @@ export {
   REDACTED,
 } from './util/redact.js';
 
+// Headless bridge-wake: persist host session_id captured from the
+// mail-hook so the dispatcher can resume a Claude Code / Codex
+// session against bridge mail when the operator's CLI isn't
+// actively running. See util/host-sessions.ts for the threat model
+// and the freshness gate.
+export {
+  saveHostSession,
+  loadHostSession,
+  isSessionFresh,
+  forgetHostSession,
+  hostSessionStoragePath,
+  DEFAULT_SESSION_MAX_AGE_MS,
+  type HostName,
+  type HostSession,
+} from './host-sessions.js';
+
 // SSRF-safe URL validation for the master API base URL — used by
 // every host integration to bound where its fetch requests can go.
 // See util/safe-url.ts for the blocklist (cloud metadata, file://,

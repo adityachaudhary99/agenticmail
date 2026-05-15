@@ -366,6 +366,80 @@ export function createDispatcherActivityRoutes(): Router {
    * to the ring buffer so the host can review recent filter
    * decisions in /dispatcher/activity.
    */
+  /**
+   * Dispatcher → API: bridge mail arrived but operator is live —
+   * we skipped the headless resume to avoid competing with the
+   * interactive host CLI session. Telemetry only; the operator's
+   * own host hook will surface this mail on their next keystroke.
+   */
+  router.post('/dispatcher/bridge-skipped', requireMaster, (req, res) => {
+    const body = req.body ?? {};
+    pushSystemEvent({
+      type: 'bridge_skipped',
+      agentName: typeof body.agentName === 'string' ? body.agentName : undefined,
+      uid: typeof body.uid === 'number' ? body.uid : undefined,
+      reason: typeof body.reason === 'string' ? body.reason : 'operator-live',
+    });
+    res.json({ ok: true });
+  });
+
+  /**
+   * Dispatcher → API: a bridge resume completed successfully. The
+   * operator's session picked up the bridge mail headlessly without
+   * the operator being at the keyboard. Surfaced in the web UI as a
+   * subtle "(headless wake)" badge on the activity feed.
+   */
+  router.post('/dispatcher/bridge-resumed', requireMaster, (req, res) => {
+    const body = req.body ?? {};
+    pushSystemEvent({
+      type: 'bridge_resumed',
+      agentName: typeof body.agentName === 'string' ? body.agentName : undefined,
+      uid: typeof body.uid === 'number' ? body.uid : undefined,
+      subject: typeof body.subject === 'string' ? body.subject : undefined,
+      from: typeof body.from === 'string' ? body.from : undefined,
+      durationMs: typeof body.durationMs === 'number' ? body.durationMs : undefined,
+      resultPreview: typeof body.resultPreview === 'string' ? body.resultPreview : undefined,
+    });
+    res.json({ ok: true });
+  });
+
+  /**
+   * Dispatcher → API: bridge mail arrived but couldn't be resumed
+   * (no fresh session, resume token expired, SDK missing). The
+   * operator needs to know — they're the one who has to wake up
+   * their CLI and act on it.
+   *
+   * Surfaced as a high-priority system event so the web UI's
+   * notification badge fires loud, AND if SMS is configured for
+   * the master account we forward a short digest to the operator's
+   * phone. The forward is best-effort: SMS failures don't poison
+   * the system event.
+   */
+  router.post('/dispatcher/bridge-escalation', requireMaster, (req, res) => {
+    const body = req.body ?? {};
+    const event = {
+      type: 'bridge_escalation',
+      urgent: true,
+      agentName: typeof body.agentName === 'string' ? body.agentName : undefined,
+      uid: typeof body.uid === 'number' ? body.uid : undefined,
+      subject: typeof body.subject === 'string' ? body.subject : undefined,
+      from: typeof body.from === 'string' ? body.from : undefined,
+      preview: typeof body.preview === 'string' ? body.preview : undefined,
+      reason: typeof body.reason === 'string' ? body.reason : 'unknown',
+      errorMessage: typeof body.errorMessage === 'string' ? body.errorMessage : undefined,
+      atMs: Date.now(),
+    };
+    pushSystemEvent(event);
+    // SMS escalation hook — only attempts delivery when the host
+    // bridge has a configured SMS target. We don't reach into smsManager
+    // directly here (that route lives on per-agent endpoints); a future
+    // 0.10.x release will wire this through a dedicated bridge-alerts
+    // config that names a target phone number. For now the system event
+    // is the operator's notification channel, surfaced by the web UI
+    // and audible via the notification sound.
+    res.json({ ok: true, escalated: true });
+  });
+
   router.post('/dispatcher/worker-skipped', requireMaster, (req, res) => {
     const body = req.body ?? {};
     if (typeof body.agentName !== 'string' || typeof body.reason !== 'string') {

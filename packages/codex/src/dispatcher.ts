@@ -51,7 +51,8 @@ import { DispatcherState } from './dispatcher-state.js';
 import { mkdirSync, createWriteStream, rmSync, type WriteStream } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { ThreadCache, AgentMemoryStore, threadIdFor, normalizeSubject } from '@agenticmail/core';
+import { ThreadCache, AgentMemoryStore, threadIdFor, normalizeSubject, loadHostSession, forgetHostSession } from '@agenticmail/core';
+import { resumeBridgeThread, composeBridgeWakePrompt } from './bridge-wake.js';
 
 /** Event shape we accept off the SSE stream. */
 interface SSEEvent {
@@ -1171,6 +1172,21 @@ export class Dispatcher {
   /** Public for tests — directly hand an event to the routing path. */
   async handleEvent(account: AgenticMailAccount, event: SSEEvent): Promise<void> {
     if (this.stopped) return;
+
+    // Bridge-mail branch — when the event is for our own bridge inbox
+    // (codex@localhost), route to handleBridgeMail (headless resume
+    // via @openai/codex-sdk) instead of spawnWorker. The bridge is the
+    // operator's session proxy, not an automated worker.
+    if (event.type === 'new' && typeof event.uid === 'number'
+        && account.name.toLowerCase() === this.cfg.bridgeAgentName.toLowerCase()) {
+      const ch = this.channels.get(account.id);
+      if (ch?.seenUids.has(event.uid)) return;
+      if (ch) rememberBounded(ch.seenUids, event.uid);
+      this.state.markSeen(account.id, event.uid);
+      void this.handleBridgeMail(account, event);
+      return;
+    }
+
     if (event.type === 'new' && typeof event.uid === 'number') {
       const ch = this.channels.get(account.id);
       if (ch?.seenUids.has(event.uid)) return;
@@ -1340,10 +1356,15 @@ export class Dispatcher {
     const bridgeName = this.cfg.bridgeAgentName.toLowerCase();
     const meta = account.metadata as { bridge?: unknown; host?: unknown } | undefined;
 
-    // (a) This host's own bridge — never watch it.
-    if (account.name.toLowerCase() === bridgeName) return false;
+    // (a) This host's OWN bridge — watch it. New since 0.10.0: when
+    //     a sub-agent mails the codex bridge with `wake: ["codex"]`
+    //     we attempt a headless resume of the operator's last thread
+    //     via @openai/codex-sdk's resumeThread(id). The routing branch
+    //     sits in handleEvent — events for our own bridge go to
+    //     handleBridgeMail instead of the normal spawnWorker path.
+    if (account.name.toLowerCase() === bridgeName) return true;
 
-    // (b) ANY bridge — including other hosts'.
+    // (b) OTHER hosts' bridges — never touch.
     if (account.role === 'bridge') return false;
     if (meta && meta.bridge === true) return false;
 
@@ -1899,6 +1920,77 @@ export class Dispatcher {
   }
 
   /** Acquire a concurrency slot, run a worker, release the slot. */
+  /**
+   * Handle mail that lands in the host's OWN bridge inbox.
+   * Resumes the operator's last Codex thread via @openai/codex-sdk's
+   * `resumeThread(id)` instead of spawning a fresh worker. See
+   * packages/codex/src/bridge-wake.ts for the SDK call, and the
+   * matching method in packages/claudecode/src/dispatcher.ts for
+   * the full rationale + short-circuit rules.
+   */
+  private inFlightBridgeWakes = new Set<number>();
+  private async handleBridgeMail(account: AgenticMailAccount, event: SSEEvent): Promise<void> {
+    if (typeof event.uid !== 'number') return;
+    if (this.inFlightBridgeWakes.has(event.uid)) return;
+    this.inFlightBridgeWakes.add(event.uid);
+    const startMs = Date.now();
+    const subject = extractSubject(event);
+    const from = extractFrom(event);
+    const preview = (event as { preview?: string }).preview
+      ?? (event.message as { preview?: string } | undefined)?.preview
+      ?? '';
+    try {
+      const saved = loadHostSession('codex');
+      if (saved && Date.now() - saved.lastSeenMs < 30_000) {
+        this.log('info', `[bridge-wake] skip — operator is live (lastSeen=${Date.now() - saved.lastSeenMs}ms ago); their hook will surface uid=${event.uid}`);
+        this.postActivity('/dispatcher/bridge-skipped', {
+          uid: event.uid, agentName: account.name, reason: 'operator-live',
+        });
+        return;
+      }
+      if (!saved) {
+        this.log('warn', `[bridge-wake] no fresh Codex thread recorded — bridge mail uid=${event.uid} cannot resume. Escalating via system-event.`);
+        this.postActivity('/dispatcher/bridge-escalation', {
+          uid: event.uid, agentName: account.name, subject, from, preview,
+          reason: 'no-fresh-session',
+        });
+        return;
+      }
+      const prompt = composeBridgeWakePrompt({
+        bridgeName: account.name, uid: event.uid, subject, from, preview,
+      });
+      const result = await resumeBridgeThread({
+        bridge: account,
+        sessionId: saved.sessionId,
+        cwd: saved.workspace,
+        prompt,
+        sandboxMode: 'workspace-write',
+        approvalPolicy: 'never',
+      }, this.log);
+      if (result.ok) {
+        this.postActivity('/dispatcher/bridge-resumed', {
+          uid: event.uid, agentName: account.name, subject, from,
+          durationMs: result.durationMs, resultPreview: result.text?.slice(0, 240),
+        });
+      } else {
+        if (result.error === 'session-expired') {
+          this.log('warn', `[bridge-wake] thread expired; forgetting and escalating uid=${event.uid}`);
+          forgetHostSession('codex');
+        }
+        this.postActivity('/dispatcher/bridge-escalation', {
+          uid: event.uid, agentName: account.name, subject, from, preview,
+          reason: result.error ?? 'resume-failed',
+          errorMessage: result.errorMessage,
+        });
+      }
+    } catch (err) {
+      this.log('error', `[bridge-wake] uid=${event.uid} threw: ${(err as Error).message}`);
+    } finally {
+      this.inFlightBridgeWakes.delete(event.uid);
+      this.log('info', `[bridge-wake] finished uid=${event.uid} in ${Date.now() - startMs}ms`);
+    }
+  }
+
   private async spawnWorker(account: AgenticMailAccount, prompt: string, ctx: { kind: string; uid?: number; taskId?: string; subject?: string; from?: string }): Promise<void> {
     // Per-agent serialization gate. If another worker is mid-flight
     // for the SAME agent, this await chains onto its tail and we

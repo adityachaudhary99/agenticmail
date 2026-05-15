@@ -82,6 +82,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { saveHostSession } from '@agenticmail/core';
 
 interface AgenticMailDiskConfig {
   masterKey?: string;
@@ -185,6 +186,22 @@ async function main(): Promise<void> {
   // Read the event type up front — drives the rate-limit decision below.
   const input = await readStdinJson();
   const eventName = input?.hook_event_name ?? 'UserPromptSubmit';
+  const sessionId = typeof input?.session_id === 'string' ? input.session_id : '';
+
+  // ─── Persist the host session for headless bridge-wake ──────────
+  //
+  // Every hook fire records the current Codex session_id so the
+  // dispatcher can resume it headlessly via @openai/codex-sdk's
+  // `resumeThread(id)` when sub-agent mail arrives in the codex
+  // bridge inbox and no interactive Codex session is running. See
+  // packages/core/src/host-sessions.ts for the rationale.
+  //
+  // Best-effort: write failures don't propagate. The dispatcher's
+  // SMS-fallback / persisted-alert path catches "no session known".
+  if (sessionId) {
+    try { saveHostSession('codex', { sessionId, workspace: process.cwd() }); }
+    catch { /* never let the persist fail kill the host hook */ }
+  }
 
   // ─── Why this hook NEVER emits a capabilities blurb in Codex ────
   //

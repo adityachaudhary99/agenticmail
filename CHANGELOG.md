@@ -5,6 +5,84 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.34] - 2026-05-15
+
+### Added — Headless bridge-wake: dispatcher resumes operator's host session when sub-agents mail the bridge
+
+Real production gap fixed: sub-agents handing off TO the bridge inbox (`wake: ["codex"]` / `wake: ["claudecode"]`) used to be a silent dead-end whenever the operator's host CLI wasn't running. The dispatcher's `shouldWatch` skipped bridges by design — there was no way to spawn a host turn without an interactive session. Threads flatlined for hours waiting for the operator to come back.
+
+Now the dispatcher can resume the operator's last session headlessly via the host SDK's resume API. New pieces:
+
+**1. Host session persistence — `@agenticmail/core/host-sessions`**
+
+`~/.agenticmail/host-sessions.json` records the operator's latest `session_id` per host. Updated on every mail-hook fire (`SessionStart` / `UserPromptSubmit` / `Stop`). Atomic write (tmp + rename), 24-hour freshness gate (matches both providers' resume-token TTLs), per-host isolation (claudecode vs codex).
+
+15 regression tests in `packages/core/src/__tests__/host-sessions.test.ts`.
+
+**2. Bridge-wake resolvers — `packages/{claudecode,codex}/src/bridge-wake.ts`**
+
+- `resumeBridgeSession(query, { sessionId, prompt, cwd, mcpEnv })` — Claude Code: passes `resume: sessionId` through the SDK so the underlying CLI runs as `claude --resume <sid> -p <prompt>`.
+- `resumeBridgeThread({ sessionId, prompt, cwd })` — Codex: `codex.resumeThread(id).runStreamed(prompt)`.
+- Both share a `composeBridgeWakePrompt(bridge, uid, subject, from, preview)` helper that gives the resumed session a structured brief: "here's the one piece of bridge mail you're being woken to handle, decide and exit short."
+
+**3. Dispatcher routing — `packages/{claudecode,codex}/src/dispatcher.ts`**
+
+`shouldWatch` no longer hard-skips the host's own bridge — it now watches it AND routes new-mail events to `handleBridgeMail` instead of the normal `spawnWorker` path. Three short-circuits:
+
+- If `lastSeenMs < 30s` → operator is at the keyboard, skip (their hook will surface).
+- If no fresh session record → emit `/dispatcher/bridge-escalation` system event (loud notification surface).
+- If resume fails with `session-expired` → forget the record + escalate.
+
+In-flight dedup via `inFlightBridgeWakes` Set so an IMAP IDLE replay can't double-fire on the same UID.
+
+**4. System-event surface — `packages/api/src/routes/dispatcher-activity.ts`**
+
+Three new dispatcher routes:
+
+- `POST /dispatcher/bridge-skipped` — operator was live, no action taken
+- `POST /dispatcher/bridge-resumed` — headless wake succeeded
+- `POST /dispatcher/bridge-escalation` — `urgent: true` system event for the web UI's notification badge
+
+The web UI sound + browser notification already listen to `/system/events`, so a bridge escalation rings the operator immediately when the UI is open.
+
+### Notes on SMS escalation (planned, not yet wired)
+
+The architecture for full SMS escalation is in place — `bridge-escalation` is the event hook a future provider listens to. The actual SMS provider integration is a deliberate hold:
+
+- The existing Google Voice flow requires browser automation to deliver, which a daemon can't do unattended.
+- A Twilio-based hook (or APNs / Telegram) needs an operator-supplied credential + setup CLI.
+
+That'll land in 0.10.x. For now the system event is the operator's notification channel, surfaced by the web UI.
+
+### Bookkeeping
+
+- `bridgeAgentName` now means "the bridge we DO watch headlessly" rather than "the bridge we skip" — comment headers updated to match.
+- `selectExposableAgents` still excludes bridges from subagent file generation (correct — the host doesn't call itself).
+- The "Handing off to the host bridge" persona section from 0.9.33 still applies; the rule "prefer routing to a teammate first" is good guidance even now that bridge handoffs work, because each headless turn still costs an API call.
+
+### Versions
+
+- `@agenticmail/core@0.9.6` — host-sessions module + 15 regression tests
+- `@agenticmail/api@0.9.25` — bridge-skipped / bridge-resumed / bridge-escalation routes
+- `@agenticmail/claudecode@0.2.20` — bridge-wake.ts + dispatcher integration
+- `@agenticmail/codex@0.1.15` — bridge-wake.ts + dispatcher integration
+- `@agenticmail/cli@0.9.34` — rolls dependencies forward
+
+756 tests pass (up from 741 — +15 host-sessions).
+
+### Upgrade
+
+```
+npm install -g @agenticmail/cli@latest
+pkill -f '@agenticmail/api/dist/index.js' && agenticmail start
+pm2 restart agenticmail-claudecode-dispatcher --update-env
+pm2 restart agenticmail-codex-dispatcher --update-env
+agenticmail-claudecode install
+agenticmail-codex install --workspace ~/Desktop/facebook-project
+```
+
+After the upgrade, the next time you run `claude` or `codex` the hook fires and records your session_id. From that point on, sub-agents that hand off to the bridge will trigger a headless resume against your last session within a minute.
+
 ## [0.9.33] - 2026-05-15
 
 ### Fixed — handoffs to the host bridge silently dropped the chain
