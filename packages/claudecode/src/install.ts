@@ -93,6 +93,9 @@ function buildMcpEntry(cfg: ClaudeCodeIntegrationConfig, bridgeKey: string, acco
 /**
  * Decide which AgenticMail agents to surface as Claude Code subagents.
  *
+ * Strict ownership: an account is exposed ONLY if `metadata.host` equals
+ * this host's bridge name. The host's roster is its own — never inherited.
+ *
  * Filters out:
  *   - the bridge agent itself (Claude Code's own identity — calling yourself
  *     is silly and would also create a duplicate-name collision in the
@@ -101,11 +104,12 @@ function buildMcpEntry(cfg: ClaudeCodeIntegrationConfig, bridgeKey: string, acco
  *   - any account flagged `metadata.bridge === true` (legacy marker from
  *     pre-0.9.3 installs where the 'bridge' role didn't exist yet)
  *   - any account owned by a DIFFERENT host (`metadata.host` set and not
- *     matching this host's bridge name) — prevents a Codex install from
- *     exposing Claude's bridge as a Claude Code subagent, and vice-versa
- *
- * Unclaimed accounts (no host stamp) stay visible to every host for
- * backwards compatibility with legacy installs.
+ *     matching this host's bridge name)
+ *   - any UNCLAIMED account (no `metadata.host` value at all). Pre-0.9.20
+ *     accounts that predate auto-tagging are unclaimed by default; the
+ *     user must run `agenticmail-<host> claim <name>` (or `claim --all`)
+ *     to transfer them. This keeps a fresh `agenticmail-codex install`
+ *     from inheriting an already-running Claude Code roster.
  */
 export function selectExposableAgents(
   accounts: AgenticMailAccount[],
@@ -117,9 +121,9 @@ export function selectExposableAgents(
     if (a.role === 'bridge') return false;
     const meta = a.metadata as { bridge?: unknown; host?: unknown } | undefined;
     if (meta && meta.bridge === true) return false;
-    if (meta && typeof meta.host === 'string' && meta.host.trim().length > 0) {
-      if (meta.host.toLowerCase() !== ownHost) return false;
-    }
+    const host = meta && typeof meta.host === 'string' ? meta.host.trim() : '';
+    if (!host) return false;                        // unclaimed → not mine
+    if (host.toLowerCase() !== ownHost) return false; // owned by another host
     return true;
   });
 }

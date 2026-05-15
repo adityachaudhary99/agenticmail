@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.23] - 2026-05-15
+
+### Changed — Strict host ownership for subagent rosters
+
+Previously a fresh `agenticmail-codex install` on a machine that already had Claude Code set up would write Codex subagent files for every existing teammate (`agenticmail-vesper.toml`, `agenticmail-orion.toml`, …). Codex inherited Claude's roster on first run, which is the opposite of what we want — each host should start with an empty teammate list and build its own.
+
+### New rule: `metadata.host === ownHost` or it's not exposed
+
+`selectExposableAgents` in both `@agenticmail/claudecode` and `@agenticmail/codex` now filters strictly: a teammate appears in the host's subagent roster ONLY if `metadata.host` equals this host's bridge name.
+
+The previous "unclaimed accounts visible to all hosts" back-compat rule is dropped. Pre-0.9.20 accounts that predate auto-tagging are unclaimed by default; the operator must run `agenticmail-<host> claim <name>` (or `claim --all`) to assign them. This is a one-time operation per legacy machine.
+
+The dispatcher's `shouldWatch` (runtime mail filter) is intentionally unchanged — it keeps the legacy "watch unclaimed accounts" rule for back-compat with single-host installs. Install-time and runtime are now decoupled.
+
+### Added — Per-host avatars in the web UI
+
+The bridge avatar previously hard-coded Claude's mark for every bridge in the inbox panel, so a co-installed Claude Code + Codex setup showed the same logo for both. Each host now gets its own branded avatar:
+
+- `claudecode` → official Claude color mark (`/branding/claude-color.svg`)
+- `codex` → OpenAI mark (`/branding/openai-mark.svg`)
+- unknown host → generic AgenticMail logo + verified tick
+
+The host registry in `packages/api/public/js/avatar.js` is the single extension point — adding a new host integration = one row + drop the SVG into `/branding/`.
+
+### Versions
+
+- `@agenticmail/api@0.9.16` (new branding assets, avatar.js host registry)
+- `@agenticmail/claudecode@0.2.13` (strict ownership filter, bridge host stamp)
+- `@agenticmail/codex@0.1.5` (strict ownership filter, bridge host stamp)
+- `@agenticmail/cli@0.9.23` (rolls dependencies forward)
+
 ## [0.9.22] - 2026-05-15
 
 ### Fixed — Cross-host bridges leaking into the wrong host's subagent list

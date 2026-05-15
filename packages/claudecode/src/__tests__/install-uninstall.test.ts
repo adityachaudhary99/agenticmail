@@ -30,6 +30,8 @@ const apiMocks = vi.hoisted(() => ({
   getAccountByName: vi.fn(),
   ensureAccount: vi.fn(),
   deleteAccount: vi.fn(),
+  setAccountRole: vi.fn(),
+  setAccountHost: vi.fn(),
 }));
 vi.mock('../api.js', () => apiMocks);
 
@@ -56,9 +58,13 @@ let amCfgPath: string;
 let claudeCfgPath: string;
 let agentsDir: string;
 
-const BRIDGE = { id: 'bridge-id', name: 'claudecode', email: 'claudecode@localhost', apiKey: 'ak_bridge' };
-const FOLA = { id: 'fola-id', name: 'Fola', email: 'fola@localhost', apiKey: 'ak_fola', role: 'secretary', metadata: { ownerName: 'Ope' } };
-const WRITER = { id: 'writer-id', name: 'writer', email: 'writer@localhost', apiKey: 'ak_writer', role: 'writer' };
+const BRIDGE = { id: 'bridge-id', name: 'claudecode', email: 'claudecode@localhost', apiKey: 'ak_bridge', role: 'bridge', metadata: { host: 'claudecode' } };
+// Teammate accounts are claimed by claudecode (metadata.host === 'claudecode')
+// so the strict-ownership install filter exposes them. The install and the
+// dispatcher share the same "only mine" rule — see selectExposableAgents in
+// install.ts.
+const FOLA = { id: 'fola-id', name: 'Fola', email: 'fola@localhost', apiKey: 'ak_fola', role: 'secretary', metadata: { ownerName: 'Ope', host: 'claudecode' } };
+const WRITER = { id: 'writer-id', name: 'writer', email: 'writer@localhost', apiKey: 'ak_writer', role: 'writer', metadata: { host: 'claudecode' } };
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'amcc-iu-'));

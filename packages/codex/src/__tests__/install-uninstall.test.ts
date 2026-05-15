@@ -27,6 +27,8 @@ const apiMocks = vi.hoisted(() => ({
   getAccountByName: vi.fn(),
   ensureAccount: vi.fn(),
   deleteAccount: vi.fn(),
+  setAccountRole: vi.fn(),
+  setAccountHost: vi.fn(),
 }));
 vi.mock('../api.js', () => apiMocks);
 
@@ -53,9 +55,12 @@ let codexCfgPath: string;
 let codexHooksPath: string;
 let agentsDir: string;
 
-const BRIDGE = { id: 'bridge-id', name: 'codex', email: 'codex@localhost', apiKey: 'ak_bridge' };
-const VESPER = { id: 'vesper-id', name: 'Vesper', email: 'vesper@localhost', apiKey: 'ak_vesper', role: 'researcher', metadata: { ownerName: 'Ope' } };
-const ORION = { id: 'orion-id', name: 'orion', email: 'orion@localhost', apiKey: 'ak_orion', role: 'developer' };
+const BRIDGE = { id: 'bridge-id', name: 'codex', email: 'codex@localhost', apiKey: 'ak_bridge', role: 'bridge', metadata: { host: 'codex' } };
+// Teammate accounts are claimed by codex (metadata.host === 'codex') so the
+// strict-ownership install filter exposes them. The dispatcher and install
+// share the same "only mine" rule — see selectExposableAgents in install.ts.
+const VESPER = { id: 'vesper-id', name: 'Vesper', email: 'vesper@localhost', apiKey: 'ak_vesper', role: 'researcher', metadata: { ownerName: 'Ope', host: 'codex' } };
+const ORION = { id: 'orion-id', name: 'orion', email: 'orion@localhost', apiKey: 'ak_orion', role: 'developer', metadata: { host: 'codex' } };
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'amcx-iu-'));
