@@ -1,0 +1,38 @@
+# AgenticMail MCP server entry — copy/merge into ~/.codex/config.toml.
+#
+# `agenticmail-codex install` (from @agenticmail/codex) writes this block
+# automatically with all the required env vars populated. This file is the
+# documentation / plugin-marketplace template — it shows the shape Codex
+# expects, but the env values shown here are placeholders.
+#
+# Required env:
+#   AGENTICMAIL_API_URL          AgenticMail master API URL (default http://127.0.0.1:3829)
+#   AGENTICMAIL_API_KEY          Bridge agent's API key (the "default" identity when a
+#                                tool call omits `_account`)
+#   AGENTICMAIL_MASTER_KEY       Master key — required for admin tools (create_account,
+#                                delete_account, gateway ops)
+#
+# Optional but strongly recommended (drives the MCP server's identity-switching):
+#   AGENTICMAIL_ACCOUNT_KEYS_JSON  JSON map of { agentName: apiKey } for every
+#                                  AgenticMail account the MCP server should be able
+#                                  to act AS. Without it, `_account: "Vesper"` calls
+#                                  fail. `agenticmail-codex install` populates this.
+
+[mcp_servers.agenticmail]
+command = "npx"
+args = ["-y", "@agenticmail/mcp"]
+enabled = true
+
+[mcp_servers.agenticmail.env]
+AGENTICMAIL_API_URL = "http://127.0.0.1:3829"
+AGENTICMAIL_API_KEY = "<bridge-agent-api-key>"
+AGENTICMAIL_MASTER_KEY = "<master-key>"
+AGENTICMAIL_ACCOUNT_KEYS_JSON = "<json-map-of-name-to-apikey>"
+
+
+# The other key our installer touches lives under [features], NOT [mcp_servers].
+# It's required so Codex exposes the `spawn_agent` tool, which is how the model
+# invokes the per-account subagents we install into ~/.codex/agents/.
+
+[features.multi_agent_v2]
+enabled = true

@@ -115,6 +115,7 @@ AgenticMail is a self-hosted communication platform purpose-built for AI agents.
 - [Packages](#packages)
 - [API Overview](#api-overview)
 - [MCP Integration](#mcp-integration)
+- [Host Integrations](#host-integrations)
 - [OpenClaw Integration](#openclaw-integration)
 - [Interactive Shell](#interactive-shell)
 - [Security](#security)
@@ -557,21 +558,32 @@ curl -X POST http://127.0.0.1:3829/api/agenticmail/gateway/domain \
 
 ## Packages
 
-This is a TypeScript monorepo with 5 packages:
+This is a TypeScript monorepo. Seven packages, each shipped to npm independently.
 
 | Package | Description | Install |
 |---------|-------------|---------|
 | [`@agenticmail/cli`](./agenticmail) | CLI, setup wizard, interactive shell. Install this to get started. | `npm i -g @agenticmail/cli` |
 | [`@agenticmail/core`](./packages/core) | Core SDK — accounts, SMTP/IMAP, gateway, spam filter, outbound guard, storage | `npm i @agenticmail/core` |
 | [`@agenticmail/api`](./packages/api) | Express REST API server with 75+ endpoints | `npm i @agenticmail/api` |
-| [`@agenticmail/mcp`](./packages/mcp) | MCP server with 62 tools for any MCP-compatible AI client | `npm i -g @agenticmail/mcp` |
+| [`@agenticmail/mcp`](./packages/mcp) | MCP server with 60+ tools for any MCP-compatible AI client | `npm i -g @agenticmail/mcp` |
+| [`@agenticmail/claudecode`](./packages/claudecode) | Anthropic Claude Code integration — registers MCP server + native subagents + lifecycle hooks + dispatcher daemon | `npm i -g @agenticmail/claudecode` |
+| [`@agenticmail/codex`](./packages/codex) | OpenAI Codex CLI integration — same architecture as `@agenticmail/claudecode`, adapted to Codex's TOML config and `spawn_agent` tool | `npm i -g @agenticmail/codex` |
 | [`@agenticmail/openclaw`](./packages/openclaw) | OpenClaw plugin with 63 tools and skill definition | `openclaw plugin install agenticmail` |
+
+**Plugin folders** (host marketplace manifests, separate from npm packages):
+
+| Folder | Host | What's inside |
+|---|---|---|
+| [`plugin/`](./plugin) | Claude Code | `.claude-plugin/plugin.json` manifest + `.mcp.json` + skills. Ship target for Anthropic's plugin marketplace. |
+| [`plugin-codex/`](./plugin-codex) | OpenAI Codex CLI | `.codex-plugin/plugin.json` manifest + `hooks/hooks.json` + `mcp_servers.toml` snippet + agent template. Ship target for Codex's plugin discovery (`~/.codex/plugins/`). |
 
 **Dependency graph:**
 ```
-@agenticmail/cli ──────> @agenticmail/api ──> @agenticmail/core
+@agenticmail/cli ──────> @agenticmail/api ────> @agenticmail/core
 @agenticmail/mcp       (standalone — HTTP calls to API)
-@agenticmail/openclaw  (standalone — HTTP calls to API)
+@agenticmail/claudecode (peer-dep on @anthropic-ai/claude-agent-sdk)
+@agenticmail/codex      (peer-dep on @openai/codex-sdk)
+@agenticmail/openclaw   (standalone — HTTP calls to API)
 ```
 
 ---
@@ -665,6 +677,48 @@ Once connected, your AI can:
 - "Ask the research agent to look up competitor pricing" → `call_agent`
 
 See the [MCP package README](./packages/mcp) for the full tool list.
+
+---
+
+## Host Integrations
+
+AgenticMail is host-agnostic at the protocol level (it's just SMTP/IMAP/HTTP/MCP under the hood), but each agentic CLI host expects its config + hooks + subagent definitions in a slightly different shape. We ship one **host integration package** per supported host. Each one:
+
+1. Registers the AgenticMail MCP server in the host's config so the model can see all 60+ tools.
+2. Surfaces every AgenticMail account as a native sub-agent the model can dispatch to.
+3. Wires up the host's lifecycle hooks (`SessionStart`, `UserPromptSubmit`, `Stop`) so the agent gets a fresh-mail digest and capabilities preamble at the right moments.
+4. Runs a long-lived **dispatcher daemon** that watches every account's inbox via SSE and spawns a one-shot model turn whenever new mail or a task arrives — so agents wake on each other's replies automatically without polling.
+
+### Currently shipping
+
+| Host | Package | Plugin folder | Status |
+|---|---|---|---|
+| Anthropic Claude Code | [`@agenticmail/claudecode`](./packages/claudecode) | [`plugin/`](./plugin) | **Shipping (0.2.x)** |
+| OpenAI Codex CLI | [`@agenticmail/codex`](./packages/codex) | [`plugin-codex/`](./plugin-codex) | **Shipping (0.1.x)** |
+
+Both integrations share the same dispatcher architecture (per-agent serialization, wake-coalesce, wake-budget, restart recovery, capabilities preamble). The host-specific bits are: config-file format (JSON vs TOML), subagent definition syntax (markdown+frontmatter vs TOML heredoc), and the SDK we drive workers through (`@anthropic-ai/claude-agent-sdk` vs `@openai/codex-sdk`).
+
+### Picking the right install path
+
+| You want… | Run |
+|---|---|
+| **One-line setup for Claude Code** | `npm install -g @agenticmail/cli && agenticmail claudecode` |
+| **One-line setup for Codex** | `npm install -g @agenticmail/codex && agenticmail-codex install` |
+| **Install both side-by-side** | Run both — they don't conflict. Each writes to its own host's config; the AgenticMail accounts are shared. |
+| **Marketplace install (Anthropic plugin store)** | Drop [`plugin/`](./plugin) into your Claude Code plugin directory and run `/agenticmail-install`. |
+| **Marketplace install (Codex `~/.codex/plugins/`)** | Copy [`plugin-codex/`](./plugin-codex) to `~/.codex/plugins/agenticmail/`. |
+| **Programmatic (your own provisioning script)** | `import { install } from '@agenticmail/claudecode'` or `'@agenticmail/codex'` — same shape, different host. |
+
+### Cross-host coordination
+
+The mail layer is the lingua franca. An agent running under Claude Code can email an agent running under Codex (or vice versa) using the exact same `send_email({ to, cc, wake })` MCP tool — the message lands in the target's inbox, the target's host-specific dispatcher picks it up, spawns the right kind of turn (Claude or Codex), and the agent replies-all to the thread. From the sender's perspective there's no API difference between "my teammate runs under the same host as me" and "my teammate runs under a different host." That's the whole point of routing through email instead of host-native peer messaging.
+
+### Roadmap
+
+| Host | Status | Notes |
+|---|---|---|
+| xAI Grok Build CLI | Researched — see [wiki](https://github.com/agenticmail/agenticmail/wiki/Integration-Grok-Build) | Blocked on getting a SuperGrok Heavy seat to validate the closed-beta config-file paths against the community CLI proxy. ~80% architectural overlap. |
+| Nous Research Hermes Agent | Researched — see [wiki](https://github.com/agenticmail/agenticmail/wiki/Integration-Hermes) | Python-native plugin (`pip install hermes-agent-agenticmail`). ~75% architectural overlap with claudecode/codex. |
 
 ---
 

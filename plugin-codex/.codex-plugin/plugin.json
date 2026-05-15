@@ -1,0 +1,50 @@
+{
+  "name": "agenticmail",
+  "displayName": "🎀 AgenticMail for Codex",
+  "description": "Give every Codex agent its own real email address and phone number. Self-hosted, runs entirely on the user's machine. Coordinate work across multiple agents — and across hosts (Claude Code, Codex, Hermes) — using ordinary email threads. Surfaces every AgenticMail account as a Codex subagent callable via spawn_agent.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Ope Olatunji",
+    "url": "https://github.com/agenticmail/agenticmail"
+  },
+  "homepage": "https://github.com/agenticmail/agenticmail",
+  "repository": "https://github.com/agenticmail/agenticmail",
+  "license": "MIT",
+  "host": {
+    "name": "codex",
+    "displayName": "OpenAI Codex CLI",
+    "homepage": "https://github.com/openai/codex"
+  },
+  "requires": {
+    "services": [
+      "AgenticMail master API (default http://127.0.0.1:3829)"
+    ],
+    "features": {
+      "multi_agent_v2": true
+    },
+    "bins": [
+      "agenticmail-mcp (from @agenticmail/mcp; auto-installed as a dependency)"
+    ]
+  },
+  "writes": [
+    "~/.codex/config.toml ([mcp_servers.<mcpServerName>] block only)",
+    "~/.codex/config.toml (features.multi_agent_v2.enabled = true)",
+    "~/.codex/hooks.json (SessionStart / UserPromptSubmit / Stop)",
+    "~/.codex/agents/<subagentPrefix><agent>.toml (one per AgenticMail account)"
+  ],
+  "tools": [
+    "Surfaces all 60+ @agenticmail/mcp tools (mcp__agenticmail__*) to Codex",
+    "Plus one Codex subagent per AgenticMail account, spawnable via spawn_agent({ agent_type: 'agenticmail-<name>' })"
+  ],
+  "keywords": [
+    "codex",
+    "openai",
+    "mcp",
+    "model-context-protocol",
+    "multi-agent",
+    "email",
+    "sms",
+    "agenticmail",
+    "coordination"
+  ]
+}

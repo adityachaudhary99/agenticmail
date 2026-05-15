@@ -1,0 +1,40 @@
+{
+  "_comment": "Codex CLI lifecycle hooks for AgenticMail. Codex discovers plugin-shipped hook files at <plugin>/hooks/hooks.json (see codex-rs/hooks/src/engine/discovery.rs).",
+  "_managedBy": "@agenticmail/codex",
+  "_warning": "On install, agenticmail-codex rewrites the `command` paths below to absolute filesystem paths resolved from the installed @agenticmail/codex package. The bare `agenticmail-codex-mail-hook` shipped here works only when the npm-global bin dir is on $PATH; the install step replaces it with `node \"<abs-path>/mail-hook.js\"` which is resilient to PATH config.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agenticmail-codex-mail-hook"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agenticmail-codex-mail-hook"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agenticmail-codex-mail-hook"
+          }
+        ]
+      }
+    ]
+  }
+}
