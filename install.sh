@@ -179,6 +179,50 @@ echo
 printf "  ${C_BOLD}Next:${C_RESET} restart your Claude Code session and try:\n\n"
 printf "    ${C_DIM}Agent { subagent_type: \"agenticmail-secretary\", prompt: \"hi\" }${C_RESET}\n"
 echo
+
+# ─── 3. Dispatcher tuning prompt (interactive, optional) ─────────────
+# The dispatcher ships with conservative defaults (10 wakes per (agent,
+# thread) per 24h, 50 concurrent workers). Power users coordinating
+# active multi-agent threads hit those limits quickly and see
+# `wake-budget exhausted` warnings without knowing where the lever is.
+# Ask once, post-install; press enter to keep defaults.
+#
+# Skipped when stdin/stdout aren't a terminal (CI runs, --no-bootstrap).
+if [ "$DO_BOOTSTRAP" = "1" ] && [ -t 0 ] && [ -t 1 ]; then
+  printf "  ${C_BOLD}Dispatcher tuning${C_RESET} ${C_DIM}(optional — press Enter to keep defaults)${C_RESET}\n"
+  printf "  ${C_DIM}The defaults are conservative. Active multi-agent threads can hit them.${C_RESET}\n"
+  echo
+
+  printf "  How many times should each agent wake on the same email thread per 24h?\n"
+  printf "    ${C_DIM}10 (default) · 50 (active coordination) · 100+ (power user)${C_RESET}\n"
+  printf "  ${C_BOLD}Wakes per thread${C_RESET} [10]: "
+  read -r WAKES_PER_THREAD || WAKES_PER_THREAD=""
+
+  printf "  ${C_BOLD}Max simultaneous workers across all agents${C_RESET} [50]: "
+  read -r MAX_CONCURRENT || MAX_CONCURRENT=""
+
+  TUNE_FLAGS=""
+  if [ -n "$WAKES_PER_THREAD" ] && [ "$WAKES_PER_THREAD" != "10" ]; then
+    TUNE_FLAGS="$TUNE_FLAGS --max-wakes-per-thread $WAKES_PER_THREAD"
+  fi
+  if [ -n "$MAX_CONCURRENT" ] && [ "$MAX_CONCURRENT" != "50" ]; then
+    TUNE_FLAGS="$TUNE_FLAGS --max-concurrent $MAX_CONCURRENT"
+  fi
+
+  if [ -n "$TUNE_FLAGS" ]; then
+    echo
+    # shellcheck disable=SC2086
+    run agenticmail-claudecode tune $TUNE_FLAGS
+    if command -v pm2 >/dev/null 2>&1; then
+      run pm2 restart agenticmail-claudecode-dispatcher >/dev/null 2>&1 || true
+    fi
+  else
+    ok "Keeping default dispatcher settings"
+  fi
+  echo
+fi
+
 printf "  ${C_DIM}For external Gmail relay or a custom domain, run:${C_RESET} ${C_GREEN}agenticmail setup${C_RESET}\n"
+printf "  ${C_DIM}To adjust rate limits later, run:${C_RESET} ${C_GREEN}agenticmail-claudecode tune${C_RESET} ${C_DIM}(--help for flags)${C_RESET}\n"
 printf "  ${C_DIM}For docs:${C_RESET} ${C_CYAN}https://github.com/agenticmail/agenticmail${C_RESET}\n"
 echo

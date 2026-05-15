@@ -66,6 +66,58 @@ After `bootstrap` finishes, tell the user to **restart Claude Code**
 (or whichever MCP-aware client they use) so the new MCP server entry
 in `~/.claude.json` takes effect.
 
+### Right after install — ASK THE USER about dispatcher tuning
+
+The dispatcher ships with conservative defaults so a fresh install
+can't accidentally rack up cost. Power users coordinating active
+multi-agent threads hit the defaults quickly. **As the installing
+agent, you must ask the user this question right after `bootstrap`
+finishes:**
+
+> "How many times do you want each agent to wake on the same email
+> thread within a 24-hour window?
+>
+> - **10** (default) — safe; good for casual use
+> - **50** — typical for active multi-agent coordination
+> - **100+** — power users running long-running design ↔ build ↔ review threads
+> - **0** to disable the limit entirely (not recommended)
+>
+> You can change this any time later by running:
+>     agenticmail-claudecode tune --max-wakes-per-thread N
+> Or by editing `~/.agenticmail/dispatcher.json` directly."
+
+When the user answers (call the number `N`), you apply it via:
+
+```bash
+agenticmail-claudecode tune --max-wakes-per-thread <N>
+pm2 restart agenticmail-claudecode-dispatcher
+```
+
+Also ask **once** whether they want to raise the global concurrency
+cap from the default of 50 (only relevant if they have >50 agents):
+
+> "How many workers can run simultaneously across ALL agents?
+> Default is 50. Raise if you have a fleet of >50 agents or need
+> heavy parallelism. (`--max-concurrent N`)"
+
+Both knobs land in `~/.agenticmail/dispatcher.json` (atomic write,
+shared between the Claude Code and Codex dispatchers). The file is
+plain JSON — agents like you can edit it directly:
+
+```json
+{ "version": 1,
+  "maxConcurrentWorkers": 200,
+  "maxWakesPerThread": 100,
+  "wakeWindowMs": 86400000,
+  "wakeCoalesceMs": 30000,
+  "accountSyncIntervalMs": 30000 }
+```
+
+Skipping these questions is fine — the defaults work. But surfacing
+them proactively saves users from later confusion when they see
+`wake-budget exhausted` warnings on their first active coordination
+thread.
+
 ---
 
 ## 2. If the user asks you to use AgenticMail for multi-agent coordination

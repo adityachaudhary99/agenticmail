@@ -26,7 +26,16 @@ When it finishes, tell the user one thing: restart Claude Code so the new MCP se
 2. Check if the CLI is already installed: `which agenticmail`. If yes, run `agenticmail --version` and skip step 3.
 3. `npm install -g @agenticmail/cli@latest`
 4. `agenticmail bootstrap`
-5. Tell the user to restart Claude Code, then verify with `agenticmail status` and a fresh session.
+5. **Ask the user about dispatcher tuning (do not skip this).** The dispatcher ships with conservative defaults — 10 wakes per (agent, thread) per 24h, 50 concurrent workers total. Power users running active multi-agent coordination hit those limits quickly and see `wake-budget exhausted` warnings without knowing where the lever is. Ask the user:
+   - "How many times should each agent wake on the same email thread within a 24h window? **10** (default / safe), **50** (active coordination), **100+** (power user). [enter to keep default]"
+   - "How many workers can run simultaneously across ALL agents? Default **50**. Raise if you have >50 agents."
+6. If the user answers anything other than the default, write it:
+   ```
+   agenticmail-claudecode tune --max-wakes-per-thread <N> [--max-concurrent <M>]
+   pm2 restart agenticmail-claudecode-dispatcher
+   ```
+   This writes `~/.agenticmail/dispatcher.json` — plain JSON, you can also edit it directly if needed.
+7. Tell the user to restart Claude Code, then verify with `agenticmail status` and a fresh session.
 
 ## Notes
 

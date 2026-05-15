@@ -41,4 +41,46 @@ EOF
   exit 69
 fi
 
-exec npx -y @agenticmail/codex install "$@"
+# Run the package installer.
+npx -y @agenticmail/codex install "$@"
+
+# ─── Dispatcher tuning prompt (interactive, optional) ───────────────
+# Same UX as the main install.sh — surface the wake-budget question
+# right after install so users don't discover the cap by hitting it.
+# Skip when stdin/stdout aren't a terminal (CI runs).
+if [ -t 0 ] && [ -t 1 ]; then
+  echo
+  echo "  Dispatcher tuning (optional — press Enter to keep defaults)"
+  echo "  The defaults are conservative. Active multi-agent threads can hit them."
+  echo
+  echo "  How many times should each agent wake on the same email thread per 24h?"
+  echo "    10 (default) · 50 (active coordination) · 100+ (power user)"
+  printf "  Wakes per thread [10]: "
+  read -r WAKES_PER_THREAD || WAKES_PER_THREAD=""
+
+  printf "  Max simultaneous workers across all agents [50]: "
+  read -r MAX_CONCURRENT || MAX_CONCURRENT=""
+
+  TUNE_FLAGS=""
+  if [ -n "$WAKES_PER_THREAD" ] && [ "$WAKES_PER_THREAD" != "10" ]; then
+    TUNE_FLAGS="$TUNE_FLAGS --max-wakes-per-thread $WAKES_PER_THREAD"
+  fi
+  if [ -n "$MAX_CONCURRENT" ] && [ "$MAX_CONCURRENT" != "50" ]; then
+    TUNE_FLAGS="$TUNE_FLAGS --max-concurrent $MAX_CONCURRENT"
+  fi
+
+  if [ -n "$TUNE_FLAGS" ]; then
+    echo
+    # shellcheck disable=SC2086
+    npx -y @agenticmail/codex tune $TUNE_FLAGS
+    if command -v pm2 >/dev/null 2>&1; then
+      pm2 restart agenticmail-codex-dispatcher >/dev/null 2>&1 || true
+    fi
+  else
+    echo "  ✓ Keeping default dispatcher settings"
+  fi
+  echo
+fi
+
+echo "  Tip: run 'agenticmail-codex tune' any time to view or change rate limits."
+echo "  ~/.agenticmail/dispatcher.json is plain JSON — agents can edit it directly."
