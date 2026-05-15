@@ -1250,28 +1250,43 @@ export class Dispatcher {
    */
   private shouldWatch(account: AgenticMailAccount): boolean {
     const bridgeName = this.cfg.bridgeAgentName.toLowerCase();
+    const meta = account.metadata as { bridge?: unknown; host?: unknown } | undefined;
+
     // (a) This host's own bridge — never watch it; the host's
     //     interactive REPL drives that inbox via UserPromptSubmit /
     //     SessionStart hooks. The dispatcher waking on bridge mail
     //     would compete with the host and burn tokens.
     if (account.name.toLowerCase() === bridgeName) return false;
+
     // (b) ANY account explicitly tagged as a bridge — including OTHER
     //     hosts' bridges. With multiple host integrations co-installed
     //     (e.g. claudecode + codex on the same machine), each host
-    //     creates its own bridge. The claudecode dispatcher should NOT
-    //     wake on mail to the codex bridge inbox (and vice versa) —
-    //     that inbox is owned by Codex's interactive REPL.
+    //     creates its own bridge. The claudecode dispatcher must NOT
+    //     wake on mail to the codex bridge inbox (and vice versa).
     if (account.role === 'bridge') return false;
-    // (c) Defensive: catch bridges that haven't been migrated to the
-    //     role yet. Accounts provisioned by host-integration installs
-    //     before role='bridge' shipped (0.1.0 / 0.1.1 codex; pre-0.2.10
-    //     claudecode) carry the role='assistant' workaround but ALWAYS
-    //     have metadata.bridge=true and/or metadata.host=<hostname>.
-    //     Both markers are stable across install versions, so we treat
-    //     either as authoritative.
-    const meta = account.metadata as { bridge?: unknown; host?: unknown } | undefined;
     if (meta && meta.bridge === true) return false;
-    if (meta && typeof meta.host === 'string' && meta.host.length > 0) return false;
+
+    // (c) Host ownership. metadata.host is stamped by the MCP server's
+    //     create_account tool (reading AGENTICMAIL_MCP_HOST env var,
+    //     which each host integration's install writes into the MCP
+    //     server's env block). Three cases:
+    //
+    //     - host === my bridge name → this is MY agent, watch ✓
+    //     - host === someone else's → THEIR agent, skip ✗
+    //     - host is unset → legacy / direct-API account, watch ✓
+    //       (backwards-compat; user can claim it via
+    //       `agenticmail-<host> claim <name>` to settle ownership)
+    //
+    //     The legacy fall-through means two dispatchers will still
+    //     wake on unclaimed accounts. Operator workaround: claim
+    //     them. Long-term fix: have create_account refuse to omit
+    //     metadata.host once every host integration writes the env
+    //     var (planned for 0.10 after telemetry shows the env var
+    //     is universally present).
+    if (meta && typeof meta.host === 'string' && meta.host.length > 0) {
+      return meta.host.toLowerCase() === bridgeName;
+    }
+
     return true;
   }
 

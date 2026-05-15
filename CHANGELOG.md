@@ -5,6 +5,91 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.20] - 2026-05-15
+
+### Added — Per-account host ownership: `metadata.host`
+
+User report: *"codex sub-agents should ride on codex sdk to openai while claudecode sub-agents do the same, maybe add distinct name tag to each agents to properly design this? we will need to add the tags to the web UI view as well."*
+
+Plus the dual-wake race from 0.9.19's acknowledged limitation: with both Claude Code and Codex dispatchers running on the same machine, both watched every teammate (vesper/orion/atlas/lyra) and both fired workers on every reply. Duplicate replies, duplicate token spend.
+
+### How ownership works
+
+Every account now carries an optional `metadata.host` field that names the host integration that owns it (`claudecode`, `codex`, future: `grok-build`, `hermes`). The dispatcher uses it to filter:
+
+| `metadata.host` | claudecode dispatcher | codex dispatcher |
+|---|---|---|
+| `'claudecode'` | watches | skips |
+| `'codex'` | skips | watches |
+| anything else set | skips | skips |
+| unset (legacy) | watches | watches (back-compat) |
+
+Sub-agents owned by Claude Code wake via `@anthropic-ai/claude-agent-sdk`; ones owned by Codex wake via `@openai/codex-sdk`. The SDK split is implicit — each dispatcher uses its own.
+
+### Where the `host` value comes from
+
+1. **MCP `create_account` auto-stamps it.** The MCP server reads `AGENTICMAIL_MCP_HOST` from its env block and sets `metadata.host = <value>` on every new account. Both host installers (claudecode + codex) now write this env var into their MCP server registration.
+
+2. **`PATCH /accounts/:id/host`** — new master-key-scoped endpoint for retro-tagging legacy accounts.
+
+3. **New `claim` CLI subcommand** on both host integrations:
+
+   ```
+   agenticmail-claudecode claim vesper orion atlas lyra
+   agenticmail-claudecode claim --all              # every unowned account
+   agenticmail-claudecode claim vesper --unclaim   # release ownership
+   agenticmail-claudecode claim vesper --json
+   ```
+
+   Same flags work on `agenticmail-codex claim`. Operator workflow when both dispatchers are running: claim each agent to one host so only that dispatcher wakes it. `--all` is the bulk-fix for fresh upgrades.
+
+### Web UI host badges
+
+The profile menu now shows a color-coded host badge next to each agent's name:
+
+- **Claude** (purple) — owned by the Claude Code dispatcher
+- **Codex** (green) — owned by the OpenAI Codex dispatcher
+- *(future hosts get their own colors as they ship)*
+- **Unclaimed** (gray) — no `metadata.host`. Hover shows a hint to run `agenticmail-<host> claim`. Both dispatchers will wake on this account if both are running.
+
+Each badge has a `title` tooltip explaining which SDK the agent rides on so the connection between badge color and runtime is explicit, not just decorative.
+
+### Backwards compatibility
+
+- Existing accounts without `metadata.host` keep working — both dispatchers still watch them (legacy behavior preserved). UI shows them as "Unclaimed".
+- After 0.9.20, every NEW account auto-tags itself on creation via the MCP env var. Once every host installer writes that var (already in this release), legacy accounts are the only unclaimed ones.
+
+### Published
+
+| Package | Old | New |
+|---|---|---|
+| `@agenticmail/mcp` | 0.9.2 | 0.9.4 |
+| `@agenticmail/api` | 0.9.14 | 0.9.15 |
+| `@agenticmail/claudecode` | 0.2.10 | 0.2.11 |
+| `@agenticmail/codex` | 0.1.2 | 0.1.3 |
+| `@agenticmail/cli` | 0.9.19 | 0.9.20 |
+
+core is unchanged this release (0.9.3 still current).
+
+### Operator upgrade
+
+```
+npm install -g @agenticmail/cli@latest
+agenticmail-claudecode install            # re-runs to write AGENTICMAIL_MCP_HOST into MCP env
+pm2 restart agenticmail-claudecode-dispatcher
+```
+
+For existing teammate accounts, claim them to one host so only that dispatcher wakes them:
+
+```
+# Pick one (whichever host you want to drive the agents going forward):
+agenticmail-claudecode claim --all
+# OR
+agenticmail-codex claim --all
+```
+
+After claim, restart the dispatcher. The web UI Profile menu shows the new badges.
+
 ## [0.9.19] - 2026-05-15
 
 ### Added — `role: 'bridge'` is now a first-class AgentRole

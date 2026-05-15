@@ -25,6 +25,8 @@ import { uninstall } from './uninstall.js';
 import { status } from './status.js';
 import { AgenticMailApiError } from './api.js';
 import { writeDispatcherTuning, resolveDispatcherTuning, defaultDispatcherConfigPath } from './dispatcher-tuning.js';
+import { listAccounts, setAccountHost } from './api.js';
+import { resolveConfig } from './config.js';
 
 const GREEN = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const RED   = (s: string) => `\x1b[31m${s}\x1b[0m`;
@@ -48,6 +50,7 @@ function usage(): void {
   print(`    uninstall          Remove the registration`);
   print(`    status             Show what's currently installed`);
   print(`    tune               View / change dispatcher tuning knobs (rate limits, concurrency)`);
+  print(`    claim <name>...    Claim agent(s) for the codex dispatcher (sets metadata.host)`);
   print('');
   print(`  ${BOLD('Flags:')}`);
   print(`    --json             (status / tune) Emit machine-readable JSON instead of prose`);
@@ -283,6 +286,104 @@ async function runTune(args: string[]): Promise<number> {
   return 0;
 }
 
+/**
+ * `claim <name> [<name> ...]` — set `metadata.host = 'codex'` on the
+ * named accounts so ONLY the codex dispatcher watches them. Use
+ * `--unclaim` to clear the tag. Use `--all` (no names) to claim
+ * every unowned, non-bridge account.
+ */
+async function runClaim(args: string[]): Promise<number> {
+  const cfg = resolveConfig({
+    apiUrl: process.env.AGENTICMAIL_API_URL,
+    masterKey: process.env.AGENTICMAIL_MASTER_KEY,
+  });
+  if (!cfg.masterKey) {
+    fail('AgenticMail master key not found. Run `agenticmail setup` first.');
+    return 1;
+  }
+  const positional = args.filter(a => !a.startsWith('-') && a !== 'claim');
+  const asJson = args.includes('--json');
+  const unclaim = args.includes('--unclaim');
+  const claimAll = args.includes('--all');
+
+  let targets: string[];
+  if (claimAll && positional.length === 0) {
+    try {
+      const all = await listAccounts(cfg.apiUrl, cfg.masterKey);
+      targets = all
+        .filter(a => a.role !== 'bridge')
+        .filter(a => {
+          const m = a.metadata as { bridge?: unknown; host?: unknown } | undefined;
+          if (m && m.bridge === true) return false;
+          if (m && typeof m.host === 'string' && m.host.length > 0 && m.host.toLowerCase() !== cfg.bridgeAgentName.toLowerCase()) {
+            return false;
+          }
+          return true;
+        })
+        .map(a => a.name);
+    } catch (err) {
+      fail(`Could not list accounts: ${(err as Error).message}`);
+      return 1;
+    }
+  } else if (positional.length === 0) {
+    fail('claim: at least one agent name required (or pass --all)');
+    print(`  ${DIM('Usage: agenticmail-codex claim <name> [<name> ...] [--unclaim] [--all]')}`);
+    return 64;
+  } else {
+    targets = positional;
+  }
+
+  let accounts;
+  try {
+    accounts = await listAccounts(cfg.apiUrl, cfg.masterKey);
+  } catch (err) {
+    fail(`Could not list accounts: ${(err as Error).message}`);
+    return 1;
+  }
+  const byName = new Map(accounts.map(a => [a.name.toLowerCase(), a]));
+  const results: Array<{ name: string; ok: boolean; reason?: string }> = [];
+
+  for (const name of targets) {
+    const account = byName.get(name.toLowerCase());
+    if (!account) {
+      results.push({ name, ok: false, reason: 'no such account' });
+      continue;
+    }
+    if (account.role === 'bridge') {
+      results.push({ name, ok: false, reason: 'is a bridge account (host-owned by definition)' });
+      continue;
+    }
+    try {
+      await setAccountHost(
+        cfg.apiUrl,
+        cfg.masterKey,
+        account.id,
+        unclaim ? null : cfg.bridgeAgentName,
+      );
+      results.push({ name, ok: true });
+    } catch (err) {
+      results.push({ name, ok: false, reason: (err as Error).message });
+    }
+  }
+
+  if (asJson) {
+    print(JSON.stringify({ host: unclaim ? null : cfg.bridgeAgentName, results }, null, 2));
+    return results.every(r => r.ok) ? 0 : 1;
+  }
+
+  print('');
+  print(`  ${PINK(unclaim ? '🎀 Unclaiming accounts' : `🎀 Claiming accounts for ${cfg.bridgeAgentName}`)}`);
+  print('');
+  for (const r of results) {
+    if (r.ok) ok(`${r.name}`);
+    else fail(`${r.name} — ${r.reason}`);
+  }
+  print('');
+  print(`  ${DIM('Restart the dispatcher to apply: pm2 restart agenticmail-codex-dispatcher')}`);
+  print('');
+  return results.every(r => r.ok) ? 0 : 1;
+}
+
 async function main(): Promise<number> {
   const args = process.argv.slice(2);
   if (args.includes('-h') || args.includes('--help') || args[0] === 'help') {
@@ -300,6 +401,8 @@ async function main(): Promise<number> {
       return runStatus(args.includes('--json'));
     case 'tune':
       return runTune(args);
+    case 'claim':
+      return runClaim(args);
     default:
       fail(`Unknown command: ${command}`);
       usage();

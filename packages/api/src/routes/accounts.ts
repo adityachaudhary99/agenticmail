@@ -324,6 +324,32 @@ export function createAccountRoutes(accountManager: AccountManager, db: Database
     } catch (err) { next(err); }
   });
 
+  /**
+   * Claim or unclaim an account for a specific host integration.
+   * Master-key scoped. Body: `{ "host": "<bridge-name>" }` claims;
+   * `{ "host": null }` unclaims (back to "watchable by any dispatcher").
+   *
+   * Used by `agenticmail-<host> claim <name>` to retro-tag accounts
+   * created before MCP-level auto-tagging (AGENTICMAIL_MCP_HOST in
+   * the MCP server env block) shipped in 0.9.20. Once tagged, only
+   * the matching host's dispatcher watches the account.
+   */
+  router.patch('/accounts/:id/host', requireMaster, async (req, res, next) => {
+    try {
+      const host = req.body?.host;
+      if (host !== null && (typeof host !== 'string' || !host.trim())) {
+        res.status(400).json({ error: 'host must be a non-empty string, or null to unclaim' });
+        return;
+      }
+      const patch: Record<string, unknown> = host === null
+        ? { host: null }
+        : { host: host.trim() };
+      const updated = await accountManager.updateMetadata(req.params.id as string, patch);
+      if (!updated) { res.status(404).json({ error: 'Agent not found' }); return; }
+      res.json(sanitizeAgent(updated));
+    } catch (err) { next(err); }
+  });
+
   // Delete account — requires master key
   // Query params: archive (default true), reason, deletedBy
   router.delete('/accounts/:id', requireMaster, async (req, res, next) => {

@@ -150,6 +150,26 @@ export async function setAccountRole(
 }
 
 /**
+ * Claim or unclaim an account for a host integration. Sets (or clears)
+ * `metadata.host` on the target account. Used by the `claim` CLI
+ * subcommand to retro-tag legacy accounts created before
+ * AGENTICMAIL_MCP_HOST was in the MCP server env block.
+ */
+export async function setAccountHost(
+  apiUrl: string,
+  masterKey: string,
+  id: string,
+  host: string | null,
+): Promise<void> {
+  await request<unknown>(
+    apiUrl,
+    masterKey,
+    `/accounts/${encodeURIComponent(id)}/host`,
+    { method: 'PATCH', body: { host } },
+  );
+}
+
+/**
  * Restart catch-up helpers.
  *
  * After a dispatcher restart the per-account SSE channel is reopened

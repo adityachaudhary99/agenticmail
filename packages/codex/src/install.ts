@@ -84,6 +84,12 @@ function buildMcpEntry(
     AGENTICMAIL_API_URL: cfg.apiUrl,
     AGENTICMAIL_API_KEY: bridgeKey,
     AGENTICMAIL_MASTER_KEY: cfg.masterKey,
+    // Host ownership tag. The MCP server's create_account stamps this
+    // value onto every new account's metadata.host, and the dispatcher
+    // uses it to filter "agents that belong to ME" — preventing two
+    // dispatchers (claudecode + codex) from both waking the same
+    // teammate on every reply.
+    AGENTICMAIL_MCP_HOST: cfg.bridgeAgentName,
   };
   if (Object.keys(accountKeys).length > 0) {
     env.AGENTICMAIL_ACCOUNT_KEYS_JSON = JSON.stringify(accountKeys);

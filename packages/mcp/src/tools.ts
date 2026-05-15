@@ -1723,10 +1723,30 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
     }
 
     case 'create_account': {
+      // Host ownership tagging. When the MCP server runs inside a host
+      // integration (claudecode, codex, …), its install writes
+      // AGENTICMAIL_MCP_HOST=<host-bridge-name> into the MCP server's
+      // env block. We stamp that onto every account created via this
+      // tool so each host's dispatcher knows which agents belong to it
+      // and the other dispatcher(s) skip them. Without this, both
+      // dispatchers wake the same teammate on every reply — double
+      // workers, double cost, double thread noise.
+      //
+      // No env var = no tag = backwards-compatible (legacy accounts
+      // remain "unclaimed" and watchable by any dispatcher; the user
+      // can claim them later with `agenticmail-<host> claim <name>`).
+      const hostTag = process.env.AGENTICMAIL_MCP_HOST?.trim();
+      const userMetadata = (args.metadata && typeof args.metadata === 'object' && !Array.isArray(args.metadata))
+        ? args.metadata as Record<string, unknown>
+        : undefined;
+      const metadata: Record<string, unknown> | undefined = hostTag
+        ? { ...(userMetadata ?? {}), host: hostTag }
+        : userMetadata;
       const result = await apiRequest('POST', '/accounts', {
         name: args.name,
         domain: args.domain,
         role: args.role,
+        ...(metadata ? { metadata } : {}),
       }, useMaster);
       if (!result) throw new Error('No response from account creation');
       return [
@@ -1736,7 +1756,8 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
         `  Role: ${result.role}`,
         `  API Key: ${result.apiKey}`,
         `  ID: ${result.id}`,
-      ].join('\n');
+        hostTag ? `  Host: ${hostTag} (this account is owned by the ${hostTag} dispatcher)` : '',
+      ].filter(Boolean).join('\n');
     }
 
     case 'setup_email_relay': {
