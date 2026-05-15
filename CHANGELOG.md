@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.36] - 2026-05-15
+
+### Added — Operator email surface in the web UI
+
+Companion to 0.9.35's MCP tool — the same `operatorEmail` is now editable directly from the profile menu in the web UI without having to ask an agent. Visible on every profile-menu open, between the inbox list and the Sign out footer.
+
+- **Display state**: shows the current address (or "Not set — sub-agent escalations stay in the web UI only" placeholder) with a small pencil affordance.
+- **Edit state**: inline `<input>` + Save / Cancel / Clear buttons. Enter saves, Escape cancels. Inline hint copy explains what the address is for ("Dispatcher emails this address when sub-agents mail your host bridge and the resume can't run").
+- **Cleared state**: setting the value to empty (or clicking Clear when one exists) removes the address — escalations stay in the web UI only.
+
+Lazy-hydrates on first profile-menu open via `GET /system/operator-email`; saves via `PATCH /system/operator-email` (same endpoints the `setup_operator_email` MCP tool uses, so changes from the UI and changes from a host agent stay in sync immediately).
+
+Server-side validation messages bubble up via the new `apiPatch` helper, so a malformed address ("not-an-email") shows "operator email must contain an @" rather than a bare 400.
+
+### Versions
+
+- `@agenticmail/api@0.9.27` — bundled web UI assets only (HTML/JS/CSS); no server-route change.
+- `@agenticmail/cli@0.9.36` — picks up the new api.
+
 ## [0.9.35] - 2026-05-15
 
 ### Added — Operator-email escalation when bridge wake can't resume

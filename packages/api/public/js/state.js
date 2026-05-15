@@ -48,6 +48,16 @@ export const state = {
    * `state.agents` so no UI work is needed when a new bridge appears.
    */
   activeHost: localStorage.getItem('agenticmail.activeHost') || 'all',
+  /**
+   * Operator's notification email address (or null when not set).
+   * Hydrated lazily on first profile-menu open via
+   * `GET /system/operator-email`. Used by the dispatcher's
+   * bridge-escalation path to forward digests when a sub-agent
+   * mails a bridge and no host session is resumable. See
+   * packages/core/src/operator-prefs.ts for the storage and
+   * profile.js for the in-menu edit affordance.
+   */
+  operatorEmail: null,
 };
 
 export const API_URL = window.location.origin;

@@ -446,6 +446,109 @@ a { color: var(--accent-strong); }
 }
 .profile-menu-footer a:hover { text-decoration: underline; }
 
+/* ─── Operator notification email — display + inline edit ──────────
+ *
+ * Lives between the inbox list and the Sign out footer. Two states:
+ *  - Display: current address (or "Not set" placeholder) + pencil
+ *  - Edit:    <input> + Save / Cancel / Clear buttons + hint copy
+ *
+ * Visual weight is deliberately understated — this is a "set once,
+ * forget" knob, not a primary action. */
+.operator-email-display {
+  padding: 6px 20px 10px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px;
+}
+.operator-email-value {
+  flex: 1;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operator-email-value.is-empty {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 12px;
+}
+.operator-email-edit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.operator-email-edit-btn:hover {
+  background: var(--bg-hover);
+  color: var(--ink);
+}
+.operator-email-edit {
+  padding: 4px 20px 12px;
+}
+.operator-email-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.operator-email-input:focus {
+  outline: none;
+  border-color: var(--accent-strong);
+}
+.operator-email-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.operator-email-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.operator-email-btn:hover { background: var(--bg-hover); }
+.operator-email-btn-primary {
+  background: var(--accent-strong);
+  color: white;
+  border-color: var(--accent-strong);
+}
+.operator-email-btn-primary:hover {
+  background: var(--accent-strong);
+  opacity: 0.9;
+}
+.operator-email-btn-danger {
+  margin-left: auto;
+  color: #b91c1c;
+  border-color: transparent;
+}
+.operator-email-btn-danger:hover {
+  background: #fee2e2;
+}
+.operator-email-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+@media (prefers-color-scheme: dark) {
+  .operator-email-btn-danger { color: #fca5a5; }
+  .operator-email-btn-danger:hover { background: #2a1717; }
+}
+
 /* ─── Avatars ──────────────────────────────────────────────────────── */
 .avatar {
   width: 32px; height: 32px; border-radius: 50%;

@@ -37,6 +37,25 @@ export async function apiPut(path, body, opts = {}) {
   return await r.json();
 }
 
+export async function apiPatch(path, body, opts = {}) {
+  const r = await fetch(`${API_URL}/api/agenticmail${path}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${opts.agentKey ?? state.masterKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    // Try to surface the server's error body so the UI can show
+    // "operator email must contain an @" instead of a bare 400.
+    let detail = '';
+    try { const j = await r.json(); detail = j?.error ? `: ${j.error}` : ''; } catch { /* ignore */ }
+    throw new Error(`${r.status} ${path}${detail}`);
+  }
+  return await r.json();
+}
+
 /**
  * Fetch an attachment with auth and trigger a browser download.
  *

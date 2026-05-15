@@ -16,9 +16,10 @@
 // The selected host persists in localStorage so the operator's view
 // preference survives reloads and across browser tabs.
 import { state } from './state.js';
-import { escapeHtml } from './utils.js';
+import { escapeHtml, toast } from './utils.js';
 import { avatarHtml, isBridgeAgent } from './avatar.js';
 import { icon } from './icons.js';
+import { apiGet, apiPatch } from './api.js';
 
 /**
  * Host registry mirrors the one in avatar.js. Kept duplicated rather
@@ -339,8 +340,131 @@ export function bindHostSwitcher() {
   });
 }
 
+/**
+ * Operator notification email — show + edit in the profile menu.
+ *
+ * The dispatcher emails this address when a sub-agent mails a host
+ * bridge AND no fresh host session is available for a headless
+ * resume. Wired to `GET / PATCH /system/operator-email` (the same
+ * endpoints the `setup_operator_email` MCP tool uses, so changes
+ * from the UI and changes from a host agent stay in sync).
+ *
+ * Two states:
+ *   1. Display: shows the current email or "Not set", with a small
+ *      "Edit" pencil. Clicking the pencil swaps to state 2.
+ *   2. Edit: <input> + Save / Cancel buttons. Save fires PATCH,
+ *      shows a toast, and re-renders state 1.
+ *
+ * Cached value: `operatorEmail` lives on `state.operatorEmail` so a
+ * re-render of the profile menu doesn't refetch every time.
+ */
+
+async function loadOperatorEmail() {
+  try {
+    const r = await apiGet('/system/operator-email');
+    state.operatorEmail = (typeof r?.email === 'string' && r.email) ? r.email : null;
+  } catch (err) {
+    // 404 / 500 on older servers — degrade silently to "not set".
+    state.operatorEmail = null;
+  }
+  renderOperatorEmail();
+}
+
+function renderOperatorEmail() {
+  const slot = document.getElementById('profile-menu-operator-email');
+  if (!slot) return;
+  const value = state.operatorEmail;
+  const editing = slot.dataset.mode === 'edit';
+
+  if (editing) {
+    slot.innerHTML = `
+      <div class="profile-menu-section">Alert email</div>
+      <div class="operator-email-edit">
+        <input
+          type="email"
+          id="operator-email-input"
+          class="operator-email-input"
+          placeholder="you@example.com"
+          value="${escapeHtml(value ?? '')}" />
+        <div class="operator-email-actions">
+          <button class="operator-email-btn operator-email-btn-primary" id="operator-email-save">Save</button>
+          <button class="operator-email-btn" id="operator-email-cancel">Cancel</button>
+          ${value ? `<button class="operator-email-btn operator-email-btn-danger" id="operator-email-clear" title="Clear — no email forward">Clear</button>` : ''}
+        </div>
+        <div class="operator-email-hint">
+          Dispatcher emails this address when sub-agents mail your host bridge and the resume can't run (no fresh session, expired token). Phone push via your normal mail app.
+        </div>
+      </div>
+    `;
+    const input = document.getElementById('operator-email-input');
+    input?.focus();
+    input?.select();
+    document.getElementById('operator-email-save')?.addEventListener('click', () => saveOperatorEmail(input?.value ?? ''));
+    document.getElementById('operator-email-cancel')?.addEventListener('click', () => {
+      slot.dataset.mode = '';
+      renderOperatorEmail();
+    });
+    document.getElementById('operator-email-clear')?.addEventListener('click', () => saveOperatorEmail(''));
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveOperatorEmail(input.value);
+      if (e.key === 'Escape') { slot.dataset.mode = ''; renderOperatorEmail(); }
+    });
+    return;
+  }
+
+  slot.innerHTML = `
+    <div class="profile-menu-section">Alert email</div>
+    <div class="operator-email-display" id="operator-email-display">
+      <div class="operator-email-value ${value ? '' : 'is-empty'}">
+        ${value ? escapeHtml(value) : 'Not set — sub-agent escalations stay in the web UI only'}
+      </div>
+      <button class="operator-email-edit-btn" id="operator-email-edit" title="${value ? 'Change' : 'Set up'}">
+        ${icon('compose', { size: 14 })}
+      </button>
+    </div>
+  `;
+  document.getElementById('operator-email-edit')?.addEventListener('click', () => {
+    slot.dataset.mode = 'edit';
+    renderOperatorEmail();
+  });
+}
+
+async function saveOperatorEmail(raw) {
+  const trimmed = String(raw ?? '').trim();
+  try {
+    // Server canonicalises (trims) and validates (must contain @ when
+    // non-empty). Empty string = clear, server stores null. We mirror
+    // the server's canonical value back into state so a refresh
+    // shows exactly what was persisted.
+    const r = await apiPatch('/system/operator-email', { email: trimmed || null });
+    state.operatorEmail = (typeof r?.email === 'string' && r.email) ? r.email : null;
+    toast(state.operatorEmail ? `Alerts now route to ${state.operatorEmail}` : 'Alert email cleared.');
+    const slot = document.getElementById('profile-menu-operator-email');
+    if (slot) slot.dataset.mode = '';
+    renderOperatorEmail();
+  } catch (err) {
+    toast(`Could not save: ${err.message.replace(/^\d+\s+\S+:\s*/, '')}`, true);
+  }
+}
+
+/** Lazy-load on first profile-menu open — keeps the initial page
+ *  load free of an extra round-trip. Subsequent opens use the
+ *  cached value in state.operatorEmail. */
+let operatorEmailHydrated = false;
+export function hydrateOperatorEmail() {
+  if (operatorEmailHydrated) {
+    renderOperatorEmail();
+    return;
+  }
+  operatorEmailHydrated = true;
+  void loadOperatorEmail();
+}
+
 export function toggleProfileMenu(e) {
   if (e) e.stopPropagation();
+  // Lazy-hydrate the operator email block the first time the menu
+  // opens (idempotent for subsequent opens — re-renders from cache).
+  hydrateOperatorEmail();
   document.getElementById('profile-menu').classList.toggle('open');
 }
 export function closeProfileMenu() {
