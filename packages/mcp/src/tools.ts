@@ -356,7 +356,7 @@ export const toolDefinitions = [
   },
   {
     name: 'reply_email',
-    description: 'Reply to an email. Fetches the original message, auto-fills To, Subject (Re:), In-Reply-To, and References, then sends with quoted body. **For multi-agent thread coordination, pass `replyAll: true`** — the original sender lands on To: (so they wake, by default), every other thread participant lands on Cc: (so they see it without waking). This is the correct shape; the tool builds it for you. **Pass `wake` to override** the default wake target (e.g. you want to wake a specific CC\'d participant). Outbound guard applies — HIGH severity content is held for review.',
+    description: 'Reply to an email. Fetches the original message, auto-fills To, Subject (Re:), In-Reply-To, and References, then sends with quoted body. **For multi-agent thread coordination, pass `replyAll: true`** — the original sender lands on To:, every other thread participant lands on Cc:. **Wake routing is body-aware**: if your reply addresses a specific CC\'d agent ("Marlow —", "@kepler", "handing off to rivet", etc.), the dispatcher wakes them automatically. If your body has no such addressing, the original sender (on To:) wakes by default. **Pass `wake` to override** explicitly (e.g. `wake: ["marlow"]` to force-target one agent, or `wake: []` to deliver silently). Outbound guard applies — HIGH severity content is held for review.',
     inputSchema: {
       type: 'object' as const,
       properties: {

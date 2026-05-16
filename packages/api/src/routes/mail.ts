@@ -404,29 +404,85 @@ export function normalizeWakeList(value: unknown): string[] | undefined {
  * no local wakes anyway).
  */
 export function deriveDefaultWakeList(toField: string | string[] | undefined): string[] | undefined {
-  if (!toField) return undefined;
-  const arr = Array.isArray(toField) ? toField : String(toField).split(',');
-  const localNames: string[] = [];
+  const localNames = extractLocalNames(toField);
+  return localNames.length > 0 ? localNames : undefined;
+}
+
+/**
+ * Extract bare local agent names from an address field (string or string[]).
+ * Reused by `deriveDefaultWakeList` and `deriveWakeFromBody` so both
+ * paths handle display-name forms and `@localhost` suffixes identically.
+ */
+function extractLocalNames(field: string | string[] | undefined): string[] {
+  if (!field) return [];
+  const arr = Array.isArray(field) ? field : String(field).split(',');
+  const out: string[] = [];
   for (const raw of arr) {
-    // Extract the bare address FIRST, before the `endsWith('@localhost')`
-    // check — display-name forms like `"Vesper <vesper@localhost>"`
-    // end with `>`, not `@localhost`, and would otherwise be
-    // skipped entirely. This previously caused `deriveDefaultWakeList`
-    // to return undefined on display-name addressing, falling
-    // through to "no allowlist" → everyone wakes. The new default
-    // semantics need to survive that case.
-    // Cap input length before the angle-bracket extractor — `[^>]+`
-    // is technically polynomial on input that lacks a closing `>`
-    // (CodeQL `js/polynomial-redos`). RFC 5321 caps an address at
-    // 320 chars; 500 is comfortably over the legitimate ceiling.
     const trimmed = String(raw).slice(0, 500).trim().toLowerCase();
     const m = trimmed.match(/<([^>]+)>/);
     const bare = (m ? m[1] : trimmed).trim();
     if (!bare.endsWith('@localhost')) continue;
     const name = bare.replace(/@localhost$/i, '');
-    if (name) localNames.push(name);
+    if (name) out.push(name);
   }
-  return localNames.length > 0 ? localNames : undefined;
+  return out;
+}
+
+/**
+ * Body-aware wake derivation.
+ *
+ * The pre-existing default — `deriveDefaultWakeList(to)` — wakes only
+ * the To: recipient. That works for one-shot sends, but breaks the
+ * common multi-agent reply-all coordination pattern:
+ *
+ *   1. Sable kicks off a thread:  To: marlow, Cc: kepler, rivet, ...
+ *   2. Marlow replies-all:        To: sable (auto, original sender),
+ *                                  Cc: kepler, rivet, ...
+ *                                 body: "Kepler — please take the next slice"
+ *   3. Without body parsing: wake list = [sable] (To-derived). Sable
+ *      wakes (despite being just the listener now); Kepler does NOT
+ *      wake even though the body explicitly addresses them. The
+ *      coordination chain stalls until someone notices.
+ *
+ * Fix: when the sender omits `wake`, scan the body for explicit
+ * addressing patterns matching agents on Cc. If we find any, those
+ * become the wake list. If we don't, fall through to the To-derived
+ * default (preserves single-recipient behaviour).
+ *
+ * Patterns recognised at word boundary, case-insensitive:
+ *   Name —     Name –     Name -        (em/en/hyphen handoff after greeting)
+ *   Name:      Name,                    (colon / comma at line start)
+ *   @Name                                (mention)
+ *   hi/hey/hello Name
+ *   over to Name / handing off to Name / dispatching to Name /
+ *   assigning to Name / next up Name / next slice Name
+ */
+export function deriveWakeFromBody(body: string, candidateNames: string[]): string[] {
+  if (!body || candidateNames.length === 0) return [];
+  // Cap input length — body parsing should not be a CPU vector.
+  const sample = body.length > 20_000 ? body.slice(0, 20_000) : body;
+  const found = new Set<string>();
+  for (const raw of candidateNames) {
+    const name = String(raw).trim().toLowerCase();
+    if (!name) continue;
+    const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Three pattern families. We test each with the canonical `i` flag.
+    // The line-start anchor accepts BOL or any whitespace-bounded
+    // sentence break so addressing buried in a paragraph still matches.
+    const patterns = [
+      // Greeting / handoff anchors:
+      //   "Marlow —"  "Marlow:"  "Marlow,"
+      new RegExp(`(?:^|[\\n.])\\s*${esc}\\s*[—–\\-:,]`, 'i'),
+      // Mention syntax:
+      //   "@marlow"
+      new RegExp(`@${esc}\\b`, 'i'),
+      // Conversational handoff phrases:
+      //   "over to marlow"  "handing off to marlow"  "next up: marlow"
+      new RegExp(`\\b(?:hi|hey|hello|over to|hand(?:ing)? off to|dispatch(?:ing)? to|assigning to|next up:?|next slice:?)\\s+${esc}\\b`, 'i'),
+    ];
+    if (patterns.some(p => p.test(sample))) found.add(name);
+  }
+  return Array.from(found);
 }
 
 /**
@@ -669,7 +725,14 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
            // implicit To-only allowlist so an approved outbound
            // matches what the unguarded path would have sent.
           const explicitWakeForPersist = normalizeWakeList(wake);
-          const wakeListForPersist = wake === undefined ? deriveDefaultWakeList(to) : explicitWakeForPersist;
+          // Same derivation as the live send path — see comment there.
+          let wakeListForPersist: string[] | undefined;
+          if (wake !== undefined) {
+            wakeListForPersist = explicitWakeForPersist;
+          } else {
+            const bodyDerived = deriveWakeFromBody(typeof text === 'string' ? text : '', extractLocalNames(cc));
+            wakeListForPersist = bodyDerived.length > 0 ? bodyDerived : deriveDefaultWakeList(to);
+          }
           const mailOptions: Record<string, unknown> = {
             to, subject, text, html, cc, bcc, replyTo, inReplyTo, references, attachments, fromName,
             ...(wakeListForPersist !== undefined ? { wakeList: wakeListForPersist } : {}),
@@ -769,7 +832,23 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
       // multi-CC threads. Sender can opt back to "wake everyone"
       // with `wake: 'all'`.
       const explicitWake = normalizeWakeList(wake);
-      const wakeList = wake === undefined ? deriveDefaultWakeList(to) : explicitWake;
+      // Wake-list resolution, in order of precedence:
+      //   1. Sender passed explicit `wake: [...]` (or sentinel) — respected.
+      //   2. Sender omitted `wake` AND the body addresses one or more
+      //      CC'd local agents ("Marlow —", "@kepler", "handing off to
+      //      rivet"). Body intent wins over the To: default; this is
+      //      what unbreaks reply-all coordination chains where the
+      //      original sender stays on To: but the body redirects work
+      //      to a different participant.
+      //   3. Fall back to deriving from To: (the pre-existing default —
+      //      single recipient gets the Claude turn, CC stays asleep).
+      let wakeList: string[] | undefined;
+      if (wake !== undefined) {
+        wakeList = explicitWake;
+      } else {
+        const bodyDerived = deriveWakeFromBody(typeof text === 'string' ? text : '', extractLocalNames(cc));
+        wakeList = bodyDerived.length > 0 ? bodyDerived : deriveDefaultWakeList(to);
+      }
       const customHeaders = wakeHeaders(wakeList);
 
       const mailOpts = {
