@@ -68,30 +68,33 @@ After `bootstrap` finishes, tell the user to **restart their host CLI**
 new MCP server entry takes effect. The MCP block lands in
 `~/.claude.json` for Claude Code and `~/.codex/config.toml` for Codex.
 
-### Setting up the Gmail relay — NEVER ask for the password in chat
+### Setting up the email relay — NEVER ask for the password in chat
 
-The bridge-escalation email path (next section) needs a working outbound relay so the API can deliver mail to the operator's personal Gmail. If `setup_operator_email` is set but the relay isn't, escalation emails fail silently (logged server-side, but no delivery).
+The bridge-escalation email path (next section) needs a working outbound relay so the API can deliver mail to the operator's personal mailbox. If `setup_operator_email` is set but the relay isn't, escalation emails fail silently (logged server-side, but no delivery).
 
-**Critical rule:** the Gmail app password is a credential. If the operator pastes it into your chat, it ends up in the LLM's context window, training data risks, and conversation history. **Don't ask for it. Don't accept it if offered.**
+**Critical rule:** the email account password (app password for Gmail / Outlook, mailbox password for custom domains) is a credential. If the operator pastes it into your chat, it ends up in the LLM's context window, training data risks, and conversation history. **Don't ask for it. Don't accept it if offered.**
 
 Instead, tell the operator to run this command in their own terminal:
 
 ```bash
-agenticmail setup-relay
+agenticmail setup-email
 ```
 
 The command:
 
-- Prompts for their Gmail address (visible — that's fine, not secret)
-- Prompts for the **app password** via hidden stdin (raw-mode `*`-masked, never leaves the process)
-- Calls `POST /api/agenticmail/gateway/relay` with the credentials
+- Prompts for their email address (visible — that's fine, not secret)
+- Auto-detects the provider from the domain (Gmail, Outlook / Microsoft 365, or custom). For unknown domains it asks whether the mailbox lives on Google Workspace, Microsoft 365, or a custom SMTP server (and only in the custom case asks for SMTP/IMAP hosts).
+- Prompts for the **password** via hidden stdin (raw-mode `*`-masked, never leaves the process)
+- Calls `POST /api/agenticmail/gateway/relay`, which verifies SMTP + IMAP auth before persisting
 - Prints success / failure
 
 You just wait. When the operator says "done", proceed to `setup_operator_email`. If they hit an error you can help diagnose from the spinner output they paste back — but you should never see the literal password.
 
 If the operator is already at the keyboard and you want to give them the exact line to run, this is the right script:
 
-> "Run `agenticmail setup-relay` in your terminal. It'll ask for your Gmail address and an app password (generate one at https://myaccount.google.com/apppasswords — needs 2FA on your Google account). The password input is hidden — I won't see it. Tell me when it's done."
+> "Run `agenticmail setup-email` in your terminal. It'll ask for your email address and a password — for Gmail use an app password (generate one at https://myaccount.google.com/apppasswords — needs 2FA on your Google account); for Outlook use an app password from your Microsoft account security settings. The password input is hidden — I won't see it. Tell me when it's done."
+
+> **`setup-relay` vs `setup-email`** — `setup-email` (added in 0.9.38) is the recommended short path: two questions, auto-detected provider, supports Gmail + Outlook + custom. `setup-relay` is the older full-interactive flow with explicit provider menus, agent-naming, and retry loops. Both write the same relay config; pick whichever fits.
 
 ### Right after install — ASK THE USER for their notification email
 

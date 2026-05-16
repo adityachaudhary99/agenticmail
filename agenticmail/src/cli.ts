@@ -607,6 +607,213 @@ async function cmdSetupRelay() {
   }
 }
 
+/**
+ * `agenticmail setup-email` — minimal "just connect my mailbox" flow.
+ *
+ * Asks for two things and nothing else: email address + password. The
+ * provider is auto-detected from the email domain (Gmail, Outlook /
+ * Microsoft 365, custom). For custom domains we additionally ask for
+ * the SMTP host (port defaults to 587, IMAP defaults to 993) — because
+ * we genuinely don't know where the mail server lives. Anyone using
+ * Google Workspace on a custom domain (user@theirco.com via Gmail)
+ * should pick "gmail" when prompted; we surface that as a hint.
+ *
+ * Separate from `setup-relay` (which is the full interactive flow
+ * with provider menus + custom-host prompts + agent-naming + retry
+ * loop). This one stays tight: collect creds, POST, done.
+ */
+async function cmdSetupEmail() {
+  const args = process.argv.slice(3);
+  if (args.some(a => a === '--help' || a === '-h' || a === 'help')) {
+    log('');
+    log(`  ${c.pinkBg(' 🎀 agenticmail setup-email ')}`);
+    log('');
+    log(`  ${c.bold('Usage:')} agenticmail setup-email`);
+    log('');
+    log(`  Minimal email-relay setup: enter your address, enter the password,`);
+    log(`  done. Provider (Gmail, Outlook, custom) is detected from the domain.`);
+    log(`  Password is collected via hidden stdin — your agent never sees it.`);
+    log('');
+    log(`  Prereq: AgenticMail already bootstrapped (run \`agenticmail setup\` first).`);
+    log('');
+    return;
+  }
+
+  const configPath = join(homedir(), '.agenticmail', 'config.json');
+  if (!existsSync(configPath)) {
+    log('');
+    fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
+    log(`  Run ${c.cyan('agenticmail setup')} first, then come back to add your email.`);
+    log('');
+    process.exit(1);
+  }
+
+  let config: SetupConfig;
+  try {
+    config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig;
+  } catch (err) {
+    log('');
+    fail(`Could not read ${configPath}: ${(err as Error).message}`);
+    log('');
+    process.exit(1);
+  }
+
+  log('');
+  log(`   ${c.bold('🎀 AgenticMail — connect your mailbox')} `);
+  log('');
+  log(`  ${c.dim('Two questions: your email, your password. Password input is')}`);
+  log(`  ${c.dim("hidden and never leaves this process — your agent doesn't see it.")}`);
+  log('');
+
+  // Make sure the API is up before we collect creds.
+  const apiBase = `http://${config.api.host}:${config.api.port}`;
+  let serverReady = false;
+  try {
+    const probe = await fetch(`${apiBase}/api/agenticmail/health`, { signal: AbortSignal.timeout(2_000) });
+    serverReady = probe.ok;
+  } catch { /* not running */ }
+  if (!serverReady) {
+    try { serverReady = await startApiServer(config); } catch { /* fall through */ }
+  }
+  if (!serverReady) {
+    fail(`API server not reachable at ${c.cyan(apiBase)}`);
+    info(`Start it with ${c.green('agenticmail start')}, then re-run this command.`);
+    process.exit(1);
+  }
+
+  // Reuse the first existing agent name if one's already provisioned, so
+  // running this on an already-set-up box doesn't create duplicate agents.
+  let agentName = 'secretary';
+  try {
+    const acctResp = await fetch(`${apiBase}/api/agenticmail/accounts`, {
+      headers: { 'Authorization': `Bearer ${config.masterKey}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (acctResp.ok) {
+      const data = await acctResp.json() as any;
+      const agents = data?.agents ?? data ?? [];
+      const first = agents.find((a: any) => a.name && a.name !== 'claudecode' && a.name !== 'codex') ?? agents[0];
+      if (first?.name) agentName = first.name;
+    }
+  } catch { /* ignore */ }
+
+  const email = (await ask(`  ${c.cyan('Your email address:')} `)).trim();
+  if (!email || !email.includes('@')) {
+    log('');
+    fail('That doesn\'t look like a valid email address.');
+    process.exit(1);
+  }
+
+  // Auto-detect provider from the domain.
+  const domain = email.split('@')[1]!.toLowerCase();
+  const GMAIL_DOMAINS = new Set(['gmail.com', 'googlemail.com']);
+  const OUTLOOK_DOMAINS = new Set(['outlook.com', 'hotmail.com', 'live.com', 'msn.com']);
+
+  let provider: RelayProvider;
+  let smtpHost: string | undefined;
+  let smtpPort: number | undefined;
+  let imapHost: string | undefined;
+  let imapPort: number | undefined;
+  let appPasswordHint = '';
+
+  if (GMAIL_DOMAINS.has(domain)) {
+    provider = 'gmail';
+    appPasswordHint = `App password: ${c.cyan('https://myaccount.google.com/apppasswords')}`;
+  } else if (OUTLOOK_DOMAINS.has(domain)) {
+    provider = 'outlook';
+    appPasswordHint = `App password: your Microsoft account → Security → Advanced security options → App passwords`;
+  } else {
+    // Custom domain. Most common case is Google Workspace / Microsoft 365
+    // hosting a vanity domain — in which case SMTP/IMAP still points at
+    // Gmail / Outlook servers. Offer that as a one-key shortcut so the
+    // operator doesn't have to type smtp.gmail.com themselves.
+    log('');
+    log(`  ${c.dim("We don't recognize the domain ")}${c.bold(domain)}${c.dim('. Where does it live?')}`);
+    log(`    ${c.cyan('1.')} Google Workspace ${c.dim('(mail hosted by Gmail)')}`);
+    log(`    ${c.cyan('2.')} Microsoft 365 ${c.dim('(mail hosted by Outlook)')}`);
+    log(`    ${c.cyan('3.')} Custom mail server`);
+    const pickProv = await pick(`  ${c.magenta('>')} `, ['1', '2', '3']);
+    if (pickProv === '1') {
+      provider = 'gmail';
+      appPasswordHint = `App password: ${c.cyan('https://myaccount.google.com/apppasswords')}`;
+    } else if (pickProv === '2') {
+      provider = 'outlook';
+      appPasswordHint = `App password: your Microsoft account → Security → Advanced security options → App passwords`;
+    } else {
+      provider = 'custom';
+      log('');
+      log(`  ${c.dim("Your mail-server hostnames (check your provider's docs):")}`);
+      smtpHost = (await ask(`  ${c.cyan('Outgoing (SMTP) host:')} `)).trim();
+      const smtpPortStr = (await ask(`  ${c.cyan('SMTP port')} ${c.dim('(587)')}: `)).trim();
+      smtpPort = smtpPortStr ? parseInt(smtpPortStr, 10) : 587;
+      imapHost = (await ask(`  ${c.cyan('Incoming (IMAP) host:')} `)).trim();
+      const imapPortStr = (await ask(`  ${c.cyan('IMAP port')} ${c.dim('(993)')}: `)).trim();
+      imapPort = imapPortStr ? parseInt(imapPortStr, 10) : 993;
+    }
+  }
+
+  log('');
+  if (appPasswordHint) log(`  ${c.dim(appPasswordHint)}`);
+  log(`  ${c.dim("Spaces in the password are fine — we'll strip them.")}`);
+  log('');
+
+  const rawPassword = await askSecret(`  ${c.cyan('Password:')} `);
+  const password = rawPassword.replace(/\s+/g, '');
+  if (!password) {
+    log('');
+    fail('No password entered.');
+    process.exit(1);
+  }
+
+  log('');
+  const spinner = new Spinner('relay');
+  spinner.start();
+
+  try {
+    const response = await fetch(`${apiBase}/api/agenticmail/gateway/relay`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.masterKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider, email, password, agentName,
+        smtpHost, smtpPort, imapHost, imapPort,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      const friendly = parseFriendlyError(text);
+      spinner.fail(friendly.message);
+      log('');
+      if (friendly.isAuthError) {
+        info('Check the email + password and run `agenticmail setup-email` again.');
+      }
+      log('');
+      process.exit(1);
+    }
+
+    const data = await response.json() as any;
+    spinner.succeed(`Mailbox connected — ${c.bold(email)} ${c.dim('via ' + provider)}`);
+    if (data?.agent?.subAddress) {
+      log('');
+      ok(`Agent ${c.bold('"' + (data.agent.name ?? agentName) + '"')} ready at ${c.cyan(data.agent.subAddress)}`);
+    }
+    log('');
+    log(`  ${c.bold('Next:')} point bridge-escalation alerts at your personal email:`);
+    log('');
+    log(`    ${c.cyan('Option A')} — tell your host agent: "set my operator notification email to <you@example.com>"`);
+    log(`    ${c.cyan('Option B')} — open the web UI → click your avatar → ${c.bold('Alert email')} → type, Save`);
+    log('');
+  } catch (err) {
+    spinner.fail(`Setup-email failed: ${(err as Error).message}`);
+    log('');
+    process.exit(1);
+  }
+}
+
 async function cmdSetup() {
   // Parse setup-specific flags (--yes, --non-interactive, -y, --help).
   const setupArgs = process.argv.slice(3);
@@ -3539,6 +3746,11 @@ switch (command) {
   case 'relay':
     cmdSetupRelay().catch(err => { console.error(err); process.exit(1); });
     break;
+  case 'setup-email':
+  case 'email':
+  case 'connect-email':
+    cmdSetupEmail().catch(err => { console.error(err); process.exit(1); });
+    break;
   case 'start':
     cmdStart().catch(err => { console.error(err); process.exit(1); });
     break;
@@ -3599,6 +3811,7 @@ switch (command) {
     log(`    ${c.green('agenticmail')}           Get started (setup + start)`);
     log(`    ${c.green('agenticmail bootstrap')} ${c.dim('Zero-question install — for AI agents (Claude Code) to run on a user\'s behalf')}`);
     log(`    ${c.green('agenticmail setup')}     Re-run the setup wizard ${c.dim('(use --yes for non-interactive)')}`);
+    log(`    ${c.green('agenticmail setup-email')}  Connect your mailbox — just email + password ${c.dim('(auto-detects Gmail/Outlook/custom)')}`);
     log(`    ${c.green('agenticmail start')}     Start the server`);
     log(`    ${c.green('agenticmail stop')}      Stop the server`);
     log(`    ${c.green('agenticmail status')}    See what's running`);

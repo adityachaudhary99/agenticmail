@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.38] - 2026-05-15
+
+### Added — `agenticmail setup-email`: two-question relay setup, any provider
+
+User feedback on 0.9.37's `setup-relay`: it kicks straight into the full interactive flow (provider menu → email → app-password URL → custom-host branch → agent-name prompt → password). For an operator who already knows their email and has an app password ready, that's six steps to type one credential pair. They asked for a minimal alternative: "simply just collect the email either gmail or outlook or domain and it should simply verify the connection to make sure it works and call it a day".
+
+Fix: a new `agenticmail setup-email` subcommand (aliases: `email`, `connect-email`) that asks **only** for email + password and auto-detects everything else from the domain.
+
+### What it does
+
+1. Loads `~/.agenticmail/config.json` (errors out clearly if AgenticMail isn't bootstrapped).
+2. Ensures the API is reachable — if not, starts it in the background before collecting credentials.
+3. Asks for the email address.
+4. Auto-detects the provider:
+   - `@gmail.com` / `@googlemail.com` → `gmail`
+   - `@outlook.com` / `@hotmail.com` / `@live.com` / `@msn.com` → `outlook`
+   - Anything else → asks "Google Workspace / Microsoft 365 / Custom SMTP?" — only the Custom branch prompts for SMTP/IMAP hosts (port defaults: 587 / 993).
+5. Asks for the password via hidden stdin (raw-mode `*`-masked, spaces stripped — Gmail copy/paste app passwords like `mhuc ofou naky pnmq` work as-is).
+6. POSTs `provider, email, password, agentName, smtpHost?, smtpPort?, imapHost?, imapPort?` to `/api/agenticmail/gateway/relay`. The endpoint verifies SMTP + IMAP auth before persisting — invalid credentials get rejected by the provider, not stored.
+7. Reuses the first existing agent name on the box (skipping `claudecode` / `codex` bridges), so re-running the command after an install doesn't spawn a duplicate "secretary".
+
+### What it deliberately doesn't do
+
+- Doesn't show the provider menu when the domain is unambiguous (Gmail / Outlook). One less question.
+- Doesn't ask for an agent name. The bootstrap or the existing relay already created one; re-asking is noise.
+- Doesn't retry on auth failure. If the password is wrong, fail fast and tell the operator to re-run. The interactive `setup-relay` retry loop assumed the operator was typing the password from memory — `setup-email` assumes a copy/paste workflow where retries don't help.
+- Doesn't try to auto-discover non-Google/Microsoft mail servers. SRV-record autodiscover would help maybe 10% of custom-domain operators and adds a network probe that fails silently on the rest. Operators on bespoke setups type SMTP/IMAP hostnames themselves.
+
+### What it does NOT replace
+
+`setup-relay` (the original full-interactive flow) is unchanged. It stays as-is for operators who want the provider menu, custom agent-naming, and per-attempt retry loop. `setup-email` is the short path; `setup-relay` is the long path. Both write to the same `/gateway/relay` endpoint with the same shape.
+
+### Files
+
+- `agenticmail/src/cli.ts` — added `cmdSetupEmail()` (~140 lines); wired `setup-email` / `email` / `connect-email` cases into the main dispatcher; added a help-listing entry. `cmdSetupRelay` untouched.
+- `agenticmail/package.json` — version → 0.9.38.
+- `AGENTS.md` — relay section now points host agents at `setup-email` as the canonical script ("Run `agenticmail setup-email` in your terminal…"). `setup-relay` mentioned as the longer alternative.
+
 ## [0.9.37] - 2026-05-15
 
 ### Added — `agenticmail setup-relay` so operators add Gmail without exposing the password to an agent
