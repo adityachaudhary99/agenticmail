@@ -405,6 +405,19 @@ interface WakeBudgetEntry {
   firstWakeAtMs: number;
 }
 
+/**
+ * One parked-wake slot per (agent, thread). Events accumulate while
+ * the budget is exhausted; a single retry timer per slot fires once
+ * the agent has been quiet for PARK_QUIESCENCE_MS.
+ */
+interface ParkedWakeEntry {
+  account: AgenticMailAccount;
+  threadId: string;
+  events: SSEEvent[];
+  parkedAtMs: number;
+  retryTimer: ReturnType<typeof setTimeout>;
+}
+
 const DEFAULT_MAX_WAKES_PER_THREAD = 10;
 const DEFAULT_WAKE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 /**
@@ -924,6 +937,35 @@ export class Dispatcher {
   private now: () => number;
 
   /**
+   * Parked wakes — events that the wake-budget rejected, held so we can
+   * retry once the (agent, thread) goes quiet. Prevents the silent-drop
+   * failure mode where a budget-exhausted thread loses incoming work
+   * forever even after the reply storm that filled the budget settles.
+   *
+   * Keyed by `${accountId}::${threadId}` to match wakeBudget. Each entry
+   * accumulates events from successive budget-rejected wakes; a single
+   * timer per entry retries once after PARK_QUIESCENCE_MS of no granted
+   * wakes for the agent. If a wake fires for the agent during that
+   * window, the timer is rescheduled — the assumption being "agent is
+   * still in a hot loop, don't unpark yet". Once the agent is quiet
+   * for the full quiescence window, the parked batch fires as ONE
+   * worker turn (bypassing the budget — this is the safety valve).
+   *
+   * The bypass is intentional: if the agent has gone genuinely quiet
+   * for 5 min, the reply-loop scenario the budget guards against is
+   * not happening; the budget is just a stale circuit-breaker. Fire
+   * the parked work and let coordination resume. If it WAS still a
+   * loop, the agent will reply again, the budget will reject the next
+   * wake, and we'll re-park — bounded re-trigger.
+   */
+  private parkedWakes = new Map<string, ParkedWakeEntry>();
+  /** Last time we actually granted a wake for an agent (any thread).
+   *  Read by the parked-wake retry to decide whether the agent is
+   *  quiet enough to unpark. */
+  private lastWakeAtByAgent = new Map<string, number>();
+  private readonly PARK_QUIESCENCE_MS = 5 * 60 * 1000;
+
+  /**
    * Layered wake-context system. ThreadCache holds the last K
    * envelopes per thread (built passively on every SSE new-mail
    * event, even when no agent wakes). AgentMemoryStore holds
@@ -1072,6 +1114,115 @@ export class Dispatcher {
   }
 
   /**
+   * Park a budget-rejected event for later retry. Replaces the
+   * previous "log and drop" behaviour that broke coordination chains
+   * on busy threads — when kepler hit cap=10 wakes in 24h on the
+   * Facebook Rebuild thread, every subsequent message to kepler was
+   * silently lost, even after the agent went idle for hours.
+   *
+   * Now: parked events accumulate per (agent, thread); once the agent
+   * has been quiet (no granted wakes) for PARK_QUIESCENCE_MS, the
+   * parked batch fires as a single worker turn. The budget check is
+   * bypassed on the unpark — if the loop is genuinely over the work
+   * gets handled; if the loop resumes, the next reply will re-charge
+   * the budget and re-park, so we stay bounded.
+   */
+  private parkEvent(account: AgenticMailAccount, event: SSEEvent, threadId: string): void {
+    if (!threadId) return; // no-thread events can't be parked sensibly
+    const key = `${account.id}::${threadId}`;
+    const existing = this.parkedWakes.get(key);
+    if (existing) {
+      existing.events.push(event);
+      // Don't restart the timer on subsequent parks — quiescence is
+      // measured from the LAST granted wake, not from each new park.
+      // The retry handler decides whether enough quiet time has
+      // elapsed when it fires.
+      this.log('info', `[dispatcher] parked another wake for "${account.name}" thread "${threadId}" (uid=${event.uid}, ${existing.events.length} queued)`);
+      return;
+    }
+    const entry: ParkedWakeEntry = {
+      account,
+      threadId,
+      events: [event],
+      parkedAtMs: this.now(),
+      retryTimer: this.scheduleParkedRetry(key),
+    };
+    this.parkedWakes.set(key, entry);
+    this.log('info', `[dispatcher] parked wake for "${account.name}" thread "${threadId}" (uid=${event.uid}) — will retry once agent is quiet for ${Math.round(this.PARK_QUIESCENCE_MS / 60000)}min`);
+  }
+
+  /**
+   * Park a coalesced batch — same logic as parkEvent but takes the
+   * full event array at once (so fireCoalescedWake's batch isn't
+   * dropped when the post-coalesce budget check fails).
+   */
+  private parkBatch(account: AgenticMailAccount, events: SSEEvent[], threadId: string): void {
+    if (!threadId || events.length === 0) return;
+    const key = `${account.id}::${threadId}`;
+    const existing = this.parkedWakes.get(key);
+    if (existing) {
+      existing.events.push(...events);
+      this.log('info', `[dispatcher] parked batch of ${events.length} for "${account.name}" thread "${threadId}" (${existing.events.length} queued)`);
+      return;
+    }
+    const entry: ParkedWakeEntry = {
+      account,
+      threadId,
+      events: [...events],
+      parkedAtMs: this.now(),
+      retryTimer: this.scheduleParkedRetry(key),
+    };
+    this.parkedWakes.set(key, entry);
+    this.log('info', `[dispatcher] parked batch of ${events.length} for "${account.name}" thread "${threadId}" — will retry once agent is quiet for ${Math.round(this.PARK_QUIESCENCE_MS / 60000)}min`);
+  }
+
+  private scheduleParkedRetry(key: string): ReturnType<typeof setTimeout> {
+    const t = setTimeout(() => {
+      this.maybeFireParked(key).catch(err => this.log('warn', `[dispatcher] parked retry error: ${(err as Error)?.message ?? err}`));
+    }, this.PARK_QUIESCENCE_MS);
+    (t as unknown as { unref?: () => void }).unref?.();
+    return t;
+  }
+
+  /**
+   * Retry-timer callback. Re-checks the quiescence window against the
+   * agent's actual last-granted-wake timestamp (not the parking time)
+   * so a parked event scheduled while the agent was hot doesn't fire
+   * too early if the loop kept going after we parked.
+   */
+  private async maybeFireParked(key: string): Promise<void> {
+    const entry = this.parkedWakes.get(key);
+    if (!entry || this.stopped) return;
+    const lastWake = this.lastWakeAtByAgent.get(entry.account.id) ?? 0;
+    const idleMs = this.now() - lastWake;
+    if (idleMs < this.PARK_QUIESCENCE_MS) {
+      // Agent was woken again while we waited — extend the park, retry
+      // when enough quiet time has actually accumulated since that wake.
+      const waitMs = this.PARK_QUIESCENCE_MS - idleMs;
+      entry.retryTimer = setTimeout(() => {
+        this.maybeFireParked(key).catch(err => this.log('warn', `[dispatcher] parked retry error: ${(err as Error)?.message ?? err}`));
+      }, waitMs + 1000);
+      (entry.retryTimer as unknown as { unref?: () => void }).unref?.();
+      return;
+    }
+    // Quiet long enough — unpark and fire as one batched wake. Bypass
+    // chargeWake on purpose; see parkEvent docstring for the rationale.
+    this.parkedWakes.delete(key);
+    const events = entry.events;
+    this.log('info', `[dispatcher] unparking "${entry.account.name}" thread "${entry.threadId}" — firing ${events.length} batched event(s) after ${Math.round(idleMs / 60000)}min quiet`);
+    const lastEvent = events[events.length - 1];
+    const prompt = events.length === 1
+      ? newMailPrompt(entry.account, lastEvent)
+      : newMailPromptForBatch(entry.account, events);
+    void this.spawnWorker(entry.account, prompt, {
+      kind: 'new-mail',
+      uid: lastEvent.uid,
+      subject: extractSubject(lastEvent),
+      from: extractFrom(lastEvent),
+    }).catch(err => this.log('warn', `[dispatcher] parked-wake spawn failed: ${(err as Error)?.message ?? err}`));
+  }
+
+  /**
    * Drop wake-budget entries that have aged out of their window.
    *
    * Called inline from chargeWake, but at most once per ~1024 inserts so
@@ -1157,6 +1308,13 @@ export class Dispatcher {
       try { clearTimeout(entry.timer); } catch { /* ignore */ }
     }
     this.deferredRetries.clear();
+    // Drop parked-wake retry timers. The restart's catch-up scan will
+    // re-surface any UIDs we held — the budget will have reset by then
+    // (24h default window), so the natural path takes over.
+    for (const entry of this.parkedWakes.values()) {
+      try { clearTimeout(entry.retryTimer); } catch { /* ignore */ }
+    }
+    this.parkedWakes.clear();
     // Flush any pending cursor updates synchronously so a restart
     // immediately after stop sees the latest lastSeenUid. The
     // debounced timer might not have fired yet.
@@ -1794,10 +1952,11 @@ export class Dispatcher {
       this.log(
         'warn',
         `[dispatcher] wake-budget exhausted for "${account.name}" on thread "${threadId}" — ` +
-          `dropped uid=${event.uid} (cap=${this.maxWakesPerThread} per ${Math.round(this.wakeWindowMs / 60000)}min; ` +
+          `parking uid=${event.uid} (cap=${this.maxWakesPerThread} per ${Math.round(this.wakeWindowMs / 60000)}min; ` +
           `raise with AGENTICMAIL_DISPATCHER_MAX_WAKES_PER_THREAD env var, or via ~/.agenticmail/dispatcher.json)`,
       );
-      this.postSkipped(account, event, 'budget-exhausted', `wake budget exhausted for thread "${threadId}" (count=${verdict.count}, cap=${this.maxWakesPerThread})`);
+      this.postSkipped(account, event, 'budget-exhausted', `wake budget exhausted for thread "${threadId}" (count=${verdict.count}, cap=${this.maxWakesPerThread}) — parked, will retry after agent quiesces`);
+      this.parkEvent(account, event, threadId);
       return;
     }
     await this.spawnWorker(account, newMailPrompt(account, event), {
@@ -1827,7 +1986,8 @@ export class Dispatcher {
     if (entry.events.length === 0) return;
     const verdict = this.chargeWake(entry.account.id, entry.threadId);
     if (!verdict.ok) {
-      this.log('warn', `[dispatcher] wake-budget exhausted for "${entry.account.name}" on thread "${entry.threadId}" — dropped batch of ${entry.events.length}`);
+      this.log('warn', `[dispatcher] wake-budget exhausted for "${entry.account.name}" on thread "${entry.threadId}" — parking batch of ${entry.events.length}`);
+      this.parkBatch(entry.account, entry.events, entry.threadId);
       return;
     }
     const lastEvent = entry.events[entry.events.length - 1];
@@ -1992,6 +2152,13 @@ export class Dispatcher {
   }
 
   private async spawnWorker(account: AgenticMailAccount, prompt: string, ctx: { kind: string; uid?: number; taskId?: string; subject?: string; from?: string }): Promise<void> {
+    // Canonical "agent is doing work right now" timestamp. Read by
+    // maybeFireParked to decide whether a parked wake can unpark
+    // (quiescence-based retry). Recorded BEFORE any awaits so even
+    // queued-but-not-yet-running spawns count as activity — that
+    // matches the operator intuition "kepler is busy" the moment a
+    // spawn is committed, not after acquireSlot returns.
+    this.lastWakeAtByAgent.set(account.id, this.now());
     // Per-agent serialization gate. If another worker is mid-flight
     // for the SAME agent, this await chains onto its tail and we
     // resume after it finishes. Prevents two simultaneous Vesper

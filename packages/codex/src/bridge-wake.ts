@@ -64,7 +64,26 @@ export async function resumeBridgeThread(
   try {
     log('info', `[bridge-wake] resuming Codex thread ${input.sessionId.slice(0, 8)}… for ${input.bridge.name}`);
     const codex = new sdk.Codex({});
-    const thread = codex.resumeThread(input.sessionId);
+    // Codex CLI refuses to exec in any directory that isn't a known
+    // trusted workspace — under pm2 our cwd is usually /Users/<user>
+    // (the launchd default), which is NOT in Codex's trust list. The
+    // failure surfaces as:
+    //   Codex Exec exited with code 1: Reading prompt from stdin...
+    //   Not inside a trusted directory and --skip-git-repo-check was not specified.
+    // and every bridge-wake fired turn into a silent no-op.
+    //
+    // Fix: opt out of the git-repo check (we're not running in a repo;
+    // we're resuming a session against bridge mail) AND pin the
+    // working directory to whatever the operator's host-session
+    // recorded as their last cwd. If we didn't capture one, fall
+    // back to $HOME so the spawn at least has a stable, real path.
+    const threadOptions: import('@openai/codex-sdk').ThreadOptions = {
+      skipGitRepoCheck: true,
+      workingDirectory: input.cwd || process.env.HOME || process.cwd(),
+      ...(input.sandboxMode ? { sandboxMode: input.sandboxMode } : {}),
+      ...(input.approvalPolicy ? { approvalPolicy: input.approvalPolicy } : {}),
+    };
+    const thread = codex.resumeThread(input.sessionId, threadOptions);
 
     // Spawn the resumed turn against the same workspace the operator
     // last had open — so file writes land in the right project tree
