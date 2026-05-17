@@ -1052,6 +1052,27 @@ export class Dispatcher {
    *  Without this, a hung dispatcher looks identical to "no
    *  events to wake on" — the host has no liveness signal. */
   private processHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  /**
+   * Periodic catch-up scan timer. Runs every CATCHUP_POLL_INTERVAL_MS
+   * across all open channels to defend against the silent-IDLE-death
+   * failure mode: the SSE stream from /api/agenticmail/events stays
+   * "connected" (no error event surfaces) but the upstream IMAP IDLE
+   * socket has dropped, so no new-mail events ever come through. Real
+   * symptom from production: kepler@localhost stopped receiving wake
+   * events for ~8 minutes after a sustained burst of replies, while
+   * sable/rivet kept receiving them on the same thread. Stalwart had
+   * delivered the missed mail to kepler's mailbox — the dispatcher
+   * just never heard about it.
+   *
+   * `runCatchUp` was already idempotent (it dedups against seenUids
+   * and the persisted cursor); it was only being called on the FIRST
+   * successful connect for each channel. Calling it periodically
+   * surfaces any missed UIDs as synthetic SSE events that flow
+   * through the normal wake path.
+   */
+  private catchUpPollTimer: ReturnType<typeof setInterval> | null = null;
+  /** How often the periodic catch-up scan runs across all channels. */
+  private readonly CATCHUP_POLL_INTERVAL_MS = 2 * 60 * 1000;
 
   constructor(opts: DispatcherOptions = {}) {
     this.cfg = resolveConfig(opts);
@@ -1274,6 +1295,18 @@ export class Dispatcher {
       running: 0,
       maxConcurrent: this.maxConcurrent,
     });
+    // Periodic catch-up across all channels. Belt-and-braces over the
+    // SSE stream: if any channel's upstream IMAP IDLE dies silently
+    // (no error event, no disconnect log), the periodic scan will
+    // notice missed UIDs and replay them as synthetic events. See
+    // catchUpPollTimer's docstring for the production repro that
+    // motivated this.
+    this.catchUpPollTimer = setInterval(() => {
+      this.runPeriodicCatchUp().catch(err =>
+        this.log('warn', `[dispatcher] periodic catch-up failed: ${(err as Error)?.message ?? err}`)
+      );
+    }, this.CATCHUP_POLL_INTERVAL_MS);
+    (this.catchUpPollTimer as unknown as { unref?: () => void }).unref?.();
     // Subscribe to system-level account-lifecycle events so new accounts
     // get an SSE channel within MILLISECONDS of `create_account`, not at
     // the next poll tick. The polling above stays as a safety net for
@@ -1287,6 +1320,8 @@ export class Dispatcher {
     this.accountSyncTimer = null;
     if (this.processHeartbeatTimer) clearInterval(this.processHeartbeatTimer);
     this.processHeartbeatTimer = null;
+    if (this.catchUpPollTimer) clearInterval(this.catchUpPollTimer);
+    this.catchUpPollTimer = null;
     if (this.systemChannelController) {
       try { this.systemChannelController.abort(); } catch { /* ignore */ }
       this.systemChannelController = null;
@@ -1735,6 +1770,29 @@ export class Dispatcher {
    * Failures here are NEVER fatal — they're "best effort". The
    * dispatcher continues processing live SSE traffic regardless.
    */
+  /**
+   * Iterate every open channel and run runCatchUp against it. Each
+   * channel's call is fire-and-forget so a slow inbox doesn't block
+   * other channels; runCatchUp is internally idempotent (seenUids +
+   * persisted cursor dedup) so concurrent invocations on the same
+   * channel are safe. We only scan channels with an established
+   * cursor — fresh accounts that haven't completed their first-run
+   * seed yet should let the initial connect handle that, not the
+   * periodic scan (which would otherwise replay every existing UID
+   * on every tick).
+   */
+  private async runPeriodicCatchUp(): Promise<void> {
+    if (this.stopped || this.channels.size === 0) return;
+    for (const ch of this.channels.values()) {
+      if (ch.stopping) continue;
+      const cursor = this.state.getCursor(ch.account.id);
+      if (!cursor) continue; // first-run path runs only through streamOne's caughtUp branch
+      void this.runCatchUp(ch).catch(err =>
+        this.log('warn', `[dispatcher] periodic catch-up for "${ch.account.name}" failed: ${(err as Error)?.message ?? err}`)
+      );
+    }
+  }
+
   private async runCatchUp(ch: ChannelState): Promise<void> {
     const account = ch.account;
     // ── Mail backlog ─────────────────────────────────────────────
