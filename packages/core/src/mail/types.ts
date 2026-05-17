@@ -36,6 +36,12 @@ export interface EmailEnvelope {
   subject: string;
   from: AddressInfo[];
   to: AddressInfo[];
+  /** Cc/Bcc from the IMAP ENVELOPE response. Added so message-view's
+   *  quote-audience backfill can pull the previous rounds' Cc/Bcc
+   *  without a full FETCH BODY round-trip — ENVELOPE already carries
+   *  them, we just weren't surfacing them. */
+  cc?: AddressInfo[];
+  bcc?: AddressInfo[];
   date: Date;
   flags: Set<string>;
   size: number;

@@ -171,7 +171,7 @@ function renderMessage(msg) {
         <div class="message-date">${escapeHtml(formatDateFull(msg.date))}</div>
       </div>
     </div>
-    <div class="message-body">${renderBodyWithThreading(bodyText, buildAudienceLookup())}</div>
+    <div class="message-body">${renderBodyWithThreading(bodyText, buildAudienceLookup(msg))}</div>
     ${attachmentsHtml}
   `;
 
@@ -239,12 +239,43 @@ function formatBytes(bytes) {
  * header serialises the date with second precision and stripped
  * timezone info.
  */
-function buildAudienceLookup() {
+function buildAudienceLookup(currentMessage = null) {
+  // Two layered sources, server-authoritative wins:
+  //
+  //   1. currentMessage.quotedAudiences — populated by the API when
+  //      it parses the body, scans for `On <date>, <addr> wrote:`
+  //      headers, and matches them against the IMAP envelopes
+  //      (which carry Cc/Bcc on the wire — we just weren't surfacing
+  //      them before 0.9.30). This works even on direct deep links
+  //      where state.messages is empty.
+  //
+  //   2. state.messages — the inbox list view the operator is
+  //      currently looking at. Fallback for older API responses
+  //      that don't yet include the server-side resolution.
+  //
+  // Layer 1 takes precedence because the server actually has access
+  // to the full mailbox envelopes; the client only sees what was
+  // paginated into state.messages.
+  const serverIndex = new Map();
+  if (currentMessage && Array.isArray(currentMessage.quotedAudiences)) {
+    for (const a of currentMessage.quotedAudiences) {
+      if (!a || !a.sender) continue;
+      // Index by sender alone AND by sender::dateIso for fuzzy date match
+      const senderKey = String(a.sender).toLowerCase();
+      const t = a.dateIso ? new Date(a.dateIso).getTime() : NaN;
+      serverIndex.set(senderKey + '::' + (Number.isFinite(t) ? t : ''), { to: a.to, cc: a.cc, bcc: a.bcc, timeMs: t });
+      // Also keep a "most recent for sender" entry as last-resort fallback
+      const allKey = senderKey + '::*';
+      const prev = serverIndex.get(allKey);
+      if (!prev || (Number.isFinite(t) && t > prev.timeMs)) {
+        serverIndex.set(allKey, { to: a.to, cc: a.cc, bcc: a.bcc, timeMs: t });
+      }
+    }
+  }
   // Defensive: state.messages may be empty if the operator navigated
-  // straight to /#/m/N. Lookup degrades to "no match" — the renderer
-  // falls back to sender-only.
+  // straight to /#/m/N. Lookup degrades to layer 1 only.
   const list = Array.isArray(state.messages) ? state.messages : [];
-  if (list.length === 0) return () => null;
+  if (list.length === 0 && serverIndex.size === 0) return () => null;
   // Flatten to a normalised array we can scan. Each entry carries
   // the same shape the renderer expects.
   const entries = list.map(m => {
@@ -265,23 +296,29 @@ function buildAudienceLookup() {
     if (!senderAddr || !dateStr) return null;
     const senderL = senderAddr.toLowerCase();
     const t = new Date(dateStr).getTime();
+
+    // Layer 1: server-resolved index. Exact date match first, then
+    // sender-only fallback. The server already matched against IMAP
+    // envelopes so this is the authoritative source.
+    if (serverIndex.size > 0) {
+      const exactKey = senderL + '::' + (Number.isFinite(t) ? t : '');
+      const exact = serverIndex.get(exactKey);
+      if (exact) return { to: exact.to, cc: exact.cc, bcc: exact.bcc };
+      const senderOnly = serverIndex.get(senderL + '::*');
+      if (senderOnly) return { to: senderOnly.to, cc: senderOnly.cc, bcc: senderOnly.bcc };
+    }
+
+    // Layer 2: state.messages — surrounding inbox list. Bounded by
+    // what the operator's folder view happens to have loaded.
     if (!Number.isFinite(t)) return null;
-    // Match by sender + nearest date within 2 s. Quote headers
-    // typically lose timezone info during render so wall-clock can
-    // shift by hours; the inbox-list date is the canonical UTC.
-    // We prefer the closest match by absolute delta.
     let best = null;
-    let bestDelta = 2000;  // 2-second tolerance for same-second matches
+    let bestDelta = 2000;
     for (const e of entries) {
       if (e.from !== senderL) continue;
       const delta = Math.abs(e.timeMs - t);
       if (delta < bestDelta) { best = e; bestDelta = delta; }
     }
     if (!best) {
-      // Fallback: if the date didn't parse close to anything, just
-      // take the most recent message from that sender. Better than
-      // nothing for the common case of a reply to the most recent
-      // prior reply.
       for (const e of entries) {
         if (e.from !== senderL) continue;
         if (!best || e.timeMs > best.timeMs) best = e;

@@ -486,6 +486,121 @@ export function deriveWakeFromBody(body: string, candidateNames: string[]): stri
 }
 
 /**
+ * Resolve audience info (To/Cc/Bcc) for every `On <date>, <addr> wrote:`
+ * quote header found in `bodyText`, by matching against the recent
+ * envelope listing of the same folder.
+ *
+ * Why this exists: legacy reply bodies (pre-0.9.32) emit just
+ * `On <date>, <addr> wrote:` with no follow-up `To:`/`Cc:` lines, and
+ * even newer ones omit `Cc:` when the original had no Cc field. The
+ * client-side renderer used to backfill from `state.messages`, but
+ * that only works when the operator is viewing a folder list that
+ * happens to contain the quoted messages — direct deep links to a
+ * single message left the quotes audience-less.
+ *
+ * Server-side resolution is authoritative: the IMAP ENVELOPE already
+ * carries Cc/Bcc, we just have to surface it. We scan up to N recent
+ * envelopes and match by sender + date (±5s tolerance, same as the
+ * client's heuristic — wall-clock can drift across parse passes).
+ *
+ * Returns an array of `{ sender, dateIso, to, cc, bcc }` entries the
+ * client renderer can index by `${sender.toLowerCase()}::${dateIso}`.
+ * Entries with no match are simply omitted; the renderer degrades to
+ * sender-only display, same as before.
+ */
+async function resolveQuotedAudiences(
+  bodyText: string,
+  receiver: { listEnvelopes: (mailbox: string, opts?: { limit?: number; offset?: number }) => Promise<import('@agenticmail/core').EmailEnvelope[]> },
+  folder: string,
+): Promise<Array<{ sender: string; dateIso: string; to: string; cc: string; bcc: string }>> {
+  if (!bodyText || typeof bodyText !== 'string') return [];
+  // Capture every `On <date>, <addr> wrote:` header anywhere in the
+  // body — including those nested inside `>`-quoted blocks (the
+  // client renderer recurses on those, so we need to feed it the
+  // nested audience info too). The pattern is lenient about `> `
+  // prefixes since recursive quotes accrete them.
+  const headerRe = /(?:^|\n)\s*(?:>\s*)*On\s+(.+?),\s+<?([^\s<>]+@[^\s<>]+)>?\s+wrote:/g;
+  const seen = new Set<string>();
+  const wanted: Array<{ sender: string; dateStr: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = headerRe.exec(bodyText)) !== null) {
+    const sender = m[2].toLowerCase();
+    const dateStr = m[1];
+    const key = `${sender}::${dateStr}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    wanted.push({ sender, dateStr });
+  }
+  if (wanted.length === 0) return [];
+
+  // Pull a generous envelope window so deeply-nested threads can be
+  // resolved on one pass. 200 covers ~weeks of activity for the
+  // typical agent inbox; bigger threads still resolve their most-
+  // recent quotes which is what matters for the visible view.
+  let envelopes: import('@agenticmail/core').EmailEnvelope[];
+  try {
+    envelopes = await receiver.listEnvelopes(folder, { limit: 200 });
+  } catch {
+    return [];
+  }
+
+  // Build sender → envelopes[] index for O(N+M) matching instead of O(N*M).
+  const bySender = new Map<string, import('@agenticmail/core').EmailEnvelope[]>();
+  for (const e of envelopes) {
+    const addr = (e.from?.[0]?.address ?? '').toLowerCase();
+    if (!addr) continue;
+    const list = bySender.get(addr);
+    if (list) list.push(e);
+    else bySender.set(addr, [e]);
+  }
+
+  const out: Array<{ sender: string; dateIso: string; to: string; cc: string; bcc: string }> = [];
+  const fmtAddrs = (arr: import('@agenticmail/core').AddressInfo[] | undefined): string =>
+    (arr ?? []).map(a => a.address || '').filter(Boolean).join(', ');
+
+  for (const { sender, dateStr } of wanted) {
+    const candidates = bySender.get(sender) ?? [];
+    if (candidates.length === 0) continue;
+    const t = new Date(dateStr).getTime();
+    let best: import('@agenticmail/core').EmailEnvelope | null = null;
+    let bestDelta = Number.POSITIVE_INFINITY;
+    if (Number.isFinite(t)) {
+      // Prefer the closest match by absolute delta within 5s; this
+      // matches the client-side tolerance for date-rounding drift
+      // across parse/render passes.
+      for (const e of candidates) {
+        const et = e.date instanceof Date ? e.date.getTime() : new Date(e.date as unknown as string).getTime();
+        if (!Number.isFinite(et)) continue;
+        const delta = Math.abs(et - t);
+        if (delta < bestDelta && delta <= 5000) { best = e; bestDelta = delta; }
+      }
+    }
+    if (!best) {
+      // Fallback: when date didn't parse close to anything (timezone
+      // drift, second-truncated quote dates), pick the candidate
+      // closest in time anyway — better than dropping the audience
+      // entirely. Bias toward "older than the current message" since
+      // that's the only direction quotes can point.
+      for (const e of candidates) {
+        const et = e.date instanceof Date ? e.date.getTime() : new Date(e.date as unknown as string).getTime();
+        if (!Number.isFinite(et)) continue;
+        const delta = Number.isFinite(t) ? Math.abs(et - t) : 0;
+        if (delta < bestDelta) { best = e; bestDelta = delta; }
+      }
+    }
+    if (!best) continue;
+    out.push({
+      sender,
+      dateIso: dateStr,
+      to: fmtAddrs(best.to),
+      cc: fmtAddrs(best.cc),
+      bcc: fmtAddrs(best.bcc),
+    });
+  }
+  return out;
+}
+
+/**
  * Build the SMTP `headers` map from a normalised wake list. Centralised
  * so every send path produces the same header format.
  */
@@ -971,7 +1086,7 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
           }))
         : [];
 
-      let payload: unknown;
+      let payload: any;
 
       // Skip spam scoring + sanitization for internal (agent-to-agent) emails
       if (isInternalEmail(parsed)) {
@@ -999,6 +1114,20 @@ export function createMailRoutes(accountManager: AccountManager, config: Agentic
           },
         };
       }
+
+      // Resolve audience info for every `On <date>, <addr> wrote:`
+      // quote header in the body so the renderer can show who was
+      // on the previous rounds. Failures degrade silently — the
+      // client falls back to its own state.messages lookup, then
+      // to sender-only display. Best-effort.
+      try {
+        const bodyForScan = typeof (payload as { text?: string }).text === 'string' ? (payload as { text?: string }).text! : '';
+        const audiences = await resolveQuotedAudiences(bodyForScan, receiver, folder);
+        if (audiences.length > 0) {
+          (payload as { quotedAudiences?: typeof audiences }).quotedAudiences = audiences;
+        }
+      } catch { /* best-effort */ }
+
       setParsedMessageInCache(agent.id, folder, uid, payload);
       res.json(payload);
     } catch (err) {

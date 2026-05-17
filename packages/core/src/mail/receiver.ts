@@ -123,6 +123,14 @@ export class MailReceiver {
             name: a.name,
             address: a.address ?? '',
           })),
+          cc: (env.cc ?? []).map((a: any) => ({
+            name: a.name,
+            address: a.address ?? '',
+          })),
+          bcc: (env.bcc ?? []).map((a: any) => ({
+            name: a.name,
+            address: a.address ?? '',
+          })),
           date: env.date ?? new Date(),
           flags: msg.flags ?? new Set<string>(),
           size: msg.size ?? 0,
