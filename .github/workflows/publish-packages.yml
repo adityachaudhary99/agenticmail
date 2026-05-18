@@ -55,16 +55,19 @@ jobs:
       - name: Install root dependencies
         run: npm ci --ignore-scripts
 
-      # Build the workspace dependencies FIRST. Every publishable package
-      # imports `@agenticmail/core`, and `@agenticmail/cli` also imports
-      # `@agenticmail/api`. `npm ci --ignore-scripts` only symlinks the
-      # workspace packages into node_modules — it does NOT build their
-      # dist/. Without this step the per-package tsup build for mcp / cli
-      # / claudecode / codex fails with "Cannot find module
-      # '@agenticmail/core'". Building core + api up front populates their
-      # dist/ so every dependent resolves.
-      - name: Build workspace dependencies (core, api)
-        run: npm run build:core && npm run build:api
+      # Build the workspace dependencies FIRST. `npm ci --ignore-scripts`
+      # only symlinks the workspace packages into node_modules — it does
+      # NOT build their dist/. Without this the per-package tsup build
+      # fails with "Cannot find module '@agenticmail/...'".
+      # Dependency map across the publish matrix:
+      #   - every package imports @agenticmail/core
+      #   - @agenticmail/cli imports @agenticmail/api, and its `--dts`
+      #     build also needs @agenticmail/claudecode + @agenticmail/codex
+      #     type declarations (they're bundle-external but still typed)
+      # Building core → api → claudecode → codex up front satisfies all
+      # six matrix packages.
+      - name: Build workspace dependencies
+        run: npm run build:core && npm run build:api && npm run build:claudecode && npm run build:codex
 
       # Build the package being published. Each package owns its own
       # `npm run build` script (tsup-based); we run it from inside the
