@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.47] - 2026-05-18
+
+### Changed
+
+- **Shared bridge-wake routing** (#38, @benediktkraus) — the
+  skip-live / escalate / resume decision for bridge mail is
+  consolidated into `planBridgeWake` in `@agenticmail/core`; the
+  Claude Code and Codex dispatchers call it instead of inlining the
+  logic. Pure refactor — behavior and dispatcher activity payloads
+  unchanged.
+- **OpenClaw host-session capture** (#39, @benediktkraus) — the
+  OpenClaw operator session is now recorded into the shared
+  host-session registry, classified `wake-only` (OpenClaw has no
+  durable SDK resume primitive). Sub-agent and mail-channel session
+  keys are explicitly excluded so only the real operator session is
+  captured.
+- **Actionable relay credential errors** (#40, @benediktkraus) —
+  Gmail/Outlook authentication, app-password, and OAuth/token-expiry
+  failures are now classified separately from generic network/TLS/DNS
+  errors, and every SMTP/IMAP error site (verify, send, poll, search,
+  fetch) is wrapped with actionable reconnect guidance instead of an
+  opaque stack message.
+
+### Security
+
+- **Relay error logs redact SASL credentials** (#40 follow-up). The
+  relay error formatter renders raw error fields (`response`,
+  `command`, `stderr`). If an SMTP/IMAP library ever surfaced an error
+  echoing an AUTH exchange, the base64 credential could ride into a
+  log line. `redactCredentialTokens` now masks the payload after an
+  `AUTH`/`AUTHENTICATE` SASL verb, keeping the verb + mechanism
+  visible for triage while redacting the secret.
+
 ## [0.9.46] - 2026-05-18
 
 ### Security — GHSA-wjjv-3mj2-39hf (HIGH)
