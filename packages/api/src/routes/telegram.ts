@@ -36,6 +36,7 @@ import {
   type AgenticMailConfig,
   type TelegramConfig,
   type ParsedTelegramMessage,
+  type GatewayManager,
 } from '@agenticmail/core';
 
 type Db = ReturnType<typeof import('@agenticmail/core').getDatabase>;
@@ -198,7 +199,11 @@ function listOpenOperatorQueries(
  * Every failure mode — missing/unknown secret — funnels into a single
  * uniform 403 so the endpoint is not a secret-probing oracle.
  */
-export function createTelegramWebhookRoutes(db: Db, config: AgenticMailConfig): Router {
+export function createTelegramWebhookRoutes(
+  db: Db,
+  config: AgenticMailConfig,
+  gatewayManager?: GatewayManager,
+): Router {
   const router = Router();
   const telegramManager = new TelegramManager(db as any, config.masterKey);
   const phoneManager = new PhoneManager(db as any, config.masterKey);
@@ -239,13 +244,26 @@ export function createTelegramWebhookRoutes(db: Db, config: AgenticMailConfig): 
         replyToMessageId: parsed.messageId,
       }).catch(() => { /* confirmation is best-effort */ });
     }
+
+    // Auto-wake bridge — fire only on a freshly-recorded message that
+    // wasn't an operator-query reply (those already fed the phone
+    // bridge directly). Same code path the poller uses, so push-mode
+    // and poll-mode wake the agent identically.
+    if (gatewayManager && !result.duplicate && !result.answeredQueryId) {
+      void gatewayManager.bridgeTelegramInbound(match.agentId, parsed, match.config)
+        .catch((err) => console.warn(`[telegram-webhook] wake bridge failed: ${(err as Error).message}`));
+    }
   });
 
   return router;
 }
 
 /** Agent-key-scoped Telegram routes: config / setup / disable / messages / send / poll. */
-export function createTelegramRoutes(db: Db, config: AgenticMailConfig): Router {
+export function createTelegramRoutes(
+  db: Db,
+  config: AgenticMailConfig,
+  gatewayManager?: GatewayManager,
+): Router {
   const router = Router();
   const telegramManager = new TelegramManager(db as any, config.masterKey);
   const phoneManager = new PhoneManager(db as any, config.masterKey);
@@ -353,6 +371,18 @@ export function createTelegramRoutes(db: Db, config: AgenticMailConfig): Router 
       };
       telegramManager.saveConfig(agent.id, telegramConfig);
 
+      // Start (or restart) the per-agent long-poll loop immediately so
+      // the user doesn't have to restart the server after `/telegram/setup`.
+      // Webhook mode doesn't need a poller; the webhook route bridges
+      // straight into `gatewayManager.bridgeTelegramInbound`.
+      if (mode === 'poll' && gatewayManager) {
+        try {
+          await gatewayManager.startTelegramPollerForAgent(agent.id, agent.name);
+        } catch (err) {
+          console.warn(`[telegram] failed to start poller after setup: ${(err as Error).message}`);
+        }
+      }
+
       res.json({
         success: true,
         telegram: redactTelegramConfig(telegramConfig),
@@ -366,7 +396,9 @@ export function createTelegramRoutes(db: Db, config: AgenticMailConfig): Router 
                 : `${allowedChatIds.length} chat(s) linked.`,
             ]
           : [
-              'Poll mode — call POST /telegram/poll on a schedule to pull new messages.',
+              gatewayManager
+                ? 'Poll mode — long-poll loop started. New messages wake the agent automatically.'
+                : 'Poll mode — call POST /telegram/poll on a schedule to pull new messages.',
               allowedChatIds.length === 0
                 ? 'No chats are linked yet — add chat ids so inbound messages are accepted.'
                 : `${allowedChatIds.length} chat(s) linked.`,
@@ -378,7 +410,7 @@ export function createTelegramRoutes(db: Db, config: AgenticMailConfig): Router 
   });
 
   // POST /telegram/disable — disable the channel.
-  router.post('/telegram/disable', (req: Request, res: Response) => {
+  router.post('/telegram/disable', async (req: Request, res: Response) => {
     try {
       const agent = getAgent(req, res);
       if (!agent) return;
@@ -388,6 +420,13 @@ export function createTelegramRoutes(db: Db, config: AgenticMailConfig): Router 
       }
       existing.enabled = false;
       telegramManager.saveConfig(agent.id, existing);
+      // Stop the running poll loop so we don't keep hammering Telegram
+      // with the now-disabled token. The poller itself also self-stops
+      // on the next config re-read, but stopping here makes shutdown
+      // deterministic.
+      if (gatewayManager) {
+        try { await gatewayManager.stopTelegramPollerForAgent(agent.id); } catch { /* ignore */ }
+      }
       res.json({ success: true, message: 'Telegram channel disabled' });
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });

@@ -63,6 +63,13 @@ export interface TelegramApiOptions {
    * is torn down before Telegram replies.
    */
   longPoll?: boolean;
+  /**
+   * External abort — lets a long-running poll loop cancel the in-flight
+   * request when the caller wants to shut down without waiting for the
+   * Telegram timeout. Composed with the internal request-timeout signal
+   * via {@link AbortSignal.any}.
+   */
+  signal?: AbortSignal;
 }
 
 /**
@@ -82,13 +89,21 @@ export async function callTelegramApi<T = unknown>(
   const pollTimeout = typeof body?.timeout === 'number' ? body.timeout : 0;
   const timeoutMs = options.longPoll && pollTimeout > 0 ? (pollTimeout + 15) * 1000 : 30_000;
 
+  // Compose the request-timeout signal with the caller-supplied one
+  // (used by `TelegramPoller.stop()` to interrupt a long-poll mid-flight
+  // rather than wait up to `timeoutMs` for it to time out).
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal = options.signal
+    ? AbortSignal.any([timeoutSignal, options.signal])
+    : timeoutSignal;
+
   let response: Response;
   try {
     response = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(timeoutMs),
+      signal,
     });
   } catch (err) {
     // A network/timeout failure can echo the request URL (with the
@@ -213,6 +228,8 @@ export interface GetUpdatesOptions {
   limit?: number;
   /** Long-poll window in seconds (0 = short poll). */
   timeoutSec?: number;
+  /** Cancel the in-flight long-poll (used by `TelegramPoller.stop()`). */
+  signal?: AbortSignal;
 }
 
 /** `getUpdates` long-poll — the poll-mode transport. */
@@ -227,7 +244,7 @@ export function getTelegramUpdates(
     limit: Math.min(Math.max(options.limit ?? 100, 1), 100),
     timeout: timeoutSec,
     allowed_updates: ['message'],
-  }, { longPoll: timeoutSec > 0 });
+  }, { longPoll: timeoutSec > 0, signal: options.signal });
 }
 
 export interface SetWebhookOptions {

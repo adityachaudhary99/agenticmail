@@ -27,6 +27,13 @@ import type { AccountManager } from '../accounts/manager.js';
 import type { Agent, AgentRole } from '../accounts/types.js';
 import { DEFAULT_AGENT_NAME, DEFAULT_AGENT_ROLE } from '../accounts/types.js';
 import { SmsManager, SmsPoller, parseGoogleVoiceSms, type SmsConfig } from '../sms/manager.js';
+import {
+  TelegramManager,
+  TelegramPoller,
+  parseTelegramOperatorReply,
+  type ParsedTelegramMessage,
+  type TelegramConfig,
+} from '../telegram/index.js';
 
 export interface LocalSmtpConfig {
   host: string;
@@ -62,6 +69,8 @@ export class GatewayManager {
   private domainPurchaser: DomainPurchaser | null = null;
   private smsManager: SmsManager | null = null;
   private smsPollers: Map<string, SmsPoller> = new Map();
+  private telegramManager: TelegramManager | null = null;
+  private telegramPollers: Map<string, TelegramPoller> = new Map();
   private encryptionKey: string | null = null;
 
   constructor(private options: GatewayManagerOptions) {
@@ -87,6 +96,16 @@ export class GatewayManager {
 
     // Initialize SMS manager
     try { this.smsManager = new SmsManager(options.db as any); } catch {}
+
+    // Initialize Telegram manager. The encryption key is the same master
+    // key used for SMS/phone — Telegram credentials (bot token, webhook
+    // secret) are stored encrypted at rest under it. A missing key
+    // means tests / no-key deployments; the manager tolerates both.
+    try {
+      this.telegramManager = new TelegramManager(options.db as any, this.encryptionKey ?? undefined);
+    } catch {
+      this.telegramManager = null;
+    }
   }
 
   /**
@@ -1038,6 +1057,209 @@ export class GatewayManager {
     }
   }
 
+  // --- Telegram Polling ---
+
+  /**
+   * Start a long-poll loop for every agent whose Telegram channel is
+   * configured + enabled + in poll mode. Webhook-mode agents skip — the
+   * webhook route already calls back into the same agent-wake bridge.
+   *
+   * Each new inbound Telegram message (that isn't an operator-query
+   * reply) is converted to a synthetic email and delivered into the
+   * agent's INBOX via the existing local-SMTP path — the very same
+   * delivery the relay uses for real email. This makes the existing
+   * IMAP IDLE → claudecode dispatcher path light up exactly as it
+   * would for a real inbound mail, so the agent gets a Claude turn
+   * without any new dispatcher plumbing. The body of the synthetic
+   * mail tells the agent the message came from Telegram and that it
+   * MUST reply via the `telegram_send` MCP tool, not via email.
+   */
+  private async startTelegramPollers(): Promise<void> {
+    if (!this.telegramManager || !this.accountManager) return;
+
+    const agents = this.db.prepare('SELECT id, name FROM agents').all() as unknown as Array<{ id: string; name: string }>;
+    for (const agent of agents) {
+      try {
+        const config = this.telegramManager.getConfig(agent.id);
+        if (!config?.enabled || config.mode !== 'poll' || !config.botToken) continue;
+        await this.startTelegramPollerForAgent(agent.id, agent.name);
+      } catch (err) {
+        console.warn(`[GatewayManager] Could not start Telegram poller for ${agent.name}: ${(err as Error).message}`);
+      }
+    }
+  }
+
+  /**
+   * Start (or restart) the Telegram poller for one agent. Idempotent —
+   * a prior poller is stopped first so re-running `/telegram/setup`
+   * picks up the new token / allow-list cleanly.
+   *
+   * Public so the API layer can poke the gateway after a successful
+   * `/telegram/setup` without waiting for the next server restart.
+   */
+  async startTelegramPollerForAgent(agentId: string, agentName?: string): Promise<void> {
+    if (!this.telegramManager) return;
+
+    const existing = this.telegramPollers.get(agentId);
+    if (existing) {
+      try { await existing.stop(); } catch { /* ignore */ }
+      this.telegramPollers.delete(agentId);
+    }
+
+    const config = this.telegramManager.getConfig(agentId);
+    if (!config?.enabled || config.mode !== 'poll' || !config.botToken) return;
+
+    const poller = new TelegramPoller(this.telegramManager, agentId);
+    poller.onInbound = async (event) => {
+      await this.bridgeInboundTelegram(event.agentId, event.message, event.config, agentName);
+    };
+    this.telegramPollers.set(agentId, poller);
+    await poller.start();
+    const botName = config.botUsername ? `@${config.botUsername}` : `bot ${config.botId ?? '(unknown)'}`;
+    console.log(`[GatewayManager] Telegram poller started for agent "${agentName ?? agentId.slice(0, 8)}" (${botName})`);
+  }
+
+  /** Stop a single agent's Telegram poller (called on disable). */
+  async stopTelegramPollerForAgent(agentId: string): Promise<void> {
+    const poller = this.telegramPollers.get(agentId);
+    if (!poller) return;
+    try { await poller.stop(); } catch { /* ignore */ }
+    this.telegramPollers.delete(agentId);
+  }
+
+  /**
+   * Convert one new inbound Telegram message into a synthetic email
+   * landing in the agent's INBOX, so the dispatcher wakes the agent.
+   *
+   * Two short-circuits before delivery:
+   *
+   *   1. If the message is from the configured operator's chat AND
+   *      looks like an operator-query reply (parsed by
+   *      `parseTelegramOperatorReply`), it's an answer to an in-flight
+   *      voice mission, not free-form chat — the HTTP webhook/poll
+   *      route already handles those by calling into the phone
+   *      manager, and the route does NOT need an agent turn. The poller
+   *      hands them off the same way: we just skip the wake here.
+   *
+   *   2. Plain `/start` (BotFather's default first DM) is a Telegram
+   *      housekeeping nudge — replying with an LLM turn for "/start"
+   *      would be embarrassing. Skip it.
+   *
+   * Everything else: synthesise the email and deliver.
+   */
+  /**
+   * Public wrapper around the bridge — the Telegram webhook route calls
+   * this directly so push-mode and poll-mode share the wake path.
+   */
+  async bridgeTelegramInbound(
+    agentId: string,
+    parsed: ParsedTelegramMessage,
+    config: TelegramConfig,
+  ): Promise<void> {
+    return this.bridgeInboundTelegram(agentId, parsed, config);
+  }
+
+  private async bridgeInboundTelegram(
+    agentId: string,
+    parsed: ParsedTelegramMessage,
+    config: TelegramConfig,
+    agentNameHint?: string,
+  ): Promise<void> {
+    // Operator-query replies short-circuit. We do NOT wake the agent
+    // for these — the phone bridge already has what it needs.
+    const operatorChatId = config.operatorChatId?.toString().trim() || '';
+    if (operatorChatId && parsed.chatId === operatorChatId) {
+      const reply = parseTelegramOperatorReply({ text: parsed.text, replyToText: parsed.replyToText });
+      if (reply) return;
+    }
+
+    // Bot-housekeeping commands skip the wake (still recorded by the
+    // poller — visible in /telegram → "view recent messages").
+    const trimmedText = (parsed.text ?? '').trim();
+    if (trimmedText === '/start' || trimmedText === '/help' || trimmedText === '/stop') {
+      return;
+    }
+    if (!trimmedText) return;
+
+    if (!this.accountManager) return;
+    const agent = await this.accountManager.getById(agentId);
+    if (!agent) return;
+    const agentName = agentNameHint ?? agent.name;
+
+    const fromLabel = parsed.fromName
+      ? `${parsed.fromName} (Telegram chat ${parsed.chatId})`
+      : `Telegram chat ${parsed.chatId}`;
+    const senderName = parsed.fromName || parsed.fromUsername || 'User';
+    const subject = `[Telegram] ${trimmedText.slice(0, 80)}${trimmedText.length > 80 ? '…' : ''}`;
+
+    // Body is designed to be read by the LLM agent. The structure +
+    // wording is borrowed from the agent-harness Fola Telegram bridge,
+    // which has been hardened against the two classic failure modes of
+    // bridged channels:
+    //
+    //   1. Reply duplication. Without an explicit routing rule the
+    //      agent often does both a tool call (telegram_send) and a
+    //      written-out narration ("I sent the message"), and the user
+    //      receives two copies of everything. The REPLY ROUTING block
+    //      below spells out that the telegram_send tool is the
+    //      authoritative reply channel — the agent's prose / narration
+    //      stays internal.
+    //   2. Wrong-channel reply. Because this prompt arrived as an email
+    //      the agent will instinctively want to reply by email. The
+    //      block explicitly forbids that — the user is on Telegram and
+    //      will never see an email reply.
+    const body = [
+      `[Incoming Telegram message — via AgenticMail Telegram bridge]`,
+      `from_name:           ${senderName}`,
+      parsed.fromId ? `from_id:             ${parsed.fromId}` : null,
+      `chat_id:             ${parsed.chatId}`,
+      `chat_type:           ${parsed.chatType}`,
+      `telegram_message_id: ${parsed.messageId}`,
+      `received_at:         ${parsed.date}`,
+      ``,
+      `=== REPLY ROUTING (important, read before responding) ===`,
+      `This message arrived via Telegram, NOT email. To reply to ${senderName}`,
+      `you must use the telegram_send MCP tool — replying by email will go`,
+      `nowhere they can see it.`,
+      ``,
+      `    telegram_send({ chatId: "${parsed.chatId}", text: "<your reply>" })`,
+      ``,
+      `Send EXACTLY ONE telegram_send call per response — do not also narrate`,
+      `or summarise what you sent in a separate reply / email, that just shows`,
+      `up to the user as a duplicate. Keep replies concise and plain text`,
+      `(Telegram strips markdown formatting in transit). No preamble like`,
+      `"sure, here you go" — just answer the question.`,
+      ``,
+      `If the user is asking you to do an errand (call someone, look up info,`,
+      `send something), do the work FIRST, then telegram_send a single clear`,
+      `update back to chat_id ${parsed.chatId} when done — that becomes the`,
+      `whole reply.`,
+      `=== END REPLY ROUTING ===`,
+      ``,
+      `--- User's message ---`,
+      trimmedText,
+      `---`,
+    ].filter((l) => l !== null).join('\n');
+
+    const inbound: InboundEmail = {
+      from: `telegram-bridge@telegram.local`,
+      to: agent.email,
+      subject,
+      text: body,
+      html: undefined,
+      // Use the Telegram-provided send time so the inbox ordering matches
+      // when the user actually pressed Send, not when the bridge ran.
+      date: parsed.date ? new Date(parsed.date) : new Date(),
+      messageId: `<tg-${parsed.chatId}-${parsed.messageId}@telegram.local>`,
+    };
+
+    try {
+      await this.deliverInboundLocally(agentName, inbound);
+    } catch (err) {
+      console.warn(`[GatewayManager] Telegram → inbox bridge failed for ${agentName}: ${(err as Error).message}`);
+    }
+  }
+
   // --- Lifecycle ---
 
   async shutdown(): Promise<void> {
@@ -1048,6 +1270,13 @@ export class GatewayManager {
       poller.stopPolling();
     }
     this.smsPollers.clear();
+    // Stop all Telegram pollers — fire-and-forget; stop() awaits the
+    // in-flight long-poll abort but we don't want shutdown to block on a
+    // pathological Telegram socket.
+    for (const poller of this.telegramPollers.values()) {
+      try { void poller.stop(); } catch { /* ignore */ }
+    }
+    this.telegramPollers.clear();
   }
 
   /**
@@ -1078,6 +1307,17 @@ export class GatewayManager {
         await this.startSmsPollers();
       } catch (err) {
         console.error('[GatewayManager] Failed to start SMS pollers:', err);
+      }
+    }
+
+    // Start Telegram long-poll loops for poll-mode-enabled agents.
+    // Webhook-mode agents skip — Telegram pushes to /telegram/webhook,
+    // which goes through the same bridge path on the route side.
+    if (this.telegramManager && this.accountManager) {
+      try {
+        await this.startTelegramPollers();
+      } catch (err) {
+        console.error('[GatewayManager] Failed to start Telegram pollers:', err);
       }
     }
 

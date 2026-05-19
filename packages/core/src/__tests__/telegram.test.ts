@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
+  TelegramPoller,
   stripTelegramMarkdown,
   splitTelegramMessage,
   redactBotToken,
@@ -344,5 +345,92 @@ describe('parseTelegramOperatorReply', () => {
 
   it('returns null for an empty message', () => {
     expect(parseTelegramOperatorReply({ text: '   ' })).toBeNull();
+  });
+});
+
+// ─── poller: long-poll loop ────────────────────────────────
+
+describe('TelegramPoller', () => {
+  /**
+   * One inbound message goes from "Telegram getUpdates" → recorded in
+   * the DB → fires the `onInbound` callback exactly once. The poller
+   * advances the offset so a redelivered batch is a no-op (Telegram
+   * acks updates only after offset advances).
+   */
+  it('records a new inbound message and fires onInbound exactly once', async () => {
+    const db = createTestDatabase();
+    seedAgent(db, 'agent1');
+    const manager = new TelegramManager(db);
+    manager.saveConfig('agent1', makeConfig({ allowedChatIds: ['42'], pollOffset: 0 }));
+
+    const update = {
+      update_id: 100,
+      message: {
+        message_id: 1,
+        from: { id: 42, first_name: 'Ope' },
+        chat: { id: 42, type: 'private' },
+        date: 1700000000,
+        text: 'hello',
+      },
+    };
+    let getUpdatesCalls = 0;
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('getUpdates')) {
+        getUpdatesCalls++;
+        // Return the update once, then empty so the loop idles.
+        return okResponse(getUpdatesCalls === 1 ? [update] : []);
+      }
+      return okResponse({});
+    }));
+
+    const seen: string[] = [];
+    const poller = new TelegramPoller(manager, 'agent1', { timeoutSec: 1 });
+    poller.onInbound = (e) => { seen.push(e.message.text); };
+    await poller.start();
+
+    // Let the loop run one or two iterations.
+    await new Promise((r) => setTimeout(r, 50));
+    await poller.stop();
+
+    expect(seen).toEqual(['hello']);
+    // Offset must have advanced past the delivered update_id so a
+    // redelivery doesn't replay it.
+    const cfg = manager.getConfig('agent1');
+    expect(cfg?.pollOffset).toBe(101);
+  });
+
+  /** A disabled config stops the loop immediately on the next iteration. */
+  it('stops itself when the config is disabled mid-flight', async () => {
+    const db = createTestDatabase();
+    seedAgent(db, 'agent1');
+    const manager = new TelegramManager(db);
+    manager.saveConfig('agent1', makeConfig({ enabled: false }));
+
+    vi.stubGlobal('fetch', vi.fn(async () => okResponse([])));
+
+    const poller = new TelegramPoller(manager, 'agent1', { timeoutSec: 1 });
+    await poller.start();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(poller.isRunning).toBe(false);
+  });
+
+  /**
+   * A 401 from Telegram (revoked / wrong token) is permanent — the
+   * poller exits rather than spin forever burning quota.
+   */
+  it('stops on a 401 token-rejected response', async () => {
+    const db = createTestDatabase();
+    seedAgent(db, 'agent1');
+    const manager = new TelegramManager(db);
+    manager.saveConfig('agent1', makeConfig({ allowedChatIds: ['42'] }));
+
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ ok: false, error_code: 401, description: 'Unauthorized' }), { status: 401 })
+    ));
+
+    const poller = new TelegramPoller(manager, 'agent1', { timeoutSec: 1 });
+    await poller.start();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(poller.isRunning).toBe(false);
   });
 });

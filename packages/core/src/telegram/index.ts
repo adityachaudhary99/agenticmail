@@ -52,6 +52,15 @@ export {
 export type { TelegramConfig, TelegramMessage, TelegramMode } from './manager.js';
 
 export {
+  TelegramPoller,
+  TELEGRAM_LONG_POLL_TIMEOUT_SEC,
+} from './poller.js';
+export type {
+  TelegramPollerOptions,
+  TelegramInboundEvent,
+} from './poller.js';
+
+export {
   formatOperatorQueryTelegramMessage,
   parseTelegramOperatorReply,
   TELEGRAM_OPERATOR_QUERY_TAG,

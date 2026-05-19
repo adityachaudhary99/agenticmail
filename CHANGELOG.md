@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.60] - 2026-05-19
+
+### Added — Telegram channel: full inbound auto-wake pipeline
+
+The Telegram channel was capture-only until this release: inbound DMs
+were recorded but nothing woke the agent, so the user DM'd the bot and
+got silence. This release closes the loop end to end.
+
+- **`TelegramPoller` (`@agenticmail/core`)** — a per-agent long-poll
+  loop (`timeout=25s`, well under proxy caps) that runs continuously
+  inside the API server, pulls new updates, dedupes by
+  `telegram_message_id`, advances the offset BEFORE dispatch (so a
+  crash mid-handle can't replay a batch), and fires an `onInbound`
+  callback for every new allow-listed message. Exits cleanly on a
+  401/404 token-rejected response rather than hammering Telegram.
+  An `AbortSignal` plumbed through `getTelegramUpdates` lets
+  `stop()` interrupt a 25-second long-poll within milliseconds.
+- **Email-synth bridge (`GatewayManager.bridgeTelegramInbound`)** —
+  converts each new inbound Telegram message into a synthetic email
+  delivered into the agent's INBOX via the existing local-SMTP path,
+  so the IMAP IDLE → `@agenticmail/claudecode` dispatcher path
+  lights up exactly as it would for a real email and the agent gets
+  a Claude turn. The body uses an explicit `REPLY ROUTING` block
+  (proven pattern from the agent-harness Fola Telegram bridge) that
+  tells the agent: reply via the `telegram_send` MCP tool, NOT by
+  email; send exactly one tool call per response; no duplicate
+  narration. Operator-query replies (answers to in-flight phone
+  call `ask_operator` questions) short-circuit — they hand off to
+  the phone manager and do NOT wake the agent. `/start`, `/help`,
+  and `/stop` bot-housekeeping commands are recorded but don't wake.
+- **Auto-start on setup** — `/telegram/setup` now starts the poller
+  for that agent immediately; no server restart. `/telegram/disable`
+  stops it cleanly. The webhook route bridges through the same
+  `bridgeTelegramInbound` so push-mode and poll-mode wake identically.
+- **Resume on server boot** — every poll-mode-enabled agent gets a
+  poller started automatically when the API server comes up (mirrors
+  the SMS poller pattern).
+
+3 new `TelegramPoller` tests; 658 core tests + 60 api tests pass; full
+monorepo build green.
+
 ## [0.9.59] - 2026-05-19
 
 ### Fixed

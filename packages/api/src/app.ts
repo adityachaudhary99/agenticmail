@@ -225,7 +225,7 @@ export function createApp(configOverrides?: Partial<AgenticMailConfig>): {
 
   // Inbound Telegram webhook (authenticates with the per-agent
   // X-Telegram-Bot-Api-Secret-Token header, before bearer auth)
-  app.use('/api/agenticmail', createTelegramWebhookRoutes(db, config));
+  app.use('/api/agenticmail', createTelegramWebhookRoutes(db, config, gatewayManager));
 
   // Integration bootstrap routes — mounted BEFORE bearer auth so a fresh
   // AI agent (Claude Code, etc.) can self-install without having to first
@@ -260,7 +260,7 @@ export function createApp(configOverrides?: Partial<AgenticMailConfig>): {
   app.use('/api/agenticmail', createTaskRoutes(db, accountManager, config));
   app.use('/api/agenticmail', createSmsRoutes(db, accountManager, config, gatewayManager));
   app.use('/api/agenticmail', createPhoneRoutes(db, config));
-  app.use('/api/agenticmail', createTelegramRoutes(db, config));
+  app.use('/api/agenticmail', createTelegramRoutes(db, config, gatewayManager));
   // Media toolset — TTS, image / video / audio editing, probing,
   // video understanding, voice cloning. Thin routes over the core
   // MediaManager; the underlying binaries (ffmpeg, ImageMagick, …) are
