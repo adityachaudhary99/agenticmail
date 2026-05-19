@@ -113,6 +113,64 @@ export function createGatewayRoutes(gatewayManager: GatewayManager): Router {
           cons: ['Requires Cloudflare account', 'Domain costs ~$10/yr', 'More setup steps', 'Gmail alias step needed for outbound'],
         },
       ],
+      // Optional channels beyond email — each is independent of the
+      // email gateway above and can be added at any time. Surfaced
+      // here so the setup_guide tool can describe the full onboarding
+      // surface (realtime voice, the phone-provider choice, Telegram).
+      channels: [
+        {
+          channel: 'realtime_voice',
+          difficulty: 'Advanced',
+          description: 'Live voice calls — the realtime voice bridge connects a carrier media stream to an OpenAI Realtime (gpt-realtime) session so the agent can hold a spoken conversation on a phone call.',
+          requirements: [
+            'An OpenAI API key (config field openaiApiKey / env OPENAI_API_KEY)',
+            'A phone transport configured (see the phone channel below)',
+          ],
+          setup: 'Run `agenticmail setup` and enter your OpenAI API key at the realtime-voice step, or set OPENAI_API_KEY in the environment.',
+          pros: ['Agents can speak on live calls, not just place call-control missions'],
+          cons: ['Requires an OpenAI API key (usage is billed by OpenAI)', 'Needs a phone transport in place'],
+          note: 'Optional. When no OpenAI key is set, phone missions still place and track calls (call-control); only the spoken-conversation bridge is unavailable.',
+        },
+        {
+          channel: 'phone',
+          difficulty: 'Advanced',
+          description: 'Outbound phone call-control missions. Pick ONE carrier — 46elks or Twilio — then provide that carrier\'s credentials, a caller phone number, and a public HTTPS webhook base URL.',
+          requirements: [
+            'A carrier account: 46elks OR Twilio',
+            'An owned caller phone number in E.164 format',
+            'A public HTTPS base URL the carrier can reach (webhookBaseUrl)',
+            'A webhook secret of at least 24 characters',
+          ],
+          providers: [
+            {
+              provider: '46elks',
+              credentials: 'API username + API password (from the 46elks dashboard)',
+              setup: { tool: 'phone_transport_setup', params: { provider: '46elks', username: 'your_46elks_username', password: 'your_46elks_password' } },
+            },
+            {
+              provider: 'twilio',
+              credentials: 'Account SID + Auth Token (from the Twilio console)',
+              setup: { tool: 'phone_transport_setup', params: { provider: 'twilio', accountSid: 'ACxxxxxxxx', authToken: 'your_twilio_auth_token' } },
+            },
+          ],
+          setup: 'Run `agenticmail setup`, choose to set up phone calling, pick 46elks or Twilio, and enter that provider\'s credentials + webhook base URL — or call the phone_transport_setup tool.',
+          pros: ['Agents can place tracked, policy-bounded outbound calls'],
+          cons: ['Carrier account required', 'Calls are billed by the carrier'],
+        },
+        {
+          channel: 'telegram',
+          difficulty: 'Beginner',
+          description: 'A Telegram bot the agent uses as a chat channel — link a bot token from @BotFather plus the chat id(s) allowed to message the agent.',
+          requirements: [
+            'A Telegram bot token from @BotFather',
+            'The numeric chat id(s) permitted to message the agent (the operator chat id)',
+          ],
+          setup: { tool: 'telegram_setup', params: { botToken: '123456789:your_telegram_bot_token', operatorChatId: 'your_chat_id' } },
+          pros: ['Quick to set up — just a bot token and a chat id', 'Operators can answer ask_operator questions from Telegram'],
+          cons: ['Only linked chats can reach the agent (fail-closed allow-list)'],
+          note: 'Run `agenticmail setup` and answer "yes" at the Telegram step, or call the telegram_setup tool.',
+        },
+      ],
     });
   });
 

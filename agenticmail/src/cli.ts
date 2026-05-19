@@ -4,6 +4,7 @@
 // "SQLite is an experimental feature" warning before @agenticmail/core
 // (which loads node:sqlite) gets evaluated.
 import './suppress-experimental-warnings.js';
+import { randomBytes } from 'node:crypto';
 import { createInterface, emitKeypressEvents } from 'node:readline';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, realpathSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -876,6 +877,35 @@ async function cmdSetupEmail() {
   }
 }
 
+/**
+ * Resolve an agent API key from the running API server.
+ *
+ * The phone-transport and Telegram channels are per-agent config —
+ * their `/phone/transport/setup` and `/telegram/setup` endpoints are
+ * scoped to an agent API key (the master key alone returns 401). This
+ * helper picks the same agent the rest of setup provisions: the first
+ * real agent, skipping the `claudecode` / `codex` host bridge agents.
+ * Returns null when the server is unreachable or no agent exists yet
+ * (in which case the optional channel steps are skipped with a hint).
+ */
+async function resolveAgentApiKey(config: SetupConfig): Promise<{ apiKey: string; name: string } | null> {
+  try {
+    const base = `http://${config.api.host}:${config.api.port}`;
+    const resp = await fetch(`${base}/api/agenticmail/accounts`, {
+      headers: { 'Authorization': `Bearer ${config.masterKey}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json() as any;
+    const agents: any[] = data?.agents ?? data ?? [];
+    const first = agents.find((a: any) => a?.apiKey && a.name !== 'claudecode' && a.name !== 'codex')
+      ?? agents.find((a: any) => a?.apiKey);
+    return first?.apiKey ? { apiKey: first.apiKey, name: first.name ?? 'agent' } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function cmdSetup() {
   // Parse setup-specific flags (--yes, --non-interactive, -y, --help).
   const setupArgs = process.argv.slice(3);
@@ -888,9 +918,10 @@ async function cmdSetup() {
     log(`  ${c.bold('Flags:')}`);
     log(`    ${c.green('-y, --yes, --non-interactive')}`);
     log(`        Skip every prompt and use safe defaults. Provisions Stalwart +`);
-    log(`        master key + a default "secretary" agent; SKIPS external email`);
-    log(`        and SMS setup. Run \`agenticmail setup\` interactively later to`);
-    log(`        add a Gmail relay or your own domain.`);
+    log(`        master key + a default "secretary" agent; SKIPS external email,`);
+    log(`        SMS, realtime voice, phone calling, and Telegram setup. Run`);
+    log(`        \`agenticmail setup\` interactively later to add a Gmail relay,`);
+    log(`        your own domain, voice, a phone carrier, or the Telegram channel.`);
     log(`    ${c.green('-h, --help')}`);
     log(`        Show this help and exit.`);
     log('');
@@ -909,14 +940,20 @@ async function cmdSetup() {
   log(`  needs to send and receive real email.`);
   log('');
   const hasOpenClaw = existsSync(join(homedir(), '.openclaw', 'openclaw.json'));
-  const totalSteps = hasOpenClaw ? 6 : 5;
+  // Steps: 1 system, 2 config, 3 services, 4 email, 5 SMS/phone,
+  // 6 realtime voice, 7 phone calling, 8 Telegram, (+1 OpenClaw if present).
+  const totalSteps = hasOpenClaw ? 9 : 8;
 
   log(`  Here's what we'll do:`);
   log(`    ${c.dim('1.')} Check your system for required tools`);
   log(`    ${c.dim('2.')} Create your private account and keys`);
   log(`    ${c.dim('3.')} Start the mail server`);
   log(`    ${c.dim('4.')} Connect your email`);
-  if (hasOpenClaw) log(`    ${c.dim('5.')} Configure OpenClaw integration`);
+  log(`    ${c.dim('5.')} Phone number access ${c.dim('(optional)')}`);
+  log(`    ${c.dim('6.')} Realtime voice calls ${c.dim('(optional)')}`);
+  log(`    ${c.dim('7.')} Phone calling — 46elks or Twilio ${c.dim('(optional)')}`);
+  log(`    ${c.dim('8.')} Telegram channel ${c.dim('(optional)')}`);
+  if (hasOpenClaw) log(`    ${c.dim('9.')} Configure OpenClaw integration`);
   log('');
   if (!NON_INTERACTIVE) {
     await pick(`  ${c.magenta('Press any key to get started...')} `, [
@@ -1320,10 +1357,232 @@ async function cmdSetup() {
     }
   }
 
-  // Step 6: OpenClaw integration (only if detected)
+  // Step 6: Realtime voice calls (optional) — OpenAI API key.
+  //
+  // The realtime voice bridge connects a carrier media stream to an
+  // OpenAI Realtime session so an agent can hold a spoken conversation
+  // on a phone call. The only thing it needs is an OpenAI API key,
+  // persisted as `openaiApiKey` in ~/.agenticmail/config.json (the same
+  // field AgenticMailConfig already exposes / resolveConfig reads). It
+  // does NOT depend on the phone transport being configured first.
+  if (serverReady) {
+    log('');
+    log(`  ${c.bold(`Step 6 of ${totalSteps}`)} ${c.dim('—')} ${c.bold('Realtime voice calls (optional)')}`);
+    log('');
+    log(`  ${c.dim('Lets your agent hold a spoken conversation on a live phone')}`);
+    log(`  ${c.dim('call, instead of only placing tracked call-control missions.')}`);
+    log(`  ${c.dim('Needs an OpenAI API key — calls are billed by OpenAI.')}`);
+    log('');
+
+    // Non-interactive mode: skip — the OpenAI key is user-owned and
+    // nobody else has it. Add it later by re-running setup.
+    const wantVoice = nonInteractiveDefault<string>('N')
+      ?? await ask(`  ${c.bold('Set up realtime voice now?')} ${c.dim('(y/N)')} `);
+    if (wantVoice.toLowerCase().startsWith('y')) {
+      log('');
+      log(`  ${c.dim('Create a key at')} ${c.cyan('https://platform.openai.com/api-keys')}`);
+      const openaiKey = (await askSecret(`  ${c.cyan('OpenAI API key:')} `)).trim();
+      if (openaiKey) {
+        try {
+          const fileConfig = JSON.parse(readFileSync(result.configPath, 'utf-8'));
+          fileConfig.openaiApiKey = openaiKey;
+          writeFileSync(result.configPath, JSON.stringify(fileConfig, null, 2), { encoding: 'utf-8', mode: 0o600 });
+          ok('OpenAI API key saved — realtime voice is enabled.');
+          info('Restart the server to pick it up: agenticmail stop && agenticmail start');
+        } catch (err) {
+          fail(`Could not save the key: ${(err as Error).message}`);
+          info('You can set it later by re-running: agenticmail setup');
+        }
+      } else {
+        info('No key entered. Realtime voice stays off — re-run setup to add it later.');
+      }
+    } else {
+      info('Skipped. Phone missions still place call-control calls without it.');
+    }
+  }
+
+  // Step 7: Phone calling — 46elks or Twilio (optional).
+  //
+  // Configures the phone call-control transport for the first agent.
+  // The user picks a carrier, enters that carrier's credentials, a
+  // caller number, and a public webhook base URL; we persist it via
+  // the existing /phone/transport/setup endpoint (agent-key scoped, so
+  // we resolve an agent key first).
+  if (serverReady) {
+    log('');
+    log(`  ${c.bold(`Step 7 of ${totalSteps}`)} ${c.dim('—')} ${c.bold('Phone calling — 46elks or Twilio (optional)')}`);
+    log('');
+    log(`  ${c.dim('Give your agent a phone number it can place outbound calls')}`);
+    log(`  ${c.dim('from. Pick a carrier — 46elks or Twilio — and enter that')}`);
+    log(`  ${c.dim("carrier's credentials. Calls are billed by the carrier.")}`);
+    log('');
+
+    // Non-interactive mode: skip — carrier credentials are user-owned.
+    const wantPhone = nonInteractiveDefault<string>('N')
+      ?? await ask(`  ${c.bold('Set up phone calling now?')} ${c.dim('(y/N)')} `);
+    if (wantPhone.toLowerCase().startsWith('y')) {
+      const agent = await resolveAgentApiKey(result.config);
+      if (!agent) {
+        log('');
+        info('No agent is set up yet — connect email first so an agent exists,');
+        info('then re-run `agenticmail setup` to add phone calling.');
+      } else {
+        log('');
+        log(`  Which carrier do you want to use?`);
+        log(`    ${c.cyan('1.')} 46elks`);
+        log(`    ${c.cyan('2.')} Twilio`);
+        const carrier = await pick(`  ${c.magenta('>')} `, ['1', '2']);
+        const provider = carrier === '2' ? 'twilio' : '46elks';
+        log('');
+
+        const phoneNumber = (await ask(`  ${c.cyan('Caller phone number')} ${c.dim('(E.164, e.g. +12125551234)')}: `)).trim();
+        let username: string;
+        let password: string;
+        if (provider === 'twilio') {
+          log(`  ${c.dim('From the Twilio console — Account SID + Auth Token.')}`);
+          username = (await ask(`  ${c.cyan('Twilio Account SID:')} `)).trim();
+          password = (await askSecret(`  ${c.cyan('Twilio Auth Token:')} `)).trim();
+        } else {
+          log(`  ${c.dim('From the 46elks dashboard — API username + API password.')}`);
+          username = (await ask(`  ${c.cyan('46elks API username:')} `)).trim();
+          password = (await askSecret(`  ${c.cyan('46elks API password:')} `)).trim();
+        }
+        log('');
+        log(`  ${c.dim('The carrier reaches AgenticMail webhooks at this public HTTPS URL.')}`);
+        const webhookBaseUrl = (await ask(`  ${c.cyan('Public webhook base URL')} ${c.dim('(https://...)')}: `)).trim();
+        // Webhook secret needs real entropy (≥24 chars) — generate one
+        // by default so the user doesn't have to invent it themselves.
+        log('');
+        const customSecret = (await ask(`  ${c.cyan('Webhook secret')} ${c.dim('(Enter to auto-generate)')}: `)).trim();
+        const webhookSecret = customSecret || randomBytes(24).toString('hex');
+
+        if (!phoneNumber || !username || !password || !webhookBaseUrl) {
+          log('');
+          fail('Phone calling needs a number, credentials, and a webhook base URL.');
+          info('Re-run `agenticmail setup` (or use the phone_transport_setup tool) to add it later.');
+        } else {
+          log('');
+          const spinner = new Spinner('general', 'Saving phone transport...');
+          spinner.start();
+          try {
+            const base = `http://${result.config.api.host}:${result.config.api.port}`;
+            const resp = await fetch(`${base}/api/agenticmail/phone/transport/setup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+              body: JSON.stringify({
+                provider,
+                phoneNumber,
+                // For Twilio the account SID + auth token ride on the
+                // generic username/password keys (buildPhoneTransportConfig
+                // accepts either those or accountSid/authToken).
+                username,
+                password,
+                webhookBaseUrl,
+                webhookSecret,
+              }),
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (resp.ok) {
+              spinner.succeed(`Phone calling configured via ${c.bold(provider)} for agent ${c.bold(agent.name)}`);
+              if (!customSecret) {
+                info(`Auto-generated webhook secret: ${maskSecret(webhookSecret)} (stored in the agent config)`);
+              }
+            } else {
+              const text = await resp.text();
+              spinner.fail(`Could not save phone transport: ${parseFriendlyError(text).message}`);
+              info('Re-run `agenticmail setup` to try again.');
+            }
+          } catch (err) {
+            spinner.fail(`Could not save phone transport: ${(err as Error).message}`);
+          }
+        }
+      }
+    } else {
+      info('Skipped. Add phone calling anytime with the phone_transport_setup tool.');
+    }
+  }
+
+  // Step 8: Telegram channel (optional).
+  //
+  // Registers a Telegram bot token + links a chat for the first agent
+  // via the existing /telegram/setup endpoint (agent-key scoped). The
+  // token is verified with Telegram server-side before it is stored.
+  if (serverReady) {
+    log('');
+    log(`  ${c.bold(`Step 8 of ${totalSteps}`)} ${c.dim('—')} ${c.bold('Telegram channel (optional)')}`);
+    log('');
+    log(`  ${c.dim('Let your agent send and receive messages through a Telegram')}`);
+    log(`  ${c.dim('bot. You provide a bot token from @BotFather and the chat')}`);
+    log(`  ${c.dim('id allowed to message the agent.')}`);
+    log('');
+
+    // Non-interactive mode: skip — the bot token is user-owned.
+    const wantTelegram = nonInteractiveDefault<string>('N')
+      ?? await ask(`  ${c.bold('Enable the Telegram channel now?')} ${c.dim('(y/N)')} `);
+    if (wantTelegram.toLowerCase().startsWith('y')) {
+      const agent = await resolveAgentApiKey(result.config);
+      if (!agent) {
+        log('');
+        info('No agent is set up yet — connect email first so an agent exists,');
+        info('then re-run `agenticmail setup` to add Telegram.');
+      } else {
+        log('');
+        log(`  ${c.dim('Create a bot: open Telegram, message @BotFather, send /newbot,')}`);
+        log(`  ${c.dim('and copy the token it gives you.')}`);
+        const botToken = (await askSecret(`  ${c.cyan('Telegram bot token:')} `)).trim();
+        log('');
+        log(`  ${c.dim('Your chat id: message your bot, then open')}`);
+        log(`  ${c.dim('https://api.telegram.org/bot<token>/getUpdates to see it.')}`);
+        const operatorChatId = (await ask(`  ${c.cyan('Your Telegram chat id:')} `)).trim();
+
+        if (!botToken) {
+          log('');
+          fail('A bot token is required to enable Telegram.');
+          info('Re-run `agenticmail setup` (or use the telegram_setup tool) to add it later.');
+        } else {
+          log('');
+          const spinner = new Spinner('general', 'Verifying bot token with Telegram...');
+          spinner.start();
+          try {
+            const base = `http://${result.config.api.host}:${result.config.api.port}`;
+            const resp = await fetch(`${base}/api/agenticmail/telegram/setup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+              body: JSON.stringify({
+                botToken,
+                // Poll mode — the default; no public URL needed.
+                mode: 'poll',
+                operatorChatId: operatorChatId || undefined,
+              }),
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (resp.ok) {
+              const data = await resp.json() as any;
+              const botName = data?.bot?.username ? `@${data.bot.username}` : 'your bot';
+              spinner.succeed(`Telegram channel enabled — ${c.bold(botName)} linked to agent ${c.bold(agent.name)}`);
+              if (!operatorChatId) {
+                info('No chat id linked yet — add one later so inbound messages are accepted.');
+              }
+              info('Poll mode: messages are pulled with the telegram_poll tool or /poll in the shell.');
+            } else {
+              const text = await resp.text();
+              spinner.fail(`Could not enable Telegram: ${parseFriendlyError(text).message}`);
+              info('Re-run `agenticmail setup` to try again.');
+            }
+          } catch (err) {
+            spinner.fail(`Could not enable Telegram: ${(err as Error).message}`);
+          }
+        }
+      }
+    } else {
+      info('Skipped. Enable Telegram anytime with the telegram_setup tool.');
+    }
+  }
+
+  // Step 9: OpenClaw integration (only if detected)
   if (hasOpenClaw && serverReady) {
     log('');
-    log(`  ${c.bold(`Step 6 of ${totalSteps}`)} ${c.dim('—')} ${c.bold('Configure OpenClaw integration')}`);
+    log(`  ${c.bold(`Step 9 of ${totalSteps}`)} ${c.dim('—')} ${c.bold('Configure OpenClaw integration')}`);
     log('');
     await registerWithOpenClaw(result.config);
   }
@@ -3168,7 +3427,7 @@ async function cmdOpenClaw() {
 
   log('');
   if (gatewayRestarted) {
-    log(`  Your agent now has ${c.bold('63 email, SMS & storage tools')} available!`);
+    log(`  Your agent now has ${c.bold('78 email, SMS, phone, Telegram & storage tools')} available!`);
     log(`  Try: ${c.dim('"Send an email to test@example.com"')}`);
     log('');
     log(`  ${c.bold('🎀 AgenticMail Coordination')} ${c.dim('(auto-configured)')}`);
@@ -3190,7 +3449,7 @@ async function cmdOpenClaw() {
   } else {
     log(`  ${c.bold('Next step:')}`);
     log(`    Restart your OpenClaw gateway, then your agent will`);
-    log(`    have ${c.bold('63 email + SMS tools')} available!`);
+    log(`    have ${c.bold('78 email, SMS, phone & Telegram tools')} available!`);
   }
   log('');
 

@@ -27,4 +27,17 @@ describe('OpenClaw tool manifest', () => {
   it('matches the tools registered at runtime', () => {
     expect(manifestToolNames()).toEqual(registeredToolNames());
   });
+
+  it('exposes the Telegram channel tools', () => {
+    const tools = new Set(registeredToolNames());
+    for (const name of [
+      'agenticmail_telegram_setup',
+      'agenticmail_telegram_config',
+      'agenticmail_telegram_send',
+      'agenticmail_telegram_messages',
+      'agenticmail_telegram_poll',
+    ]) {
+      expect(tools.has(name), `${name} should be registered`).toBe(true);
+    }
+  });
 });

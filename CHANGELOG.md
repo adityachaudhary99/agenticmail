@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.55] - 2026-05-20
+
+### Added — setup & onboarding for the new calling features
+
+v0.9.52–0.9.54 shipped realtime voice, the voice tool layer, the
+Telegram channel, and the Twilio provider — but their *onboarding* was
+never updated. A feature you cannot configure at install is only
+half-shipped; this release closes that gap.
+
+- **`agenticmail setup` wizard** — three new guided steps, each
+  optional / skippable and skipped under `--yes`: realtime voice
+  (`OPENAI_API_KEY`), phone calling (pick **46elks or Twilio**, enter
+  that carrier's credentials + webhook base URL), and the Telegram
+  channel (bot token + chat link).
+- **Agent self-setup** — so an AI agent can configure it all
+  unattended: `phone_transport_setup` (MCP + OpenClaw) now exposes the
+  `twilio` provider and its `accountSid` / `authToken` params; five
+  Telegram tools were added on both surfaces (`telegram_setup`,
+  `telegram_config`, `telegram_send`, `telegram_messages`,
+  `telegram_poll`); and `setup_guide` / `/gateway/setup-guide` now
+  describe realtime voice, the carrier choice, and Telegram.
+- **`.env.example`** — documents `OPENAI_API_KEY`, the Twilio and
+  46elks credentials, the phone webhook settings, and the Telegram
+  variables.
+- **README** — the install section covers every new wizard step.
+
+1045 tests pass; full monorepo build green. The MCP + OpenClaw
+tool-catalog parity tests stay green with the new Telegram tools.
+
 ## [0.9.54] - 2026-05-20
 
 ### Added — Twilio as a phone transport provider

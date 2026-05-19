@@ -2,7 +2,7 @@
  * Catalogue ↔ tool-definition consistency tests.
  *
  * These are the only tests this package needs — most of the MCP server is
- * data-shaped (62 tool wrappers around HTTP calls). What CAN silently rot
+ * data-shaped (84 tool wrappers around HTTP calls). What CAN silently rot
  * is the link between:
  *
  *   1. The catalogue in tool-catalog.ts (what request_tools advertises).
@@ -88,6 +88,27 @@ describe('tool catalogue ↔ tool definitions', () => {
       'call_transcript',
       'call_cancel',
     ]);
+  });
+
+  it('telegram set exposes the Telegram channel surface', () => {
+    expect(TOOL_SETS.telegram).toEqual([
+      'telegram_setup',
+      'telegram_config',
+      'telegram_send',
+      'telegram_messages',
+      'telegram_poll',
+    ]);
+  });
+
+  it('phone_transport_setup advertises both 46elks and twilio providers', () => {
+    const tool = toolDefinitions.find(t => t.name === 'phone_transport_setup');
+    expect(tool, 'phone_transport_setup must be defined').toBeTruthy();
+    const provider = (tool!.inputSchema.properties as Record<string, any>).provider;
+    expect(provider?.enum).toEqual(['46elks', 'twilio']);
+    // Twilio credential aliases must be exposed so an agent can set up
+    // Twilio without overloading the generic username/password fields.
+    expect((tool!.inputSchema.properties as Record<string, any>).accountSid).toBeTruthy();
+    expect((tool!.inputSchema.properties as Record<string, any>).authToken).toBeTruthy();
   });
 
   it('total catalogued tool count matches the real tool count minus meta-tools', () => {

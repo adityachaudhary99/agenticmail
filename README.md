@@ -436,7 +436,13 @@ npm install -g @agenticmail/cli
 agenticmail setup
 ```
 
-The wizard walks you through everything: dependency checks, master key generation, mail-server start, optional Gmail relay or custom domain, optional SMS setup, optional OpenClaw integration. Re-runnable any time.
+The wizard walks you through everything: dependency checks, master key generation, mail-server start, optional Gmail relay or custom domain, optional SMS setup, optional realtime voice (OpenAI API key), optional phone calling (pick **46elks or Twilio** and enter that carrier's credentials), optional Telegram channel (bot token + chat link), and optional OpenClaw integration. Every optional step is skippable and re-runnable any time. With `--yes` / `--non-interactive` all the optional steps are skipped with safe defaults.
+
+The new optional steps in detail:
+
+- **Realtime voice** — paste an OpenAI API key to enable live spoken phone calls (the realtime voice bridge). Without it, phone missions still place and track call-control calls; only the spoken-conversation bridge is unavailable. The key is stored as `openaiApiKey` in `~/.agenticmail/config.json` (file mode 0600).
+- **Phone calling** — pick your carrier (`46elks` or `twilio`), enter that carrier's credentials (46elks API username/password, or Twilio Account SID/Auth Token), a caller number, and a public HTTPS webhook base URL. The webhook secret is auto-generated if you don't supply one. Persisted to the agent's phone-transport config.
+- **Telegram channel** — paste a bot token from `@BotFather` and your chat id. The token is verified with Telegram before it's stored; the channel comes up in poll mode (pull messages with the `telegram_poll` tool or `/poll` in the shell).
 
 ### Skip external email entirely?
 
@@ -450,6 +456,7 @@ Yes. AgenticMail works in **local-only mode** — agents email each other at `*@
 - Starts Stalwart in a Docker container
 - Creates your first agent with its own email and API key
 - Optionally configures a gateway (relay or domain) for internet email
+- Optionally enables realtime voice (OpenAI API key), phone calling (46elks or Twilio), and the Telegram channel
 
 ### Send your first email (programmatic)
 
@@ -515,7 +522,7 @@ AgenticMail includes a full CLI for managing your server. All commands are avail
 |---------|-------------|
 | `agenticmail` | **Start the server** (runs setup first if not initialized). Opens the interactive shell after startup. This is the default command — just run `agenticmail` with no arguments. |
 | `agenticmail bootstrap` | ✨ **Zero-question install.** One-shot pipeline: setup + service install + claudecode wiring. Designed for AI agents (Claude Code, scripts, CI) to run on a user's behalf — no prompts, no decisions. Skips Gmail relay and SMS setup (which need user-owned credentials); add them later with `agenticmail setup`. |
-| `agenticmail setup` | **Run the setup wizard** interactively. Walks you through system checks, account creation, service startup, email connection (Gmail/Outlook/custom domain), phone number setup, and OpenClaw integration. Pass `--yes` (or `-y`, `--non-interactive`) to skip every prompt and use safe defaults. Safe to re-run — won't overwrite existing config. |
+| `agenticmail setup` | **Run the setup wizard** interactively. Walks you through system checks, account creation, service startup, email connection (Gmail/Outlook/custom domain), phone number (SMS) setup, realtime voice (OpenAI API key), phone calling (46elks or Twilio), the Telegram channel, and OpenClaw integration. Pass `--yes` (or `-y`, `--non-interactive`) to skip every prompt and use safe defaults. Safe to re-run — won't overwrite existing config. |
 | `agenticmail start` | **Start the server** and open the interactive shell. Ensures Docker is running, Stalwart is up, and the API server is reachable. Automatically installs the auto-start service if not already set up. |
 | `agenticmail shell` | 👀 **Drop into the interactive shell against an already-running server.** Use this to monitor every agent's inbox, send mail on their behalf, watch the dispatcher event feed, or run any of the 44+ shell commands. Exits cleanly with `/exit`; the server keeps running. Best command to point a user at when they ask "what have my agents been doing?" |
 | `agenticmail web` | 🌐 **Open the Gmail-style web UI in your browser.** Two-column layout (sidebar with Compose + folders / content pane), 24×24 vector icons, hash router, real-time SSE updates, full markdown rendering, compose + reply with the `wake` parameter surfaced as a field. Same master key as the API. Available at `http://127.0.0.1:3829/` whenever the API server is running. |

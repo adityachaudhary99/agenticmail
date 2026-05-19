@@ -623,7 +623,7 @@ export const toolDefinitions = [
   },
   {
     name: 'setup_guide',
-    description: 'Get a comparison of email setup modes (Relay vs Domain) with difficulty levels, requirements, pros/cons, and step-by-step instructions. Show this to users who want to set up real internet email.',
+    description: 'Get a comparison of email setup modes (Relay vs Domain) AND the optional channels — realtime voice (OPENAI_API_KEY), phone call-control with a 46elks-vs-Twilio provider choice, and the Telegram channel — each with difficulty levels, requirements, pros/cons, and step-by-step instructions. Show this to users who want to set up real internet email, voice calls, phone, or Telegram.',
     inputSchema: {
       type: 'object' as const,
       properties: {},
@@ -1199,26 +1199,88 @@ export const toolDefinitions = [
   },
   {
     name: 'phone_transport_setup',
-    description: 'Configure the phone call-control transport for this agent. This stores provider credentials and webhook settings; it does not start a call.',
+    description: 'Configure the phone call-control transport for this agent. This stores provider credentials and webhook settings; it does not start a call. Pick ONE provider — 46elks or twilio — and supply that provider\'s credentials. For 46elks pass username + password; for twilio pass accountSid + authToken (or the generic username + password — for twilio username is the account SID and password is the auth token).',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        provider: { type: 'string', enum: ['46elks'], description: 'Phone provider. Currently 46elks is supported for call-control missions.' },
+        provider: { type: 'string', enum: ['46elks', 'twilio'], description: 'Phone provider: "46elks" (default) or "twilio". Both support call-control missions and realtime voice.' },
         phoneNumber: { type: 'string', description: 'Owned caller phone number in E.164 format, e.g. +43123456789' },
-        username: { type: 'string', description: '46elks API username' },
-        password: { type: 'string', description: '46elks API password' },
+        username: { type: 'string', description: '46elks API username. For twilio this is the account SID — prefer the accountSid param for clarity.' },
+        password: { type: 'string', description: '46elks API password. For twilio this is the auth token — prefer the authToken param for clarity.' },
+        accountSid: { type: 'string', description: 'Twilio only: the account SID (alias for username when provider is "twilio").' },
+        authToken: { type: 'string', description: 'Twilio only: the account auth token (alias for password when provider is "twilio").' },
         webhookBaseUrl: { type: 'string', description: 'Public HTTPS base URL for AgenticMail phone webhooks' },
-        webhookSecret: { type: 'string', description: 'Shared secret included on provider webhook URLs' },
-        apiUrl: { type: 'string', description: 'Optional 46elks API base URL override' },
+        webhookSecret: { type: 'string', description: 'Shared secret included on provider webhook URLs (at least 24 characters)' },
+        apiUrl: { type: 'string', description: 'Optional provider API base URL override (46elks or Twilio REST root)' },
         capabilities: { type: 'array', items: { type: 'string' }, description: 'Transport capabilities, e.g. ["call_control"] or ["call_control","realtime_media"]' },
         supportedRegions: { type: 'array', items: { type: 'string' }, description: 'Supported region scopes: AT, DE, EU, WORLD' },
       },
-      required: ['phoneNumber', 'username', 'password', 'webhookBaseUrl', 'webhookSecret'],
+      required: ['phoneNumber', 'webhookBaseUrl', 'webhookSecret'],
     },
   },
   {
     name: 'phone_capabilities',
     description: 'Show the configured phone provider, caller number, supported regions, and whether realtime media is available.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {},
+    },
+  },
+
+  // --- Telegram Channel ---
+  {
+    name: 'telegram_setup',
+    description: 'Configure the Telegram channel for this agent — register a bot token from @BotFather and link the chat(s) allowed to message the agent. The token is verified with Telegram and stored encrypted. Defaults to poll mode (call telegram_poll on a schedule); pass mode "webhook" with a public HTTPS webhookUrl + webhookSecret for push delivery.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        botToken: { type: 'string', description: 'Telegram bot API token from @BotFather (e.g. 123456789:AA...).' },
+        operatorChatId: { type: 'string', description: 'The chat id of the operator — always allowed to message the agent and to answer ask_operator questions.' },
+        allowedChatIds: { type: 'array', items: { type: 'string' }, description: 'Additional chat ids permitted to message the agent. An empty allow-list means only the operator chat can reach the agent (fail-closed).' },
+        mode: { type: 'string', enum: ['poll', 'webhook'], description: 'Inbound transport: "poll" (default — pull updates with telegram_poll) or "webhook" (Telegram pushes updates).' },
+        webhookUrl: { type: 'string', description: 'Webhook mode only: public HTTPS URL Telegram delivers updates to.' },
+        webhookSecret: { type: 'string', description: 'Webhook mode only: shared secret echoed in the X-Telegram-Bot-Api-Secret-Token header (at least 16 chars, A-Z a-z 0-9 _ -).' },
+      },
+      required: ['botToken'],
+    },
+  },
+  {
+    name: 'telegram_config',
+    description: 'Get the current Telegram channel configuration for this agent — whether it is enabled, the bot username, linked chats, and transport mode. Credentials are redacted.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {},
+    },
+  },
+  {
+    name: 'telegram_send',
+    description: 'Send a Telegram message from this agent\'s bot to a chat. Requires the Telegram channel to be configured (telegram_setup) and enabled.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        chatId: { type: 'string', description: 'Target Telegram chat id.' },
+        text: { type: 'string', description: 'Message text to send.' },
+        replyToMessageId: { type: 'number', description: 'Optional Telegram message id to reply to.' },
+      },
+      required: ['chatId', 'text'],
+    },
+  },
+  {
+    name: 'telegram_messages',
+    description: 'List stored Telegram messages (inbound and outbound) for this agent, newest first.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        direction: { type: 'string', enum: ['inbound', 'outbound'], description: 'Filter by direction.' },
+        chatId: { type: 'string', description: 'Filter by chat id.' },
+        limit: { type: 'number', description: 'Max messages (default: 20, max: 100).' },
+        offset: { type: 'number', description: 'Skip messages (default: 0).' },
+      },
+    },
+  },
+  {
+    name: 'telegram_poll',
+    description: 'Pull and process new Telegram updates (poll-mode transport). Call this on a schedule when the channel is in poll mode to ingest new inbound messages and answer ask_operator questions sent from the operator chat.',
     inputSchema: {
       type: 'object' as const,
       properties: {},
@@ -2118,6 +2180,26 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
         lines.push('Cons:');
         for (const con of mode.cons) lines.push(`  - ${con}`);
         lines.push('');
+      }
+      // Optional channels beyond email — realtime voice, the phone
+      // carrier choice (46elks vs Twilio), and the Telegram channel.
+      if (Array.isArray(result.channels) && result.channels.length) {
+        lines.push('Optional Channels (independent of email — add any time):', '');
+        for (const ch of result.channels) {
+          lines.push(`=== ${String(ch.channel).toUpperCase()} (${ch.difficulty}) ===`);
+          lines.push(ch.description);
+          lines.push('Requirements:');
+          for (const req of ch.requirements ?? []) lines.push(`  - ${req}`);
+          if (Array.isArray(ch.providers)) {
+            lines.push('Providers (pick one):');
+            for (const p of ch.providers) lines.push(`  - ${p.provider}: ${p.credentials}`);
+          }
+          if (typeof ch.setup === 'string') lines.push(`Setup: ${ch.setup}`);
+          for (const pro of ch.pros ?? []) lines.push(`  + ${pro}`);
+          for (const con of ch.cons ?? []) lines.push(`  - ${con}`);
+          if (ch.note) lines.push(`Note: ${ch.note}`);
+          lines.push('');
+        }
       }
       return lines.join('\n');
     }
@@ -3172,6 +3254,10 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
         phoneNumber: args.phoneNumber,
         username: args.username,
         password: args.password,
+        // Twilio credential aliases — buildPhoneTransportConfig accepts
+        // accountSid/authToken in place of username/password for twilio.
+        accountSid: args.accountSid,
+        authToken: args.authToken,
         webhookBaseUrl: args.webhookBaseUrl,
         webhookSecret: args.webhookSecret,
         apiUrl: args.apiUrl,
@@ -3183,6 +3269,50 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
 
     case 'phone_capabilities': {
       const result = await apiRequest('GET', '/phone/capabilities');
+      return JSON.stringify(result, null, 2);
+    }
+
+    // --- Telegram Channel ---
+
+    case 'telegram_setup': {
+      const result = await apiRequest('POST', '/telegram/setup', {
+        botToken: args.botToken,
+        operatorChatId: args.operatorChatId,
+        allowedChatIds: args.allowedChatIds,
+        mode: args.mode,
+        webhookUrl: args.webhookUrl,
+        webhookSecret: args.webhookSecret,
+      });
+      return JSON.stringify(result, null, 2);
+    }
+
+    case 'telegram_config': {
+      const result = await apiRequest('GET', '/telegram/config');
+      return JSON.stringify(result, null, 2);
+    }
+
+    case 'telegram_send': {
+      const result = await apiRequest('POST', '/telegram/send', {
+        chatId: args.chatId,
+        text: args.text,
+        replyToMessageId: args.replyToMessageId,
+      });
+      return JSON.stringify(result, null, 2);
+    }
+
+    case 'telegram_messages': {
+      const query = new URLSearchParams();
+      if (args.direction) query.set('direction', String(args.direction));
+      if (args.chatId) query.set('chatId', String(args.chatId));
+      if (args.limit) query.set('limit', String(args.limit));
+      if (args.offset) query.set('offset', String(args.offset));
+      const suffix = query.toString() ? `?${query.toString()}` : '';
+      const result = await apiRequest('GET', `/telegram/messages${suffix}`);
+      return JSON.stringify(result, null, 2);
+    }
+
+    case 'telegram_poll': {
+      const result = await apiRequest('POST', '/telegram/poll');
       return JSON.stringify(result, null, 2);
     }
 

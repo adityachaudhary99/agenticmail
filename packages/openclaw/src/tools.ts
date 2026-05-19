@@ -1170,7 +1170,7 @@ export function registerTools(
   // --- Gateway tools (always use master key, no session override) ---
 
   reg('agenticmail_setup_guide', {
-    description: 'Get a comparison of email setup modes (Relay vs Domain) with difficulty levels, requirements, and step-by-step instructions. Show this to users who want to set up real internet email to help them choose the right mode.',
+    description: 'Get a comparison of email setup modes (Relay vs Domain) AND the optional channels — realtime voice (OPENAI_API_KEY), phone call-control with a 46elks-vs-Twilio provider choice, and the Telegram channel — with difficulty levels, requirements, and step-by-step instructions. Show this to users who want to set up real internet email, voice calls, phone, or Telegram to help them choose.',
     parameters: {},
     handler: async () => {
       try {
@@ -2478,15 +2478,17 @@ WHERE filters support operators: {column: value} for equality, {column: {$gt: 5,
   });
 
   reg('agenticmail_phone_transport_setup', {
-    description: 'Configure the phone call-control transport for this agent. This stores provider credentials and webhook settings; it does not start a call.',
+    description: 'Configure the phone call-control transport for this agent. This stores provider credentials and webhook settings; it does not start a call. Pick ONE provider — "46elks" or "twilio" — and supply that provider\'s credentials. For 46elks pass username + password; for twilio pass accountSid + authToken (twilio also accepts the generic username/password where username is the account SID and password is the auth token).',
     parameters: {
-      provider: { type: 'string', description: 'Phone provider. Currently "46elks" is supported.' },
+      provider: { type: 'string', description: 'Phone provider: "46elks" (default) or "twilio". Both support call-control missions and realtime voice.' },
       phoneNumber: { type: 'string', required: true, description: 'Owned caller phone number in E.164 format, e.g. +43123456789' },
-      username: { type: 'string', required: true, description: '46elks API username' },
-      password: { type: 'string', required: true, description: '46elks API password' },
+      username: { type: 'string', description: '46elks API username. For twilio this is the account SID — prefer accountSid for clarity.' },
+      password: { type: 'string', description: '46elks API password. For twilio this is the auth token — prefer authToken for clarity.' },
+      accountSid: { type: 'string', description: 'Twilio only: the account SID (alias for username when provider is "twilio").' },
+      authToken: { type: 'string', description: 'Twilio only: the account auth token (alias for password when provider is "twilio").' },
       webhookBaseUrl: { type: 'string', required: true, description: 'Public HTTPS base URL for AgenticMail phone webhooks' },
-      webhookSecret: { type: 'string', required: true, description: 'Shared secret included on provider webhook URLs' },
-      apiUrl: { type: 'string', description: 'Optional 46elks API base URL override' },
+      webhookSecret: { type: 'string', required: true, description: 'Shared secret included on provider webhook URLs (at least 24 characters)' },
+      apiUrl: { type: 'string', description: 'Optional provider API base URL override (46elks or Twilio REST root)' },
       capabilities: { type: 'array', description: 'Transport capabilities, e.g. ["call_control"] or ["call_control","realtime_media"]' },
       supportedRegions: { type: 'array', description: 'Supported region scopes: AT, DE, EU, WORLD' },
     },
@@ -2498,6 +2500,10 @@ WHERE filters support operators: {column: value} for equality, {column: {$gt: 5,
           phoneNumber: params.phoneNumber,
           username: params.username,
           password: params.password,
+          // Twilio credential aliases — buildPhoneTransportConfig accepts
+          // accountSid/authToken in place of username/password for twilio.
+          accountSid: params.accountSid,
+          authToken: params.authToken,
           webhookBaseUrl: params.webhookBaseUrl,
           webhookSecret: params.webhookSecret,
           apiUrl: params.apiUrl,
@@ -2515,6 +2521,96 @@ WHERE filters support operators: {column: value} for equality, {column: {$gt: 5,
       try {
         const c = await ctxForParams(ctx, params);
         return await apiRequest(c, 'GET', '/phone/capabilities');
+      } catch (err) { return { success: false, error: (err as Error).message }; }
+    },
+  });
+
+  // --- Telegram Channel ---
+
+  reg('agenticmail_telegram_setup', {
+    description: 'Configure the Telegram channel for this agent — register a bot token from @BotFather and link the chat(s) allowed to message the agent. The token is verified with Telegram and stored encrypted. Defaults to poll mode (call agenticmail_telegram_poll on a schedule); pass mode "webhook" with a public HTTPS webhookUrl + webhookSecret for push delivery.',
+    parameters: {
+      botToken: { type: 'string', required: true, description: 'Telegram bot API token from @BotFather (e.g. 123456789:AA...).' },
+      operatorChatId: { type: 'string', description: 'The chat id of the operator — always allowed to message the agent and to answer ask_operator questions.' },
+      allowedChatIds: { type: 'array', description: 'Additional chat ids permitted to message the agent. An empty allow-list means only the operator chat can reach the agent (fail-closed).' },
+      mode: { type: 'string', description: 'Inbound transport: "poll" (default — pull updates with agenticmail_telegram_poll) or "webhook" (Telegram pushes updates).' },
+      webhookUrl: { type: 'string', description: 'Webhook mode only: public HTTPS URL Telegram delivers updates to.' },
+      webhookSecret: { type: 'string', description: 'Webhook mode only: shared secret echoed in the X-Telegram-Bot-Api-Secret-Token header (at least 16 chars, A-Z a-z 0-9 _ -).' },
+    },
+    handler: async (params: any) => {
+      try {
+        const c = await ctxForParams(ctx, params);
+        return await apiRequest(c, 'POST', '/telegram/setup', {
+          botToken: params.botToken,
+          operatorChatId: params.operatorChatId,
+          allowedChatIds: params.allowedChatIds,
+          mode: params.mode,
+          webhookUrl: params.webhookUrl,
+          webhookSecret: params.webhookSecret,
+        });
+      } catch (err) { return { success: false, error: (err as Error).message }; }
+    },
+  });
+
+  reg('agenticmail_telegram_config', {
+    description: 'Get the current Telegram channel configuration for this agent — whether it is enabled, the bot username, linked chats, and transport mode. Credentials are redacted.',
+    parameters: {},
+    handler: async (params: any) => {
+      try {
+        const c = await ctxForParams(ctx, params);
+        return await apiRequest(c, 'GET', '/telegram/config');
+      } catch (err) { return { success: false, error: (err as Error).message }; }
+    },
+  });
+
+  reg('agenticmail_telegram_send', {
+    description: 'Send a Telegram message from this agent\'s bot to a chat. Requires the Telegram channel to be configured (agenticmail_telegram_setup) and enabled.',
+    parameters: {
+      chatId: { type: 'string', required: true, description: 'Target Telegram chat id.' },
+      text: { type: 'string', required: true, description: 'Message text to send.' },
+      replyToMessageId: { type: 'number', description: 'Optional Telegram message id to reply to.' },
+    },
+    handler: async (params: any) => {
+      try {
+        const c = await ctxForParams(ctx, params);
+        return await apiRequest(c, 'POST', '/telegram/send', {
+          chatId: params.chatId,
+          text: params.text,
+          replyToMessageId: params.replyToMessageId,
+        });
+      } catch (err) { return { success: false, error: (err as Error).message }; }
+    },
+  });
+
+  reg('agenticmail_telegram_messages', {
+    description: 'List stored Telegram messages (inbound and outbound) for this agent, newest first.',
+    parameters: {
+      direction: { type: 'string', description: 'Filter: "inbound" or "outbound" (default: both).' },
+      chatId: { type: 'string', description: 'Filter by chat id.' },
+      limit: { type: 'number', description: 'Max messages (default: 20, max: 100).' },
+      offset: { type: 'number', description: 'Skip messages (default: 0).' },
+    },
+    handler: async (params: any) => {
+      try {
+        const c = await ctxForParams(ctx, params);
+        const query = new URLSearchParams();
+        if (params.direction) query.set('direction', String(params.direction));
+        if (params.chatId) query.set('chatId', String(params.chatId));
+        if (params.limit) query.set('limit', String(params.limit));
+        if (params.offset) query.set('offset', String(params.offset));
+        const suffix = query.toString() ? `?${query.toString()}` : '';
+        return await apiRequest(c, 'GET', `/telegram/messages${suffix}`);
+      } catch (err) { return { success: false, error: (err as Error).message }; }
+    },
+  });
+
+  reg('agenticmail_telegram_poll', {
+    description: 'Pull and process new Telegram updates (poll-mode transport). Call this on a schedule when the channel is in poll mode to ingest new inbound messages and answer ask_operator questions sent from the operator chat.',
+    parameters: {},
+    handler: async (params: any) => {
+      try {
+        const c = await ctxForParams(ctx, params);
+        return await apiRequest(c, 'POST', '/telegram/poll');
       } catch (err) { return { success: false, error: (err as Error).message }; }
     },
   });

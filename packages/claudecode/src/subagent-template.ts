@@ -34,7 +34,7 @@
  *
  * # Tiered tool loading (token budget)
  *
- * Loading all 62 AgenticMail tool schemas into a fresh subagent's context
+ * Loading all 84 AgenticMail tool schemas into a fresh subagent's context
  * costs ~10K tokens per spawn — most of it never used. We mirror the
  * three-tier lazy-loading design from the AgenticMail enterprise
  * tool-resolver:
@@ -140,7 +140,7 @@ export function renderPersonaBody(input: SubagentTemplateInput): string {
     '',
     `You have access to TWO complementary toolsets:`,
     '',
-    `1. **AgenticMail MCP tools** (\`${tool('*')}\`) — your mailbox, contacts, tasks, signatures, drafts, SMS, agent coordination. The full ~62-tool surface; the most common ones (\`${tool('list_inbox')}\`, \`${tool('send_email')}\`, \`${tool('reply_email')}\`, \`${tool('search_emails')}\`, \`${tool('call_agent')}\`, \`${tool('wait_for_email')}\`, …) are pre-loaded. Anything else is reachable via the meta-tools \`${tool('request_tools')}\` (discover) + \`${tool('invoke')}\` (call by name).`,
+    `1. **AgenticMail MCP tools** (\`${tool('*')}\`) — your mailbox, contacts, tasks, signatures, drafts, SMS, agent coordination. The full ~84-tool surface; the most common ones (\`${tool('list_inbox')}\`, \`${tool('send_email')}\`, \`${tool('reply_email')}\`, \`${tool('search_emails')}\`, \`${tool('call_agent')}\`, \`${tool('wait_for_email')}\`, …) are pre-loaded. Anything else is reachable via the meta-tools \`${tool('request_tools')}\` (discover) + \`${tool('invoke')}\` (call by name).`,
     '',
     `2. **Native Claude Code tools** — Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch, NotebookEdit, and friends. The same toolset the host session has. Use them when the work actually involves files, code, the shell, or the web — DO NOT paste source code into an email when you could write the file yourself and tell the team "shipped to ./void_fall.py, runs with python3 void_fall.py". You are a real agent doing real work, not a paste-buffer.`,
     '',

@@ -4,7 +4,7 @@
  *
  * # Why this exists
  *
- * Loading all 62 tool schemas into a Claude Code subagent's context costs
+ * Loading all 84 tool schemas into a Claude Code subagent's context costs
  * ~10K tokens per spawn — most of it never used. To stay cheap, subagents
  * are launched with a small curated whitelist (the ESSENTIAL set below)
  * plus a `request_tools` meta-tool. When they need something outside the
@@ -155,6 +155,15 @@ export const TOOL_SETS = {
     'call_cancel',
   ],
 
+  /** Telegram channel — bot setup, send/list messages, poll for updates. */
+  telegram: [
+    'telegram_setup',
+    'telegram_config',
+    'telegram_send',
+    'telegram_messages',
+    'telegram_poll',
+  ],
+
   /** Account admin (master-key territory — create/delete accounts, cleanup). */
   account_admin: [
     'create_account',
@@ -210,6 +219,7 @@ export const SET_DESCRIPTIONS: Record<ToolSetName, string> = {
   contacts: 'Address book and your own metadata',
   sms: 'SMS / voice — send/read/setup/parse/record',
   phone: 'Phone call-control — setup/capabilities/start/status/transcript/cancel',
+  telegram: 'Telegram channel — bot setup, send/list messages, poll for updates',
   account_admin: 'Account admin — create/delete/stop/resume agents, cleanup (master key required)',
   storage: 'File storage for an agent',
   memory: 'Persistent agent memory — remember/recall/reflect, ranked context digest, stats',
