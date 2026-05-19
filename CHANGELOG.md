@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.58] - 2026-05-19
+
+### Added — `/telegram` and `/call` shell commands
+
+The interactive shell (`agenticmail shell`) gained two commands that
+surface automatically in `/help` (the help screen is generated from
+the command map — adding an entry surfaces it everywhere):
+
+- **`/telegram`** — manage the Telegram channel inline. Shows current
+  status (bot username, mode, linked chats), and walks through the
+  full `@BotFather` → token → chat id flow on first run. Once enabled,
+  the same command views recent messages, polls for new updates,
+  adds another linked chat id, or disables the channel. Backed by
+  `/telegram/{config,setup,messages,poll,disable}` API routes.
+- **`/call`** — send an agent on an outbound phone errand from the
+  shell. Prompts for a destination number, a free-form task
+  description, and a duration cap (1–15 minutes, default 5), then
+  hands the policy-validated mission to `/calls/start`. The agent
+  places the call over the active phone transport (Twilio or 46elks)
+  and posts the live transcript to the mission record.
+
+### Fixed
+
+- `/sms` was calling `getActiveAgent()` without `await`, sending
+  `Authorization: Bearer undefined` to the SMS endpoints. Added the
+  missing `await` (also applied in the new `/telegram` and `/call`
+  commands).
+
 ## [0.9.57] - 2026-05-19
 
 ### Fixed — Twilio realtime voice end-to-end

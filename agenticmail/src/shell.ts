@@ -3358,7 +3358,10 @@ export async function interactiveShell(options: ShellOptions): Promise<void> {
     sms: {
       desc: 'Manage SMS / phone number (view, setup, change, disable)',
       run: async () => {
-        const agent = getActiveAgent();
+        // `getActiveAgent` is async — `await` it so `agent.apiKey` is the
+        // real key, not `undefined` from the unresolved Promise that
+        // earlier versions of this command accidentally sent.
+        const agent = await getActiveAgent();
         if (!agent) return;
         log('');
         log(hr());
@@ -3527,6 +3530,269 @@ export async function interactiveShell(options: ShellOptions): Promise<void> {
             }
           }
         }
+        log('');
+      },
+    },
+
+    telegram: {
+      desc: 'Manage Telegram channel (setup, view chat, poll, disable)',
+      run: async () => {
+        const agent = await getActiveAgent();
+        if (!agent) return;
+        log('');
+        log(hr());
+        heading('Telegram channel');
+        log('');
+
+        // Current status from /telegram/config (credentials redacted by the server).
+        let tg: any = null;
+        try {
+          const resp = await fetch(`${apiBase}/api/agenticmail/telegram/config`, {
+            headers: { 'Authorization': `Bearer ${agent.apiKey}` },
+          });
+          const data = await resp.json() as any;
+          tg = data?.telegram;
+        } catch {}
+
+        if (tg?.enabled) {
+          const bot = tg.botUsername ? `@${tg.botUsername}` : `(id ${tg.botId})`;
+          log(`  ${c.green('●')} Telegram is ${c.green('enabled')}`);
+          log(`  ${c.dim('Bot:')}            ${c.bold(bot)}`);
+          log(`  ${c.dim('Mode:')}           ${tg.mode}`);
+          log(`  ${c.dim('Operator chat:')}  ${tg.operatorChatId || c.dim('(none)')}`);
+          log(`  ${c.dim('Linked chats:')}   ${tg.allowedChatIds?.length ?? 0}`);
+        } else if (tg && !tg.enabled) {
+          log(`  ${c.yellow('●')} Telegram is ${c.yellow('disabled')}`);
+        } else {
+          log(`  ${c.dim('●')} Telegram is ${c.dim('not configured')}`);
+        }
+
+        log('');
+        log(`  ${c.bold('Options:')}`);
+        if (!tg?.enabled) {
+          log(`    ${c.cyan('1')} Set up a Telegram bot`);
+        } else {
+          log(`    ${c.cyan('1')} View recent messages`);
+          log(`    ${c.cyan('2')} Poll Telegram for new messages now`);
+          log(`    ${c.cyan('3')} Add another linked chat id`);
+          log(`    ${c.cyan('4')} Disable Telegram`);
+        }
+        log(`    ${c.dim('Enter')} Go back`);
+        log('');
+
+        const choice = await new Promise<string>(resolve => {
+          rl.question(`  ${c.bold('Choose:')} `, resolve);
+        });
+
+        if (!tg?.enabled) {
+          if (choice.trim() !== '1') { log(''); return; }
+          // Setup flow.
+          log('');
+          log(`  ${c.bold('Bot setup (takes ~30 seconds):')}`);
+          log('');
+          log(`    1. Open Telegram, message ${c.cyan('@BotFather')}, send ${c.bold('/newbot')}`);
+          log(`    2. Pick a name + username, copy the ${c.bold('bot token')} it returns`);
+          log(`    3. DM your new bot once so it can see your chat`);
+          log(`    4. Open ${c.cyan('https://api.telegram.org/bot<TOKEN>/getUpdates')}`);
+          log(`       to see your ${c.bold('chat id')} (the numeric id under "from")`);
+          log('');
+          const botToken = await new Promise<string>(resolve => {
+            rl.question(`  ${c.bold('Bot token:')} `, resolve);
+          });
+          if (!botToken.trim()) { info('Cancelled.'); return; }
+          const operatorChatId = await new Promise<string>(resolve => {
+            rl.question(`  ${c.bold('Your chat id')} ${c.dim('(Enter to add later):')} `, resolve);
+          });
+          try {
+            const resp = await fetch(`${apiBase}/api/agenticmail/telegram/setup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+              body: JSON.stringify({
+                botToken: botToken.trim(),
+                mode: 'poll',
+                operatorChatId: operatorChatId.trim() || undefined,
+                allowedChatIds: operatorChatId.trim() ? [operatorChatId.trim()] : undefined,
+              }),
+            });
+            const data = await resp.json() as any;
+            if (data.success) {
+              const bot = data.bot?.username ? `@${data.bot.username}` : '(bot)';
+              ok(`Telegram channel enabled — ${c.bold(bot)} linked to ${c.bold(agent.name)}`);
+              if (!operatorChatId.trim()) {
+                info('No chat id linked yet — re-run /telegram to add one so inbound messages are accepted.');
+              } else {
+                info(`DM ${bot} from Telegram now — your agent will receive it.`);
+                info('Poll mode: messages arrive when the dispatcher polls (or via /telegram → 2).');
+              }
+            } else {
+              fail(data.error || 'Setup failed');
+            }
+          } catch (err) { fail((err as Error).message); }
+        } else {
+          if (choice.trim() === '1') {
+            // View recent messages.
+            try {
+              const resp = await fetch(`${apiBase}/api/agenticmail/telegram/messages?limit=20`, {
+                headers: { 'Authorization': `Bearer ${agent.apiKey}` },
+              });
+              const data = await resp.json() as any;
+              if (!data.messages?.length) {
+                info('No Telegram messages yet.');
+              } else {
+                log('');
+                for (const msg of data.messages) {
+                  const dir = msg.direction === 'inbound' ? c.green('← IN ') : c.blue('→ OUT');
+                  const who = msg.chatId ? `chat ${msg.chatId}` : '(no chat)';
+                  const time = new Date(msg.createdAt).toLocaleString();
+                  log(`  ${dir} ${c.bold(who)} ${c.dim(time)}`);
+                  const body = (msg.text || msg.body || '').toString();
+                  log(`       ${body.length > 80 ? body.slice(0, 80) + '...' : body}`);
+                  log('');
+                }
+                info(`${data.messages.length} message(s)`);
+              }
+            } catch (err) { fail((err as Error).message); }
+          } else if (choice.trim() === '2') {
+            // Poll Telegram for new updates right now.
+            try {
+              const resp = await fetch(`${apiBase}/api/agenticmail/telegram/poll`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${agent.apiKey}` },
+              });
+              const data = await resp.json() as any;
+              if (data.success) {
+                ok(`Polled — ${data.processed ?? 0} new update(s) processed.`);
+              } else {
+                fail(data.error || 'Poll failed');
+              }
+            } catch (err) { fail((err as Error).message); }
+          } else if (choice.trim() === '3') {
+            // Add another linked chat id (keep the existing token).
+            const newChatId = await new Promise<string>(resolve => {
+              rl.question(`  ${c.bold('Chat id to allow:')} `, resolve);
+            });
+            if (!newChatId.trim()) { info('Cancelled.'); return; }
+            // /telegram/setup is idempotent for the token and replaces the
+            // allow-list with what we send — so re-send token + merged list.
+            try {
+              const existing = (tg.allowedChatIds || []).map(String);
+              const merged = Array.from(new Set([...existing, newChatId.trim()]));
+              const resp = await fetch(`${apiBase}/api/agenticmail/telegram/setup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+                body: JSON.stringify({
+                  botToken: tg.botToken,
+                  mode: tg.mode,
+                  operatorChatId: tg.operatorChatId,
+                  allowedChatIds: merged,
+                }),
+              });
+              const data = await resp.json() as any;
+              if (data.success) ok(`Linked. Allowed chats: ${merged.length}.`);
+              else fail(data.error || 'Update failed');
+            } catch (err) { fail((err as Error).message); }
+          } else if (choice.trim() === '4') {
+            // Disable.
+            const confirm = await new Promise<string>(resolve => {
+              rl.question(`  ${c.bold('Disable Telegram?')} ${c.dim('(y/N)')} `, resolve);
+            });
+            if (confirm.toLowerCase().startsWith('y')) {
+              try {
+                const resp = await fetch(`${apiBase}/api/agenticmail/telegram/disable`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${agent.apiKey}` },
+                });
+                const data = await resp.json() as any;
+                if (data.success) ok('Telegram disabled. Re-run /telegram to enable again.');
+                else fail(data.error || 'Failed to disable');
+              } catch (err) { fail((err as Error).message); }
+            } else {
+              info('Cancelled.');
+            }
+          }
+        }
+        log('');
+      },
+    },
+
+    call: {
+      desc: 'Send an agent on a phone errand (outbound voice call)',
+      run: async () => {
+        const agent = await getActiveAgent();
+        if (!agent) return;
+        log('');
+        log(hr());
+        heading('Send agent on a call');
+        log('');
+        log(`  ${c.dim('The agent will dial the number you give, complete the')}`);
+        log(`  ${c.dim('errand in your voice, and post the live transcript back')}`);
+        log(`  ${c.dim('to this server. You will get every word the agent said.')}`);
+        log('');
+
+        const to = (await new Promise<string>(resolve => {
+          rl.question(`  ${c.cyan('Number to call')} ${c.dim('(E.164, e.g. +13365551234):')} `, resolve);
+        })).trim();
+        if (!to) { info('Cancelled.'); return; }
+
+        log('');
+        log(`  ${c.dim('Describe what the agent should do on the call. Be specific —')}`);
+        log(`  ${c.dim('what to say first, what to ask, when to hang up.')}`);
+        const task = (await new Promise<string>(resolve => {
+          rl.question(`  ${c.cyan('Task:')} `, resolve);
+        })).trim();
+        if (!task) { info('Cancelled.'); return; }
+
+        const minutesStr = (await new Promise<string>(resolve => {
+          rl.question(`  ${c.cyan('Max call duration in minutes')} ${c.dim('(Enter for 5):')} `, resolve);
+        })).trim();
+        const minutes = Math.max(1, Math.min(15, parseInt(minutesStr || '5', 10) || 5));
+
+        // Policy mirrors the validator in core/src/phone/policy.ts. The
+        // five `confirmPolicy` fields each have a fixed required value
+        // ("never" or "needs_operator") — anything else is rejected as
+        // `unsafe-confirm-policy`. `regionAllowlist` must use one of
+        // PHONE_REGION_SCOPES: AT / DE / EU / WORLD.
+        const policy = {
+          policyVersion: 1,
+          regionAllowlist: ['WORLD'],
+          maxCallDurationSeconds: minutes * 60,
+          maxCostPerMission: 5,
+          maxAttempts: 1,
+          transcriptEnabled: true,
+          recordingEnabled: false,
+          confirmPolicy: {
+            paymentDetails: 'never',
+            contractCommitment: 'never',
+            costOverLimit: 'needs_operator',
+            sensitivePersonalData: 'needs_operator',
+            unclearAlternative: 'needs_operator',
+          },
+          alternativePolicy: { maxTimeShiftMinutes: 120 },
+        };
+
+        log('');
+        info('Dialing...');
+        try {
+          const resp = await fetch(`${apiBase}/api/agenticmail/calls/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+            body: JSON.stringify({ to, task, policy }),
+          });
+          const data = await resp.json() as any;
+          if (!resp.ok || !data.success) {
+            fail(data.error || `HTTP ${resp.status}`);
+            log('');
+            info('No phone transport configured? Run `agenticmail setup` to add Twilio or 46elks.');
+            return;
+          }
+          const m = data.mission;
+          ok(`Call dialing — mission ${c.bold(m.id)}`);
+          log(`  ${c.dim('From:')}     ${m.from}`);
+          log(`  ${c.dim('To:')}       ${m.to}`);
+          log(`  ${c.dim('Provider:')} ${m.provider} ${c.dim('(call id ' + m.providerCallId + ')')}`);
+          log('');
+          info(`Watch the transcript live: /call ${m.id}  (or pull JSON from /api/agenticmail/calls/${m.id}/transcript)`);
+        } catch (err) { fail((err as Error).message); }
         log('');
       },
     },
