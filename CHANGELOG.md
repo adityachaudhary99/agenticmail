@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.67] - 2026-05-20
+
+### Added — OpenAI key prompt in `setup-phone` + re-entrant config flow
+
+Two related wins for the channel-setup commands, built on a new
+shared `agenticmail/src/setup-utils.ts` module so future
+`setup-*` commands stay consistent without copy-pasting the pattern.
+
+- **`setup-phone` now prompts for an OpenAI API key.** Realtime
+  voice (the live spoken-conversation bridge) needs an OpenAI key;
+  without it, calls connect but the bridge fails on open and the
+  recipient hears silence. The wizard prompts as a 4th optional
+  step (hidden input), saves to `~/.agenticmail/config.json`
+  under `openaiApiKey`, and prints a loud yellow warning after the
+  transport is saved if the key is still missing — with the exact
+  re-run command the user can use to add it later. No more "I
+  set up Twilio, why do calls fail?" surprises.
+
+- **All `setup-*` wizards are now re-entrant.** Running
+  `agenticmail setup-phone` (or `setup-telegram`) a second time
+  now:
+    1. Fetches what's already configured for that channel
+       (transport / token / allow-list / OpenAI key).
+    2. Prints a "Currently configured" summary with secrets
+       masked (`(set, ends …abcd)` for API keys, `(encrypted,
+       kept as-is…)` for tokens encrypted at rest).
+    3. Prompts ONLY for the fields that are still missing.
+    4. Offers a numbered "Update any of the already-configured
+       values?" picker — pick `1,3` to re-enter the phone number
+       and OpenAI key, skip the rest. Empty input keeps things
+       as-is.
+  Secret fields handle the "keep" path correctly: the API call
+  omits the password / bot-token entirely so the server keeps the
+  encrypted-at-rest value rather than overwriting it with the
+  placeholder string. Token rotations are still a one-flow update.
+
+- **`setup-utils.ts`** is the shared module — exports
+  `collectFields({ title, fields, isTTY, prompts, c, logger })`
+  with a `SetupField` interface (key, label, hint, secret,
+  required, current, mask, placeholder). All the "summary →
+  prompt-missing → offer-update" UX lives there exactly once.
+  Future `setup-*` commands (slack, discord, ...) drop in for
+  free.
+
 ## [0.9.66] - 2026-05-20
 
 ### Changed — `setup-phone` + `setup-telegram` are now interactive wizards

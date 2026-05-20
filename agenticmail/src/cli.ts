@@ -19,6 +19,7 @@ import {
   type SetupConfig,
 } from '@agenticmail/core';
 import { interactiveShell } from './shell.js';
+import { collectFields, SetupError, type SetupField } from './setup-utils.js';
 
 /**
  * Prompt for text input. Creates a temporary readline per call
@@ -1152,77 +1153,165 @@ async function cmdSetupPhone() {
     log('');
   }
 
-  let phoneNumber = flag('phone-number') ?? process.env.AGENTICMAIL_PHONE_NUMBER ?? '';
-  let webhookBaseUrl = flag('webhook-url') ?? process.env.AGENTICMAIL_WEBHOOK_URL ?? '';
-  let username = provider === 'twilio'
-    ? (flag('account-sid') ?? process.env.TWILIO_ACCOUNT_SID ?? '')
-    : (flag('username') ?? process.env.ELKS_USERNAME ?? '');
-  let password = provider === 'twilio'
-    ? (flag('auth-token') ?? process.env.TWILIO_AUTH_TOKEN ?? '')
-    : (flag('password') ?? process.env.ELKS_PASSWORD ?? '');
   // Webhook secret needs ≥24 chars of entropy; mint one if the operator
   // didn't supply it so they don't have to invent it themselves. Same
   // logic the interactive wizard uses.
   const customSecret = flag('webhook-secret') ?? process.env.AGENTICMAIL_WEBHOOK_SECRET ?? '';
   const webhookSecret = customSecret || randomBytes(24).toString('hex');
 
-  // Interactive prompts come FIRST, tunnel last. Earlier ordering tried
-  // to be clever and open the tunnel before asking — but the user just
-  // watched a 5–30s spinner before being told "now type your Account
-  // SID", which made the spinner feel like the command was going to do
-  // everything itself and then failed at the end. Doing the prompts up
-  // front matches everyone's expectation of a guided wizard, and the
-  // tunnel cold-start happens at the very end as the last "OK, working
-  // on it" step before saving the config.
-  //
-  // Each prompt has its own one-line explanation so a first-time user
-  // knows what they're being asked for and where to find it. The auth
-  // token uses `askSecret` (raw-mode `*`-masked input) — visible-input
-  // would land the token in their terminal scrollback / tmux logs.
-  if (process.stdin.isTTY) {
-    if (!phoneNumber) {
-      log(`  ${c.bold('1) Caller phone number')}`);
-      log(`  ${c.dim('   The number from your carrier — the one the agent calls FROM.')}`);
-      log(`  ${c.dim('   Must be in E.164 format (starts with +, then country code).')}`);
-      phoneNumber = (await ask(`     ${c.cyan('Number:')} ${c.dim('(e.g. +15555550100) ')}`)).trim();
-      log('');
-    }
-    if (!username) {
-      const label = provider === 'twilio' ? 'Twilio Account SID' : '46elks API username';
-      const where = provider === 'twilio'
-        ? 'Find it at console.twilio.com → top-right Account dashboard, "Account SID" (starts with AC...).'
-        : 'Find it at 46elks.com dashboard → Account → API credentials, "Username".';
-      log(`  ${c.bold('2) ' + label)}`);
-      log(`  ${c.dim('   ' + where)}`);
-      username = (await ask(`     ${c.cyan('Paste it:')} `)).trim();
-      log('');
-    }
-    if (!password) {
-      const label = provider === 'twilio' ? 'Twilio Auth Token' : '46elks API password';
-      const where = provider === 'twilio'
-        ? 'Same Twilio Account page — click "View" on the primary Auth Token. This is a SECRET; treat it like a password.'
-        : 'Same 46elks dashboard page, "Password" field. This is a SECRET; treat it like a password.';
-      log(`  ${c.bold('3) ' + label)}`);
-      log(`  ${c.dim('   ' + where)}`);
-      log(`  ${c.dim('   Input is hidden — you won\'t see what you type, that\'s expected.')}`);
-      // Hidden input — `*`-masked, never echoes to stdout, never lands
-      // in the scrollback. Same helper the setup-email wizard uses.
-      password = (await askSecret(`     ${c.cyan('Paste it:')} `)).trim();
-      log('');
-    }
-  }
-
-  const missing: string[] = [];
-  if (!phoneNumber) missing.push('--phone-number');
-  if (!username) missing.push(provider === 'twilio' ? '--account-sid' : '--username');
-  if (!password) missing.push(provider === 'twilio' ? '--auth-token' : '--password');
-  if (missing.length) {
-    log('');
-    fail(`Missing required field(s): ${missing.join(', ')}`);
-    info(`See: ${c.green('agenticmail setup-phone --help')}`);
-    log('');
+  // We need the API server up + an agent api key before we can read
+  // existing config and save changes. Resolve both up front so the
+  // re-entrant flow can show what's already set in the summary.
+  const configPath = join(homedir(), '.agenticmail', 'config.json');
+  if (!existsSync(configPath)) {
+    fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
+    info(`Run ${c.cyan('agenticmail setup')} first, then re-run this.`);
     process.exit(1);
   }
+  let config: SetupConfig;
+  try { config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig; }
+  catch (err) { fail(`Could not read ${configPath}: ${(err as Error).message}`); process.exit(1); }
+
+  const apiBase = `http://${config.api.host}:${config.api.port}`;
+  try {
+    const probe = await fetch(`${apiBase}/api/agenticmail/health`, { signal: AbortSignal.timeout(2_000) });
+    if (!probe.ok) throw new Error('not ok');
+  } catch {
+    try { await startApiServer(config); }
+    catch { fail(`API server not reachable at ${c.cyan(apiBase)}. Start it with ${c.green('agenticmail start')}.`); process.exit(1); }
+  }
+
+  const agent = await resolveAgentApiKey(config);
+  if (!agent) {
+    fail('No agent provisioned yet — connect email first via `agenticmail setup-email`.');
+    process.exit(1);
+  }
+
+  // Pull whatever's already saved for this agent's phone transport, so
+  // a second run of `setup-phone` can show "currently configured"
+  // values and only prompt for what's missing. Endpoint returns the
+  // config with secrets redacted to `(encrypted)` — we treat the
+  // presence of `(encrypted)` as "this secret is set" without
+  // exposing the literal bytes.
+  let existing: any = {};
+  try {
+    const r = await fetch(`${apiBase}/api/agenticmail/phone/transport/config`, {
+      headers: { 'Authorization': `Bearer ${agent.apiKey}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (r.ok) existing = (await r.json() as any)?.transport ?? {};
+  } catch { /* not yet configured */ }
+
+  // The OpenAI key lives in `~/.agenticmail/config.json` (not in agent
+  // metadata) — it's the one credential the realtime voice bridge
+  // needs to actually carry a spoken conversation on the call.
+  // Optional. Without it the carrier still places the call, but the
+  // voice bridge fails on connect and the recipient hears silence —
+  // we warn loudly at the end if the user skipped it.
+  const existingOpenaiKey = (config as any).openaiApiKey ?? '';
+
+  // Build the field list for the shared collector. Order matters —
+  // these are the order the user will see prompts in, so the cheap-
+  // to-paste values (number, SID) come before the slow-to-find ones
+  // (auth token) and the optional-with-warning OpenAI key last.
+  const credFields: SetupField[] = [
+    {
+      key: 'phone-number',
+      label: 'Caller phone number',
+      hint: [
+        'The number from your carrier — the one the agent calls FROM.',
+        'Must be in E.164 format (starts with +, then country code).',
+      ],
+      placeholder: '(e.g. +15555550100)',
+      current: existing.phoneNumber ?? flag('phone-number') ?? process.env.AGENTICMAIL_PHONE_NUMBER ?? '',
+      required: true,
+    },
+    {
+      key: 'username',
+      label: provider === 'twilio' ? 'Twilio Account SID' : '46elks API username',
+      hint: provider === 'twilio'
+        ? ['Find it at console.twilio.com → top-right Account dashboard,', '"Account SID" (starts with AC...).']
+        : ['Find it at 46elks.com dashboard → Account → API credentials,', '"Username".'],
+      // Account SIDs are visible identifiers (not strictly secret) —
+      // 46elks usernames are similarly public. Show as-is.
+      current: existing.username ?? (provider === 'twilio'
+        ? (flag('account-sid') ?? process.env.TWILIO_ACCOUNT_SID ?? '')
+        : (flag('username') ?? process.env.ELKS_USERNAME ?? '')),
+      required: true,
+    },
+    {
+      key: 'password',
+      label: provider === 'twilio' ? 'Twilio Auth Token' : '46elks API password',
+      hint: [
+        provider === 'twilio'
+          ? 'Same Twilio Account page — click "View" on the primary Auth Token.'
+          : 'Same 46elks dashboard page, "Password" field.',
+        'This is a SECRET; treat it like a password.',
+        'Input is hidden — you won\'t see what you type, that\'s expected.',
+      ],
+      secret: true,
+      // The API redacts to `(encrypted)` — flag it as present without
+      // pulling the actual value. The user can still UPDATE in the
+      // phase-2 flow if they need to rotate the token.
+      current: existing.password
+        ? '(encrypted, kept as-is unless you update below)'
+        : (provider === 'twilio'
+            ? (flag('auth-token') ?? process.env.TWILIO_AUTH_TOKEN ?? '')
+            : (flag('password') ?? process.env.ELKS_PASSWORD ?? '')),
+      required: true,
+    },
+    {
+      key: 'openai-api-key',
+      label: 'OpenAI API key (for realtime voice)',
+      hint: [
+        'Optional. Without it, the agent CANNOT have live spoken phone',
+        'conversations — calls connect but the voice bridge has nothing',
+        'to power the agent\'s speech. With it, the agent listens and',
+        'responds in real time via OpenAI\'s Realtime API.',
+        'Get a key at https://platform.openai.com/api-keys.',
+      ],
+      secret: true,
+      // Mark as configured if config.json already has it. The literal
+      // value isn't shown — the user either keeps it (skip) or
+      // updates it (re-enter via the update-any picker).
+      current: existingOpenaiKey
+        ? '(set in ~/.agenticmail/config.json — kept unless you update below)'
+        : (flag('openai-api-key') ?? process.env.OPENAI_API_KEY ?? ''),
+      required: false,
+    },
+  ];
+
+  let collected;
+  try {
+    collected = await collectFields({
+      title: `Connect ${provider} phone calling`,
+      fields: credFields,
+      isTTY: !!process.stdin.isTTY,
+      prompts: { ask, askSecret },
+      c: { bold: c.bold, dim: c.dim, cyan: c.cyan, green: c.green, yellow: c.yellow, magenta: c.magenta },
+      logger: { log, ok, info, fail },
+    });
+  } catch (err) {
+    // SetupError is the "still missing required" outcome — the
+    // collector already printed a user-facing line, just exit.
+    if (err instanceof SetupError) process.exit(1);
+    throw err;
+  }
+
+  // Untangle the collected values. For secrets the user "kept", the
+  // collected value is the placeholder string `(encrypted, kept...)`
+  // — we substitute back the empty-string marker so the API knows to
+  // leave the encrypted-at-rest value alone instead of overwriting it
+  // with the placeholder text.
+  const phoneNumber = collected.values['phone-number'];
+  const username = collected.values['username'];
+  const passwordRaw = collected.values['password'];
+  const password = collected.changedKeys.includes('password') ? passwordRaw : '';
+  const openaiKeyRaw = collected.values['openai-api-key'];
+  const openaiKey = collected.changedKeys.includes('openai-api-key') ? openaiKeyRaw : '';
+  const openaiKeyEffective = openaiKey || existingOpenaiKey;
+
+  let webhookBaseUrl = flag('webhook-url') ?? process.env.AGENTICMAIL_WEBHOOK_URL ?? existing.webhookBaseUrl ?? '';
 
   // Tunnel comes LAST — by this point the user has answered every
   // question and just wants AgenticMail to finish. A spinner here is
@@ -1249,32 +1338,22 @@ async function cmdSetupPhone() {
     log('');
   }
 
-  const configPath = join(homedir(), '.agenticmail', 'config.json');
-  if (!existsSync(configPath)) {
-    fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
-    info(`Run ${c.cyan('agenticmail setup')} first, then re-run this.`);
-    process.exit(1);
-  }
-
-  let config: SetupConfig;
-  try { config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig; }
-  catch (err) { fail(`Could not read ${configPath}: ${(err as Error).message}`); process.exit(1); }
-
-  // Bring the API up if it's not already, then resolve the per-agent
-  // API key (the /phone/transport/setup endpoint is agent-scoped).
-  const apiBase = `http://${config.api.host}:${config.api.port}`;
-  try {
-    const probe = await fetch(`${apiBase}/api/agenticmail/health`, { signal: AbortSignal.timeout(2_000) });
-    if (!probe.ok) throw new Error('not ok');
-  } catch {
-    try { await startApiServer(config); }
-    catch { fail(`API server not reachable at ${c.cyan(apiBase)}. Start it with ${c.green('agenticmail start')}.`); process.exit(1); }
-  }
-
-  const agent = await resolveAgentApiKey(config);
-  if (!agent) {
-    fail('No agent provisioned yet — connect email first via `agenticmail setup-email`.');
-    process.exit(1);
+  // Save the OpenAI key first if it changed — the realtime voice
+  // bridge reads `openaiApiKey` from `~/.agenticmail/config.json` at
+  // session-open time. Doing this BEFORE the phone-transport POST
+  // means if the operator does test-call immediately afterward, the
+  // already-running API server picks up the key on its first read
+  // (the bridge doesn't cache it).
+  if (openaiKey) {
+    try {
+      const fileConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+      fileConfig.openaiApiKey = openaiKey;
+      writeFileSync(configPath, JSON.stringify(fileConfig, null, 2), { encoding: 'utf-8', mode: 0o600 });
+      ok('OpenAI API key saved — realtime voice is enabled.');
+    } catch (err) {
+      fail(`Could not save OpenAI API key: ${(err as Error).message}`);
+      info('Phone transport will still be saved, but realtime voice will not work until the key is configured.');
+    }
   }
 
   log('');
@@ -1289,10 +1368,19 @@ async function cmdSetupPhone() {
   const spinner = new Spinner('general', 'Saving phone transport...');
   spinner.start();
   try {
+    // Build the POST body — omit password ONLY if the user kept the
+    // existing encrypted value (we don't have the real bytes to send).
+    // The server route treats a missing `password` on update as "keep
+    // the existing encrypted-at-rest value as-is", so the call still
+    // succeeds and Twilio webhook signing keeps working.
+    const body: Record<string, unknown> = {
+      provider, phoneNumber, username, webhookBaseUrl, webhookSecret,
+    };
+    if (password) body.password = password;
     const resp = await fetch(`${apiBase}/api/agenticmail/phone/transport/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
-      body: JSON.stringify({ provider, phoneNumber, username, password, webhookBaseUrl, webhookSecret }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(15_000),
     });
     if (resp.ok) {
@@ -1308,6 +1396,28 @@ async function cmdSetupPhone() {
   } catch (err) {
     spinner.fail(`Could not save phone transport: ${(err as Error).message}`);
     process.exit(1);
+  }
+
+  // No OpenAI key configured — the carrier transport is saved, but
+  // calls cannot actually carry a spoken conversation yet. Surface
+  // this loudly so the operator doesn't discover it the first time
+  // they try `/call`. Single yellow-tinted block (no spinner, no
+  // animation — this is documentation the user re-reads).
+  if (!openaiKeyEffective) {
+    log('');
+    log(`  ${c.yellow('⚠')} ${c.bold('No OpenAI API key configured')} ${c.dim('— calls will not work yet.')}`);
+    log('');
+    log(`  ${c.dim('The agent\'s spoken voice on a phone call is driven by the OpenAI')}`);
+    log(`  ${c.dim('Realtime API. Without a key, an outbound call connects but the')}`);
+    log(`  ${c.dim('voice bridge fails on open and the recipient hears silence.')}`);
+    log('');
+    log(`  ${c.bold('Add a key any time:')}`);
+    log(`    ${c.green('agenticmail setup-phone --provider ' + provider)}    ${c.dim('(re-run this; we\'ll just prompt for the key)')}`);
+    log(`  ${c.dim('Or pipe via env:')}`);
+    log(`    ${c.green('OPENAI_API_KEY=… agenticmail setup-phone --provider ' + provider)}`);
+    log('');
+    log(`  ${c.dim('Get a key at https://platform.openai.com/api-keys.')}`);
+    log('');
   }
 }
 
@@ -1368,42 +1478,8 @@ async function cmdSetupTelegram() {
     return;
   }
 
-  let botToken = flag('bot-token') ?? process.env.TELEGRAM_BOT_TOKEN ?? '';
-  let operatorChatId = (flag('chat-id') ?? process.env.TELEGRAM_CHAT_ID ?? '').trim();
-
-  // Interactive prompts when running at a real TTY. Mirrors the
-  // setup-phone wizard added in v0.9.66: anyone who just types
-  // `agenticmail setup-telegram` at their terminal expects to be
-  // walked through it. Scripted callers still get the hard error
-  // (no TTY → no stdin → blocking on `ask` would hang forever).
-  if (!botToken) {
-    if (!process.stdin.isTTY) {
-      fail('--bot-token is required when running non-interactively (no TTY).');
-      info(`See: ${c.green('agenticmail setup-telegram --help')}`);
-      process.exit(1);
-    }
-    log('');
-    log(`  ${c.bold('🎀 AgenticMail — connect Telegram')}`);
-    log('');
-    log(`  ${c.dim('Create a bot: open Telegram, message @BotFather, send /newbot,')}`);
-    log(`  ${c.dim('and copy the token it gives you.')}`);
-    // Use askSecret — the token IS a credential (anyone with it can
-    // operate the bot). Hidden input keeps it out of the scrollback.
-    botToken = (await askSecret(`  ${c.cyan('Telegram bot token:')} `)).trim();
-    if (!botToken) {
-      log('');
-      fail('A bot token is required to enable Telegram.');
-      process.exit(1);
-    }
-    log('');
-  }
-  if (!operatorChatId && process.stdin.isTTY) {
-    log(`  ${c.dim('Your chat id: message your bot, then open')}`);
-    log(`  ${c.dim('https://api.telegram.org/bot<token>/getUpdates to see it.')}`);
-    operatorChatId = (await ask(`  ${c.cyan('Your Telegram chat id')} ${c.dim('(Enter to add later):')} `)).trim();
-    log('');
-  }
-
+  // Resolve config + agent up front so the re-entrant collector can
+  // show what's already saved for this Telegram channel.
   const configPath = join(homedir(), '.agenticmail', 'config.json');
   if (!existsSync(configPath)) {
     fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
@@ -1429,6 +1505,81 @@ async function cmdSetupTelegram() {
     process.exit(1);
   }
 
+  // Pull existing Telegram config (token redacted, allow-list visible)
+  // so a second run can show "currently configured" + only prompt for
+  // missing fields.
+  let existingTg: any = {};
+  try {
+    const r = await fetch(`${apiBase}/api/agenticmail/telegram/config`, {
+      headers: { 'Authorization': `Bearer ${agent.apiKey}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (r.ok) existingTg = (await r.json() as any)?.telegram ?? {};
+  } catch { /* not yet configured */ }
+
+  // Two fields: bot token (secret) + the operator's allowed chat id
+  // (visible — that's just the numeric id of who's allowed to DM the
+  // bot). Reuse the same shared collector as `setup-phone` so the
+  // re-entrant "currently configured / update any?" UX is identical
+  // across all the channel-setup commands.
+  const fields: SetupField[] = [
+    {
+      key: 'bot-token',
+      label: 'Telegram bot token',
+      hint: [
+        'Get one from @BotFather: open Telegram, message @BotFather,',
+        'send /newbot, follow the prompts, and copy the token it returns.',
+        'Input is hidden — you won\'t see what you type, that\'s expected.',
+      ],
+      secret: true,
+      current: existingTg.botToken
+        ? '(encrypted, kept as-is unless you update below)'
+        : (flag('bot-token') ?? process.env.TELEGRAM_BOT_TOKEN ?? ''),
+      required: true,
+    },
+    {
+      key: 'chat-id',
+      label: 'Your Telegram chat id (allow-list)',
+      hint: [
+        'Restricts who can DM your bot. Find it by DMing your bot once,',
+        'then visiting https://api.telegram.org/bot<TOKEN>/getUpdates and',
+        'reading the numeric "from.id" out of the JSON.',
+      ],
+      placeholder: '(e.g. 7096812530)',
+      current: existingTg.operatorChatId
+        ?? (flag('chat-id') ?? process.env.TELEGRAM_CHAT_ID ?? '').trim(),
+      required: false,
+    },
+  ];
+
+  let collected;
+  try {
+    collected = await collectFields({
+      title: 'Connect Telegram',
+      fields,
+      isTTY: !!process.stdin.isTTY,
+      prompts: { ask, askSecret },
+      c: { bold: c.bold, dim: c.dim, cyan: c.cyan, green: c.green, yellow: c.yellow, magenta: c.magenta },
+      logger: { log, ok, info, fail },
+    });
+  } catch (err) {
+    if (err instanceof SetupError) process.exit(1);
+    throw err;
+  }
+
+  // Decide what to send to the API. For the token we ONLY send when
+  // it just changed — sending the `(encrypted, kept...)` placeholder
+  // would overwrite the real token with that literal string, breaking
+  // the channel. If no fresh token AND none was set before, that's a
+  // hard error (the collector already enforces required=true so this
+  // is belt-and-suspenders).
+  const botTokenNew = collected.changedKeys.includes('bot-token') ? collected.values['bot-token'] : '';
+  const operatorChatId = collected.values['chat-id'] || '';
+  if (!botTokenNew && !existingTg.botToken) {
+    fail('A bot token is required to enable Telegram.');
+    process.exit(1);
+  }
+
   log('');
   log(`  ${c.bold('🎀 AgenticMail — connect Telegram')}`);
   log('');
@@ -1436,48 +1587,83 @@ async function cmdSetupTelegram() {
   log(`  ${c.dim('chat id:')}  ${operatorChatId || c.dim('(none — only the operator chat is allowed to DM, set later)')}`);
   log('');
 
-  const spinner = new Spinner('general', 'Verifying bot token with Telegram...');
-  spinner.start();
-  try {
-    const resp = await fetch(`${apiBase}/api/agenticmail/telegram/setup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
-      body: JSON.stringify({ botToken, mode: 'poll', operatorChatId: operatorChatId || undefined }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      spinner.fail(`Could not enable Telegram: ${parseFriendlyError(text).message}`);
+  // Only POST to /telegram/setup if SOMETHING changed (new token OR
+  // chat-id changed). Otherwise we're just confirming an already-saved
+  // config — no need to roundtrip and possibly re-verify the token
+  // against Telegram. Saves a few seconds on re-runs that just check
+  // current state.
+  const chatIdChanged = collected.changedKeys.includes('chat-id');
+  if (botTokenNew || chatIdChanged) {
+    const spinner = new Spinner('general', botTokenNew
+      ? 'Verifying bot token with Telegram...'
+      : 'Updating allowed chat id...');
+    spinner.start();
+    try {
+      // Build the body. If we don't have a fresh token, the server's
+      // /telegram/setup currently REQUIRES one — so we have to read the
+      // stored encrypted token, decrypt-then-resend... or trust the
+      // caller to have only triggered this branch when they have a
+      // new token. The fresh token is required by the route handler
+      // anyway, so this path only fires when `botTokenNew` is set OR
+      // (existing token + chat-id changed) — in the second case we
+      // have to surface a clearer message because the route insists
+      // on a token even just to update the chat-id.
+      if (!botTokenNew) {
+        spinner.fail('Updating just the chat id without re-supplying the bot token isn\'t supported by the server yet.');
+        info(`Re-run and choose to update the ${c.bold('bot token')} too (you can paste the same value).`);
+        process.exit(1);
+      }
+      const resp = await fetch(`${apiBase}/api/agenticmail/telegram/setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+        body: JSON.stringify({ botToken: botTokenNew, mode: 'poll', operatorChatId: operatorChatId || undefined }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        spinner.fail(`Could not enable Telegram: ${parseFriendlyError(text).message}`);
+        process.exit(1);
+      }
+      const data = await resp.json() as any;
+      const botName = data?.bot?.username ? `@${data.bot.username}` : 'your bot';
+      spinner.succeed(`Telegram channel enabled — ${c.bold(botName)} linked to ${c.bold(agent.name)}`);
+    } catch (err) {
+      spinner.fail(`Could not enable Telegram: ${(err as Error).message}`);
       process.exit(1);
     }
-    const data = await resp.json() as any;
-    const botName = data?.bot?.username ? `@${data.bot.username}` : 'your bot';
-    spinner.succeed(`Telegram channel enabled — ${c.bold(botName)} linked to ${c.bold(agent.name)}`);
-  } catch (err) {
-    spinner.fail(`Could not enable Telegram: ${(err as Error).message}`);
-    process.exit(1);
+  } else {
+    ok('Telegram channel already configured — no changes.');
   }
 
-  // Write the standalone bridge's config files. This is what makes
-  // inbound DMs actually wake the agent (vs. just being recorded in
-  // the API). agent-key gives the bridge's spawned `claude -p` turns
+  // Write / refresh the standalone bridge's config files. This is what
+  // makes inbound DMs actually wake the agent (vs. just being recorded
+  // in the API). agent-key gives the bridge's spawned `claude -p` turns
   // access to the full @agenticmail/mcp toolset via mcp-config.json.
-  try {
-    const { mkdirSync: mkdir, writeFileSync: writeFile, chmodSync } = await import('node:fs');
-    const tgDir = join(homedir(), '.agenticmail', 'telegram');
-    mkdir(tgDir, { recursive: true });
-    writeFile(join(tgDir, 'telegram-token'), botToken, { mode: 0o600 });
-    chmodSync(join(tgDir, 'telegram-token'), 0o600);
-    writeFile(join(tgDir, 'agent-key'), agent.apiKey, { mode: 0o600 });
-    chmodSync(join(tgDir, 'agent-key'), 0o600);
-    if (operatorChatId) writeFile(join(tgDir, 'telegram-allowed-ids'), operatorChatId + '\n');
-    ok(`Bridge files written to ${c.dim(tgDir)}`);
-    info(`Run ${c.green('agenticmail start')} to start (or restart) the bridge.`);
-    log('');
-  } catch (err) {
-    fail(`Could not write bridge config: ${(err as Error).message}`);
-    info('Telegram is configured in the API but the bridge service is not. Inbound DMs will not wake the agent until you re-run this.');
-    process.exit(1);
+  //
+  // Only rewrite files whose corresponding field actually changed —
+  // otherwise we'd clobber the on-disk token with the
+  // `(encrypted, kept...)` placeholder string. A no-op re-run leaves
+  // the bridge files untouched.
+  if (botTokenNew || chatIdChanged) {
+    try {
+      const { mkdirSync: mkdir, writeFileSync: writeFile, chmodSync } = await import('node:fs');
+      const tgDir = join(homedir(), '.agenticmail', 'telegram');
+      mkdir(tgDir, { recursive: true });
+      if (botTokenNew) {
+        writeFile(join(tgDir, 'telegram-token'), botTokenNew, { mode: 0o600 });
+        chmodSync(join(tgDir, 'telegram-token'), 0o600);
+      }
+      writeFile(join(tgDir, 'agent-key'), agent.apiKey, { mode: 0o600 });
+      chmodSync(join(tgDir, 'agent-key'), 0o600);
+      if (operatorChatId) writeFile(join(tgDir, 'telegram-allowed-ids'), operatorChatId + '\n');
+      ok(`Bridge files written to ${c.dim(tgDir)}`);
+      info(`Run ${c.green('agenticmail start')} to start (or restart) the bridge.`);
+      log('');
+    } catch (err) {
+      fail(`Could not write bridge config: ${(err as Error).message}`);
+      info('Telegram is configured in the API but the bridge service is not. Inbound DMs will not wake the agent until you re-run this.');
+      process.exit(1);
+    }
   }
 }
 
