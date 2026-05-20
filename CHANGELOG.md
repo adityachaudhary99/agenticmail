@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.64] - 2026-05-20
+
+### Added — `agenticmail tunnel` (free Cloudflare quick-tunnel)
+
+Solves the show-stopper for residential / local installs: phone
+providers and webhook-mode integrations need a public HTTPS URL,
+but most users don't have one. The new tunnel command (and the
+auto-tunnel hook in `setup-phone`) wraps Cloudflare's free
+quick-tunnel — no Cloudflare account, no signup, no domain —
+into a one-liner that "just works".
+
+- **`agenticmail tunnel {start|stop|status|url}`** — manages a
+  detached `cloudflared tunnel --url http://127.0.0.1:<port>`
+  process. Captures the `*.trycloudflare.com` URL from
+  cloudflared's stderr within ~5–30s of startup and persists
+  `{pid, url, port, startedAt}` to `~/.agenticmail/tunnel.json`
+  so subsequent commands can reuse it. Cloudflared binary
+  resolution falls back through managed
+  (`~/.agenticmail/bin/cloudflared` — auto-installed by
+  `agenticmail bootstrap`) → system PATH (`brew install
+  cloudflared` etc) → clear actionable error if neither found.
+- **`setup-phone` auto-creates the tunnel.** If neither
+  `--webhook-url` nor `AGENTICMAIL_WEBHOOK_URL` is set,
+  `setup-phone` opens a quick-tunnel and uses its URL —
+  transparently, no extra step. Reuses any existing live tunnel
+  so repeated runs don't pile up cloudflared processes. Users
+  with their own domain (set up via `agenticmail setup` domain
+  mode) just pass their hostname and the auto-tunnel is skipped.
+- **`npm uninstall -g @agenticmail/cli` kills the tunnel.**
+  Without that the cloudflared process would survive uninstall
+  pointing at a dead local port and spam the tunnel network
+  with retries. The teardown reads the pid from `tunnel.json`,
+  SIGTERMs it, then proceeds to remove `~/.agenticmail`.
+
 ## [0.9.63] - 2026-05-20
 
 ### Added — non-interactive `setup-phone` and `setup-telegram` commands

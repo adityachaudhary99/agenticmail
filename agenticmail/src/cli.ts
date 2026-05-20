@@ -448,6 +448,96 @@ async function startApiServer(config: SetupConfig): Promise<boolean> {
 }
 
 /**
+ * Ensure a Cloudflare quick-tunnel is running and return its URL.
+ *
+ * Used by `setup-phone` (Twilio + 46elks both need a publicly-reachable
+ * HTTPS webhook URL) so the operator never has to think about exposing
+ * their local box to the public internet — we just transparently spin
+ * up a free `*.trycloudflare.com` tunnel pointed at the local API and
+ * hand the URL back. Auto-start triggers only when a setup command
+ * actually needs it: `agenticmail start` on its own doesn't open a
+ * tunnel, so users who never wire up phone calls or webhook-mode
+ * integrations pay nothing for the feature.
+ *
+ * Returns the URL on success, or `null` if the tunnel could not be
+ * brought up (cloudflared missing, network failure, etc). Caller
+ * should surface a helpful error in the null case — this function
+ * never throws and never calls `process.exit` so it's safe to call
+ * from any context.
+ */
+async function ensureTunnelUrl(): Promise<string | null> {
+  const tunnelStateFile = join(homedir(), '.agenticmail', 'tunnel.json');
+  // Reuse a live tunnel if we've already started one.
+  try {
+    if (existsSync(tunnelStateFile)) {
+      const state = JSON.parse(readFileSync(tunnelStateFile, 'utf-8')) as { pid?: number; url?: string };
+      if (state.pid && state.url) {
+        try { process.kill(state.pid, 0); return state.url; }
+        catch { /* dead — fall through and start fresh */ }
+      }
+    }
+  } catch { /* corrupt state — fall through */ }
+
+  // Need a config to know which local port to expose.
+  const configPath = join(homedir(), '.agenticmail', 'config.json');
+  if (!existsSync(configPath)) return null;
+  let config: SetupConfig;
+  try { config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig; }
+  catch { return null; }
+  const port = config.api.port;
+
+  // Resolve cloudflared — managed first, then system PATH.
+  const managedBin = join(homedir(), '.agenticmail', 'bin', 'cloudflared');
+  let bin = existsSync(managedBin) ? managedBin : '';
+  if (!bin) {
+    try {
+      const { execFileSync } = await import('node:child_process');
+      const out = execFileSync('which', ['cloudflared'], { timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+      if (out) bin = out;
+    } catch { /* not on PATH */ }
+  }
+  if (!bin) return null;
+
+  const { spawn: sp } = await import('node:child_process');
+  const child = sp(bin, ['tunnel', '--no-autoupdate', '--config', '/dev/null', '--url', `http://127.0.0.1:${port}`], {
+    detached: true,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: process.env,
+  });
+
+  const url = await new Promise<string | null>((resolve) => {
+    const timer = setTimeout(() => {
+      try { child.kill('SIGTERM'); } catch {}
+      resolve(null);
+    }, 30_000);
+    const onChunk = (chunk: Buffer) => {
+      const m = chunk.toString().match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
+      if (m) { clearTimeout(timer); resolve(m[0]); }
+    };
+    child.stdout?.on('data', onChunk);
+    child.stderr?.on('data', onChunk);
+    child.on('error', () => { clearTimeout(timer); resolve(null); });
+    child.on('exit', () => { clearTimeout(timer); resolve(null); });
+  });
+
+  if (!url) return null;
+
+  child.unref();
+  try {
+    mkdirSync(dirname(tunnelStateFile), { recursive: true });
+    writeFileSync(tunnelStateFile, JSON.stringify({
+      pid: child.pid,
+      url,
+      port,
+      startedAt: new Date().toISOString(),
+    }, null, 2));
+  } catch { /* tunnel is running — losing the state file just means
+                  next call can't reuse it, which only costs another
+                  cold start */ }
+  return url;
+}
+
+/**
  * Spawn the standalone Telegram bridge as a detached background process,
  * but only when the user has gone through the Telegram setup step
  * (`agenticmail setup` writes the three required files). The bridge
@@ -1018,6 +1108,10 @@ async function cmdSetupPhone() {
     log(`  ${c.dim('Secrets are stored encrypted at rest under your master key.')}`);
     log(`  ${c.dim('Pipe via env / stdin to keep them out of shell history.')}`);
     log('');
+    log(`  ${c.bold('--webhook-url is optional:')} if you skip it, we open a free Cloudflare`);
+    log(`  ${c.dim('quick-tunnel for you (https://*.trycloudflare.com) — no Cloudflare account,')}`);
+    log(`  ${c.dim('no signup, no domain. The tunnel stays up across `setup-phone` runs.')}`);
+    log('');
     return;
   }
 
@@ -1029,7 +1123,34 @@ async function cmdSetupPhone() {
   }
 
   const phoneNumber = flag('phone-number') ?? process.env.AGENTICMAIL_PHONE_NUMBER ?? '';
-  const webhookBaseUrl = flag('webhook-url') ?? process.env.AGENTICMAIL_WEBHOOK_URL ?? '';
+  let webhookBaseUrl = flag('webhook-url') ?? process.env.AGENTICMAIL_WEBHOOK_URL ?? '';
+  // If the operator didn't pass a webhook URL, auto-create one for
+  // them. Twilio + 46elks both need a publicly-reachable HTTPS
+  // endpoint to deliver webhooks to, and a typical local install has
+  // no public URL — so we transparently spin up a free Cloudflare
+  // quick-tunnel pointing at the local API and use the resulting
+  // `*.trycloudflare.com` URL. Free, no account, no signup.
+  //
+  // `ensureTunnelUrl` is idempotent: if a healthy tunnel is already
+  // running (from a prior `setup-phone` run or an explicit
+  // `agenticmail tunnel start`) we reuse it; otherwise we cold-start
+  // one. Returns null if cloudflared isn't installed — in which case
+  // we surface a clear actionable error below rather than silently
+  // failing on the missing-field validation.
+  if (!webhookBaseUrl) {
+    const tunnelSpinner = new Spinner('general', 'Opening Cloudflare quick-tunnel for webhook delivery...');
+    tunnelSpinner.start();
+    const url = await ensureTunnelUrl();
+    if (url) {
+      webhookBaseUrl = url;
+      tunnelSpinner.succeed(`Tunnel ready — webhooks will be delivered to ${c.cyan(url)}`);
+    } else {
+      tunnelSpinner.fail('Could not open a Cloudflare tunnel (cloudflared not installed?).');
+      info(`Install cloudflared (${c.dim('macOS: brew install cloudflared, or run `agenticmail bootstrap`')}), then re-run this command.`);
+      info(`Or pass your own URL: ${c.green('--webhook-url https://your-domain.example/')}`);
+      process.exit(1);
+    }
+  }
   const username = provider === 'twilio'
     ? (flag('account-sid') ?? process.env.TWILIO_ACCOUNT_SID ?? '')
     : (flag('username') ?? process.env.ELKS_USERNAME ?? '');
@@ -4313,6 +4434,202 @@ async function cmdStop() {
   log('');
 }
 
+/**
+ * `agenticmail tunnel {start|stop|status|url}` — public-URL tunnel
+ * for the local API server, so providers that need to webhook into
+ * this machine (Twilio, 46elks, Telegram-webhook-mode) can actually
+ * reach it from the public internet.
+ *
+ * Uses Cloudflare's free "quick tunnel" (`cloudflared tunnel --url
+ * http://127.0.0.1:<port>`) — no Cloudflare account, no signup, no
+ * domain, no DNS setup. The tunnel publishes a random
+ * `*.trycloudflare.com` hostname that's stable for the lifetime of
+ * the cloudflared process. Cloudflared is already auto-installed
+ * by `agenticmail bootstrap` (at `~/.agenticmail/bin/cloudflared`)
+ * or picked up from the system PATH if the user has it via Homebrew.
+ *
+ * State lives at `~/.agenticmail/tunnel.json` (`{pid, url, port,
+ * startedAt}`) so `setup-phone` and `setup-telegram` can read the
+ * URL without re-running the tunnel.
+ *
+ * Subcommands:
+ *
+ *   agenticmail tunnel start    Spawn cloudflared, capture URL, save
+ *                                state, print the URL. No-op if a
+ *                                tunnel is already running.
+ *   agenticmail tunnel status   Show current URL + pid + uptime.
+ *   agenticmail tunnel url      Print only the URL (for piping into
+ *                                env vars, e.g.
+ *                                `AGENTICMAIL_WEBHOOK_URL=$(agenticmail tunnel url)`).
+ *   agenticmail tunnel stop     Kill the tunnel process, clear state.
+ */
+async function cmdTunnel() {
+  const subCmd = process.argv[3] || 'status';
+  const tunnelStateFile = join(homedir(), '.agenticmail', 'tunnel.json');
+
+  const readState = (): { pid?: number; url?: string; port?: number; startedAt?: string } => {
+    try { return JSON.parse(readFileSync(tunnelStateFile, 'utf-8')); }
+    catch { return {}; }
+  };
+  const isAlive = (pid: number): boolean => {
+    try { process.kill(pid, 0); return true; }
+    catch { return false; }
+  };
+  const printUrl = () => {
+    const state = readState();
+    if (state.pid && state.url && isAlive(state.pid)) console.log(state.url);
+    else process.exit(1);
+  };
+
+  switch (subCmd) {
+    case 'url': printUrl(); return;
+
+    case 'status': {
+      log('');
+      const state = readState();
+      if (state.pid && state.url && isAlive(state.pid)) {
+        ok(`Tunnel running ${c.dim('(pid ' + state.pid + ')')}`);
+        log(`  ${c.dim('URL:')}    ${c.cyan(state.url)}`);
+        log(`  ${c.dim('Local:')}  http://127.0.0.1:${state.port ?? '?'}`);
+        if (state.startedAt) log(`  ${c.dim('Up:')}     ${state.startedAt}`);
+      } else {
+        info(`Tunnel not running. Start with ${c.green('agenticmail tunnel start')}.`);
+      }
+      log('');
+      return;
+    }
+
+    case 'stop': {
+      log('');
+      const state = readState();
+      if (state.pid && isAlive(state.pid)) {
+        try { process.kill(state.pid, 'SIGTERM'); } catch { /* already dead */ }
+        ok(`Tunnel stopped ${c.dim('(was pid ' + state.pid + ')')}`);
+      } else {
+        info('Tunnel was not running.');
+      }
+      try { unlinkSync(tunnelStateFile); } catch { /* ignore */ }
+      log('');
+      return;
+    }
+
+    case 'start': {
+      log('');
+      const existing = readState();
+      if (existing.pid && existing.url && isAlive(existing.pid)) {
+        ok('Tunnel already running');
+        log(`  ${c.dim('URL:')} ${c.cyan(existing.url)}`);
+        log('');
+        return;
+      }
+
+      // Need the API port to point cloudflared at. Read it from config.
+      const configPath = join(homedir(), '.agenticmail', 'config.json');
+      if (!existsSync(configPath)) {
+        fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
+        info(`Run ${c.cyan('agenticmail setup')} first.`);
+        process.exit(1);
+      }
+      let config: SetupConfig;
+      try { config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig; }
+      catch (err) { fail(`Could not read ${configPath}: ${(err as Error).message}`); process.exit(1); }
+      const port = config.api.port;
+
+      // Resolve the cloudflared binary — managed first (lives under
+      // ~/.agenticmail/bin after `agenticmail bootstrap` ran the
+      // CloudflaredInstaller), then system PATH (Homebrew etc).
+      const managedBin = join(homedir(), '.agenticmail', 'bin', 'cloudflared');
+      let bin = existsSync(managedBin) ? managedBin : '';
+      if (!bin) {
+        try {
+          const { execFileSync } = await import('node:child_process');
+          const out = execFileSync('which', ['cloudflared'], { timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+          if (out) bin = out;
+        } catch { /* not on PATH */ }
+      }
+      if (!bin) {
+        fail('cloudflared not found.');
+        info(`Run ${c.green('agenticmail bootstrap')} (auto-installs cloudflared), or install it yourself:`);
+        info(`  ${c.dim('macOS:')}  brew install cloudflared`);
+        info(`  ${c.dim('Linux:')}  https://github.com/cloudflare/cloudflared/releases`);
+        process.exit(1);
+      }
+
+      const { spawn: sp } = await import('node:child_process');
+      const spinner = new Spinner('general', `Starting Cloudflare tunnel via ${c.dim(bin)}...`);
+      spinner.start();
+
+      // Quick-tunnel: `cloudflared tunnel --url http://127.0.0.1:<port>`.
+      // No `--config` (would inherit a stale named-tunnel config from
+      // earlier setup); explicitly `--config /dev/null` so even a
+      // pre-existing ~/.cloudflared/config.yml can't hijack the flags.
+      const child = sp(bin, ['tunnel', '--no-autoupdate', '--config', '/dev/null', '--url', `http://127.0.0.1:${port}`], {
+        detached: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: process.env,
+      });
+
+      // cloudflared prints the assigned trycloudflare.com URL to stderr
+      // within ~5 seconds of startup. Capture from BOTH streams (line
+      // ordering varies by cloudflared version) and resolve as soon as
+      // we see the URL.
+      const url = await new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          spinner.fail('Tunnel did not return a URL within 30s');
+          try { child.kill('SIGTERM'); } catch {}
+          reject(new Error('timeout'));
+        }, 30_000);
+        const onChunk = (chunk: Buffer) => {
+          const text = chunk.toString();
+          const m = text.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
+          if (m) { clearTimeout(timer); resolve(m[0]); }
+        };
+        child.stdout?.on('data', onChunk);
+        child.stderr?.on('data', onChunk);
+        child.on('error', (err) => { clearTimeout(timer); reject(err); });
+        child.on('exit', (code) => { clearTimeout(timer); reject(new Error(`cloudflared exited code=${code}`)); });
+      }).catch((err) => { spinner.fail(`Tunnel failed: ${(err as Error).message}`); process.exit(1); });
+
+      // Detach so cloudflared survives this CLI process. We've already
+      // captured the URL, so we don't need to keep listening to its
+      // output — `child.unref()` lets Node exit even though the child
+      // is still alive (it's now a true background daemon).
+      child.unref();
+
+      const state = {
+        pid: child.pid,
+        url,
+        port,
+        startedAt: new Date().toISOString(),
+      };
+      try {
+        mkdirSync(dirname(tunnelStateFile), { recursive: true });
+        writeFileSync(tunnelStateFile, JSON.stringify(state, null, 2));
+      } catch (err) {
+        // The tunnel IS running — losing the state file just means
+        // future `tunnel status` / `setup-phone` won't auto-find it.
+        info(`Could not persist tunnel state: ${(err as Error).message}`);
+      }
+
+      spinner.succeed(`Tunnel ready ${c.dim('(pid ' + child.pid + ')')}`);
+      log(`  ${c.dim('URL:')}    ${c.cyan(url)}`);
+      log(`  ${c.dim('Local:')}  http://127.0.0.1:${port}`);
+      log('');
+      info(`Use this URL as your webhook target — e.g. ${c.green('AGENTICMAIL_WEBHOOK_URL=' + url)}`);
+      info(`Or pipe directly:  ${c.green('AGENTICMAIL_WEBHOOK_URL=$(agenticmail tunnel url)')}`);
+      log('');
+      return;
+    }
+
+    default:
+      log('');
+      fail(`Unknown subcommand: ${subCmd}`);
+      info(`Try: ${c.green('agenticmail tunnel {start|stop|status|url}')}`);
+      log('');
+      process.exit(1);
+  }
+}
+
 async function cmdService() {
   const subCmd = process.argv[3] || 'status';
   const svc = new ServiceManager();
@@ -4518,6 +4835,9 @@ switch (command) {
   case 'telegram':
     cmdSetupTelegram().catch(err => { console.error(err); process.exit(1); });
     break;
+  case 'tunnel':
+    cmdTunnel().catch(err => { console.error(err); process.exit(1); });
+    break;
   case 'start':
     cmdStart().catch(err => { console.error(err); process.exit(1); });
     break;
@@ -4581,6 +4901,7 @@ switch (command) {
     log(`    ${c.green('agenticmail setup-email')}  Connect your mailbox — just email + password ${c.dim('(auto-detects Gmail/Outlook/custom)')}`);
     log(`    ${c.green('agenticmail setup-phone')}  Connect Twilio / 46elks for outbound calls ${c.dim('(--account-sid + --auth-token, or env vars)')}`);
     log(`    ${c.green('agenticmail setup-telegram')}  Wire up the Telegram bridge ${c.dim('(--bot-token + --chat-id, or env vars)')}`);
+    log(`    ${c.green('agenticmail tunnel')}     Public HTTPS tunnel to your local API ${c.dim('(free Cloudflare quick-tunnel; needed for Twilio webhooks)')}`);
     log(`    ${c.green('agenticmail start')}     Start the server`);
     log(`    ${c.green('agenticmail stop')}      Stop the server`);
     log(`    ${c.green('agenticmail status')}    See what's running`);

@@ -44,9 +44,19 @@ piped via env, never typed on the command line):**
 TWILIO_ACCOUNT_SID='<your Twilio Account SID>' \
 TWILIO_AUTH_TOKEN='<your Twilio Auth Token>' \
 AGENTICMAIL_PHONE_NUMBER='<your number in E.164, e.g. +15555550100>' \
-AGENTICMAIL_WEBHOOK_URL='<your public https URL>' \
   agenticmail setup-phone --provider twilio
 ```
+
+Twilio needs to webhook back into the machine, but you don't need
+to think about that: if `--webhook-url` / `AGENTICMAIL_WEBHOOK_URL`
+is not provided, `setup-phone` automatically opens a free Cloudflare
+quick-tunnel (no account, no signup, free `*.trycloudflare.com` URL)
+and uses that. The tunnel persists across runs.
+
+If you do have your own public HTTPS URL — e.g. you ran `agenticmail
+setup` in domain mode, or you have your own reverse proxy — pass
+`AGENTICMAIL_WEBHOOK_URL=https://your-domain.example/` and the
+auto-tunnel is skipped.
 
 Same shape for 46elks (use `ELKS_USERNAME` / `ELKS_PASSWORD` and
 `--provider 46elks`). Webhook secret is auto-minted if omitted.

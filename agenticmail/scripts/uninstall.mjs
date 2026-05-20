@@ -22,6 +22,25 @@ const os = platform();
 function log(msg) { console.log(`[agenticmail] ${msg}`); }
 function tryExec(cmd, opts = {}) { try { execSync(cmd, { timeout: 15_000, stdio: 'ignore', ...opts }); } catch { /* ignore */ } }
 
+// ── 0. Stop the Cloudflare quick-tunnel (if running) ─────────────
+//
+// `agenticmail tunnel start` spawns a detached cloudflared process
+// and records its PID + URL in tunnel.json. Without an explicit
+// kill the cloudflared process would survive uninstall (pointing
+// at a now-dead local port), spam the tunnel network with retries,
+// and confuse a fresh reinstall's `tunnel start` (the PID file
+// would already exist).
+try {
+  const tunnelState = join(home, '.agenticmail', 'tunnel.json');
+  if (existsSync(tunnelState)) {
+    const state = JSON.parse(readFileSync(tunnelState, 'utf-8'));
+    if (state.pid && Number.isInteger(state.pid)) {
+      try { process.kill(state.pid, 'SIGTERM'); } catch { /* already dead */ }
+      log(`Stopped Cloudflare tunnel (pid ${state.pid})`);
+    }
+  }
+} catch { /* best-effort */ }
+
 // ── 1. Stop the Telegram bridge child process ────────────────────
 //
 // `agenticmail start` spawns the bridge when configured and records
