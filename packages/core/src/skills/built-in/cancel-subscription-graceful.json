@@ -1,0 +1,101 @@
+{
+  "id": "cancel-subscription-graceful",
+  "name": "Cancel a Subscription (and capture any retention offer)",
+  "version": "1.0.0",
+  "category": "subscription",
+  "tags": ["cancel", "subscription", "retention", "save-money"],
+  "description": "Call a subscription provider to cancel, while also capturing any retention offer the user might want to accept instead of fully cancelling. Common for gyms, software, magazines, streaming, SiriusXM.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User wants to cancel a recurring subscription. They've already decided to cancel; they're open to a retention offer if it's compelling, but the default is to walk away.",
+    "preconditions": [
+      "User has account info (login email, phone number on file, or account number).",
+      "User has clear intent: 'cancel by default, accept only if retention offer drops the price by X% or includes Y'.",
+      "User knows when the next billing cycle hits — useful for timing the cancellation."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Be firm about cancellation up front. 'I'd like to cancel' is the first sentence, not the fifth.",
+    "When the rep counter-offers, treat it as new information — write it down, don't reject it instantly.",
+    "Decisions on whether to ACCEPT a retention offer are not yours; check back with the user (via `ask_operator`) unless the operator pre-authorised a clear acceptance threshold.",
+    "Get a cancellation confirmation NUMBER in writing (email). 'Verbally confirmed' has burned operators in the past.",
+    "Watch for the 'we'll send you a final invoice' move — that's not a problem unless it's higher than expected. Confirm the FINAL amount."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to cancel my subscription, please. My account is under [email/account-number].",
+    "stall_thinking": "Let me think about that for one second.",
+    "stall_research": "Hold on one moment — I want to double-check something before I commit.",
+    "decline_retention": "I appreciate the offer, but I'm going to go ahead and cancel today. Could we go through the cancellation process now?",
+    "accept_retention_provisional": "That's a better offer than I was expecting. I want to think about it for a few minutes — can I call back if I decide to take it, or do I need to decide right now?",
+    "confirm_final_amount": "Just to confirm — what's my final amount, and when will the service stop?",
+    "request_confirmation_email": "Can you send a cancellation confirmation to my email on file? I want it in writing.",
+    "graceful_close": "Thank you for taking care of this. Have a good rest of your day."
+  },
+  "tactics": [
+    {
+      "name": "State cancellation in the first sentence",
+      "when": "Immediately after the rep finishes their opening greeting.",
+      "script": "Use `opener`. Don't volunteer a reason yet — the rep will ask, and your reason matters less than the fact you've already made a decision.",
+      "priority": 1
+    },
+    {
+      "name": "Give a brief, low-emotional reason",
+      "when": "Rep asks why you're cancelling.",
+      "script": "Pick the simplest true reason. 'I'm not using it enough to justify the cost' is calm and gives the rep nothing to argue with. Don't badmouth the product — that triggers defensive responses."
+    },
+    {
+      "name": "Hear out the retention offer once",
+      "when": "Rep starts pitching savings.",
+      "script": "Let them say their full pitch. Then ask: 'What's the total cost over the next 12 months if I accept this offer?' Specific number = decidable."
+    },
+    {
+      "name": "Defer the decision to the operator",
+      "when": "Retention offer is in the user's pre-stated acceptance range OR is so good you want to confirm.",
+      "script": "Use `accept_retention_provisional`. Then call `ask_operator` with the exact offer + total cost + any new terms. Do NOT accept on the user's behalf without explicit authorisation."
+    },
+    {
+      "name": "Stay polite if the rep escalates",
+      "when": "Rep says 'are you sure?' / 'let me transfer you to a specialist'.",
+      "script": "Two paths: (a) if you have time, accept the transfer — the specialist often has better authority and the call ends faster. (b) if you don't, say: 'I've decided. Could we just process the cancellation now?'"
+    },
+    {
+      "name": "Get the confirmation number AND the email",
+      "when": "Cancellation is processing.",
+      "script": "Use `confirm_final_amount` and `request_confirmation_email`. Repeat both back: 'So my final charge is [amount], the service stops on [date], and you'll send me a confirmation email today — is that right?'"
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept a retention offer without explicit authorisation from the user. Their pre-stated 'I'd take it if X' is authorisation; ambiguous offers go through `ask_operator`.",
+    "Do NOT give in to guilt tactics ('after all these years?'). Stay friendly but on-mission.",
+    "Do NOT cancel without confirming the final billing amount. Some providers prorate; some charge a full final cycle.",
+    "Do NOT let the rep convert the cancellation into a 'pause' or 'free month' without explicit operator agreement — paused subscriptions often auto-restart.",
+    "Do NOT badmouth competitors or the product. Reps are humans; rudeness shortens the call but spoils your goodwill."
+  ],
+  "success_signals": [
+    "Rep generates a cancellation confirmation number.",
+    "Rep confirms the final amount + service stop date.",
+    "Rep agrees to send a confirmation email."
+  ],
+  "failure_signals": [
+    "Rep insists cancellation requires a written letter or fax (some gyms / magazines still do this — note it and exit).",
+    "Rep won't give a confirmation number or written confirmation.",
+    "Rep transfers you in circles without progress."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the cancellation confirmation number, the final billing amount, and the service stop date. Confirm the confirmation email is coming. Thank the rep.",
+    "on_failure": "Note the obstacle (e.g. 'requires written notice mailed to corporate'), get the exact address / form requirements, and end the call. The operator can follow up via mail or escalation.",
+    "follow_ups": [
+      "Email the operator: cancellation confirmation number, stop date, final amount.",
+      "Calendar a check at the stop date to confirm no further charges hit the user's card.",
+      "If a written-notice path is required, draft the cancellation letter and email it to the operator for review."
+    ]
+  },
+  "required_user_info": [
+    "Account login email or account number",
+    "User's clear intent: cancel-by-default + acceptance threshold for any retention offer",
+    "Next billing date",
+    "Email address for confirmation"
+  ],
+  "contributed_by": "AgenticMail core team"
+}

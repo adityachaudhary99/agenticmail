@@ -1,0 +1,314 @@
+/**
+ * Skill registry — load, search, validate, list.
+ *
+ * Skills live in two places:
+ *
+ *   1. **Built-in** — JSON files bundled with `@agenticmail/core` at
+ *      `packages/core/src/skills/built-in/*.json`. These ship with
+ *      every install and form the starter library. Editing one in
+ *      a fork is fine, but the canonical copy is the one in the
+ *      monorepo — PRs to add or refine built-in skills are the
+ *      community contribution path.
+ *
+ *   2. **User-contributed** — JSON files dropped into
+ *      `~/.agenticmail/skills/*.json` at runtime. The registry
+ *      scans this directory on every `list` / `search` / `load`
+ *      call (cached for a few seconds) so a user can add a skill
+ *      without restarting the server. User-contributed skills
+ *      override built-ins when their `id` collides.
+ *
+ * The registry is filesystem-only — no DB. A skill is a leaf JSON
+ * file, easy to diff in git, easy to write by hand. Loading skills
+ * directly from `~/.agenticmail/skills/` (no manifest, no
+ * `enabled: true`) is deliberate: the simplest contribution path
+ * is "drop the file in, that's it."
+ */
+
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { join, dirname, basename } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
+import type {
+  Skill,
+  SkillSummary,
+  SkillValidationError,
+  SkillCategory,
+} from './types.js';
+
+/** Built-in skills directory — resolved relative to this module. */
+function builtInDir(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  // Source layout: `packages/core/src/skills/registry.ts` ←→ `built-in/`
+  // Dist  layout: `packages/core/dist/skills/registry.js` ←→ `built-in/`
+  // We copy `built-in/` into `dist/skills/` on build (handled by the
+  // package's tsup config). Both locations are siblings of this file.
+  return join(here, 'built-in');
+}
+
+/** User-contributed skills directory — created on first read. */
+function userDir(): string {
+  const dir = join(homedir(), '.agenticmail', 'skills');
+  try { if (!existsSync(dir)) mkdirSync(dir, { recursive: true }); } catch { /* ignore */ }
+  return dir;
+}
+
+/** Coarse 5-second cache so an active skill_search loop doesn't re-read disk per call. */
+const cache: {
+  ts: number;
+  byId: Map<string, Skill> | null;
+} = { ts: 0, byId: null };
+
+const CACHE_TTL_MS = 5_000;
+
+function loadAllSkillsFromDisk(): Map<string, Skill> {
+  const all = new Map<string, Skill>();
+  const dirs = [builtInDir(), userDir()];
+
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    let entries: string[];
+    try { entries = readdirSync(dir); } catch { continue; }
+    for (const entry of entries) {
+      if (!entry.endsWith('.json')) continue;
+      const fullPath = join(dir, entry);
+      try {
+        const st = statSync(fullPath);
+        if (!st.isFile()) continue;
+        const raw = readFileSync(fullPath, 'utf-8');
+        const parsed = JSON.parse(raw) as Skill;
+        const errors = validateSkill(parsed);
+        if (errors.length > 0) {
+          // Skip invalid skills with a warning. Don't crash the
+          // server on a community contribution typo — the rest of
+          // the library stays usable.
+          console.warn(`[skills] ${entry} invalid, skipping: ${errors.map((e) => `${e.path}: ${e.message}`).join('; ')}`);
+          continue;
+        }
+        // User-contributed skills win on collision — that's the
+        // intended override path (e.g. ship a localised version).
+        all.set(parsed.id, parsed);
+      } catch (err) {
+        console.warn(`[skills] could not load ${fullPath}: ${(err as Error).message}`);
+      }
+    }
+  }
+  return all;
+}
+
+function ensureLoaded(): Map<string, Skill> {
+  const now = Date.now();
+  if (cache.byId && now - cache.ts < CACHE_TTL_MS) return cache.byId;
+  const fresh = loadAllSkillsFromDisk();
+  cache.byId = fresh;
+  cache.ts = now;
+  return fresh;
+}
+
+/** Manual cache invalidation — useful for tests + after a write. */
+export function invalidateSkillCache(): void {
+  cache.byId = null;
+  cache.ts = 0;
+}
+
+/**
+ * Schema validator. Returns a list of (path, message) — empty list
+ * means the skill is structurally valid. Catches the classes of
+ * mistakes a contributor is most likely to make:
+ *
+ *   - Missing top-level required fields.
+ *   - Wrong types (`tactics` as object instead of array).
+ *   - Empty arrays where a non-empty one is required.
+ *   - Invalid `category` value.
+ *   - Tactic with empty `script`.
+ *
+ * Intentionally NOT a full JSON-schema implementation — the cost of
+ * a dependency on `ajv` or similar isn't justified for our shape.
+ */
+export function validateSkill(s: unknown): SkillValidationError[] {
+  const errs: SkillValidationError[] = [];
+  if (!s || typeof s !== 'object' || Array.isArray(s)) {
+    return [{ path: '$', message: 'skill must be a JSON object' }];
+  }
+  const sk = s as Record<string, unknown>;
+
+  const requireString = (key: string, minLen = 1) => {
+    const v = sk[key];
+    if (typeof v !== 'string' || v.length < minLen) {
+      errs.push({ path: key, message: `must be a non-empty string` });
+    }
+  };
+  const requireArray = (key: string, minLen = 1) => {
+    const v = sk[key];
+    if (!Array.isArray(v) || v.length < minLen) {
+      errs.push({ path: key, message: `must be a non-empty array` });
+    }
+  };
+
+  requireString('id');
+  if (typeof sk.id === 'string' && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(sk.id)) {
+    errs.push({ path: 'id', message: 'must be lowercase-hyphenated slug (a-z, 0-9, -)' });
+  }
+  requireString('name');
+  requireString('version');
+  requireString('description');
+  requireString('category');
+
+  const validCategories: SkillCategory[] = [
+    'negotiation', 'customer-service', 'reservations', 'medical-admin',
+    'legal-admin', 'finance-admin', 'real-estate', 'travel',
+    'subscription', 'home-services', 'social', 'civic', 'employment',
+    'debt-collection', 'other',
+  ];
+  if (typeof sk.category === 'string' && !validCategories.includes(sk.category as SkillCategory)) {
+    errs.push({ path: 'category', message: `unknown category "${sk.category}"; must be one of: ${validCategories.join(', ')}` });
+  }
+
+  if (!Array.isArray(sk.tags)) errs.push({ path: 'tags', message: 'must be an array of strings' });
+  if (sk.disclaimer !== null && typeof sk.disclaimer !== 'string') {
+    errs.push({ path: 'disclaimer', message: 'must be a string or null' });
+  }
+
+  // Context block.
+  if (!sk.context || typeof sk.context !== 'object') {
+    errs.push({ path: 'context', message: 'must be an object' });
+  } else {
+    const ctx = sk.context as Record<string, unknown>;
+    if (typeof ctx.when_to_use !== 'string') errs.push({ path: 'context.when_to_use', message: 'must be a string' });
+    if (!Array.isArray(ctx.preconditions)) errs.push({ path: 'context.preconditions', message: 'must be an array' });
+    if (typeof ctx.estimated_call_duration_minutes !== 'number') errs.push({ path: 'context.estimated_call_duration_minutes', message: 'must be a number' });
+  }
+
+  requireArray('principles', 2);
+  if (!sk.phrases || typeof sk.phrases !== 'object') errs.push({ path: 'phrases', message: 'must be an object of {key: phrase}' });
+
+  if (!Array.isArray(sk.tactics) || sk.tactics.length === 0) {
+    errs.push({ path: 'tactics', message: 'must be a non-empty array' });
+  } else {
+    sk.tactics.forEach((t, i) => {
+      if (!t || typeof t !== 'object') {
+        errs.push({ path: `tactics[${i}]`, message: 'must be an object' });
+        return;
+      }
+      const tactic = t as Record<string, unknown>;
+      if (typeof tactic.name !== 'string') errs.push({ path: `tactics[${i}].name`, message: 'must be a string' });
+      if (typeof tactic.when !== 'string') errs.push({ path: `tactics[${i}].when`, message: 'must be a string' });
+      if (typeof tactic.script !== 'string' || tactic.script.length < 5) {
+        errs.push({ path: `tactics[${i}].script`, message: 'must be a non-empty string (>= 5 chars)' });
+      }
+    });
+  }
+
+  requireArray('boundaries', 1);
+  if (!Array.isArray(sk.success_signals)) errs.push({ path: 'success_signals', message: 'must be an array' });
+  if (!Array.isArray(sk.failure_signals)) errs.push({ path: 'failure_signals', message: 'must be an array' });
+
+  if (!sk.exit_strategy || typeof sk.exit_strategy !== 'object') {
+    errs.push({ path: 'exit_strategy', message: 'must be an object' });
+  } else {
+    const xs = sk.exit_strategy as Record<string, unknown>;
+    if (typeof xs.on_success !== 'string') errs.push({ path: 'exit_strategy.on_success', message: 'must be a string' });
+    if (typeof xs.on_failure !== 'string') errs.push({ path: 'exit_strategy.on_failure', message: 'must be a string' });
+  }
+
+  if (!Array.isArray(sk.required_user_info)) errs.push({ path: 'required_user_info', message: 'must be an array' });
+  if (typeof sk.contributed_by !== 'string') errs.push({ path: 'contributed_by', message: 'must be a string' });
+
+  return errs;
+}
+
+/** Return a summary view (no body, no tactics) — used by `skill_list`. */
+function summarize(s: Skill): SkillSummary {
+  return {
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    tags: s.tags,
+    description: s.description,
+    version: s.version,
+    disclaimer_required: !!s.disclaimer,
+    estimated_call_duration_minutes: s.context.estimated_call_duration_minutes,
+  };
+}
+
+/** List all skills (summaries), optionally filtered. */
+export function listSkills(opts: { category?: SkillCategory; tag?: string } = {}): SkillSummary[] {
+  const all = Array.from(ensureLoaded().values());
+  const filtered = all.filter((s) => {
+    if (opts.category && s.category !== opts.category) return false;
+    if (opts.tag && !s.tags.includes(opts.tag.toLowerCase())) return false;
+    return true;
+  });
+  return filtered.sort((a, b) => a.name.localeCompare(b.name)).map(summarize);
+}
+
+/**
+ * Fuzzy-search skills by `query` against name, description, tags, and
+ * the contents of `phrases` / `tactics.script` / `principles`. Returns
+ * results ranked by a simple score (matches in name > tags > body).
+ *
+ * Intentionally low-tech — substring match, lowercased, no stemming.
+ * For a corpus of <1000 skills this is fast enough that BM25 / vector
+ * search is overkill, and the user-facing matcher should be
+ * predictable rather than clever.
+ */
+export function searchSkills(query: string, limit = 20): SkillSummary[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return listSkills();
+  const all = Array.from(ensureLoaded().values());
+  const scored: Array<{ skill: Skill; score: number }> = [];
+  for (const s of all) {
+    let score = 0;
+    if (s.id.toLowerCase().includes(q)) score += 10;
+    if (s.name.toLowerCase().includes(q)) score += 8;
+    if (s.tags.some((t) => t.toLowerCase().includes(q))) score += 5;
+    if (s.category.toLowerCase().includes(q)) score += 4;
+    if (s.description.toLowerCase().includes(q)) score += 3;
+    if (s.principles.some((p) => p.toLowerCase().includes(q))) score += 2;
+    if (Object.values(s.phrases).some((p) => p.toLowerCase().includes(q))) score += 2;
+    if (s.tactics.some((t) => t.script.toLowerCase().includes(q) || t.name.toLowerCase().includes(q))) score += 2;
+    if (score > 0) scored.push({ skill: s, score });
+  }
+  scored.sort((a, b) => b.score - a.score || a.skill.name.localeCompare(b.skill.name));
+  return scored.slice(0, limit).map((x) => summarize(x.skill));
+}
+
+/** Load the FULL skill body (everything an agent needs to act on it). */
+export function loadSkill(id: string): Skill | null {
+  return ensureLoaded().get(id) ?? null;
+}
+
+/**
+ * Save a new or updated skill to `~/.agenticmail/skills/<id>.json`.
+ * Validates first; throws on invalid input. Bumps `updated_at`.
+ *
+ * Used by `agenticmail skill add` and by the future "build farm"
+ * agents that draft skills programmatically — the same path either
+ * way.
+ */
+export function saveUserSkill(skill: Skill): { path: string } {
+  const errors = validateSkill(skill);
+  if (errors.length > 0) {
+    throw new Error(`skill validation failed: ${errors.map((e) => `${e.path}: ${e.message}`).join('; ')}`);
+  }
+  const dir = userDir();
+  const path = join(dir, `${skill.id}.json`);
+  const now = new Date().toISOString();
+  const out: Skill = {
+    ...skill,
+    created_at: skill.created_at ?? now,
+    updated_at: now,
+  };
+  writeFileSync(path, JSON.stringify(out, null, 2), 'utf-8');
+  invalidateSkillCache();
+  return { path };
+}
+
+/** Filename-from-id helper (`negotiate-bill-reduction` → `negotiate-bill-reduction.json`). */
+export function skillFilename(id: string): string {
+  return `${basename(id)}.json`;
+}
+
+/** Where the user library lives (for surfacing in error messages / help). */
+export function userSkillsDir(): string {
+  return userDir();
+}

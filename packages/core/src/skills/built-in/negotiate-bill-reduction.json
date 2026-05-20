@@ -1,0 +1,116 @@
+{
+  "id": "negotiate-bill-reduction",
+  "name": "Negotiate a Bill Reduction",
+  "version": "1.0.0",
+  "category": "negotiation",
+  "tags": ["billing", "retention", "discount", "phone-call", "savings"],
+  "description": "Call a service provider's customer service or retention line and negotiate down a recurring bill (cable, internet, cell, insurance, gym, streaming).",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "The user wants to reduce a recurring monthly bill. Best for services with retention departments (telco, cable, ISP, insurance, gyms, SiriusXM). Less effective for subscriptions that have no human you can negotiate with (Netflix, Spotify) — those call for `cancel-subscription-graceful` instead.",
+    "preconditions": [
+      "User has their account number or login email ready.",
+      "User has approximate service start date (year is enough).",
+      "User knows what they're currently paying and what they'd like to pay.",
+      "Ideally, user has researched competitor pricing for the same service."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Be calm and friendly — the rep didn't choose your bill, the company did. Allies, not adversaries.",
+    "Mirror the rep's energy. If they're chatty, chat back briefly; if they're crisp, be crisp.",
+    "Frame the call as 'I want to stay if we can find a way' — not 'I'm threatening to leave'. Retention reps have unlock codes; angry-customer reps do not.",
+    "Specific numbers always beat vague asks. 'Can you get me to $80?' lands better than 'Can you make it cheaper?'.",
+    "Silence is a tactic. After you state your ask, say nothing. The rep often fills the silence with a counter.",
+    "The first rep often says no. Politely ask for retention, customer loyalty, or a supervisor — different roles, different authority levels."
+  ],
+  "phrases": {
+    "opener": "Hi, I've been a customer since about [year], and I noticed my bill has gone up to [amount]. I'm trying to figure out if there's a way to bring it down so I can keep my service. What options do you have for long-term customers?",
+    "stall_thinking": "Let me think about that for just a second.",
+    "stall_research": "Hold on one moment — I want to make sure I have my numbers right.",
+    "ask_for_retention": "Could you transfer me to your retention or customer-loyalty department? They sometimes have programs that aren't visible at the front desk.",
+    "competitor_mention": "I've been looking at [Competitor] — they're offering similar service for around [amount]. I really don't want to switch because [reason], but the math is making it hard. Is there anything you can do to match?",
+    "supervisor_request": "I appreciate everything you've checked. Would you mind looping in a supervisor? Not because you've done anything wrong — I just want to make sure we've explored everything before I make a decision.",
+    "graceful_close_success": "Thank you so much for working with me on this. Can you read back the new monthly amount and confirm when it takes effect? And can I get a confirmation number or your name for my records?",
+    "graceful_close_failure": "I totally understand. I appreciate you taking the time. I'm going to think about my options and may call back. Could you note on my account that I called about pricing today? Thanks again."
+  },
+  "tactics": [
+    {
+      "name": "Open with loyalty + a specific ask",
+      "when": "First substantive turn after pleasantries.",
+      "script": "Use the `opener` phrase. Lead with how long you've been a customer (loyalty is leverage), state the current bill, name a target.",
+      "priority": 1
+    },
+    {
+      "name": "Let silence do work",
+      "when": "Right after stating the target.",
+      "script": "Stay quiet for 3-5 seconds after the ask. The rep frequently offers more than they would have if you kept talking.",
+      "priority": 2
+    },
+    {
+      "name": "Mention a verified competitor",
+      "when": "After the rep says no discounts are available.",
+      "script": "Use the `competitor_mention` phrase, but ONLY with a real offer the user has shown you. Fabricating competitor prices is a hard boundary — reps verify, and you destroy your leverage if caught.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for retention",
+      "when": "Front-line rep insists no discount exists.",
+      "script": "Use the `ask_for_retention` phrase. Front-line CSRs often genuinely cannot discount; retention teams literally have a budget for this.",
+      "priority": 4
+    },
+    {
+      "name": "Ask for a supervisor",
+      "when": "Retention has also exhausted what they can offer and the gap is still large.",
+      "script": "Use the `supervisor_request` phrase. Frame it as not blaming the rep — that gets you handed off with goodwill instead of marked as difficult.",
+      "priority": 5
+    },
+    {
+      "name": "Offer to renew / extend in exchange for a lower rate",
+      "when": "Rep mentions a contract or term.",
+      "script": "Offer: 'If I commit to another [12/24 months], can we get to [target]?' Reps unlock different price tiers when you accept lock-in. Only do this if the user has authorised a term commitment — otherwise hold via `ask_operator`.",
+      "priority": 6
+    },
+    {
+      "name": "Accept partial wins",
+      "when": "Rep can't hit the target but offers something.",
+      "script": "If the rep offers a credit, a one-time promotional rate, or a free upgrade — accept it cleanly even if it's not the full target. Banking a partial win is better than walking with nothing."
+    }
+  ],
+  "boundaries": [
+    "Do NOT lie about competitor pricing — use only offers the user has actually verified.",
+    "Do NOT commit to a new contract term without explicit user approval mid-call (use `ask_operator`).",
+    "Do NOT be rude, condescending, or threatening. The rep is a human; the company is the system.",
+    "Do NOT cancel the service unless the user explicitly authorised cancellation. 'Threatening to cancel' is a leverage move but you stop short of actually pulling the trigger without permission.",
+    "Do NOT share more personal information than the rep needs to look up the account. They don't need your SSN to check pricing."
+  ],
+  "success_signals": [
+    "Rep transfers you to retention.",
+    "Rep offers a one-time credit or promotional rate.",
+    "Rep proactively mentions a 'loyalty program' or 'long-term customer rate'.",
+    "Rep asks what amount you're trying to reach — they're negotiating.",
+    "Supervisor takes over and re-runs your account."
+  ],
+  "failure_signals": [
+    "Rep + supervisor + retention all firmly say no.",
+    "Rep insists on a contract term the user hasn't authorised.",
+    "Call duration > 45 minutes with no movement.",
+    "Rep tells you the only way to lower the bill is to downgrade service — and the downgrade doesn't fit the user's stated needs."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the new rate, the effective date, any term commitment, and any conditions. Get the rep's name and a confirmation or case number. Ask if the change will be sent in writing (email or in-account notification).",
+    "on_failure": "Thank the rep, ask them to note your account that you called about pricing, and end politely. Report back to the operator with what was offered (if anything) so they can decide whether to switch providers.",
+    "follow_ups": [
+      "Email the operator the new monthly amount, effective date, and confirmation number.",
+      "Calendar a check-back in 11 months — promotional rates often roll off at month 12."
+    ]
+  },
+  "required_user_info": [
+    "Account number or login email for the service",
+    "Current monthly amount and target monthly amount",
+    "Approximate service start date (year)",
+    "Whether the user is willing to commit to a new term (and if so, max length)",
+    "Any verified competitor offers"
+  ],
+  "contributed_by": "AgenticMail core team"
+}

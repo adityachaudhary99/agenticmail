@@ -33,4 +33,12 @@ export default defineConfig({
   // the media module feature-detects it at runtime and degrades
   // gracefully with an install hint when it is absent.
   external: ['node:*', 'node-edge-tts'],
+  // Built-in skills are JSON files loaded at runtime by
+  // `packages/core/src/skills/registry.ts` (which resolves them
+  // relative to its own dist location). esbuild won't move data
+  // files on its own — `onSuccess` mirrors the source tree's
+  // `built-in/` directory into `dist/skills/built-in/` after every
+  // build so the registry finds them in both source-runs and
+  // installed npm packages.
+  onSuccess: 'mkdir -p dist/skills/built-in && cp -R src/skills/built-in/. dist/skills/built-in/',
 });

@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.72] - 2026-05-20
+
+### Added — Skill library (Phase 1: foundation + starter library + MCP tools)
+
+The first slice of the skill library: an agent on a phone call can
+now search for, load, and ground its next turns on a structured
+playbook for a specific real-world task — bill negotiation, debt
+collector handling, restaurant reservations, credit card dispute,
+court clerk check-in, home-service scheduling, airline rebooking,
+medical appointment booking, subscription cancellation.
+
+**Architecture.** Skills are JSON-on-disk so non-engineers can
+contribute them. Each skill is a complete playbook (principles,
+scripted phrases, ordered tactics, hard boundaries, success/failure
+signals, exit strategy) — not a thin "be assertive" hint. The
+schema is in `packages/core/src/skills/types.ts` and validated at
+load time. Skills live in two places:
+
+- **Built-in** (`packages/core/src/skills/built-in/*.json`) —
+  ships with `@agenticmail/core`. PRs to this directory are the
+  community contribution path.
+- **User-contributed** (`~/.agenticmail/skills/*.json`) — loaded
+  at runtime. User skills override built-ins on `id` collision.
+
+**Starter library (this ship — 9 skills):**
+
+| ID | Category | What it does |
+|---|---|---|
+| `negotiate-bill-reduction` | negotiation | Call a provider's retention line, negotiate a recurring bill down |
+| `book-restaurant-reservation` | reservations | Book a table; angle politely for a better seating |
+| `cancel-subscription-graceful` | subscription | Cancel and capture retention offers cleanly |
+| `handle-debt-collector` | debt-collection | US/FDCPA-aware: don't acknowledge, request validation, exit |
+| `book-medical-appointment` | medical-admin | Verify insurance, book, capture prep instructions |
+| `dispute-credit-card-charge` | finance-admin | File a dispute, capture case number + provisional credit |
+| `schedule-home-service` | home-services | Surface diagnostic fee + tight window; diagnostic-only authorisation |
+| `airline-change-or-refund` | travel | Lead with PNR + status, frame as disruption, capture rebook details |
+| `court-administrative-checkin` | legal-admin | Clerk's office only, NOT representation, mandatory disclaimer |
+
+Each skill has a clear disclaimer for legal/medical/financial
+sensitivity (the agent MUST recite the disclaimer at the start of
+the substantive turn). Hard boundaries enforce things like "don't
+acknowledge the debt amount", "don't commit to payment without
+authorisation", "don't lie about competitor pricing".
+
+**MCP tools** — `@agenticmail/mcp` exposes three new tools:
+
+- `skill_list({category?, tag?})` — list summaries
+- `skill_search({query, limit?})` — fuzzy ranking
+- `skill_load({id})` — full skill body + `rendered_prompt`
+
+**Contribution guide** at `packages/core/src/skills/README.md`.
+Schema validator runs at registry load — invalid skills are
+skipped with a warning rather than crashing the server.
+
+**Phase 2 + Phase 3 plan** in `docs/skill-library-plan.md`:
+mid-call dynamic context injection (next ship); community PR
+pipeline + multi-agent build farm (after that).
+
+18 new tests covering the validator + every built-in skill's
+schema compliance.
+
 ## [0.9.71] - 2026-05-20
 
 ### Fixed — operator's chat id leaked into a placeholder hint

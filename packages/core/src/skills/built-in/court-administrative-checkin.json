@@ -1,0 +1,99 @@
+{
+  "id": "court-administrative-checkin",
+  "name": "Court Administrative Check-in (clerk's office, NOT representation)",
+  "version": "1.0.0",
+  "category": "legal-admin",
+  "tags": ["court", "clerk", "filing", "case-status", "legal", "administrative"],
+  "description": "Call a court clerk's office to check case status, confirm a filing was received, look up the next hearing date, request a copy of a docket entry, or ask about administrative procedures. This is NEVER legal advice or representation.",
+  "disclaimer": "I am an AI assistant calling on behalf of [name]. I am not a licensed attorney, and nothing on this call constitutes legal advice or representation. I am only requesting administrative information from the clerk's office.",
+  "context": {
+    "when_to_use": "User needs administrative information from a court clerk's office: did my filing arrive? What's the next hearing date? Where do I send a payment? How do I request a copy of an order? This skill is STRICTLY for clerk's-office administrative work. ANY substantive legal question — strategy, what to file, whether to plead, how to respond — requires a licensed attorney and is OUTSIDE the scope of this skill.",
+    "preconditions": [
+      "Case number (case caption + court + docket / case number).",
+      "Party name as it appears in the case caption.",
+      "User's authorisation to call as their agent for administrative inquiries only.",
+      "User has confirmed they are NOT seeking legal advice through this call.",
+      "If the case involves an attorney of record, the user has confirmed the attorney is OK with this administrative call (or the user is pro se / self-represented)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "RECITE THE DISCLAIMER at the top of the substantive turn. Always. No exceptions.",
+    "If the clerk starts to ask substantive legal questions ('what's your plea?', 'are you contesting?'), redirect: 'I'm only an administrative assistant — the party / their attorney will address that directly.'",
+    "Use the case caption exactly. Courts route by case number; getting it wrong wastes time.",
+    "Clerks are not lawyers. They will sometimes give procedural advice that turns out to be subtly wrong. Verify anything important with the user (and ideally, an attorney) before acting on it.",
+    "Be patient and respectful. Clerk's offices are understaffed; being kind to the clerk often unlocks help that wouldn't otherwise be offered."
+  ],
+  "phrases": {
+    "open_disclaimer": "Before we start: I am an AI assistant calling on behalf of [name]. I am not a licensed attorney, and nothing I say is legal advice. I'm only asking the clerk's office for administrative information.",
+    "opener_case_status": "I'd like to check the status of case [number] — [party] versus [other party]. Could you tell me the most recent docket entries and the next scheduled hearing date?",
+    "opener_filing_confirmation": "I'd like to confirm whether a filing was received and entered for case [number]. The filing was [type] sent on [date].",
+    "opener_payment_or_copy": "I need to know how to [request a certified copy of an order / pay a fee / submit a form] for case [number].",
+    "redirect_substantive": "I appreciate the question, but I'm not authorised to discuss the substance of the case. The party or their attorney will address that directly. Could we stick to the administrative question?",
+    "ask_next_step": "What's the next step from the party's side — anything they need to file, attend, or respond to by a specific date?",
+    "request_confirmation_method": "Will the clerk's office mail or email a confirmation, or should the party check the docket online? Is there a website where the docket is published?",
+    "graceful_close": "Thank you for your time. To confirm: [recap of what was learned]. I'll relay this to [name]."
+  },
+  "tactics": [
+    {
+      "name": "Disclaimer + the specific administrative question",
+      "when": "First substantive turn.",
+      "script": "Use `open_disclaimer` then the matching opener (`opener_case_status`, `opener_filing_confirmation`, `opener_payment_or_copy`). The opener fits the user's actual question.",
+      "priority": 1
+    },
+    {
+      "name": "Redirect substantive legal questions back to the party",
+      "when": "Clerk asks anything beyond administrative info.",
+      "script": "Use `redirect_substantive`. Don't give the clerk a substantive answer even if you 'know' it. The party or their attorney owns those answers."
+    },
+    {
+      "name": "Ask for the procedural next step",
+      "when": "Administrative info is gathered.",
+      "script": "Use `ask_next_step`. Clerks often volunteer 'the next hearing is on X' or 'they need to file Y by Z' — capture those dates accurately."
+    },
+    {
+      "name": "Confirm the source of truth",
+      "when": "Wrapping up.",
+      "script": "Use `request_confirmation_method`. Most courts have a docket-online portal; learn the URL so the user can verify what you were told."
+    }
+  ],
+  "boundaries": [
+    "NEVER give legal advice. Not even small advice. Not even repeating advice the clerk gave. The user must hear it directly from a licensed attorney to rely on it.",
+    "NEVER answer substantive questions about the case (plea, position, strategy).",
+    "NEVER claim to be an attorney or to represent the party. You are an administrative agent.",
+    "NEVER skip the disclaimer.",
+    "NEVER cite legal authority. If the clerk asks 'on what basis?' or 'what rule?', say: 'I'm only here for administrative information — the party's attorney would address that.'",
+    "NEVER use this skill for substantive litigation tasks: filing a brief, arguing a motion, negotiating a settlement, advising on a plea, requesting a stay. All of those require a licensed attorney."
+  ],
+  "success_signals": [
+    "Clerk confirms case status / filing receipt / next hearing.",
+    "Clerk provides a docket-portal URL or written confirmation.",
+    "Clerk's responses stay administrative (no substantive legal questions came up)."
+  ],
+  "failure_signals": [
+    "Clerk refuses to discuss the case (case may be sealed or restricted — note and exit).",
+    "Clerk insists on substantive answers the user hasn't authorised the AI to give.",
+    "Clerk gives ambiguous or contradictory information (note exactly what was said; the user should confirm via the docket portal or an attorney)."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: docket entries learned, next hearing date, next step required from the party (with deadline), docket-portal URL if available. Thank the clerk.",
+    "on_failure": "Note exactly what the clerk said and what was refused. Thank the clerk. Report back so the user can call back themselves or consult an attorney.",
+    "follow_ups": [
+      "Email the user: case status, next hearing date, any deadlines, docket-portal URL, the clerk's name + extension if given.",
+      "Calendar the next hearing date.",
+      "Calendar any deadline mentioned (with a 3-day buffer reminder).",
+      "STRONGLY recommend the user verify substantive matters with a licensed attorney."
+    ]
+  },
+  "required_user_info": [
+    "Case number + court + party name as in the caption",
+    "User's explicit authorisation for an administrative call ONLY",
+    "User's confirmation that they understand this is not legal advice",
+    "Whether the case has an attorney of record (and if so, whether they've cleared this administrative call)"
+  ],
+  "contributed_by": "AgenticMail core team",
+  "extra": {
+    "scope": "STRICTLY administrative. Substantive legal work requires a licensed attorney.",
+    "disclaimer_required_reason": "Unauthorised practice of law is a crime in every US jurisdiction. The disclaimer is the user's protection AND the agent's."
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "id": "dispute-credit-card-charge",
+  "name": "Dispute a Credit Card Charge",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": ["chargeback", "fraud", "dispute", "billing", "credit-card"],
+  "description": "Call a credit card issuer's customer service line to dispute a specific charge (fraudulent, duplicate, service-not-received, billing error). Walk through the issuer's dispute flow and capture a case number.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User has identified a specific charge on their statement they want disputed. This skill is for the FIRST call to the issuer. If the issuer denies the dispute and the user wants to escalate, that's a different skill (escalate-credit-dispute).",
+    "preconditions": [
+      "Cardholder's name + last 4 digits of the card (issuer rarely needs the full number on a callback).",
+      "Specific charge: date, merchant name as shown on statement, exact amount.",
+      "Dispute reason in one of these standard categories: fraud / unauthorised, duplicate charge, service not received, item not as described, amount wrong, recurring charge after cancellation.",
+      "What the user has already tried (contacted the merchant directly? When? Result?)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Pick ONE dispute category up front and stick to it. Issuers categorise disputes; switching mid-call resets the form.",
+    "Be specific. Vague disputes get denied; specific ones with dates, names, and amounts succeed.",
+    "Note merchant contact history. Issuers often ask 'did you try the merchant first?' — for non-fraud disputes, this is sometimes required.",
+    "Get a case number BEFORE you hang up. No case number = no traceable dispute.",
+    "Provisional credit is the issuer's standard move on fraud disputes — accept it but understand it's reversible if the dispute is later denied.",
+    "Stay calm. You're not arguing — you're following a process. The rep didn't make the charge; they're routing your form."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to dispute a charge on my account. The cardholder's name is [name], last four of the card is [last4]. The charge is [amount] on [date] from [merchant].",
+    "category_fraud": "I did not authorise this charge — I don't recognise the merchant and the card was in my possession.",
+    "category_duplicate": "This charge appears twice on my statement on the same date for the same amount. Only one transaction should have gone through.",
+    "category_service_not_received": "I was billed but never received the service / item. I tried contacting the merchant on [date] and [outcome].",
+    "category_recurring_after_cancel": "I cancelled this subscription on [date] but I'm still being billed. I have [confirmation evidence] but I'd like the issuer to stop the charges and refund what was billed after cancellation.",
+    "request_case_number": "Can I get a case number or reference for this dispute?",
+    "ask_about_provisional": "Will I get a provisional credit while you investigate? If so, when?",
+    "ask_about_timeline": "How long does the investigation usually take, and what's the next step from my side — do I need to send documentation?",
+    "ask_card_replacement": "Given this might be unauthorised, should we close this card and issue a new number so further charges can't hit it?",
+    "graceful_close": "Thank you. To confirm, the case number is [number], the disputed amount is [amount], and you'll [next step]. I'll watch for the email."
+  },
+  "tactics": [
+    {
+      "name": "Open with all the facts at once",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Save the rep five questions by giving name, last4, amount, date, merchant in one go.",
+      "priority": 1
+    },
+    {
+      "name": "State the dispute category cleanly",
+      "when": "Rep asks why you're disputing.",
+      "script": "Pick the matching `category_*` phrase. Avoid mixing categories — 'fraud AND duplicate' confuses the form."
+    },
+    {
+      "name": "Volunteer merchant contact history",
+      "when": "Non-fraud dispute (service-not-received, billing error).",
+      "script": "If the user already contacted the merchant, share: when, who they spoke to, what was promised, what happened. Issuers prefer disputes where the cardholder tried the merchant first."
+    },
+    {
+      "name": "Ask for a new card on fraud disputes",
+      "when": "Dispute category is fraud / unauthorised.",
+      "script": "Use `ask_card_replacement`. Even if the rep is on top of it, asking explicitly creates a paper trail. New card number = no further fraudulent charges on the same number."
+    },
+    {
+      "name": "Capture case number, provisional credit, timeline",
+      "when": "Dispute is filed.",
+      "script": "Use `request_case_number`, `ask_about_provisional`, `ask_about_timeline`. Read back at close (`graceful_close`)."
+    }
+  ],
+  "boundaries": [
+    "Do NOT exaggerate the dispute. 'It's fraud!' for a charge the user actually recognises but is unhappy with will get the dispute denied and may flag the user's account.",
+    "Do NOT commit to documentation the user can't produce. If the rep asks for a screenshot / receipt / cancellation confirmation, take note but don't pretend you have something you don't.",
+    "Do NOT accept a 'merchant credit' as a substitute for a chargeback unless the user has authorised that path — once you accept the merchant credit, the dispute usually closes.",
+    "Do NOT share the full card number or CVV — issuers can pull the account by last4 + name + DOB or zip.",
+    "Do NOT escalate to a supervisor until the front-line rep has had a fair shot. The first dispute call is form-filing, not negotiation."
+  ],
+  "success_signals": [
+    "Rep generates a case / reference number.",
+    "Rep mentions provisional credit (for fraud / duplicate / billing error).",
+    "Rep agrees to a timeline (e.g. 'investigation completes in 10-14 business days').",
+    "Rep offers to close the card and reissue (for fraud)."
+  ],
+  "failure_signals": [
+    "Rep denies the dispute on the call (front-line CSRs rarely have this authority — if it happens, ask for the dispute team or a supervisor).",
+    "Rep insists you contact the merchant first when the category is fraud (this is non-standard — escalate).",
+    "Rep won't give a case number."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: case number, disputed amount, dispute category, provisional credit yes/no + when, expected timeline, any documentation requested from your side. Thank the rep.",
+    "on_failure": "Note the obstacle. Thank the rep. Report back so the operator can decide whether to escalate or pursue the merchant directly.",
+    "follow_ups": [
+      "Email the operator: case number, dispute amount, provisional credit status, timeline, documentation requested.",
+      "Calendar a check-in at the end of the timeline window.",
+      "If documentation was requested, calendar a same-week reminder to gather + send it."
+    ]
+  },
+  "required_user_info": [
+    "Cardholder's full name + last 4 of the card",
+    "Disputed charge: exact amount, date, merchant name as shown on statement",
+    "Dispute category (fraud / duplicate / service-not-received / wrong amount / recurring-after-cancel)",
+    "Merchant contact history (for non-fraud)",
+    "What the user wants: refund + new card / refund + close subscription / refund only"
+  ],
+  "contributed_by": "AgenticMail core team",
+  "extra": {
+    "jurisdiction": "US — most major US issuers; EU PSD2 disputes follow a different process and need a separate skill."
+  }
+}

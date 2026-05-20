@@ -1,0 +1,93 @@
+{
+  "id": "book-restaurant-reservation",
+  "name": "Book a Restaurant Reservation",
+  "version": "1.0.0",
+  "category": "reservations",
+  "tags": ["restaurant", "dining", "reservation", "phone-call"],
+  "description": "Call a restaurant to book a table at a specific date / time / party size, handle full-availability gracefully, and politely angle for a better table or time when possible.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User wants a table at a specific restaurant for a specific date and time. The restaurant either doesn't take online reservations, the desired slot isn't showing online, or the user wants a specific seating area (window, patio, booth) that the online system doesn't let them request.",
+    "preconditions": [
+      "User has the date, time, and party size locked in (or a small acceptable window for each).",
+      "User has the restaurant's phone number.",
+      "User has their name + a callback number to leave for the reservation.",
+      "If applicable: any dietary restrictions, allergies, or accessibility needs."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Be brief and warm — a host fielding 50 calls a night appreciates someone who gets to the point.",
+    "Lead with the specific ask, not small talk. 'I'd like to book a table for two on Friday at 7:30' before any pleasantry.",
+    "If the first slot is full, have a fallback ready BEFORE they ask. Don't make the host scroll through options for you.",
+    "Special requests (window seat, anniversary cake) go AT THE END after the booking is confirmed, not as a condition of the booking.",
+    "Always thank the host by name before hanging up."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to book a table for [party_size] on [day] at [time] — is that available?",
+    "fallback_offer": "If [time] doesn't work, I'm flexible — anywhere from [earlier_time] to [later_time] would also work.",
+    "request_specific_seating": "If you have a [seating preference, e.g. booth, patio, window] available, that would be lovely — but only if it works with what you've got.",
+    "occasion_note": "We're celebrating [occasion] — no need to do anything special, just thought you should know.",
+    "callback_left": "My name is [name] and the best number is [phone]. Should I confirm anything else?",
+    "graceful_close_success": "Thank you so much, [host_name] — we'll see you [day] at [time].",
+    "graceful_close_full": "No worries at all, thanks for checking. I'll try [alternate_date] online. Have a great evening!"
+  },
+  "tactics": [
+    {
+      "name": "Open with the full ask",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Include party size, day, and time in the first sentence — saves the host from extracting them piece by piece.",
+      "priority": 1
+    },
+    {
+      "name": "Offer flexibility immediately if asked",
+      "when": "Host says the requested time isn't available.",
+      "script": "Use `fallback_offer` with the user's pre-stated acceptable window. Don't make the host ask 'what about earlier?' three times.",
+      "priority": 2
+    },
+    {
+      "name": "Add the occasion AFTER confirmation",
+      "when": "Reservation is confirmed; host is wrapping up.",
+      "script": "Mention the occasion with `occasion_note`. Hosts often quietly arrange something small (a sparkler, a window table) when they have a beat of time. Asking before confirmation makes it feel transactional."
+    },
+    {
+      "name": "Get the host's name",
+      "when": "Reservation is confirmed.",
+      "script": "Casual: 'Sorry, I didn't catch your name?' Then thank them by name on close. Restaurants notice."
+    }
+  ],
+  "boundaries": [
+    "Do NOT promise a tip or anything monetary in exchange for a better table.",
+    "Do NOT lie about the occasion (e.g. claiming it's a birthday when it isn't) to get free dessert.",
+    "Do NOT haggle on minimums or fees — that's for the host's manager, not the host.",
+    "Do NOT keep the host on the phone with small talk if they sound rushed."
+  ],
+  "success_signals": [
+    "Host confirms the date / time / party size.",
+    "Host volunteers seating ('I have a nice booth open')."
+  ],
+  "failure_signals": [
+    "Restaurant is closed on the requested day.",
+    "Restaurant requires online-only reservations.",
+    "Restaurant is fully booked for every slot in the user's window."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the date, time, party size, and the name the reservation is under. Thank the host by name.",
+    "on_failure": "Thank the host warmly, mention you'll try the online system or another date, and end the call. Report back so the user can pick an alternative.",
+    "follow_ups": [
+      "Calendar the reservation in the user's calendar with the restaurant name + party size + reservation name.",
+      "If the restaurant takes confirmation calls or texts, note that and watch for them."
+    ]
+  },
+  "required_user_info": [
+    "Restaurant name + phone number",
+    "Party size",
+    "Date(s) acceptable",
+    "Time(s) acceptable (with a flex window)",
+    "Name to put the reservation under",
+    "Callback number to leave",
+    "Any dietary restrictions or accessibility needs",
+    "Occasion (optional)"
+  ],
+  "contributed_by": "AgenticMail core team"
+}

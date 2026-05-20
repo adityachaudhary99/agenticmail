@@ -1,0 +1,109 @@
+{
+  "id": "handle-debt-collector",
+  "name": "Handle a Debt Collector Call (US-FDCPA-aware)",
+  "version": "1.0.0",
+  "category": "debt-collection",
+  "tags": ["debt", "collection", "FDCPA", "legal", "consumer-protection"],
+  "description": "Field a call from a debt collector on the operator's behalf without acknowledging the debt, request written validation per FDCPA, and end the call cleanly. US-specific.",
+  "disclaimer": "I am an AI assistant calling on behalf of the account holder. I am not a licensed attorney, and nothing I say constitutes legal advice. Please send any requests in writing to the address on file. The account holder will respond through their own channels.",
+  "context": {
+    "when_to_use": "A US debt collector calls the operator (or the operator wants the agent to call them back). The Fair Debt Collection Practices Act (FDCPA, 15 U.S.C. §1692) gives the consumer specific rights: validation of debt, restrictions on contact times, the right to dispute. Goal: NOT to negotiate the debt, but to (a) request written validation, (b) document the contact, (c) refuse to admit the debt, and (d) end the call without making payment commitments.",
+    "preconditions": [
+      "Operator has authorised the agent to field debt-collection calls on their behalf.",
+      "Operator's full legal name + an address for written correspondence is on file.",
+      "Jurisdiction is the United States. For other countries, do NOT use this skill — load the jurisdiction-specific variant or refuse the call."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "Never acknowledge the debt verbally. 'I'm not in a position to confirm or discuss the debt on this call' is your baseline response to anything about amount, age, or origin.",
+    "ASK for written validation under FDCPA §1692g — the collector must send it within 5 days of initial contact.",
+    "Document the call. Get the collector's full name, the company name, an address, and a callback number — read them back for confirmation.",
+    "Never make a payment commitment, partial payment, or 'pay-by-date' on the call. Those statements can restart the statute of limitations.",
+    "Stay calm and polite. Collectors who escalate are gathering evidence; collectors who remain professional are following the script. Match their professionalism.",
+    "If the collector is abusive, threatens arrest, claims to be law enforcement, or refuses to identify themselves — note it and end the call. Those are FDCPA violations and worth documenting."
+  ],
+  "phrases": {
+    "open_disclaimer": "Before we go further: I'm an AI assistant calling on behalf of [legal name]. I'm not an attorney and nothing I say is legal advice. Please continue.",
+    "ask_who_you_are": "May I get your full name, the name of the company you're calling from, and a callback number?",
+    "request_validation": "Under the Fair Debt Collection Practices Act, I'd like you to send written validation of this debt to the address on file — including the amount, the original creditor, and your authority to collect. Can you confirm you'll send that?",
+    "refuse_to_acknowledge": "I'm not in a position to confirm or discuss the debt on this call. Please send the validation in writing.",
+    "refuse_payment_request": "I won't be making any payment or payment arrangement on this call. The account holder will respond through their own channels after receiving written validation.",
+    "ask_to_stop_calling": "Per FDCPA §1692c(c), please cease further phone contact and use written correspondence only. Can you confirm you'll note the file accordingly?",
+    "document_abuse": "I need to note that you just [described behaviour]. I'm ending the call. Please send all future communication in writing.",
+    "graceful_close": "Thank you. The account holder will respond in writing after receiving the validation. Have a good day."
+  },
+  "tactics": [
+    {
+      "name": "Open with the disclaimer + identity ask",
+      "when": "First substantive turn.",
+      "script": "Use `open_disclaimer` then `ask_who_you_are`. Write down (in the call transcript) every piece of identifying info the collector gives.",
+      "priority": 1
+    },
+    {
+      "name": "Request written validation immediately",
+      "when": "After identity is documented.",
+      "script": "Use `request_validation`. This is the single most important move — once validation is requested, the collector is legally required to send it before any further collection activity.",
+      "priority": 2
+    },
+    {
+      "name": "Refuse to acknowledge the debt",
+      "when": "Collector asks about the amount, the original creditor, or any account details.",
+      "script": "Use `refuse_to_acknowledge`. Repeat as needed — the collector will often re-ask in different words.",
+      "priority": 3
+    },
+    {
+      "name": "Refuse to commit to payment",
+      "when": "Collector asks for a payment date, settlement, or partial payment.",
+      "script": "Use `refuse_payment_request`. Do NOT entertain a settlement amount even hypothetically — even a 'I'd consider $X' can be cited later as an acknowledgment."
+    },
+    {
+      "name": "Request cease-of-phone-contact (optional)",
+      "when": "The operator has pre-authorised cease-and-desist on phone calls (per FDCPA §1692c(c)).",
+      "script": "Use `ask_to_stop_calling`. Only do this if the operator has authorised it — once requested, the collector may sue (in writing) without further phone contact, which can accelerate legal action."
+    },
+    {
+      "name": "Document and exit on abusive behaviour",
+      "when": "Collector threatens arrest, jail, wage garnishment without a court order, claims to be law enforcement, uses profanity, or refuses to identify themselves.",
+      "script": "Use `document_abuse` and end the call. The transcript becomes evidence for an FDCPA complaint to the CFPB or a state AG."
+    }
+  ],
+  "boundaries": [
+    "NEVER acknowledge the debt's amount, age, or validity. Even 'yes that sounds about right' can restart the statute of limitations.",
+    "NEVER offer to pay, settle, or arrange payment on the call.",
+    "NEVER give the operator's bank account, credit card, or SSN to the collector.",
+    "NEVER lie — saying you're an attorney is a federal crime under 18 U.S.C. §912 if it implies you're operating as an attorney.",
+    "NEVER use this skill for non-US jurisdictions — FDCPA does not apply outside the US and the script may not match local law.",
+    "ALWAYS recite the disclaimer at the top of the substantive turn. This is required, not optional."
+  ],
+  "success_signals": [
+    "Collector commits to sending written validation.",
+    "Collector accepts the request for written-only contact (if requested).",
+    "Call ends with the collector's full identification documented."
+  ],
+  "failure_signals": [
+    "Collector refuses to identify themselves.",
+    "Collector becomes abusive, threatens arrest, or claims to be law enforcement.",
+    "Collector insists on a verbal acknowledgment of the debt before sending validation."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the collector's name, company, callback number, and the written-validation commitment. Thank them. Email the operator the documented contact + a summary so they can decide on next steps.",
+    "on_failure": "End the call after documenting the issue (use `document_abuse` if applicable, or just `graceful_close` if it's a benign deadlock). The operator should consider an FDCPA complaint to the CFPB (consumerfinance.gov) or their state AG, and may want to consult an actual attorney.",
+    "follow_ups": [
+      "Email the operator: collector's name, company, callback number, key statements, and the full call transcript.",
+      "If any FDCPA red flags appeared (abuse, threats, false claims), include those prominently and suggest the operator speak to a consumer-protection attorney.",
+      "If written validation was promised, calendar a follow-up at day 7 to confirm it arrived."
+    ]
+  },
+  "required_user_info": [
+    "Operator's full legal name + mailing address (for validation correspondence)",
+    "Authorisation for the agent to field debt-collection calls on their behalf",
+    "Pre-authorisation (or not) for the FDCPA §1692c(c) cease-phone-contact request"
+  ],
+  "contributed_by": "AgenticMail core team",
+  "extra": {
+    "jurisdiction": "US",
+    "legal_framework": "FDCPA (15 U.S.C. §1692)",
+    "disclaimer_required_reason": "The agent is not an attorney; debt collection contains legal traps that demand the disclaimer up front."
+  }
+}

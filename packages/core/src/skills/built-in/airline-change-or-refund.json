@@ -1,0 +1,111 @@
+{
+  "id": "airline-change-or-refund",
+  "name": "Change or Refund an Airline Reservation",
+  "version": "1.0.0",
+  "category": "travel",
+  "tags": ["airline", "flight", "refund", "rebook", "travel-disruption"],
+  "description": "Call an airline to change a booking, request a refund, or rebook around a cancelled / delayed flight. Surface fare rules, fee waivers, and travel credits that don't show in the app.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User needs to change a flight, get refunded for a cancelled flight, or rebook after a disruption. Use this when the airline's app / website doesn't expose the option the user needs, or when a fee waiver is plausible (weather, schedule change > 1 hour, illness with documentation, bereavement).",
+    "preconditions": [
+      "Confirmation number / record locator (6 letters and numbers).",
+      "Passenger's full name as shown on the ticket (matches photo ID).",
+      "Loyalty number, if any.",
+      "Original itinerary + the desired new itinerary (date / time / cities).",
+      "Reason for the change (schedule change, weather, personal — affects which waivers apply).",
+      "Whether the user wants a refund, travel credit, or a rebooked itinerary."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Loyalty status matters. Lead with the elite number (Platinum, 1K, etc) if the user has one — different reps, different rules.",
+    "If the AIRLINE caused the disruption (cancellation, schedule change > 1 hour, equipment swap), the rules are MUCH more in the user's favour. Lead with the disruption fact.",
+    "Travel credits and refunds are different. A 'refund' goes back to the original payment; a 'travel credit' is airline-only money with an expiry. Be explicit about which you're asking for.",
+    "Fee waivers are sometimes discretionary — a calm, polite request from a long-tenured customer gets them more often than a demanding one.",
+    "Schedule change protections (DOT rules for US flights with significant schedule changes) often entitle a refund EVEN ON A NON-REFUNDABLE FARE. Don't accept 'non-refundable' as final.",
+    "If the first rep can't help, hold for a supervisor or call back later (different rep, different mood, sometimes different answer)."
+  ],
+  "phrases": {
+    "opener_with_status": "Hi, I'm calling about confirmation [PNR] for [passenger name]. I'm a [status] member — number [loyalty]. I need to [change / refund / rebook] this trip.",
+    "opener_without_status": "Hi, I'm calling about confirmation [PNR] for [passenger name]. I need to [change / refund / rebook] this trip.",
+    "lead_with_disruption": "Before we look at fees — this is because of [airline's schedule change / cancellation / equipment swap / weather waiver]. Can we look at change-fee or refund options under that policy first?",
+    "request_specific_rebook": "I'd like to move to [airline] flight [number] on [date] departing [time] — same routing. What's the difference in fare?",
+    "request_refund": "Given [reason], I'd like to refund the unused portion to the original form of payment. What's the refund amount and the processing time?",
+    "ask_credit_alternative": "If a refund isn't possible, what's the travel-credit option — value, expiry date, transferable?",
+    "ask_fee_waiver": "Is there any way to waive the change fee? I'm a long-time customer and this trip is for [brief reason].",
+    "stall_thinking": "Let me think about that for one second.",
+    "stall_research": "Hold on, I want to confirm something with the passenger before I commit.",
+    "graceful_close": "Thank you. To confirm: [new itinerary], confirmation [number], total [amount] charged or refund of [amount] to [method] arriving in [days]. I'll watch for the email."
+  },
+  "tactics": [
+    {
+      "name": "Lead with PNR + loyalty status",
+      "when": "First substantive turn.",
+      "script": "Use `opener_with_status` if the user has any elite status (even bronze). Status changes the rep's screen colour — they treat the call differently.",
+      "priority": 1
+    },
+    {
+      "name": "Frame the call as a disruption claim, not a customer change",
+      "when": "The airline caused (or contributed to) the change.",
+      "script": "Use `lead_with_disruption`. Cancellations, schedule changes > 60 min (for US carriers), equipment swaps that affect seat assignments, all unlock different waivers."
+    },
+    {
+      "name": "Ask for refund first, accept credit as fallback",
+      "when": "User has a clear preference for refund.",
+      "script": "Use `request_refund` first. If denied, use `ask_credit_alternative`. Credits should be accepted only if the user pre-authorised credits-OK."
+    },
+    {
+      "name": "Politely ask for a fee waiver",
+      "when": "A change fee is being quoted on a personal change (not a disruption).",
+      "script": "Use `ask_fee_waiver`. Don't make it a demand — make it a question with a tone of 'help me out if you can'."
+    },
+    {
+      "name": "Escalate to a supervisor",
+      "when": "Front-line rep says no on something a supervisor might say yes to (fee waiver, fare-difference reduction, specific seat reassignment).",
+      "script": "Polite: 'I appreciate you checking. Could we get a supervisor's read on this? Not because you've done anything wrong — I just want to make sure we've explored the policies before I commit.'"
+    },
+    {
+      "name": "Hang up and call back",
+      "when": "Call has gone in circles and the supervisor also said no.",
+      "script": "End politely, wait an hour, call back. Different rep, sometimes different answer. This is a known industry quirk; don't rage about it, just try again."
+    }
+  ],
+  "boundaries": [
+    "Do NOT commit to a fare difference > $X without explicit user authorisation. Use `ask_operator` for big numbers.",
+    "Do NOT accept a travel credit instead of a refund unless the user pre-authorised credit-OK.",
+    "Do NOT agree to non-refundable rules being final on a disruption-caused change — push back politely.",
+    "Do NOT share the user's full credit card on a recorded line if avoidable; the airline usually has the card on file.",
+    "Do NOT make up reasons to claim a waiver (bereavement, illness) — if the user doesn't have actual documentation, don't use those framings."
+  ],
+  "success_signals": [
+    "Rep waives a change fee.",
+    "Rep offers a refund to the original payment method.",
+    "Rep finds a flight in the user's preferred window.",
+    "Rep notes elite-status protections that exceed the base fare's rules."
+  ],
+  "failure_signals": [
+    "Rep + supervisor both decline waiver requests on a disruption-caused change (try calling back).",
+    "Rep can find no flight in the user's window for any price the user pre-authorised.",
+    "Refund processing time quoted at > 60 days (probably wrong — escalate)."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: new itinerary (flight numbers, dates, times, routing), confirmation number, total charged or refund amount + method + processing time. Thank the rep. Confirm email is coming.",
+    "on_failure": "Note exactly what was offered and what was refused. Thank the rep. Report back so the user can decide to call back, file a DOT complaint (US), or accept the loss.",
+    "follow_ups": [
+      "Email the user: new itinerary, confirmation number, refund / credit details, processing time.",
+      "Add the new flights to the user's calendar.",
+      "If a credit was issued, calendar the expiry date.",
+      "If a refund was promised, calendar a 14-day check that it actually arrived."
+    ]
+  },
+  "required_user_info": [
+    "Confirmation number (PNR) + passenger name as on the ticket",
+    "Loyalty number + status, if any",
+    "Original itinerary + desired new itinerary",
+    "Reason for the change (disruption, personal, etc)",
+    "Outcome preference: refund / credit / rebook (with max fare-difference if rebook)",
+    "Max fare difference the user will authorise without callback"
+  ],
+  "contributed_by": "AgenticMail core team"
+}

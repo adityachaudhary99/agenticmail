@@ -200,6 +200,13 @@ export const TOOL_SETS = {
     'memory_stats',
   ],
 
+  /** Skill library — JSON how-to-act-like-a-skilled-human playbooks loaded on demand during phone calls. */
+  skills: [
+    'skill_list',
+    'skill_search',
+    'skill_load',
+  ],
+
   /** Mail-server setup / onboarding wizards. */
   setup: [
     'setup_guide',
@@ -233,6 +240,7 @@ export const SET_DESCRIPTIONS: Record<ToolSetName, string> = {
   sms: 'SMS / voice — send/read/setup/parse/record',
   phone: 'Phone call-control — setup/capabilities/start/status/transcript/cancel',
   telegram: 'Telegram channel — bot setup, send/list messages, poll for updates',
+  skills: 'Skill library — load real-world phone-call playbooks (negotiate-bill-reduction, handle-debt-collector, book-restaurant-reservation, …) on demand mid-call. Search and load when the agent hits a situation it needs a playbook for.',
   media: 'Media toolset — text-to-speech, image/video/audio editing, probing, video understanding, voice cloning (opt-in, needs ffmpeg/ImageMagick/whisper)',
   account_admin: 'Account admin — create/delete/stop/resume agents, cleanup (master key required)',
   storage: 'File storage for an agent',

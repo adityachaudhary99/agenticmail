@@ -435,3 +435,16 @@ export type {
   AgentMemoryEntry, MemoryCategory, MemoryImportance, MemorySource,
   MemoryStats, CreateMemoryInput, UpdateMemoryInput, MemoryQueryOptions,
 } from './memory/index.js';
+
+// Skill library — JSON how-to-act-like-a-skilled-human bundles agents
+// load on demand during phone calls. Built-in skills ship in the
+// `skills/built-in/` folder; user-contributed ones live in
+// `~/.agenticmail/skills/`. See packages/core/src/skills/*.
+export {
+  listSkills, searchSkills, loadSkill, saveUserSkill, validateSkill,
+  invalidateSkillCache, userSkillsDir, renderSkillAsPrompt,
+} from './skills/index.js';
+export type {
+  Skill, SkillCategory, SkillContext, SkillTactic, SkillExitStrategy,
+  SkillSummary, SkillValidationError,
+} from './skills/index.js';

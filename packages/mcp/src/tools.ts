@@ -1564,6 +1564,50 @@ export const toolDefinitions = [
       properties: {},
     },
   },
+  // ─── Skill library — load real-world phone-call playbooks ──────────
+  // The skill library is a JSON-on-disk collection of structured
+  // playbooks ("negotiate a bill reduction", "handle a debt collector
+  // call", "book a restaurant reservation") — each one a complete
+  // bundle of principles, tactics, scripted phrases, boundaries, and
+  // exit strategies. Agents load them on demand DURING a call when
+  // they hit a situation they don't have ambient knowledge of: pause
+  // the call ("hold on one moment"), `skill_search` for relevant
+  // ones, `skill_load` the best match, then resume with the loaded
+  // skill grounding the next turn.
+  {
+    name: 'skill_list',
+    description: 'List available phone-call skill playbooks, optionally filtered by category (e.g. "negotiation", "reservations", "debt-collection") or tag. Returns summaries (id, name, description, tags) — call `skill_load` with the id to get the full playbook.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        category: { type: 'string', description: 'Filter by category. Valid: negotiation, customer-service, reservations, medical-admin, legal-admin, finance-admin, real-estate, travel, subscription, home-services, social, civic, employment, debt-collection, other.' },
+        tag: { type: 'string', description: 'Filter by a single tag (case-insensitive).' },
+      },
+    },
+  },
+  {
+    name: 'skill_search',
+    description: 'Fuzzy-search skills by free-text query against name, description, tags, principles, phrases, and tactic scripts. Use this DURING a call when you need a playbook for the situation you just hit ("the rep is asking for a settlement number — what do I do?"). Returns ranked summaries; load the top match with `skill_load`.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Free-text query, e.g. "rep wants me to commit to payment" or "restaurant fully booked".' },
+        limit: { type: 'number', description: 'Max results (default 10).' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'skill_load',
+    description: 'Load the FULL skill playbook by id. Returns the complete JSON document: principles, scripted phrases, tactic priority list, boundaries, success/failure signals, exit strategy. Use the response to ground your next turns on the call — the playbook should drive your phrasing, tactic order, and exit decisions.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        id: { type: 'string', description: 'Skill id (lowercase-hyphenated, e.g. "negotiate-bill-reduction").' },
+      },
+      required: ['id'],
+    },
+  },
   // ─── Meta-tools for tiered tool loading ────────────────────────────
   // These exist so a Claude Code subagent (or any host that wants to keep
   // its spawn context small) can load this MCP server with only a handful
@@ -3728,6 +3772,43 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
     case 'memory_stats': {
       const result = await apiRequest('GET', '/memory/stats');
       return JSON.stringify(result, null, 2);
+    }
+
+    // ─── Skill library ───────────────────────────────────────────────
+    // Skills don't need the API server — they're files on disk read
+    // by `@agenticmail/core`'s skill registry. The MCP server is
+    // already linked against core, so we just import and call.
+    case 'skill_list': {
+      const { listSkills } = await import('@agenticmail/core');
+      const result = listSkills({
+        category: typeof args.category === 'string' ? (args.category as any) : undefined,
+        tag: typeof args.tag === 'string' ? args.tag : undefined,
+      });
+      return JSON.stringify({ count: result.length, skills: result }, null, 2);
+    }
+    case 'skill_search': {
+      const { searchSkills } = await import('@agenticmail/core');
+      const query = typeof args.query === 'string' ? args.query : '';
+      const limit = typeof args.limit === 'number' ? args.limit : 10;
+      if (!query) throw new Error('skill_search: `query` is required');
+      const result = searchSkills(query, limit);
+      return JSON.stringify({ count: result.length, query, skills: result }, null, 2);
+    }
+    case 'skill_load': {
+      const { loadSkill, renderSkillAsPrompt } = await import('@agenticmail/core');
+      const id = typeof args.id === 'string' ? args.id : '';
+      if (!id) throw new Error('skill_load: `id` is required');
+      const skill = loadSkill(id);
+      if (!skill) throw new Error(`skill_load: no skill with id "${id}" — call \`skill_list\` to see what's available`);
+      // Return BOTH the structured JSON (for programmatic use) and a
+      // pre-rendered prompt block (for direct injection into the
+      // next call turn's instructions). Agents typically use the
+      // rendered form; tooling that wants to operate on the
+      // tactics list can parse the JSON instead.
+      return JSON.stringify({
+        skill,
+        rendered_prompt: renderSkillAsPrompt(skill),
+      }, null, 2);
     }
 
     // ─── Meta-tools ──────────────────────────────────────────────────

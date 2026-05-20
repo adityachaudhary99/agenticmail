@@ -1,0 +1,100 @@
+{
+  "id": "schedule-home-service",
+  "name": "Schedule a Home-Service Appointment (Plumber, Electrician, HVAC)",
+  "version": "1.0.0",
+  "category": "home-services",
+  "tags": ["plumber", "electrician", "hvac", "appointment", "home-repair", "diagnostic-fee"],
+  "description": "Call a home-service contractor to schedule a diagnostic / repair visit, surface the diagnostic fee + after-hours rates up front, and confirm a tight window so the homeowner isn't waiting all day.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User needs a contractor on-site: leaking pipe, electrical problem, AC not cooling, appliance broken, etc. Skill is for ROUTINE scheduling, not emergencies — if water is actively flooding, the user should call directly and use emergency dispatch language.",
+    "preconditions": [
+      "Address of the service location.",
+      "One-sentence description of the issue ('garbage disposal jammed, no power'; 'kitchen sink dripping under cabinet'; 'AC fan not turning on').",
+      "Availability windows the homeowner can be on-site.",
+      "Whether the homeowner wants the cheapest available slot or the soonest.",
+      "Approximate age of the system / item if known (a 25-year-old water heater is a different conversation than a 2-year-old one)."
+    ],
+    "estimated_call_duration_minutes": 10
+  },
+  "principles": [
+    "Diagnostic fees and after-hours rates are the most common surprise. Surface them up front.",
+    "Tight time windows matter. 'Between 8 AM and 5 PM' eats a homeowner's day. Push for a 2-3 hour window or a 'we'll text 30 min before arrival' guarantee.",
+    "Get the technician's name when possible — accountability runs higher when a name is attached.",
+    "Authorising the diagnostic visit is NOT the same as authorising the repair. Make this explicit: 'I'll authorise the visit + diagnostic fee, but any repair over $X needs me to approve it before the tech proceeds.'",
+    "Watch out for 'membership' upsells at the end. Politely defer ('I'll think about that and call back') unless the homeowner has pre-authorised."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to schedule a service visit at [address]. The issue is [one-line description]. When can someone come out?",
+    "ask_diagnostic_fee": "What's your diagnostic or service-call fee? Is it waived if we go forward with the repair?",
+    "ask_after_hours": "Is that during regular business hours, or would it be an after-hours rate?",
+    "ask_arrival_window": "What's the arrival window — 2-hour, 4-hour? Will the technician call or text before arriving?",
+    "ask_technician_name": "Do you know which technician will come out so I can let the homeowner know who to expect?",
+    "authorize_diagnostic_only": "I'll authorise the diagnostic visit and the [amount] fee. For any repair over [threshold], the technician will need to call the homeowner before proceeding. Can you note that on the work order?",
+    "defer_membership_upsell": "I appreciate you mentioning the membership program — I'll talk to the homeowner about that and we can sign up later if it's right. For today let's just get the visit on the schedule.",
+    "graceful_close_success": "Great, so to confirm: technician [name if known] will arrive between [start] and [end] on [day] at [address]. Diagnostic fee is [amount], and any repair over [threshold] gets a callback before they start. Thanks!"
+  },
+  "tactics": [
+    {
+      "name": "Open with address + issue",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Many dispatchers can route the call faster if they know the service area and category up front.",
+      "priority": 1
+    },
+    {
+      "name": "Surface pricing immediately",
+      "when": "After the dispatcher confirms availability.",
+      "script": "Use `ask_diagnostic_fee` and `ask_after_hours`. A $79 diagnostic that's waived with repair is a different decision than a $149 fee that's separate."
+    },
+    {
+      "name": "Confirm window + arrival notification",
+      "when": "Dispatcher offers a date.",
+      "script": "Use `ask_arrival_window`. Push back on 'all-day' windows: 'Is there any way to get a tighter window? The homeowner has to plan around it.'"
+    },
+    {
+      "name": "Set the diagnostic-only authorisation",
+      "when": "Before confirming the appointment.",
+      "script": "Use `authorize_diagnostic_only`. This is the single most important line — it prevents the technician from doing a $1,200 repair on a $79 visit without homeowner sign-off."
+    },
+    {
+      "name": "Defer membership / service plan upsells",
+      "when": "Dispatcher pitches a 'maintenance program' or 'annual service plan'.",
+      "script": "Use `defer_membership_upsell`. These can be reasonable, but the homeowner shouldn't sign up over the phone without thinking."
+    }
+  ],
+  "boundaries": [
+    "Do NOT authorise repairs sight-unseen. Diagnostic visit only; repairs require the homeowner's approval based on the tech's findings.",
+    "Do NOT commit to a maintenance plan or membership on the call.",
+    "Do NOT share the homeowner's full payment info — most contractors collect at the time of service.",
+    "Do NOT accept 'we'll get there when we can' as a window. Push for a 2-4 hour bracket minimum.",
+    "Do NOT schedule for a time the homeowner hasn't confirmed they can be there. A no-show may be billed."
+  ],
+  "success_signals": [
+    "Dispatcher confirms a specific date + a tight window.",
+    "Dispatcher discloses diagnostic fee + after-hours policy.",
+    "Dispatcher notes the diagnostic-only authorisation on the work order.",
+    "Dispatcher offers technician's name + arrival notification method (text/call)."
+  ],
+  "failure_signals": [
+    "Earliest availability is past when the homeowner needs the issue addressed.",
+    "Diagnostic fee is non-refundable + non-credited toward repair.",
+    "Dispatcher won't commit to a tighter window than 'sometime that day'."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: day, arrival window, technician name (if known), diagnostic fee, repair-approval threshold, arrival notification method. Thank the dispatcher.",
+    "on_failure": "Note the deal-breaker (fee too high, window too wide, availability too far out). Thank the dispatcher. Report back so the homeowner can pick another contractor.",
+    "follow_ups": [
+      "Email the homeowner: date, window, technician (if known), fee, repair-authorisation threshold.",
+      "Calendar the appointment with the address.",
+      "Calendar a reminder 30 minutes before the window starts (in case arrival-notification didn't fire)."
+    ]
+  },
+  "required_user_info": [
+    "Service address",
+    "One-line issue description + system age (if applicable)",
+    "Availability windows the homeowner can be on-site",
+    "Repair-authorisation threshold (dollar amount above which the homeowner wants to be called)",
+    "Whether to accept emergency / after-hours rates"
+  ],
+  "contributed_by": "AgenticMail core team"
+}

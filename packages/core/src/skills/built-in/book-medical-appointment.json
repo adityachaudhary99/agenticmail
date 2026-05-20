@@ -1,0 +1,99 @@
+{
+  "id": "book-medical-appointment",
+  "name": "Book a Medical / Dental Appointment",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": ["doctor", "dentist", "appointment", "scheduling", "insurance"],
+  "description": "Call a medical or dental office to book an appointment, verify they take the operator's insurance, capture the prep instructions, and confirm the time + location.",
+  "disclaimer": "I'm an AI assistant calling on behalf of [patient name]. I'm not a medical professional and cannot answer clinical questions — those will be addressed by the patient directly at the appointment.",
+  "context": {
+    "when_to_use": "User needs to book a routine appointment (cleaning, annual physical, follow-up visit, vaccination, etc). Not for symptom triage or emergencies — for those, the user should call directly or use the office's nurse line.",
+    "preconditions": [
+      "Patient's full name, date of birth, and insurance information (carrier + member ID + group number).",
+      "Reason for visit in plain language ('annual cleaning', 'follow-up on lab results', 'new-patient visit').",
+      "Date / time preferences with a flex window.",
+      "Existing patient or new patient? (Affects intake time required.)"
+    ],
+    "estimated_call_duration_minutes": 10
+  },
+  "principles": [
+    "Lead with the reason for visit and the patient's status (existing vs new). Front-desk staff route the call entirely based on those two facts.",
+    "Verify insurance BEFORE confirming the appointment. 'Do you take [carrier]?' is a free question; finding out at the appointment that they don't is expensive.",
+    "Get every detail in writing if possible — confirmation email, text message, or patient portal entry. Verbal-only confirmations are forgotten by reception.",
+    "Ask for prep instructions (fasting, paperwork, ID, insurance card) — these are easy to forget and embarrassing to discover at check-in.",
+    "Do NOT discuss symptoms or clinical details. You're an AI; the patient will discuss medical specifics at the appointment."
+  ],
+  "phrases": {
+    "open_disclaimer": "I'm an AI assistant calling on behalf of [patient name]. I'm not a medical professional, so I won't be able to discuss symptoms or clinical details — but I can handle scheduling.",
+    "opener_existing": "I'd like to book an appointment for [patient name] for [reason]. The date of birth on file is [DOB]. Existing patient.",
+    "opener_new": "I'd like to book a new-patient appointment for [patient name] for [reason]. They've never been seen at this practice.",
+    "verify_insurance": "Before we lock anything in — can you confirm you accept [insurance carrier], plan name [plan]? Member ID is [ID].",
+    "ask_prep": "What should the patient bring or do to prepare? Anything to bring (ID, insurance card, prior records)? Any fasting or medication restrictions?",
+    "ask_confirmation_method": "Will you send a text or email confirmation? What's the best way to confirm we're on the schedule?",
+    "request_callback_number": "And the best number to reach the patient if anything changes is [phone]. Could you note that on the file?",
+    "graceful_close_success": "Thank you so much. So we're set for [day] at [time] at [location] — and [prep summary]. Have a good day.",
+    "graceful_close_no_availability": "I understand. I'll talk to [patient name] and call back to look at later dates. Thanks for checking."
+  },
+  "tactics": [
+    {
+      "name": "Disclaimer + reason for visit + patient status",
+      "when": "First substantive turn.",
+      "script": "Lead with the disclaimer (`open_disclaimer`), then immediately give reason + existing/new status (`opener_existing` or `opener_new`). Saves the receptionist from extracting it.",
+      "priority": 1
+    },
+    {
+      "name": "Verify insurance before booking",
+      "when": "Receptionist offers a time slot.",
+      "script": "Use `verify_insurance` BEFORE accepting the slot. If they don't take the insurance, ask if they're in-network with any other carriers the patient might have, then exit politely if not."
+    },
+    {
+      "name": "Get prep instructions before hanging up",
+      "when": "Appointment is confirmed.",
+      "script": "Use `ask_prep`. Common items: photo ID, insurance card, list of medications, fasting (lab work), arrive 15 min early for paperwork (new patient)."
+    },
+    {
+      "name": "Get the confirmation method in writing",
+      "when": "Receptionist is wrapping up.",
+      "script": "Use `ask_confirmation_method`. Some offices use a portal, some text, some don't confirm at all (in which case set a reminder yourself)."
+    },
+    {
+      "name": "Read back the full appointment details",
+      "when": "Before ending the call.",
+      "script": "Patient's name + date + time + location + provider name + prep summary. Receptionists appreciate this — it catches their typos, not yours."
+    }
+  ],
+  "boundaries": [
+    "Do NOT discuss the patient's symptoms, medical history, or any clinical information. You're a scheduler, not a clinician.",
+    "Do NOT share the patient's full SSN, even if asked — DOB + insurance ID is enough for routine scheduling.",
+    "Do NOT commit to an appointment without verifying insurance (unless the patient is paying cash and the office is informed).",
+    "Do NOT book without explicit slot acceptance — if multiple slots are offered, pick the user-pre-stated preferred one; if none match, ask the user via `ask_operator`."
+  ],
+  "success_signals": [
+    "Office confirms insurance acceptance.",
+    "Office confirms appointment with a date, time, location, and provider name.",
+    "Office confirms a method for written confirmation."
+  ],
+  "failure_signals": [
+    "Office doesn't take the insurance.",
+    "Office has no availability in the user's window.",
+    "Office requires a referral the patient doesn't have."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back date / time / location / provider / prep. Thank the receptionist. Set a calendar event for the patient.",
+    "on_failure": "Note the obstacle (no in-network, no availability, referral required). Thank the receptionist. Report back so the operator can pick a different provider or get the referral first.",
+    "follow_ups": [
+      "Email or message the operator: date, time, location, provider, prep list, confirmation number / portal entry.",
+      "Calendar the appointment.",
+      "Calendar a 24-hour reminder."
+    ]
+  },
+  "required_user_info": [
+    "Patient's full name + date of birth",
+    "Insurance carrier, member ID, group number, plan name",
+    "Reason for visit (plain language)",
+    "Existing patient or new patient",
+    "Date / time preferences + flex window",
+    "Best callback phone number for the patient"
+  ],
+  "contributed_by": "AgenticMail core team"
+}
