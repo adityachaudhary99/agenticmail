@@ -1,0 +1,139 @@
+{
+  "id": "read-vocal-cues",
+  "name": "Read Vocal Cues for What the Rep Is NOT Saying",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "vocal-cues",
+    "listening",
+    "subtext",
+    "phone-call",
+    "negotiation",
+    "discretion",
+    "emotional-intelligence"
+  ],
+  "description": "Notice the small shifts in the rep's voice — pace, pitch, breath, word choice, filler words — and decode what they're signalling beneath the literal sentence. Most of the useful information on a call is non-literal.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call where the rep's discretion is in play — retention, escalations, claim handling, scheduling exceptions, government services. Especially valuable when you suspect the rep CAN do more than they're admitting, or when you need to know whether a 'no' is final.",
+    "preconditions": [
+      "Headset / speaker quality good enough to hear breath and pauses — bad audio defeats this skill.",
+      "You have heard 2-3 minutes of the rep's baseline voice — you can't detect a shift without a baseline.",
+      "You are not multitasking visually — eyes on something complex blunts hearing."
+    ],
+    "estimated_call_duration_minutes": 0
+  },
+  "principles": [
+    "Baseline first, then deviation. The cue is the SHIFT from their own baseline, not from some absolute norm.",
+    "Speed up = discomfort or eagerness to wrap. Slow down = thinking or empathy.",
+    "Pitch up = uncertainty or stress. Pitch down = authority or finality.",
+    "Filler words ('um', 'uh', 'so', 'I mean') cluster when the rep is choosing what NOT to say.",
+    "Audible breath in is hesitation. Audible breath out is release or resignation.",
+    "Hedging words ('typically', 'generally', 'in most cases') usually mean 'there are exceptions and I know what they are.'",
+    "Typing sounds that suddenly stop = they hit a screen they're reading carefully. Wait."
+  ],
+  "phrases": {
+    "ask_about_the_pause": "Sounds like you're looking at something — anything I can help with from my side?",
+    "ask_about_the_hedge": "You said 'typically' — does that mean there's a case where this could go differently?",
+    "ask_about_the_softener": "When you said [softening word], I wanted to ask — is there flexibility there?",
+    "name_the_shift_gently": "I don't want to put you on the spot — but it sounded like something just changed. Did I miss something?",
+    "respect_the_silence": "Take your time, I'm not going anywhere.",
+    "thank_for_the_detail": "Appreciate you noticing that — that's useful."
+  },
+  "tactics": [
+    {
+      "name": "Establish baseline in the first 2 minutes",
+      "when": "Opening of the call.",
+      "script": "Listen actively to: their natural pace (words/min), their default pitch, their filler-word frequency, their breath pattern. You won't notice this consciously — just attend to the voice as a whole and let your nervous system encode it.",
+      "priority": 1
+    },
+    {
+      "name": "Tone-shift detector — VOICE SLOWS",
+      "when": "Their speech tempo drops noticeably below baseline.",
+      "script": "They are either thinking or empathising. DO NOT FILL THE SILENCE. Let them complete the thought. The sentence that follows is often the most valuable in the call.",
+      "priority": 2
+    },
+    {
+      "name": "Tone-shift detector — VOICE SPEEDS UP",
+      "when": "Tempo rises sharply, sentences shorten.",
+      "script": "They want to wrap (you've taken too long), or they're uncomfortable with what they're about to say. Match their pace, get to the ask quickly, and listen for what they rush past — that's where the information lives.",
+      "priority": 3
+    },
+    {
+      "name": "Tone-shift detector — PITCH RISES",
+      "when": "Sentence ends in upward inflection where it normally wouldn't.",
+      "script": "Uncertainty or implicit question. Their last sentence wasn't as solid as it sounded. Probe gently with `ask_about_the_hedge`.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — PITCH DROPS",
+      "when": "Voice drops in pitch and slows, often with a 'so look,' or 'honestly,' opener.",
+      "script": "Authority moment — they are about to say what they actually think, possibly off-script. Stay completely quiet and let them finish.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — FILLER CLUSTER",
+      "when": "Sudden run of 'um, uh, so, I mean' where baseline was clean.",
+      "script": "They are choosing what NOT to say. Often there's an exception they're deciding whether to mention. Use `ask_about_the_softener` or `name_the_shift_gently` to invite them in.",
+      "priority": 6
+    },
+    {
+      "name": "Tone-shift detector — TYPING PAUSE",
+      "when": "Keyboard sounds stop suddenly mid-call.",
+      "script": "They are reading something carefully on their screen. DO NOT speak. Use `respect_the_silence` only if it stretches past 30 seconds.",
+      "priority": 7
+    },
+    {
+      "name": "Tone-shift detector — INHALE BEFORE SPEAKING",
+      "when": "Audible breath-in before they answer your question.",
+      "script": "Hesitation. The honest answer and the official answer may differ. Listen for which one comes out — often they say the official answer then add a softening exception.",
+      "priority": 8
+    },
+    {
+      "name": "Tone-shift detector — EXHALE",
+      "when": "Audible sigh, especially mid-sentence.",
+      "script": "Resignation, frustration, or fatigue. Acknowledge gently if appropriate — sometimes a quiet 'I hear you' opens a door. Sometimes it's better ignored. Read context.",
+      "priority": 9
+    },
+    {
+      "name": "Decode hedging words",
+      "when": "Rep uses 'typically,' 'generally,' 'in most cases,' 'as a rule,' 'normally.'",
+      "script": "These words almost always mean 'there are exceptions and I know them.' Probe gently with `ask_about_the_hedge`. Do not interrogate — invite.",
+      "priority": 10
+    }
+  ],
+  "boundaries": [
+    "Do NOT name the cue accusingly ('I heard you hesitate'). It puts the rep on defence.",
+    "Do NOT psychoanalyse out loud. Even when you're right, calling out emotional state to a stranger is uncomfortable.",
+    "Do NOT assume malice from a sigh or a hedge — most of the time it's fatigue, not deception.",
+    "Do NOT use cues you've read to manipulate the rep into something against their interest.",
+    "Do NOT confuse audio artefacts (echo, bad mic) with vocal cues."
+  ],
+  "success_signals": [
+    "Rep volunteers an exception after you gently probed a hedge.",
+    "Rep says 'how did you know to ask that?' — you read them well.",
+    "You correctly predict the rep's next move from a vocal shift.",
+    "Rep relaxes more as the call goes on — they feel heard."
+  ],
+  "failure_signals": [
+    "You name a cue and the rep becomes defensive.",
+    "You over-interpret every breath and start asking constant probing questions.",
+    "You miss obvious cues because you were rehearsing your next sentence.",
+    "Your reads turn out wrong repeatedly — you may be projecting."
+  ],
+  "exit_strategy": {
+    "on_success": "Close warmly with a specific thank-you that reflects the moment ('thank you for going the extra step there').",
+    "on_failure": "If your reads have been wrong, drop the inference layer and just listen to the literal words for the rest of the call.",
+    "follow_ups": [
+      "Log specific cue-> outcome pairs to refine your model — humans have idiosyncratic baselines.",
+      "Note industries / call lines where this skill paid off — some are voice-rich (retention, claims) and some are not (automated-feeling support)."
+    ]
+  },
+  "required_user_info": [
+    "What outcome the operator is hoping for — you read cues against the goal, not in the abstract.",
+    "Any context about THIS rep if known (regular contact, history of calls).",
+    "Operator's tolerance for slightly longer calls — cue-reading rewards patience."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

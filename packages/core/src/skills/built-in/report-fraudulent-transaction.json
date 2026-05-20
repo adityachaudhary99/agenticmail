@@ -1,0 +1,126 @@
+{
+  "id": "report-fraudulent-transaction",
+  "name": "Report a Fraudulent Transaction and Get Provisional Credit",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "fraud",
+    "provisional-credit",
+    "regulation-e",
+    "debit-card",
+    "phone-call",
+    "zero-liability",
+    "banking-finance"
+  ],
+  "description": "Call a bank's fraud line to report one or more unauthorized transactions on a debit or credit account, lock or reissue the compromised card, and secure a provisional credit while the investigation runs.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User sees one or more charges they did not authorize on a checking, savings, or credit card statement. Call promptly — Regulation E gives the strongest protection when reported within 2 business days for debit cards, and Reg Z caps unauthorized credit-card liability at $50 regardless. Use the fraud number printed on the back of the card or the bank's official site, NOT a number from an email or text.",
+    "preconditions": [
+      "User has the account number or card number (last 4 is fine to start).",
+      "User can list each fraudulent transaction: date, amount, merchant string.",
+      "User has confirmed the card is in their possession (or knows it is missing).",
+      "User has NOT clicked any links in 'fraud alert' texts/emails — those are often the scam itself.",
+      "Operator-stated cap on any actions that move money or change product terms."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Speed matters legally. Reg E protection drops sharply after 2 business days for debit and after 60 days for credit. Open the report on this call, even if details are incomplete.",
+    "Use ONLY the number on the back of the card or the bank's official website. If the user got a 'fraud alert' text, do not call the number in it — call the card-back number and ask 'did you flag activity on my account?'",
+    "Separate 'card compromised' from 'identity compromised'. One bad debit charge usually means card data was skimmed; a new account opened in the user's name means identity theft and a different workflow (credit freeze, IdentityTheft.gov report).",
+    "Provisional credit is your goal on this call. Reg E requires it within 10 business days for most debit disputes (extended cases up to 45 days) — ask for it explicitly.",
+    "Document everything: case number, rep name, exact time of report, what was promised in writing.",
+    "Do not narrate guesses about who did it. 'I don't recognize this charge' is sufficient; speculation can be used to deny the claim ('you authorized your roommate'?)."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling to report unauthorized transactions on my account. I'd like to file a fraud claim, lock the card, and request provisional credit. Can you open a case?",
+    "verify_the_rep": "Before I share details, can I confirm I'm speaking with the bank's fraud department and not a transferred line? Could you give me a case or reference number I can verify against the number on the back of my card?",
+    "list_the_charges": "Here are the charges I'm disputing: [date, amount, merchant], [date, amount, merchant]. I did not authorize any of these and the card has [been with me / is missing].",
+    "ask_for_provisional_credit": "Under Regulation E, can you process a provisional credit while the investigation proceeds? I'd like to confirm the timing in writing.",
+    "ask_for_reg_e_form": "Could you send me the written Regulation E claim form or affidavit so I can complete the formal dispute today?",
+    "escalate_to_fraud_supervisor": "Got it. Could you connect me to a fraud-team supervisor or claim specialist? I want to make sure the claim is opened correctly the first time.",
+    "ask_about_card_reissue": "Please cancel the current card number and issue a new one. What's the standard delivery time, and is expedited shipping available at no charge given the fraud?",
+    "graceful_close": "Thank you. Can you read back the case number, the provisional-credit amount and date, the new card delivery date, and your name? I'd like a written summary emailed or messaged in-app."
+  },
+  "tactics": [
+    {
+      "name": "Verify the line before disclosing",
+      "when": "Call connects, before reading any account info.",
+      "script": "Use the `verify_the_rep` phrase. If the user reached this number via a 'fraud alert' message rather than the card back, hang up and redial the card-back number.",
+      "priority": 1
+    },
+    {
+      "name": "Open the claim cleanly",
+      "when": "First substantive turn.",
+      "script": "Use the `opener`. State three asks together: file the claim, lock/reissue the card, request provisional credit. Bundling sets the call's agenda.",
+      "priority": 2
+    },
+    {
+      "name": "List charges in a single pass",
+      "when": "Rep asks what's disputed.",
+      "script": "Read each line item with date, amount, exact merchant string. If there are more than 5, ask the rep whether they want them by email upload or by phone.",
+      "priority": 3
+    },
+    {
+      "name": "Pin provisional-credit timing",
+      "when": "Rep confirms the claim is opened.",
+      "script": "Use `ask_for_provisional_credit`. For debit cards: cite Reg E 10-business-day rule. Get the rep to commit to either same-day, within 10 days, or to flag the case as 'extended investigation' (up to 45 days).",
+      "priority": 4
+    },
+    {
+      "name": "Escalate if first rep stalls",
+      "when": "Front-line rep says 'we can only open the case, supervisor decides credit.'",
+      "script": "Politely use `escalate_to_fraud_supervisor`. Fraud-team supervisors and claim specialists have authority front-line reps do not.",
+      "priority": 5
+    },
+    {
+      "name": "Cap the disclosure",
+      "when": "Rep asks for SSN, full DOB, or 'security questions' that feel excessive.",
+      "script": "Offer last 4 of SSN, last 4 of card, and answer the bank's own pre-set questions. If asked for full SSN with no clear reason, ask 'is full SSN required for this dispute, or will the last 4 work?' — usually last 4 is enough."
+    },
+    {
+      "name": "Get the writeback",
+      "when": "Claim opens and credit timing is set.",
+      "script": "Use `graceful_close`. Ask for the summary in-app or by secure message — never plain email with full account info."
+    }
+  ],
+  "boundaries": [
+    "Do NOT call any 'fraud line' number from a text, email, or pop-up — only the card-back / official-site number.",
+    "Do NOT share full SSN unless the bank explicitly says it is required and the user has approved (use `ask_operator`).",
+    "Do NOT speculate about who made the charges — say 'I did not authorize this.'",
+    "Do NOT agree to 'verify your identity' by reading back a one-time code the bank texted you — legitimate bank reps will never ask for that code.",
+    "Do NOT close the call without a case number, rep name, and timing on provisional credit and card reissue."
+  ],
+  "success_signals": [
+    "Rep opens a formal fraud case and reads back a case number.",
+    "Rep confirms provisional credit timing (same-day, 10 business days, or 45-day extended).",
+    "Rep confirms the compromised card is locked and a replacement is in the mail.",
+    "Rep offers expedited shipping at no charge.",
+    "Rep agrees to send a written summary via secure message."
+  ],
+  "failure_signals": [
+    "Rep refuses to open the case until a paper form is mailed in (red flag — push for supervisor).",
+    "Rep insists on provisional credit being denied without citing a specific reason.",
+    "Caller-ID does not match the card-back number you intended to dial (you may be on a spoofed line — hang up, redial).",
+    "Rep asks for a code they just texted (this is not the bank — terminate the call)."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm case number, provisional-credit amount + date, new card delivery date and tracking, rep name. Ask for a written summary via secure in-app message. Tell the operator to monitor the account daily for the next 7 days.",
+    "on_failure": "Get a case number anyway, note rep name, and ask to be transferred to a fraud claim specialist. If still blocked, file a CFPB complaint and escalate via the bank's executive-relations team. Inform the operator and request approval to escalate.",
+    "follow_ups": [
+      "Calendar: re-check provisional credit in 10 business days.",
+      "Calendar: re-check final investigation outcome in 45 days.",
+      "If identity theft is suspected, advise operator to consider a credit freeze at Equifax, Experian, TransUnion."
+    ]
+  },
+  "required_user_info": [
+    "Account or card last 4",
+    "List of disputed charges (date, amount, merchant string)",
+    "Whether the physical card is in possession or missing",
+    "Approved mailing address for the replacement card",
+    "Operator approval threshold for any action that moves money"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,139 @@
+{
+  "id": "detect-lies-and-contradictions",
+  "name": "Detect Lies and Contradictions Mid-Call",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adversarial-robustness",
+    "deception-detection",
+    "phone-call",
+    "evidence",
+    "critical-reasoning"
+  ],
+  "description": "Notice when what the rep just said contradicts (a) something they said two minutes ago, (b) something on the user's bill, (c) the company's own published policy, or (d) physical reality. Surface the contradiction without accusing — make the rep resolve it.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Layered over every customer-service, billing, retention, claims, or escalation call. Activate any time a rep makes a factual claim about the account, the policy, the timeline, or what 'has to' happen next.",
+    "preconditions": [
+      "Agent is keeping a running ledger of every factual claim the rep makes (claim, time, exact wording).",
+      "Agent has access to the user's source documents (bill, contract, prior emails) for cross-check.",
+      "Agent is prepared to ask the rep to repeat or clarify without sounding hostile."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Track every factual assertion in working memory with a timestamp. You cannot detect a contradiction you didn't record.",
+    "Most 'lies' on customer-service calls are not lies — they are scripted approximations, junior-rep guesses, or stale internal training. Treat contradictions as information, not as malice.",
+    "Never accuse. Ask. 'Help me reconcile this' beats 'you just said the opposite' every time.",
+    "When the rep contradicts themselves, the SECOND statement is usually the corrected one — but the FIRST statement often reveals the real script. Note both.",
+    "A contradiction with the written record (bill, email, contract) is worth more than a contradiction within the conversation. Documents don't forget.",
+    "Silence after surfacing a contradiction is the strongest move. Let the rep resolve it; don't rescue them."
+  ],
+  "phrases": {
+    "log_claim_internally": "[Internal note] Rep said: '<exact words>' at <mm:ss>. Tag: <policy|fee|timeline|authority|identity>.",
+    "soft_surface": "I want to make sure I'm following — a minute ago I thought I heard <X>, and now it sounds like <Y>. Can you help me square those?",
+    "document_anchor": "On the bill in front of me dated <date>, it shows <Z>. How does that line up with what you just described?",
+    "ask_for_source": "Where in the policy is that written? I'd love to look at the exact language so I'm sure I understand.",
+    "request_replay": "Sorry — could you say that one more time, slowly? I want to write it down exactly.",
+    "park_and_proceed": "Okay, let's set that aside for a moment and come back to it. In the meantime, can we also look at <next item>?"
+  },
+  "tactics": [
+    {
+      "name": "Run a claim ledger",
+      "when": "From the first substantive sentence the rep speaks.",
+      "script": "After each rep claim, internally log: time, exact phrase, category. Do not paraphrase — paraphrasing loses the contradiction.",
+      "priority": 1
+    },
+    {
+      "name": "Cross-check against documents in real time",
+      "when": "Any claim about fees, dates, plan terms, or account history.",
+      "script": "Compare against the bill / contract / prior confirmation the user provided. If document and rep disagree, use `document_anchor`.",
+      "priority": 2
+    },
+    {
+      "name": "Soft-surface contradictions",
+      "when": "You catch a within-call contradiction.",
+      "script": "Use `soft_surface`. Tone is curious, not gotcha. Make it the rep's job to reconcile.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for the source",
+      "when": "Rep cites 'policy' or 'system'.",
+      "script": "Use `ask_for_source`. Real policies have written text; invented ones do not. If the rep can't point to it, it isn't policy — it's their best guess.",
+      "priority": 4
+    },
+    {
+      "name": "Park and circle back",
+      "when": "Surfacing the contradiction risks derailing a still-productive call.",
+      "script": "Use `park_and_proceed`. Note the contradiction, keep moving on the primary goal, return to it before close."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep said the fee is $X, then later said it's $Y.",
+      "consider": [
+        "They mis-spoke once — most common.",
+        "They are reading two different screens (current bill vs. next bill cycle).",
+        "$X is the gross fee, $Y is after a promo credit — both true.",
+        "$X was a script default, $Y is the actual account — the second is usually right.",
+        "They are testing whether you'll notice."
+      ],
+      "next_action": "Ask the rep which number applies to the user's next statement, and ask them to read the line item back."
+    },
+    {
+      "observation": "Rep said 'we can't do that' but the company website says it's available.",
+      "consider": [
+        "Rep is genuinely unaware — front-line training lags marketing by months.",
+        "It's available, but not from this department — ask which team handles it.",
+        "It's available, but requires a tier of account the user doesn't have.",
+        "The website is stale.",
+        "Rep is gatekeeping to protect a metric (handle time, save rate)."
+      ],
+      "next_action": "Read the exact language from the page back to the rep. Ask them to check with a supervisor or transfer."
+    },
+    {
+      "observation": "Rep claims a policy that contradicts what a different rep said yesterday.",
+      "consider": [
+        "Policy genuinely changed between calls (rare in 24 hours).",
+        "One of the two reps invented an out — usually whichever was more convenient for the company.",
+        "Two different sub-policies apply and neither rep flagged which one.",
+        "Yesterday's rep made a one-time exception they had no authority to make."
+      ],
+      "next_action": "Ask for the policy in writing — case number, supervisor, or an email. Anchor to documents."
+    }
+  ],
+  "boundaries": [
+    "Do NOT call the rep a liar, even when you are sure. Frame everything as 'help me reconcile'.",
+    "Do NOT pretend you have a recording or written evidence you do not have.",
+    "Do NOT escalate hostility just because you caught a contradiction — caught contradictions are leverage; spent leverage is wasted.",
+    "Do NOT abandon the primary goal of the call to win a contradiction debate."
+  ],
+  "success_signals": [
+    "Rep corrects themselves voluntarily after you ask them to reconcile.",
+    "Rep escalates to a supervisor when challenged on policy source.",
+    "Rep agrees to send the relevant policy in writing.",
+    "Original ask becomes easier because the rep is now operating carefully."
+  ],
+  "failure_signals": [
+    "Rep doubles down on both contradictory statements as if neither was said.",
+    "Rep becomes hostile and starts threatening to end the call.",
+    "Rep refuses to provide policy in writing or via a supervisor.",
+    "Contradictions multiply — sign of an off-script improv that won't stabilize. Time to hang up and call back (see `reset-by-callback`)."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture the reconciled answer in writing — confirmation number, supervisor name, or follow-up email. The reconciliation is the deliverable.",
+    "on_failure": "Politely end the call. Note all contradictions verbatim in the post-call report. Recommend callback to a different rep.",
+    "follow_ups": [
+      "File the claim ledger with the user.",
+      "If the contradiction is material (money, contract terms), recommend a written complaint and citing the exact wording."
+    ]
+  },
+  "required_user_info": [
+    "Source documents the agent can cross-check against (bill, contract, prior emails).",
+    "Prior call notes if any.",
+    "Whether the user authorises requesting written follow-up."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

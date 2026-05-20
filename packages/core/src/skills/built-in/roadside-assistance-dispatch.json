@@ -1,0 +1,132 @@
+{
+  "id": "roadside-assistance-dispatch",
+  "name": "Dispatch Roadside Assistance with Timing and Confirmation",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "roadside",
+    "tow",
+    "dispatch",
+    "eta",
+    "auto",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Call the carrier's roadside assistance line, dispatch a tow or service truck to a stranded driver, and get a confirmed ETA, driver name, truck number, and destination locked in — with a fallback plan if the ETA slips.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "User is stranded (flat tire, dead battery, lockout, fuel-out, mechanical breakdown, accident-related tow) and needs the carrier's roadside benefit dispatched. Use immediately after confirming the user is in a SAFE location — safety overrides everything.",
+    "preconditions": [
+      "User is in a safe location (off the roadway, with hazard lights, behind a barrier if available, or has called 911 if not).",
+      "Policy number or member ID ready, OR phone number on file for lookup.",
+      "Vehicle location — cross-streets, mile marker, GPS coordinates, or pinned location URL.",
+      "Vehicle year/make/model/color and plate number.",
+      "Destination for the tow if applicable (preferred body shop, repair shop, or user's home/work)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Safety first. If the user is in traffic, on an interstate shoulder, or in danger — 911 and a non-roadside tow may be the right call. Roadside is for non-emergency.",
+    "ETAs are estimates. Confirm a 'callback if delayed' threshold (commonly 15 minutes past ETA).",
+    "Dispatch confirmation = (a) provider company name, (b) truck/driver name or ID, (c) ETA window, (d) callback number. Without those four, you have a vague promise.",
+    "Tow destination matters. Towing to a non-network shop can change repair authorization paths and rental coverage. Confirm the destination upfront.",
+    "Mileage limits exist on roadside benefits (commonly 15-100 miles depending on plan). If destination is beyond the limit, the user pays the overage — confirm before dispatch.",
+    "If the carrier dispatch is hours away, third-party tows (paid out-of-pocket then reimbursed) are often faster — confirm the reimbursement process before going off-network."
+  ],
+  "phrases": {
+    "opener": "Hi, I need roadside dispatch for [vehicle] at [location]. The situation is [flat tire / lockout / dead battery / fuel out / accident tow]. Driver is [safe / in traffic, needs urgent dispatch]. Policy/member [number].",
+    "confirm_safety": "Before we go further — is the driver in a safe location off the roadway with hazard lights on? If not, the priority is moving to safety or calling 911 first.",
+    "request_eta_window": "What's the dispatch ETA window? Not an estimate — a window, like 30-45 minutes.",
+    "request_dispatch_details": "Could you give me the dispatched provider's company name, truck number or driver name, and their direct callback number?",
+    "confirm_destination_and_mileage": "Tow destination is [shop name and address]. That's [N] miles from the current location. Is that within the roadside benefit's mileage cap, and if not, what's the per-mile overage rate?",
+    "set_callback_threshold": "If the truck doesn't arrive within 15 minutes after the ETA window closes, please call me back proactively so we can decide whether to dispatch a backup.",
+    "ask_reimbursement_path": "If your dispatch ETA is too long for the driver's safety, can the user call a local tow and submit for reimbursement? What's the process — receipts, mileage, paperwork?",
+    "graceful_close": "Thank you. To confirm: [provider] truck [N], driver [name], ETA [window], destination [shop], mileage cap [N], callback if delayed past [time]. Driver will stay at the vehicle / move to a safe spot nearby."
+  },
+  "tactics": [
+    {
+      "name": "Confirm safety FIRST",
+      "when": "First substantive turn.",
+      "script": "Use the `confirm_safety` phrase before getting into dispatch logistics. If the driver isn't safe, no dispatch detail matters until they are.",
+      "priority": 1
+    },
+    {
+      "name": "Demand a window, not an estimate",
+      "when": "Rep gives a single-number ETA.",
+      "script": "Use the `request_eta_window` phrase. '45 minutes' becomes 'sometime between now and 2 hours' if not pinned. A window is a commitment.",
+      "priority": 2
+    },
+    {
+      "name": "Capture the four dispatch artifacts",
+      "when": "After ETA is set.",
+      "script": "Use the `request_dispatch_details` phrase. Without provider, truck/driver ID, and callback number, the user can't follow up if no one shows.",
+      "priority": 3
+    },
+    {
+      "name": "Confirm destination + mileage upfront",
+      "when": "Before dispatch is finalised.",
+      "script": "Use the `confirm_destination_and_mileage` phrase. Surprise mileage overages and surprise drop-offs at unwanted shops are the top post-tow complaints.",
+      "priority": 4
+    },
+    {
+      "name": "Set the callback threshold",
+      "when": "Mid-call.",
+      "script": "Use the `set_callback_threshold` phrase. Carriers will sit on a 'dispatched' ticket for hours unless the user follows up — set the ground rule that they call you.",
+      "priority": 5
+    },
+    {
+      "name": "Map the reimbursement path as a fallback",
+      "when": "If dispatch ETA is unacceptably long.",
+      "script": "Use the `ask_reimbursement_path` phrase. Reimbursement requires receipts and often the provider's invoice. Knowing the process upfront unlocks the faster local-tow option.",
+      "priority": 6
+    },
+    {
+      "name": "Keep the driver coached during the wait",
+      "when": "After dispatch is confirmed.",
+      "script": "Remind the driver to stay visible to the tow truck, keep the phone charged, have policy + ID ready, and to refuse any non-dispatched tow truck that 'just happens to be in the area' (illegal solicitations are common at accident scenes).",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT delay the dispatch for paperwork if the driver is unsafe. Get the truck rolling, capture details after.",
+    "Do NOT authorize a tow to an unfamiliar shop the carrier recommends without checking it against the user's preferred shop list. Tow location can lock in repair authorization.",
+    "Do NOT let the carrier dispatch to a 'preferred network' shop solely on the basis of cheaper cost if the user has a preferred shop with which they have a relationship.",
+    "Do NOT accept a tow truck that arrives without prior carrier confirmation — accident-scene predators tow vehicles to high-fee impound lots.",
+    "Do NOT sign anything the tow driver presents beyond a basic acknowledgment of vehicle transfer. Storage and impound contracts can lock the vehicle behind escalating fees.",
+    "Do NOT discuss fault or accident specifics with the tow operator — they're not the adjuster."
+  ],
+  "success_signals": [
+    "Dispatch confirmed with provider company, truck/driver ID, ETA window, callback number.",
+    "Destination and mileage confirmed within benefit limits.",
+    "Callback-if-delayed rule established.",
+    "Driver coached on what to expect.",
+    "Reimbursement fallback documented in case of delay."
+  ],
+  "failure_signals": [
+    "Carrier won't commit to an ETA window.",
+    "Carrier can't name the dispatched provider.",
+    "ETA exceeds 2 hours and no faster option offered.",
+    "Carrier insists on towing to a non-preferred shop without a stated reason."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the dispatch artifacts. Stay with the driver via text until the truck arrives. Once vehicle is picked up, confirm with the driver that the truck matches the dispatched provider before transfer.",
+    "on_failure": "If dispatch is unworkable, use the reimbursement path — call a local tow, pay, collect receipts, file reimbursement post-event. Document the carrier's failure to dispatch promptly — relevant if the user later wants to escalate.",
+    "follow_ups": [
+      "Stay in contact with the driver via text until pickup.",
+      "Confirm vehicle arrival at the destination.",
+      "If reimbursement was used, file the claim with receipts within the carrier's window (often 30 days).",
+      "Note the dispatch experience in case of repeat issues — frequent stranded scenarios may warrant a roadside upgrade or a third-party plan (AAA, Better World Club)."
+    ]
+  },
+  "required_user_info": [
+    "Policy / member number",
+    "Vehicle location (cross-streets, mile marker, GPS, or pinned URL)",
+    "Vehicle year/make/model/color/plate",
+    "Situation (flat / battery / lockout / fuel / accident / mechanical)",
+    "Whether driver is safe right now",
+    "Preferred tow destination (shop or address)",
+    "Phone number the carrier should use to reach the driver directly"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

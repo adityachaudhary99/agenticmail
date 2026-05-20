@@ -1,0 +1,120 @@
+{
+  "id": "handle-callback-stall",
+  "name": "Handle the \"We'll Call You Back\" Stall",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "closing",
+    "stall",
+    "callback",
+    "anti-pattern",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "When a rep says 'we'll call you back', convert that vague intent into a specific, accountable, named commitment — or refuse it. The unbounded callback is the single biggest time sink in customer-service workflows. Most callbacks never happen. Treat the phrase as a stall, not a plan.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any time a rep proposes ending the current call with a 'we'll get back to you' — whether for research, escalation, system limitations, or any other reason. ALSO use when a rep hints they'd rather end the call than continue working the issue.",
+    "preconditions": [
+      "You're still on the call with the rep who proposed the callback.",
+      "You have not yet agreed to end the call.",
+      "You can keep the line open for another 3-5 minutes to pin specifics."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "A callback without a named owner is functionally a callback that won't happen. Companies route callbacks to queues; queues route to whoever's next; whoever's next has no context.",
+    "A callback without a deadline is functionally indefinite. 'In a few days' becomes weeks.",
+    "A callback without a ticket / case / reference number is unverifiable. If you call asking 'where's my callback?', they need a key to look it up.",
+    "Push to resolve on THIS call whenever possible. Even waiting on hold for 20 minutes is usually cheaper than the round-trip cost of a callback that needs to be chased.",
+    "Get the callback number FROM you to THEM — not the other way around. 'I'll be at this number at this time, calling YOU then' shifts the work back."
+  ],
+  "phrases": {
+    "first_resistance": "Before we go to a callback — is there any way we can resolve this on the line today? Even if it takes a longer hold. I find callbacks often slip through the cracks for both of us.",
+    "owner_pin": "If we do go to a callback, who specifically will be calling — you, a named teammate, or just whoever's next in the queue? I'd like a name so I know who to ask for if I have to follow up.",
+    "deadline_pin": "What's the latest I should expect to hear by? I'd rather you over-promise on the time and beat it than leave it open-ended.",
+    "ticket_pin": "What's the case or ticket number for the callback? If I don't hear back by [deadline], I'll call in referencing that number — saves us starting over.",
+    "no_show_protocol": "If the callback doesn't happen on time, what's the best number for me to call, and is there a way to flag it as 'callback overdue' rather than starting fresh?",
+    "reverse_callback": "Rather than waiting, can I be the one to call back at [specific time]? I'll ask for you / [named rep] directly. I find that's more reliable.",
+    "escalate_stall": "Thanks for offering the callback — but I've been burned before. Could we get a supervisor on now to either resolve this today or formally schedule the callback with a named owner?",
+    "graceful_close_success": "Got it: callback by [deadline], from [name or team], ticket [N]. If I don't hear by then, I'll call back referencing [N]. Thank you.",
+    "graceful_close_failure": "I'm not comfortable closing on an open-ended callback — could I speak with a supervisor before we end the call?"
+  },
+  "tactics": [
+    {
+      "name": "Resist the callback first",
+      "when": "Rep first proposes 'we'll call you back'.",
+      "script": "Use the `first_resistance` phrase. Many callbacks are offered because the rep is approaching their wrap time or doesn't want to hold — pushing back gently often unlocks resolution on the live call.",
+      "priority": 1
+    },
+    {
+      "name": "Pin the owner",
+      "when": "Callback is genuinely required (research, system update, escalation).",
+      "script": "Use the `owner_pin` phrase. 'Someone from our team will reach out' = nobody. A name + ID is the minimum.",
+      "priority": 2
+    },
+    {
+      "name": "Pin the deadline",
+      "when": "Owner has been named.",
+      "script": "Use the `deadline_pin` phrase. Force a specific date AND time-of-day if possible. 'By Friday' is weaker than 'by 5pm Friday'.",
+      "priority": 3
+    },
+    {
+      "name": "Pin the ticket / case number",
+      "when": "Owner and deadline pinned.",
+      "script": "Use the `ticket_pin` phrase. The ticket is the recovery key. Without it, a failed callback turns into a fresh call from scratch.",
+      "priority": 4
+    },
+    {
+      "name": "Set the no-show protocol upfront",
+      "when": "Everything pinned.",
+      "script": "Use the `no_show_protocol` phrase. This rehearses the recovery path while you still have the rep — they may volunteer a direct line or escalation route they wouldn't share later.",
+      "priority": 5
+    },
+    {
+      "name": "Offer to reverse the callback",
+      "when": "Rep can't pin an owner, deadline, or ticket reliably.",
+      "script": "Use the `reverse_callback` phrase. Customer-initiated callbacks with prior reference numbers complete vastly more often than company-initiated ones. Take ownership when possible.",
+      "priority": 6
+    },
+    {
+      "name": "Escalate if pinning fails",
+      "when": "Two or more of owner / deadline / ticket cannot be pinned.",
+      "script": "Use the `escalate_stall` phrase. An unstructured callback is essentially the rep wishing you well. Supervisors can either resolve live OR commit to a structured callback the front line can't.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept 'we'll call you back' without at least: a name OR team, a deadline, and a reference number. Two of three is the minimum bar.",
+    "Do NOT let the rep set the callback time at a moment when the user is unavailable — pin a window that actually works.",
+    "Do NOT promise to wait silently. Tell the rep what your follow-up plan is ('I'll call back referencing [N] if I don't hear by [deadline]') so they know the callback failure path is real.",
+    "Do NOT accept callback to a number the user doesn't control or check ('I'll call your home line' when the user only checks mobile)."
+  ],
+  "success_signals": [
+    "Rep names a specific person or named team who will call.",
+    "Rep gives a deadline tighter than the user expected.",
+    "Rep volunteers a direct extension or queue identifier for the no-show recovery path.",
+    "Rep agrees to send the ticket number in writing before hanging up."
+  ],
+  "failure_signals": [
+    "Rep waffles on the owner ('someone will get back to you').",
+    "Rep gives no deadline or a wildly open one ('within 30 days').",
+    "Rep refuses or fails to provide a ticket number.",
+    "Rep gets defensive when you push for specifics — strong signal the callback isn't real."
+  ],
+  "exit_strategy": {
+    "on_success": "Log: callback owner, deadline, ticket number, no-show recovery path. Calendar the deadline + a buffer (e.g. deadline + 2 hours). At the buffer, initiate the user-side callback per the no-show protocol.",
+    "on_failure": "Escalate to a supervisor before closing. If supervisor also cannot structure the callback, treat the issue as effectively unresolved and consider opening a formal complaint case as the actual artifact.",
+    "follow_ups": [
+      "If the callback happens: immediately re-run `capture-rep-identity` and `lock-in-terms-verbally` on the new call.",
+      "If the callback fails: call in with the original ticket number and refuse to re-tell the story from scratch — 'I have ticket [N], please pull it up'."
+    ]
+  },
+  "required_user_info": [
+    "A reliable callback number AND a time window when the user can answer",
+    "Tolerance threshold: how long the user is willing to wait before escalating",
+    "Authority to escalate or open a complaint case if pinning fails"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

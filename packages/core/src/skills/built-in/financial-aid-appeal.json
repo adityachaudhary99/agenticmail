@@ -1,0 +1,128 @@
+{
+  "id": "financial-aid-appeal",
+  "name": "Appeal or Follow Up on a Financial-Aid Award",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "financial-aid",
+    "appeal",
+    "fafsa",
+    "scholarship",
+    "tuition",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call a college financial-aid office to follow up on a pending award, appeal an insufficient package, or trigger a professional-judgment review for changed family circumstances (job loss, medical bills, divorce, death).",
+  "disclaimer": "Award decisions are governed by federal regulations (Title IV) and the school's own policy. The aid office has real discretion under 'professional judgment' but cannot violate federal rules. This skill does not constitute financial advice.",
+  "context": {
+    "when_to_use": "The user (a) hasn't received an aid decision past the school's stated turnaround, (b) received a package they cannot afford, or (c) has a documented change in circumstances since the FAFSA was filed (lost job, large unreimbursed medical bill, separation/divorce, death of parent, one-time income on the tax return that won't repeat). Use this BEFORE the deposit deadline if at all possible — schools have more flexibility while you're still a prospective student.",
+    "preconditions": [
+      "User has their Student ID and FAFSA submission confirmation.",
+      "User knows the gap: what the school is asking them to pay vs. what they can actually pay.",
+      "If appealing for changed circumstances: user has — or can quickly obtain — documentation (termination letter, medical bills, death certificate, custody filing).",
+      "User has checked the school's financial-aid website for a 'Special Circumstances' / 'Appeal' form — most schools require one, and the call is to grease it through, not replace it."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "The front desk cannot approve appeals — they triage. Your real audience is a counselor or the Director of Financial Aid. Be polite to the gatekeeper; save the specifics for the decision-maker.",
+    "'Professional judgment' is the magic phrase. It's the federal statute (HEA Sec. 479A) that lets aid officers override the FAFSA when current reality differs from the tax-year snapshot. Naming it signals you've done homework.",
+    "Documentation beats narrative. A termination letter is worth ten paragraphs of explanation. Lead with the document, not the story.",
+    "Deadlines are layered: federal, state, institutional, and internal. Ask which one is actually binding on YOUR appeal — institutional deadlines are often soft.",
+    "Schools want to enroll you. If you have other admits, mention them — not as a threat, but as context: 'I'm trying to make this work but I need to compare net cost.'",
+    "Never accuse the school of being unfair. Frame everything as 'I'm hoping there's a path forward.' Anger closes doors that paperwork opens."
+  ],
+  "phrases": {
+    "opener_followup": "Hi, I'm calling to check on my financial-aid file. My Student ID is [ID]. My FAFSA was submitted on [date] and I haven't seen an award letter yet — could you check the status and let me know what's still outstanding?",
+    "opener_appeal": "Hi, I received my award letter and I'd like to start an appeal — our family's financial situation has changed materially since the tax year on the FAFSA. Could you walk me through your professional-judgment process?",
+    "ask_for_counselor": "Could I speak with the financial-aid counselor assigned to my file, or schedule a callback? I'd like to make sure I submit the appeal correctly the first time.",
+    "name_professional_judgment": "I know the FAFSA reflects [tax year] income, but since then [parent / I] [lost the job in March / had $40k in medical bills / etc.]. I think this qualifies for a professional-judgment review — what documentation do you need from me?",
+    "ask_for_director": "The counselor's been great to work with. Given the gap, would it be possible to have the Director of Financial Aid take a second look? I want to make sure every option's been considered before I make a deposit decision.",
+    "deposit_deadline_lever": "My deposit deadline is [date] and I genuinely can't commit until I know the final aid number. Is there any way to either expedite the appeal review or extend the deposit deadline by [N] weeks?",
+    "graceful_close_success": "Thank you. To confirm: I'm submitting [forms] by [date], and I should expect a revised award letter by [date]. May I have your name and a reference number for the appeal? And is it OK if I email you directly with follow-up questions?",
+    "graceful_close_failure": "Okay. Could you put the final answer in writing so I know what I'm working with? And can you point me to the office that handles emergency grants or institutional scholarships I might still be eligible for?"
+  },
+  "tactics": [
+    {
+      "name": "Triage call first, appeal second",
+      "when": "Before any substantive ask.",
+      "script": "Ask the front-desk person what their appeal process actually is (form name, where to upload, who reviews). Get the form requirements before you spend time on the narrative — half of appeals are rejected on missing paperwork, not on merit.",
+      "priority": 1
+    },
+    {
+      "name": "Name 'professional judgment' explicitly",
+      "when": "Appealing due to changed circumstances (job loss, medical, divorce, death, one-time income).",
+      "script": "Use the `name_professional_judgment` phrase. The term tells the counselor you know it's allowed under federal law and not just a sob story — they're more likely to route it for substantive review.",
+      "priority": 2
+    },
+    {
+      "name": "Lead with documentation",
+      "when": "First substantive turn with the counselor.",
+      "script": "State each change with the document attached: 'Parent's termination letter dated [date], W-2 showing [income], medical EOBs totaling [amount].' Specific > narrative.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for a deposit-deadline extension",
+      "when": "The appeal won't resolve before the binding deposit date.",
+      "script": "Use the `deposit_deadline_lever` phrase. Schools routinely grant 2-4 week extensions when an appeal is pending — they want the enrollment.",
+      "priority": 4
+    },
+    {
+      "name": "Escalate to the Director",
+      "when": "The counselor has reviewed and says no, but the gap is large and the documentation is strong.",
+      "script": "Use the `ask_for_director` phrase. Frame it as 'second look', not 'over your head.' Directors approve unusual exceptions counselors aren't authorized to make.",
+      "priority": 5
+    },
+    {
+      "name": "Surface alternative pools",
+      "when": "Federal/state aid is maxed out.",
+      "script": "Ask about: institutional scholarships not yet awarded, departmental aid in the user's major, emergency grants, work-study expansion, payment plans with zero interest, and outside scholarship matching. Schools often have small pools they don't advertise."
+    },
+    {
+      "name": "Bring up other admits — gently",
+      "when": "Appealing at a school where you have a competing offer.",
+      "script": "Say: 'I've been admitted to [X] with a net cost of [Y]. I'd much rather come here, but I have to compare apples to apples.' Don't threaten, just frame the math. Schools sometimes 'merit match' to win the enrollment."
+    }
+  ],
+  "boundaries": [
+    "Do NOT lie about family income, employment, or expenses — aid fraud is a federal crime and they can verify with IRS data.",
+    "Do NOT promise to enroll in exchange for aid — verbal commitments can be invoked later and the school may pull aid if you decline.",
+    "Do NOT submit doctored documentation. If a document doesn't exist yet (e.g. divorce decree not final), say so and ask what interim proof is acceptable.",
+    "Do NOT accept verbal-only changes to the award. Always insist on a revised award letter in writing.",
+    "Do NOT skip the school's actual appeal form just because the call went well — verbal approval without paperwork doesn't bind the bursar."
+  ],
+  "success_signals": [
+    "Counselor uses the phrase 'professional judgment' or 'special circumstances review' affirmatively.",
+    "Counselor names a specific form and a timeline for review.",
+    "Director's office offers a callback.",
+    "Deposit deadline is extended in writing (even by email).",
+    "Counselor asks clarifying questions about documentation — they're building a case, not closing one."
+  ],
+  "failure_signals": [
+    "Front desk refuses to route past themselves after two attempts.",
+    "Counselor says 'we don't do appeals' (this is almost never true at a Title IV school — escalate immediately).",
+    "Award is reduced rather than increased after appeal (rare but possible if FAFSA data was wrong in the user's favor — stop, consult operator).",
+    "Director declines in writing with no path to additional pools."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: which form to submit, by when, what documents, who reviews, expected response date, and whether the deposit deadline is extended. Get the counselor's direct email and a reference / case number.",
+    "on_failure": "Get the denial in writing. Ask explicitly about: emergency grants, departmental scholarships, payment plans, and outside-scholarship matching. Note for the operator: it may be time to compare net costs against other admits or consider a gap year.",
+    "follow_ups": [
+      "Email the operator the form name, deadline, document checklist, and counselor contact.",
+      "Calendar the appeal-decision date plus 3 business days as a check-in.",
+      "If approved: confirm the revised award letter actually arrives in writing before the deposit deadline.",
+      "If denied: calendar a re-appeal window for the next semester — circumstances can change and many schools allow one appeal per academic year."
+    ]
+  },
+  "required_user_info": [
+    "Student ID and date of birth",
+    "FAFSA submission date and (if available) Data Release Number",
+    "Current award letter amount vs. cost of attendance",
+    "Specific change in circumstances + the date it occurred",
+    "Documentation available (and what's still being gathered)",
+    "Deposit / response deadline",
+    "Other admits + net costs (if appealing on merit-match grounds)"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

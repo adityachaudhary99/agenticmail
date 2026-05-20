@@ -1,0 +1,121 @@
+{
+  "id": "reschedule-appointment",
+  "name": "Reschedule an Existing Appointment Without Losing Your Slot",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "scheduling",
+    "reschedule",
+    "appointments",
+    "phone-call",
+    "continuity-of-care",
+    "healthcare"
+  ],
+  "description": "Call a clinic to move an existing appointment to a different date/time while preserving the operator's continuity of care — same provider where possible, no late-cancel fees, no being bumped to the back of a months-long waitlist.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator has an existing appointment and needs a different date/time. The risk is being treated as a brand-new booking — losing the original provider, restarting on a waitlist, or being charged a late-cancel fee. This skill is specifically for protecting position.",
+    "preconditions": [
+      "Operator's name, DOB, and the original appointment's date / provider / location are provided.",
+      "Original appointment confirmation number if available (cuts the call in half).",
+      "Reason for moving the appointment — operators do not need to justify themselves, but a one-line reason helps the rep find a slot fast ('conflict at work', 'travel', 'feeling better' for follow-up visits).",
+      "New windows of availability: at least 2-3 candidate dates/times.",
+      "Operator's flexibility: same provider only, or any provider in practice; in-person vs telehealth."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "Frame the call as 'moving' not 'cancelling'. The word 'cancel' triggers different scripts in the rep's system and can drop you off the active patient list.",
+    "Reschedule BEFORE the late-cancel window closes (usually 24h). If you're inside the window, lead with that fact and ask for a fee waiver — many practices waive once if you're rebooking, not abandoning.",
+    "Continuity of care is worth fighting for. A new appointment with the same provider in 3 weeks usually beats a sooner appointment with a stranger.",
+    "If the rep tries to cancel-and-rebook as two separate transactions, push to do it as a single move — that's what protects your position.",
+    "Verify the OLD appointment is actually released. Double-booked appointments cause no-shows that get flagged on the patient record."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling on behalf of [Operator]. They have an appointment with Dr. [Name] on [date] at [time] — confirmation [number if available] — and we need to MOVE it, not cancel it. Same provider if at all possible. Can you help with that?",
+    "ask_to_move_not_cancel": "Could we treat this as a reschedule rather than a cancel-and-rebook? I want to make sure we keep our slot in the system and don't get bumped to a new-patient queue.",
+    "fee_waiver_request": "I realise we're inside the 24-hour window. We're rescheduling, not no-showing — is there any way to waive the late-change fee since we're keeping the relationship with the practice?",
+    "provider_continuity": "We'd really like to stay with Dr. [Name] for continuity. If we have to wait longer to keep them, that's fine — what's your next available with that specific provider?",
+    "telehealth_pivot": "If in-person isn't available sooner, would Dr. [Name] do a telehealth visit instead? That might open up more options.",
+    "stall_research": "One moment — let me check the operator's calendar for those windows.",
+    "verify_readback": "So the original on [old date] is released, and we're now confirmed for [new date] at [new time] with Dr. [Name] at [location]. Is there a new confirmation number?",
+    "graceful_close": "Thank you. Could you please send a confirmation email or portal notification so we have it in writing? Appreciate your help."
+  },
+  "tactics": [
+    {
+      "name": "Lead with 'move' not 'cancel'",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. The verb choice matters — 'move' triggers reschedule scripts; 'cancel' can trigger termination scripts that release your slot to the public pool.",
+      "priority": 1
+    },
+    {
+      "name": "Protect provider continuity first, time second",
+      "when": "Rep offers a different provider as the quickest move.",
+      "script": "Use `provider_continuity`. Confirm with operator via `ask_operator` if they're willing to switch providers OR wait longer for the original — do not decide for them.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for fee waiver if inside late-cancel window",
+      "when": "Rep mentions a late-change or no-show fee.",
+      "script": "Use `fee_waiver_request`. Most practices waive once for an actual reschedule. If denied, surface to operator before agreeing to the fee — they may prefer to keep the original appointment.",
+      "priority": 3
+    },
+    {
+      "name": "Offer telehealth as a bridge",
+      "when": "In-person reschedule pushes the visit out further than is acceptable.",
+      "script": "Use `telehealth_pivot`. Many follow-ups and refill check-ins can be done virtually — but DO NOT assume that's clinically appropriate. Surface to operator if in doubt.",
+      "priority": 4
+    },
+    {
+      "name": "Verify the old slot is actually released",
+      "when": "Before ending the call.",
+      "script": "Use `verify_readback`. Specifically confirm: 'And the original appointment on [old date] is now cancelled in your system, correct?' Double-bookings cause silent no-show flags. If the rep hesitates or says 'I'll do that after the call', ask them to do it while you're on the line.",
+      "priority": 5
+    },
+    {
+      "name": "Pause and re-verify if the rep mid-call says the original appointment doesn't exist",
+      "when": "Rep can't find the original booking.",
+      "script": "Do NOT accept 'we'll just book you a new one' until you understand why the original is missing. It may be at a sister location, under a maiden name, or have been silently cancelled by the practice. Get the underlying reason before booking new — otherwise you may double-book or lose a waitlist spot.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to fees on the operator's behalf.",
+    "NEVER agree to a 'cancel and we'll call you back to rebook' — that is a slot loss in disguise. Hold the line until both halves are done.",
+    "NEVER move the appointment to a slot the operator has not approved if the new slot is more than a week off the requested window."
+  ],
+  "success_signals": [
+    "Single transaction: old slot released, new slot confirmed, in one phone call.",
+    "Same provider preserved (or operator explicitly authorised switch).",
+    "Late-change fee waived OR operator pre-authorised paying it.",
+    "Confirmation number for the new appointment + written follow-up promised."
+  ],
+  "failure_signals": [
+    "Rep insists on cancelling now and rebooking later 'when slots open' — high risk of slot loss.",
+    "Late-change fee not waivable and operator hasn't authorised payment.",
+    "No same-provider slot within the operator's clinical window.",
+    "Rep cannot locate the original appointment and the reason is unclear."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: original released, new date/time/provider/location, confirmation number, any new-paperwork requirements, and that a written confirmation is being sent. Note the rep's first name.",
+    "on_failure": "Politely close. Report to operator the exact blocker (fee, provider unavailability, system glitch) and present options before retrying.",
+    "follow_ups": [
+      "Check operator's portal within 24h to verify the change shows correctly.",
+      "If a fee was unavoidable, log it for the operator's records.",
+      "Set a reminder 48h before the new appointment for any pre-visit prep."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name and DOB (DOB read-only)",
+    "Original appointment date, provider, location",
+    "Original confirmation number (if available)",
+    "2-3 candidate new dates/times",
+    "Whether telehealth is acceptable",
+    "Whether a different provider in the practice is acceptable",
+    "Whether the operator pre-authorises paying a late-change fee (yes/no)"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

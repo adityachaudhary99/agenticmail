@@ -1,0 +1,122 @@
+{
+  "id": "utility-payment-plan-avoid-disconnect",
+  "name": "Set Up a Utility Payment Plan to Avoid Disconnection",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "utility",
+    "payment-plan",
+    "disconnect",
+    "deferred-payment",
+    "phone-call",
+    "hardship",
+    "utility-telecom"
+  ],
+  "description": "Call a utility (electric / gas / water) when a shutoff notice has arrived (or is imminent) and negotiate a Deferred Payment Arrangement (DPA), hardship credit, or LIHEAP referral so service stays on while the balance is paid down over time.",
+  "disclaimer": "If service has already been disconnected, ask immediately about reconnection fees and same-day vs. next-day reconnection windows. If a household member is medically vulnerable or the weather is in a state-defined cold/heat-shutoff-moratorium window, say so first — most states legally prohibit disconnection in those cases.",
+  "context": {
+    "when_to_use": "User has received a disconnect / shutoff notice, OR sees a past-due balance large enough that they cannot pay in full this cycle, OR has already been disconnected. Time-sensitive — call before the disconnect date on the notice, not after.",
+    "preconditions": [
+      "User has the shutoff notice with disconnect date and amount due.",
+      "User knows what they can realistically pay TODAY and what they can pay per month going forward.",
+      "User knows whether the household qualifies for state/federal energy assistance (LIHEAP, ratepayer assistance) — even rough income bracket helps.",
+      "User has documented any medical or weather-vulnerability factors."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Call BEFORE the disconnect date. Pre-disconnect, you negotiate; post-disconnect, you pay reconnect fees and a deposit on top of arrears.",
+    "There are three layers of help, request in order: (1) Deferred Payment Arrangement, (2) hardship credit / one-time forgiveness, (3) LIHEAP / state energy-assistance referral. Don't lead with assistance — DPAs require no income verification.",
+    "Mention vulnerability factors EARLY (medical, infants under 1, seniors over 62, active-duty military, recent job loss). Many utilities have program codes that only activate when the rep ticks the right box.",
+    "If routed to collections instead of customer-care / billing assistance, recognise it within 60 seconds — collections agents are scripted on payment-in-full, not on plans.",
+    "Be specific with numbers. 'I can pay $X today and $Y per month for 6 months' is a proposal; 'I'm struggling, what can you do?' is a wish."
+  ],
+  "phrases": {
+    "opener": "Hi, I received a shutoff notice on account [number] for $[amount] dated [disconnect date]. I want to keep service on — I can pay $[amount] today, and I'd like to set up a deferred payment arrangement for the balance. Can we walk through options?",
+    "queue_check": "Quick check — am I in customer care / payment assistance, or in collections? I'm here to set up a payment plan, and I want to make sure I'm with the team that can authorise one.",
+    "transfer_request": "Could you do a warm transfer to the payment-arrangement team and stay on the line until they pick up? I don't want to lose my hold position if they can't take me right now.",
+    "vulnerability_flag": "Before we go further — there's [an infant under 1 / a senior over 62 / someone on powered medical equipment / recent job loss] in the household. Does that change the options available on this account?",
+    "weather_moratorium_check": "Is this a [cold weather / heat] moratorium period in [state]? I'd like to understand whether disconnect can proceed before [moratorium end date] regardless of the plan.",
+    "propose_dpa": "Here's what I can do: $[down payment] today, then $[monthly] on top of the regular bill for [N] months. That clears the arrears in [N] months. Does that work, or what does your standard DPA look like?",
+    "ask_hardship_credit": "Does the company have a one-time hardship credit or arrears-forgiveness program I could apply for? I'd rather match my plan with that than borrow to catch up.",
+    "ask_liheap": "Can you refer me to LIHEAP / [state-specific assistance program] and put a 14-day hold on disconnect while my application is processed? Most programs guarantee that hold once you have an application reference number.",
+    "lock_in_writing": "Can you email or text me the DPA terms — down payment, monthly add-on, end date, and confirmation that disconnect is removed — before we hang up? I want it in writing.",
+    "graceful_close": "Thanks. So down payment of $[X] today, then $[Y]/month for [N] months, disconnect lifted, confirmation number [number], and I'll watch for the email."
+  },
+  "tactics": [
+    {
+      "name": "Lead with a specific proposal",
+      "when": "First substantive turn after opener.",
+      "script": "Use `propose_dpa`. Naming the down payment + the monthly add-on first anchors the negotiation. Most utility DPA defaults are 25% down + balance over 6-12 months — proposing inside that envelope gets fast approval.",
+      "priority": 1
+    },
+    {
+      "name": "Recognise wrong-queue fast",
+      "when": "Rep starts pushing for payment-in-full or threatens 'we cannot stop the disconnect'.",
+      "script": "Use `queue_check` and `transfer_request`. Collections is incentivised on collection rate; payment-assistance is incentivised on retention.",
+      "priority": 2
+    },
+    {
+      "name": "Surface vulnerability factors early",
+      "when": "Within the first 2 minutes if any apply.",
+      "script": "Use `vulnerability_flag`. This is not leverage — it changes which program codes the rep can apply.",
+      "priority": 3
+    },
+    {
+      "name": "Check the weather moratorium",
+      "when": "Cold-weather (typically Nov-Mar) or heat-event states.",
+      "script": "Use `weather_moratorium_check`. If active, disconnect is often legally barred — that buys time even if the DPA negotiation stalls.",
+      "priority": 4
+    },
+    {
+      "name": "Layer hardship + assistance referrals",
+      "when": "DPA alone leaves a monthly burden the user cannot sustain.",
+      "script": "Use `ask_hardship_credit` AND `ask_liheap`. The DPA covers arrears; assistance can knock down the principal so the monthly is sustainable.",
+      "priority": 5
+    },
+    {
+      "name": "Get it in writing before hanging up",
+      "when": "All terms agreed.",
+      "script": "Use `lock_in_writing`. Verbal DPAs evaporate at shift change. Confirmation email + case number is the proof you need if collections action restarts."
+    }
+  ],
+  "boundaries": [
+    "Do NOT agree to a monthly add-on the user cannot actually pay. Default-breaking a DPA usually triggers immediate disconnect with no second chance.",
+    "Do NOT pay anything before the rep has confirmed the DPA is set up in the system — paying down the arrears voluntarily can be applied to current charges, leaving the past-due intact.",
+    "Do NOT misrepresent income for hardship credit. Most programs verify and a fraudulent claim disqualifies the account from future assistance.",
+    "Do NOT cancel autopay during a DPA — autopay default often disables the DPA automatically."
+  ],
+  "success_signals": [
+    "DPA terms confirmed: down payment, monthly add-on, end date, removal of disconnect.",
+    "Confirmation number issued and written confirmation incoming.",
+    "Vulnerability flag accepted; medical-baseline or shutoff-protection added to account.",
+    "LIHEAP / assistance referral with a hold-on-disconnect window."
+  ],
+  "failure_signals": [
+    "Rep insists on payment in full and refuses to transfer to assistance.",
+    "DPA monthly add-on offered is larger than the user can sustain — accepting would set up a default.",
+    "Disconnect proceeds despite confirmed moratorium (escalate to PUC same day).",
+    "No written confirmation arrives within 48 hours."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm all numbers, the rep's name, confirmation number, and the email/text channel for written terms. Calendar each monthly DPA payment.",
+    "on_failure": "File a complaint with the state PUC same day — include the rep name, time, and substance of refusal. Simultaneously, contact local community-action agency or 211 for emergency utility assistance funding (one-time bill payment) and any utility ombudsman.",
+    "follow_ups": [
+      "Confirm written DPA terms received within 48 hours.",
+      "Pay the down payment immediately, not at the end of the day.",
+      "If LIHEAP referred, complete the application within the hold window (typically 14 days).",
+      "Calendar each monthly add-on — DPA default usually triggers immediate shutoff without further notice."
+    ]
+  },
+  "required_user_info": [
+    "Account number and service address",
+    "Disconnect notice amount and date",
+    "Amount user can pay today",
+    "Amount user can pay monthly beyond regular bill",
+    "Any vulnerability factors (medical, infant, senior, military, recent job loss)",
+    "Whether income may qualify for LIHEAP / state assistance",
+    "Best email or phone for written confirmation"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

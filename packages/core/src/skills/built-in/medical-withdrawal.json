@@ -1,0 +1,131 @@
+{
+  "id": "medical-withdrawal",
+  "name": "Withdrawal, Incomplete, or Medical Withdrawal",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "withdrawal",
+    "incomplete",
+    "medical-withdrawal",
+    "dean",
+    "leave",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call the dean of students, academic advising, or student-affairs office to choose between a course withdrawal (W), an incomplete grade (I), or a medical withdrawal — and to navigate the documentation, financial-aid, and re-entry consequences of each.",
+  "disclaimer": "Each option carries different consequences for the transcript, financial aid (including Return to Title IV calculations), tuition refund, health insurance, on-campus housing, and immigration status (F-1/J-1). This skill helps navigate the process; it does not substitute for medical, legal, or financial advice.",
+  "context": {
+    "when_to_use": "The user can't finish the current term as planned because of (a) a medical or mental-health issue with documentation, (b) a family emergency, (c) overload that's now untenable, or (d) a single course they could finish later if granted an Incomplete. Use BEFORE finals if at all possible — past finals, the options collapse to retroactive medical withdrawal which is harder and slower.",
+    "preconditions": [
+      "User can describe what's happening in one sentence and roughly when it started.",
+      "User has access to a clinician or counselor who can document the condition with dates (campus health, primary care, therapist, ER discharge).",
+      "User has at least a vague sense of which courses to keep, drop, or finish-later.",
+      "User has checked the academic calendar for the last-day-to-withdraw and last-day-to-receive-an-Incomplete deadlines."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "The three options are different tools, not synonyms: W (course-by-course, GPA-neutral, transcript visible), I (course finishes next term, instructor-dependent), MW (full-term, often refundable, requires documentation, can affect aid + housing + immigration).",
+    "Incompletes are an INSTRUCTOR'S decision, not the registrar's. The dean can't grant one — only the professor can. Always start with the instructor for an Incomplete.",
+    "Medical withdrawal is a benefit, not a punishment. The transcript notation is usually 'W' or 'MW', not 'F'. The cost is usually the term, not the GPA.",
+    "Re-entry after a medical withdrawal often requires a clearance letter from a provider AND a meeting with the dean of students. Plan for that on the front end.",
+    "Federal financial aid: dropping below half-time triggers the loan grace-period clock. Withdrawing past 60% of the term avoids Return to Title IV recalculation. Get the date.",
+    "International students on F-1/J-1 status: a withdrawal can terminate SEVIS unless authorized by the DSO. Loop the international-student office BEFORE filing."
+  ],
+  "phrases": {
+    "opener": "Hi, I need to step back from this term — at least one course, possibly all of them — for medical reasons. I'd like to talk through what my options are: withdrawal, incomplete, or medical withdrawal. Can we walk through them?",
+    "ask_for_dean_of_students": "Could I speak with the dean of students or an associate dean? I'd like to make sure I get the right option, not just the easiest paperwork.",
+    "ask_for_60_percent_date": "What date does the term hit 60% completion? I want to understand the Return to Title IV implications of withdrawing before vs. after that point.",
+    "ask_about_incomplete": "For [course], could I request an Incomplete instead? I've talked to the instructor and they're [open / not open] to it. What does your office need to formalize that?",
+    "ask_about_MW_documentation": "What documentation do you require for a medical withdrawal? Does the provider need to be on-campus, or is an outside clinician acceptable? Is a letter sufficient or do you need records?",
+    "ask_about_re_entry": "If I take a medical withdrawal, what is the process to come back? Do I need a clearance letter, a return interview, a re-application?",
+    "ask_about_housing_meal": "I'm in [housing / on a meal plan]. If I withdraw, what happens — refund, prorated, terminated immediately?",
+    "ask_about_F1_status": "I'm on F-1 status. Has the international-student office been looped in on this conversation? I don't want to file before talking to my DSO.",
+    "graceful_close_success": "To confirm: I'm filing [form] by [date], with [documentation], and the effective date will be [date]. Tuition refund will be [%], financial-aid recalculation will be [status], housing termination is [date], and re-entry requires [steps]. May I have your name and email for follow-up?"
+  },
+  "tactics": [
+    {
+      "name": "Map the three options before choosing",
+      "when": "Beginning of the call.",
+      "script": "Use the `opener`. Force the conversation through all three options before deciding — W, I, MW. Front-line staff sometimes default-recommend whichever is easiest paperwork, not which is best for the student.",
+      "priority": 1
+    },
+    {
+      "name": "Talk to the instructor BEFORE the dean for an Incomplete",
+      "when": "User can plausibly finish one or two courses by submitting a paper / final at a later date.",
+      "script": "Use `ask_about_incomplete`. The instructor must agree and usually sets the completion deadline (often 6 weeks to one term). Without that yes, the dean can't act.",
+      "priority": 2
+    },
+    {
+      "name": "Get the 60% date and the refund schedule",
+      "when": "Considering a withdrawal of any kind.",
+      "script": "Use `ask_for_60_percent_date`. Schools must perform a Return to Title IV calculation for withdrawals before 60% of the term — this can result in the student owing back unearned aid. After 60%, no recalculation.",
+      "priority": 3
+    },
+    {
+      "name": "Loop the DSO for international students",
+      "when": "User is F-1 or J-1 status.",
+      "script": "Use `ask_about_F1_status`. A withdrawal that's not authorized by the DSO can terminate SEVIS within days — that's a much bigger problem than the term. The DSO can authorize an Authorized Early Withdrawal that protects status.",
+      "priority": 4
+    },
+    {
+      "name": "Frontload the documentation",
+      "when": "Pursuing medical withdrawal.",
+      "script": "Use `ask_about_MW_documentation`. A short provider letter with: condition (in general terms), dates of impact, prognosis, recommendation to withdraw. HIPAA-protected detail is not required and not advised — keep it terse.",
+      "priority": 5
+    },
+    {
+      "name": "Pre-arrange re-entry conditions",
+      "when": "Planning to return next term or next year.",
+      "script": "Use `ask_about_re_entry`. Get the exact requirements (clearance letter, meeting with dean, re-application) in writing now — students who return 6 months later often find requirements have shifted.",
+      "priority": 6
+    },
+    {
+      "name": "Escalate to the dean of students if blocked",
+      "when": "Front-line advising says the only option is W when documentation supports MW.",
+      "script": "Use `ask_for_dean_of_students`. The dean of students can authorize medical withdrawal, refund-schedule exceptions, and housing extensions that registrars and bursars cannot."
+    }
+  ],
+  "boundaries": [
+    "Do NOT submit medical documentation that isn't real. Schools verify clinicians and falsifying medical records is a serious violation.",
+    "Do NOT withdraw before the DSO has authorized it if the user is on F-1 / J-1.",
+    "Do NOT take an Incomplete without a written completion plan (deadline + remaining work + how grade is calculated) from the instructor.",
+    "Do NOT promise a return date — medical recovery isn't a calendar.",
+    "Do NOT skip the financial-aid call. The bursar will recover overpayment whether the student knew or not."
+  ],
+  "success_signals": [
+    "Dean of students agrees the case fits medical withdrawal.",
+    "Instructor confirms Incomplete in writing with a completion deadline.",
+    "Return to Title IV calculation is favorable (after 60% of the term, or aid impact is small).",
+    "DSO has been consulted and is preparing authorized withdrawal paperwork.",
+    "Housing / meal-plan refunds are pro-rated to the withdrawal date."
+  ],
+  "failure_signals": [
+    "Past the medical-withdrawal deadline for this term and retroactive process requires an academic-standing committee review (weeks).",
+    "Instructor refuses Incomplete and student is too unwell to finish.",
+    "Withdrawal drops F-1 student below course-load minimum without DSO authorization — SEVIS termination is imminent.",
+    "Financial-aid recalculation results in significant repayment owed.",
+    "Housing is on academic-year contract with no medical exception clause."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm chosen option, effective date, documentation due date, financial-aid impact, housing/meal-plan status, DSO authorization status (if applicable), and re-entry conditions. Get the dean's email.",
+    "on_failure": "Identify the specific blocker. If documentation: who else can provide it. If timing: is retroactive withdrawal possible. If aid: can the school offer institutional grants to bridge the recalculation. Escalate to dean of students if not yet involved.",
+    "follow_ups": [
+      "Email the operator a written summary of the chosen path, deadlines, and contacts.",
+      "Calendar the re-entry checkpoints (clearance letter, return interview) 30 days before target return.",
+      "If Incomplete: calendar the instructor's completion deadline minus 1 week as a working buffer.",
+      "If medical withdrawal: schedule a check-in with the dean of students 2 weeks before re-enrollment to confirm requirements haven't changed."
+    ]
+  },
+  "required_user_info": [
+    "Student ID and current course load",
+    "One-sentence description of the issue + approximate start date",
+    "Provider name + contact (with permission to verify dates)",
+    "Immigration status (F-1, J-1, citizen, permanent resident)",
+    "Housing / meal-plan / health-insurance status",
+    "Financial aid composition (Pell, Stafford, Parent PLUS, institutional grant, scholarships, work-study)",
+    "Target return term"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.87] - 2026-05-20
+
+### Added — 160+ built-in skills (community drop + emergency-services bundle)
+
+**Community drop — 150 new playbooks across 15 categories.** An 18-agent
+build farm (15 author agents + 3 reviewers covering schema, adversarial
+robustness, and tone) produced 10 skills each in these categories:
+customer-support escalation, healthcare phone calls, government
+services (DMV / IRS / SSA / courts / USCIS), insurance claims +
+disputes, banking + finance, travel disruption, utility + telecom,
+housing + tenancy, education + admissions, professional-services
+intake, outbound + cold calls, advanced negotiation, critical
+reasoning + adversarial robustness, emotional intelligence, and
+closing + commitment.
+
+**Emergency-services bundle — 10 hand-written life-safety skills.**
+Calling 911 (medical / fire / violent crime in progress), local
+police non-emergency, welfare check requests, the FBI tip line, 988
+(suicide & crisis lifeline), poison control (1-800-222-1222), elder
+and child abuse reporting (APS / CPS), and fraud reporting (IC3 /
+FTC / state AG). Each emergency skill has airtight boundaries:
+explicit per-call operator authorisation, AI-self-identification on
+the first sentence, SWATting smell-test as a priority-0 tactic, hard
+refusal of false reports, coerced-cancel awareness on the violent-
+crime skill, and confidentiality preservation on 988.
+
+**`SkillCategory` enum extended** with ten new categories
+(emergency-services, critical-reasoning, emotional-intelligence,
+closing, outreach, professional-services, education, tenancy,
+utility-telecom, insurance) to cover the community drop.
+
+### Bumps
+
+`core` 0.9.32 → 0.9.33, `cli` 0.9.86 → 0.9.87.
+
 ## [0.9.86] - 2026-05-20
 
 ### Added — persona reaches every spawn path, not just voice

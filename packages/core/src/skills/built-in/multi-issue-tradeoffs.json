@@ -1,0 +1,155 @@
+{
+  "id": "multi-issue-tradeoffs",
+  "name": "Multi-Issue Trading: Expanding the Pie Beyond Price",
+  "version": "1.0.0",
+  "category": "negotiation",
+  "tags": ["integrative", "logrolling", "trades", "issue-mapping", "phone-call"],
+  "description": "Most negotiations get stuck because they're being played on a single dimension (usually price). The best deals are found by introducing additional dimensions and trading what's cheap for you for what's valuable to them — and vice versa.",
+  "disclaimer": "Multi-issue trading requires that you actually know which dimensions you can offer. Trading something you don't have authority over is a fast path to a broken deal. Verify authority with the user via `ask_operator` before offering term, scope, or contractual concessions.",
+  "context": {
+    "when_to_use": "Whenever a price-only negotiation is stuck OR when the deal is structurally complex (B2B, real estate, employment, contractor agreements, multi-party). Less applicable to one-time consumer transactions with a true fixed SKU.",
+    "preconditions": [
+      "You have mapped the full set of dimensions in play (at minimum: price, term, payment timing, scope, support, exclusivity, references).",
+      "You know which of those dimensions YOU can offer.",
+      "You have a hypothesis about which dimensions matter MOST to the counterparty (asymmetric value)."
+    ],
+    "estimated_call_duration_minutes": 35
+  },
+  "principles": [
+    "Single-issue negotiation is distributive (zero-sum); multi-issue is integrative (positive-sum). Always try to find a second dimension before settling on the first.",
+    "Trade what's CHEAP for you for what's VALUABLE to them. That's where the pie grows.",
+    "Bundle concessions, never give one at a time. 'I'll do X, Y, and Z if you do A, B, and C' is more powerful than three serial 'I'll do X if you do A' exchanges — and it locks the deal.",
+    "Discover dimensions by asking. 'What else matters to you besides price?' is one of the highest-ROI questions in any negotiation. Most counterparties answer truthfully.",
+    "Never concede without a reciprocal trade. Free concessions teach the counterparty that you'll give more for free.",
+    "Asymmetric value is the source of all gains. If a 12-month term costs the rep nothing but is worth $X to me — that's pure surplus to capture."
+  ],
+  "phrases": {
+    "discover_dimensions": "What else matters to you on a deal like this besides price?",
+    "introduce_term": "What if I committed to [12 / 24] months — does that move the price?",
+    "introduce_payment": "What if I paid annually upfront / net-15 / via ACH — what's that worth on price?",
+    "introduce_scope": "What if we trimmed [feature/SKU] — does that change the math?",
+    "introduce_references": "I'd be willing to be a public reference / case study / testimonial — is that worth anything to you?",
+    "introduce_exclusivity": "What if I committed to using only your service for [category] — does that unlock anything?",
+    "introduce_timing": "What if I closed by end of month vs. next quarter — does that help on price?",
+    "bundle_proposal": "Here's where I am: if we do [A, B, C], I can commit to [X, Y, Z]. Is that a package you can work with?",
+    "trade_signal": "I can move on [X] if you can move on [Y].",
+    "no_free_concessions": "I can do that — what do you have for me in exchange?"
+  },
+  "tactics": [
+    {
+      "name": "Map dimensions before naming numbers",
+      "when": "Beginning of any structurally complex negotiation.",
+      "script": "Open with `discover_dimensions`. Build a list of what matters to the rep. This frames the rest of the call as a multi-axis search.",
+      "priority": 1
+    },
+    {
+      "name": "Introduce a new dimension when stuck on price",
+      "when": "Two or more price exchanges produced no movement.",
+      "script": "Use one of the introduce-X phrases. The dimension you pick should be (a) cheap for you, (b) plausibly valuable for them. Term and payment timing are the most universally tradable.",
+      "priority": 2
+    },
+    {
+      "name": "Bundle, never serialize",
+      "when": "You have 2+ concessions on the table.",
+      "script": "Wrap them into one package with `bundle_proposal`. Counterparty must accept or counter the WHOLE bundle, not pick the pieces they like and reject the rest.",
+      "priority": 3
+    },
+    {
+      "name": "Refuse free concessions",
+      "when": "Counterparty asks for a concession without offering one.",
+      "script": "Use `no_free_concessions`: 'I can do that — what do you have for me in exchange?' Said warmly, this trains them to trade.",
+      "priority": 4
+    },
+    {
+      "name": "Trade across asymmetric value",
+      "when": "You've discovered something that's near-free for you but valuable to them (e.g., a public reference, a longer term).",
+      "script": "Trade it hard. 'I'll be a reference for $X off the price' — but only commit on dimensions the user has authorized.",
+      "priority": 5
+    },
+    {
+      "name": "Reserve a 'sweetener' for the close",
+      "when": "Deal is 90% there but needs a final nudge.",
+      "script": "Hold one small concession in reserve from the beginning (e.g., 'I can also throw in [Z]' at the end). Sweeteners at the close convert 'almost-yes' into 'yes'."
+    }
+  ],
+  "decision_tree": {
+    "description": "Multi-issue trading happens at every junction of the negotiation. When you sense a stall, run this tree to find the next dimension.",
+    "branches": [
+      {
+        "if_you_hear": "'The price is the price' / 'we don't have flexibility on price'.",
+        "interpretation": "Counterparty is signaling price is locked. Other dimensions are likely OPEN.",
+        "say": "Introduce a new dimension: `introduce_term` or `introduce_payment` or `introduce_scope`.",
+        "do_not": "Do not press on price. Pivot dimensions."
+      },
+      {
+        "if_you_hear": "'What else are you looking for besides price?' (they're asking YOU about dimensions).",
+        "interpretation": "Good — they're already in multi-issue mode.",
+        "say": "Name 2-3 dimensions where you'd value movement. Be specific.",
+        "do_not": "Do not say 'just a better price'. That collapses you back to single-issue."
+      },
+      {
+        "if_you_hear": "Counterparty offers a concession unprompted.",
+        "interpretation": "They want to keep the deal alive. Don't accept-and-pocket — trade.",
+        "say": "Accept warmly AND counter-trade: 'Great — and if I add [Y] to my side, can we also do [Z]?'",
+        "do_not": "Do not silently bank the concession. Use its momentum."
+      },
+      {
+        "if_you_hear": "Counterparty asks for a concession from you without offering one.",
+        "interpretation": "Testing whether you'll concede for free.",
+        "say": "`no_free_concessions`: 'I can do that — what do you have for me?'",
+        "do_not": "Do not concede unilaterally even on small things. Pattern matters more than individual move."
+      },
+      {
+        "if_you_hear": "Counterparty enthusiastic about ONE specific term (e.g., longer commitment).",
+        "interpretation": "You've found high-asymmetric-value dimension. Press it.",
+        "say": "Test the value: 'How much would a 24-month commitment unlock on price?' Force them to put a number on it.",
+        "do_not": "Do not give the term for free — extract the price move first."
+      },
+      {
+        "if_you_hear": "Counterparty offers bundle ('we can do A and B if you do X and Y').",
+        "interpretation": "They're playing the right game. Engage on bundle terms.",
+        "say": "Counter-bundle. Don't accept their bundle as-is — modify two pieces and re-offer.",
+        "do_not": "Do not pick at one part of their bundle while ignoring the rest. Engage with the whole."
+      },
+      {
+        "if_you_hear": "After 2 rounds of multi-issue trading, both sides circling without close.",
+        "interpretation": "Either the gap is real OR there's an undisclosed constraint.",
+        "say": "Surface the constraint: 'What's the one thing that, if we solved it, would let you close today?'",
+        "do_not": "Do not keep cycling dimensions. The blocker is now meta, not dimensional."
+      },
+      {
+        "if_you_hear": "Counterparty says 'I have to ask my manager about X' on a specific dimension.",
+        "interpretation": "That dimension is the one with the most authority headroom. Manager has more latitude there than on price.",
+        "say": "Press on that dimension: 'Great — while you check, can we also explore if there's more room on [Y]?' Manager-call is your moment.",
+        "do_not": "Do not focus only on price during the manager pause. The whole bundle gets reviewed."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT trade dimensions the user has not authorized (term, exclusivity, scope changes).",
+    "Do NOT bundle in items the user has marked non-negotiable.",
+    "Do NOT invent dimensions to bluff with — if you mention 'autopay' you must be willing to do it.",
+    "Do NOT continue introducing dimensions past the user's complexity tolerance — some users want a simple deal, even if suboptimal."
+  ],
+  "success_signals": [
+    "Counterparty asks YOU questions about your priorities — multi-issue dialogue is active.",
+    "Counterparty proposes asymmetric trades (their cheap-thing for your valuable-thing or vice versa).",
+    "Final deal includes 2+ non-price terms that wouldn't have been in a single-issue close.",
+    "Counterparty thanks you for being 'creative' or 'flexible' — both code for 'you played the right game'."
+  ],
+  "failure_signals": [
+    "Counterparty firmly refuses to discuss any non-price dimension after 2 attempts.",
+    "Bundle proposed by you gets dismantled piece-by-piece — counterparty is cherry-picking.",
+    "You've introduced 4+ dimensions and the deal hasn't moved — too many open variables; consolidate."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the FULL bundle in writing — every dimension, not just price. Use `commitment_check` and make sure each item has an owner and timing.",
+    "on_failure": "If multi-issue trading doesn't move the deal, the constraint is probably authority or fixed-pricing. Escalate or accept the single-issue outcome and consider walking (see `10-walkaway-threats`)."
+  },
+  "required_user_info": [
+    "Full list of dimensions the user can trade (with authority levels for each).",
+    "User's ranking of which dimensions matter to THEM (so concessions are made on lower-ranked dimensions).",
+    "Any hypothesis about what matters most to the counterparty."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

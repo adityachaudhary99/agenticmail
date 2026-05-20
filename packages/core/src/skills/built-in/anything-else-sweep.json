@@ -1,0 +1,120 @@
+{
+  "id": "anything-else-sweep",
+  "name": "The \"Is There Anything Else I Should Know?\" Sweep",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "closing",
+    "gotchas",
+    "fees",
+    "fine-print",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Before saying goodbye, run a deliberate sweep with the rep: 'Is there anything else I should know that we haven't covered?' This single open-ended question regularly surfaces fees, expiration dates, contract terms, eligibility conditions, and adjacent issues the rep was about to skip past. It costs 30 seconds and often saves the entire agreement.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Late in the closing phase, AFTER readback and lock-in, BEFORE the formal goodbye. Use on every call without exception — even short informational ones. The sweep is one of the highest ROI moves in customer-service operations.",
+    "preconditions": [
+      "The substantive agreement / inquiry is concluded.",
+      "You still have rep attention and a few minutes of call time.",
+      "You've already locked the specifics — the sweep is for items you DIDN'T already cover."
+    ],
+    "estimated_call_duration_minutes": 3
+  },
+  "principles": [
+    "Open-ended beats checklist for this question. 'Anything else I should know' lets the rep volunteer things they wouldn't admit under direct interrogation.",
+    "Run multiple passes with slightly different framings — fees, dates, conditions, account flags, scheduled changes. Each framing fires a different recall trigger in the rep.",
+    "Treat 'no, that's everything' as the FIRST answer, not the final one. Re-ask in a different way at least once.",
+    "Watch for hesitation. A pause after the sweep often precedes a 'well, actually…' that contains the highest-value information of the call.",
+    "If the rep surfaces a new item during the sweep, restart the closing sequence from readback — new info means new lock-in is required."
+  ],
+  "phrases": {
+    "open_sweep": "Before we wrap up — is there anything else I should know about my account, or about what we just agreed to, that we haven't already covered?",
+    "fees_pass": "Any fees, charges, or one-time costs associated with this — even small ones — that I should expect on the next bill or statement?",
+    "dates_pass": "Any upcoming dates I should have on my radar — expirations, renewal dates, promotional roll-offs, scheduled changes?",
+    "conditions_pass": "Any conditions or fine-print items I should be aware of — things that could void this agreement or change it?",
+    "flags_pass": "Anything else flagged on my account — open issues, pending changes, holds, alerts — that we haven't touched on today?",
+    "competitor_proactive": "If I'm thinking about [adjacent service / upgrade / downgrade] in the future, is there anything I should know now that would affect that decision?",
+    "second_pass_probe": "Just one more — sometimes there's a small thing that comes up between calls. Anything at all you'd add if you were on my side of the line?",
+    "graceful_close_success": "That's really helpful — thanks for the extra minute. Sounds like we're all set then.",
+    "graceful_close_failure": "Thanks for the heads-up on [item]. Given that's new information, can we walk back through the agreement to make sure it accounts for it?"
+  },
+  "tactics": [
+    {
+      "name": "Open the sweep wide",
+      "when": "After readback and lock-in, before goodbye.",
+      "script": "Use the `open_sweep` phrase. The widest possible question first; narrower ones later. Resist asking specifically — let the rep choose what to surface.",
+      "priority": 1
+    },
+    {
+      "name": "Specific pass: fees",
+      "when": "Open sweep returned 'no'.",
+      "script": "Use the `fees_pass` phrase. Fees are the #1 hidden-item category — activation, restocking, early-termination, paper-billing, late-payment, processing.",
+      "priority": 2
+    },
+    {
+      "name": "Specific pass: dates",
+      "when": "Fees pass complete.",
+      "script": "Use the `dates_pass` phrase. Date sweeps catch promotional roll-offs and silent renewals — the second-biggest source of bill surprise.",
+      "priority": 3
+    },
+    {
+      "name": "Specific pass: conditions",
+      "when": "Dates pass complete.",
+      "script": "Use the `conditions_pass` phrase. Targets eligibility requirements, autopay enrolment, paperless requirements, term commitments.",
+      "priority": 4
+    },
+    {
+      "name": "Specific pass: account flags",
+      "when": "Conditions pass complete.",
+      "script": "Use the `flags_pass` phrase. Catches unrelated open issues — old credits, pending refunds, security alerts, double-billing investigations — that the rep would otherwise leave for the next call.",
+      "priority": 5
+    },
+    {
+      "name": "Second open pass",
+      "when": "All specific passes complete.",
+      "script": "Use the `second_pass_probe` phrase. The 'if you were on my side' framing often unlocks empathy-driven disclosure the formal sweeps don't.",
+      "priority": 6
+    },
+    {
+      "name": "Restart closing if a new item surfaces",
+      "when": "Any sweep returns substantive new information.",
+      "script": "Use the `graceful_close_failure` phrase, then loop back to readback. New info means the agreement effectively just changed; redo lock-in.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT skip the sweep because the rep seems eager to end the call. That's exactly when the sweep is most valuable.",
+    "Do NOT accept 'I think we're good' on the first pass. Run at least two more framings.",
+    "Do NOT use the sweep to introduce NEW asks (those belong earlier). The sweep is reception, not transmission.",
+    "Do NOT keep sweeping past three rounds — at that point, escalation or rescheduling is more productive than more sweeps."
+  ],
+  "success_signals": [
+    "Rep volunteers a fee, date, or condition you hadn't been told about.",
+    "Rep references something they almost forgot ('oh, and you'll want to know about…').",
+    "Rep offers a proactive heads-up about an unrelated change to the account.",
+    "Rep confirms NOTHING else exists with concrete coverage ('I've checked your account flags, your billing schedule, and your service plan — all clean')."
+  ],
+  "failure_signals": [
+    "Rep gives identical short denials to every framing — possible they aren't actually checking.",
+    "Rep gets impatient and tries to end the call.",
+    "Rep surfaces a new item only after you say 'okay, hanging up' — suggests deliberate omission earlier.",
+    "Rep checks something and gets quiet for a long time, then changes the subject."
+  ],
+  "exit_strategy": {
+    "on_success": "Log any new items surfaced. If they affect the agreement, re-run readback + lock-in. If they're informational, save them as future check-ins (e.g. promotional roll-off dates).",
+    "on_failure": "If the rep is clearly withholding, escalate. If the rep is genuinely thorough and there's nothing else, proceed to written confirmation and final close.",
+    "follow_ups": [
+      "Add any surfaced dates to the user's calendar with reminders 1-2 weeks in advance.",
+      "Cross-check the written confirmation for any items the sweep surfaced — they should appear in writing too."
+    ]
+  },
+  "required_user_info": [
+    "A note-taking surface for any new items surfaced",
+    "Tolerance for an extra 2-3 minutes of call time per sweep",
+    "Awareness of what the user already knows (so the agent doesn't redundantly ask about familiar items)"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

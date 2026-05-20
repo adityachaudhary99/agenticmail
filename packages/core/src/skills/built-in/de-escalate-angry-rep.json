@@ -1,0 +1,114 @@
+{
+  "id": "de-escalate-angry-rep",
+  "name": "De-escalate an Angry Rep (Without Absorbing the Anger)",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "de-escalation",
+    "anger",
+    "tone",
+    "phone-call",
+    "boundaries",
+    "regulation",
+    "emotional-intelligence"
+  ],
+  "description": "Bring a hot, hostile, or frustrated rep back to a working baseline without becoming a mirror for their emotion. The goal is not to win the moment — it is to make the next 10 minutes useful.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "The rep is sharp, sarcastic, raising their voice, talking over you, sighing audibly, slamming keys, or punishing you with curt one-word answers. Use BEFORE the call becomes unworkable. If the rep is already abusive (slurs, threats, personal attacks), escalate to a supervisor instead — this skill is for hot, not toxic.",
+    "preconditions": [
+      "You have heard at least one full sentence from the rep — do not pre-empt anger that isn't there.",
+      "You know the operator's actual goal so you can hold it through the noise.",
+      "You have ~5 extra minutes of patience budget — de-escalation takes time."
+    ],
+    "estimated_call_duration_minutes": 4
+  },
+  "principles": [
+    "Anger is almost always about the LAST thing the rep handled, not you. Assume a queue of 30 difficult callers before you.",
+    "Lower your pitch and slow your tempo by ~15%. Two regulated voices cannot stay escalated for long; one will follow the other, and you go first.",
+    "Validate the feeling, not the framing. 'That sounds frustrating' is true; 'You're right, this company is awful' makes you a fellow complainer and forfeits your leverage.",
+    "Do not match volume. Matching volume teaches the rep that volume is how they get heard by you — the call gets louder, not clearer.",
+    "Name one concrete thing you appreciate about what they've already done. Specific gratitude resets the social contract.",
+    "If you absorb the anger, you become useless to the operator. Stay porous to information, opaque to affect."
+  ],
+  "phrases": {
+    "first_acknowledgement": "I can hear this has already been a long one for you — I'm not here to make it harder. Can we take it from the top together?",
+    "validate_without_agreeing": "That sounds genuinely frustrating. I'd be annoyed too if I were on your side of the desk right now.",
+    "name_the_dynamic": "I think we got off on a tense foot — that's on me as much as anyone. Mind if we reset for 30 seconds?",
+    "redirect_to_task": "I want to make this short for you. If we can solve [specific thing], I'll be out of your hair in five minutes.",
+    "stall_to_regulate": "Give me one second — I want to make sure I'm asking you the right question.",
+    "boundary_if_personal": "I get that you're frustrated. I'd just ask we keep it about the account — I'll do the same."
+  },
+  "tactics": [
+    {
+      "name": "Drop your voice first",
+      "when": "Within the first three seconds of detecting heat.",
+      "script": "Consciously drop pitch ~10-15%, slow tempo, lengthen pauses to ~1s. Do not comment on their tone. Behavior modelling beats correction.",
+      "priority": 1
+    },
+    {
+      "name": "Validate the feeling once, fully, then move",
+      "when": "Immediately after they vent.",
+      "script": "Use the `validate_without_agreeing` phrase. Validate ONCE — repeated validation reads as patronising. Then redirect to the task.",
+      "priority": 2
+    },
+    {
+      "name": "Concrete appreciation",
+      "when": "After the first piece of useful information they give you, even small.",
+      "script": "'Thank you — that's exactly what I needed' or 'That helps a lot, I appreciate it.' Specific, not generic. This rebuilds the contract.",
+      "priority": 3
+    },
+    {
+      "name": "Tone-shift detector — RECALIBRATE",
+      "when": "Rep softens (slower speech, longer answers, an 'okay so…' opener, you hear them type instead of sigh).",
+      "script": "DO NOT celebrate or comment on the shift. Match their new baseline immediately — slightly warmer but still calm. Commenting on the de-escalation re-escalates it.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — RE-HEATING",
+      "when": "Voice rises again, interrupts return, or sarcasm reappears mid-call.",
+      "script": "Pause for a full beat. Lower your voice again. Use `stall_to_regulate`. Do not chase the conversation up the heat ladder.",
+      "priority": 5
+    },
+    {
+      "name": "Soft boundary if it gets personal",
+      "when": "Rep makes it about you (your accent, your competence, your gender).",
+      "script": "Use `boundary_if_personal` once, calmly, no apology. If it continues, ask for a different rep or supervisor — note the time and the language."
+    }
+  ],
+  "boundaries": [
+    "Do NOT apologise for asking a legitimate question. Apologising under heat trains the rep to use heat.",
+    "Do NOT agree the company is bad just to bond. You'll need that company's cooperation in three minutes.",
+    "Do NOT explain de-escalation tactics to the rep ('I can tell you're upset, let's both take a breath'). It reads as condescending and re-ignites.",
+    "Do NOT mirror sarcasm. Once.",
+    "Do NOT carry the residue into the next call segment — when the rep softens, you soften with them, fully."
+  ],
+  "success_signals": [
+    "Rep takes a deeper breath you can hear.",
+    "Sentences get longer and more declarative ('okay so what I can do is…').",
+    "Rep uses your name or 'sir/ma'am' (re-personalising).",
+    "Typing sounds replace sighing.",
+    "Rep volunteers information you didn't ask for."
+  ],
+  "failure_signals": [
+    "Three validation attempts and no softening.",
+    "Rep becomes personal, profane, or threatening.",
+    "Rep hangs up or transfers you without warning.",
+    "You notice YOUR voice tightening — you've started absorbing it."
+  ],
+  "exit_strategy": {
+    "on_success": "Once the call is workable, do NOT linger on the reset — get to the task crisply so the rep is rewarded for the shift with progress. Close warmly: 'Genuinely, thank you for sticking with me on this.'",
+    "on_failure": "Politely end and call back: 'I can tell we're both having a tough one — I'm going to call back in a bit, no hard feelings.' A new rep is often the entire fix.",
+    "follow_ups": [
+      "If the rep was abusive, note time, employee ID if given, and language used — report to operator.",
+      "Self-debrief: was there a phrase YOU used that triggered the heat? Log it for next call."
+    ]
+  },
+  "required_user_info": [
+    "The actual task — you need the goal to hold through the storm.",
+    "Operator's tolerance for callback (some can't wait, in which case push through).",
+    "Whether this is a regulated industry (medical, legal) where rep behavior should be reported."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

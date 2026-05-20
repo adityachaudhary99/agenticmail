@@ -1,0 +1,120 @@
+{
+  "id": "match-energy-keep-goal",
+  "name": "Match the Rep's Energy Without Losing the Operator's Goal",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "mirroring",
+    "tone",
+    "energy",
+    "phone-call",
+    "focus",
+    "discipline",
+    "emotional-intelligence"
+  ],
+  "description": "Mirror the rep's pace, register, and warmth closely enough to be liked, but keep one foot planted on the operator's goal so you don't get talked off it. The risk of energy-matching is drift — this skill is about the discipline that prevents it.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call where the rep has a strong, defined energy — chatty, crisp, jokey, dry, dramatic, deeply professional. Especially important when the rep is GOOD at their job and naturally pulls you into their rhythm, because that rhythm may not serve the goal.",
+    "preconditions": [
+      "You know the operator's single most important outcome — not three, the one.",
+      "You can keep a private 'goal anchor' sentence in mind throughout the call.",
+      "You have permission to be a little playful / dry / formal as the call demands."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Mirror tempo first, vocabulary second, jokes last. Tempo is invisible; jokes are visible and risky.",
+    "Match within ~10% of their register — not 100%. Full mimicry is uncanny. Slight echo is rapport.",
+    "Keep one sentence in your head that names the goal. Say it silently before every reply. If your next sentence doesn't move toward it, change the sentence.",
+    "Chatty reps will trade five minutes of small talk for one favour — that can be a good deal. Just decide BEFORE you spend it.",
+    "Crisp reps reward crispness with speed and information density. Don't soften them; meet them.",
+    "Energy-match the rep, goal-anchor the operator. Two channels, same mouth."
+  ],
+  "phrases": {
+    "goal_re_anchor": "Quick check before we go further — main thing I'm trying to land is [goal in one sentence]. Are we on track for that?",
+    "chatty_redirect_warm": "Ha — okay, before I forget what I called about, can we lock in [goal]?",
+    "crisp_acknowledge": "Got it. Next item: [goal in one clause].",
+    "playful_mirror_low_risk": "Fair enough — you've heard that one before, huh?",
+    "formal_mirror": "Understood. May I confirm [goal] before we proceed?",
+    "soft_pause": "Hold on — let me make sure I'm not getting ahead of myself."
+  },
+  "tactics": [
+    {
+      "name": "Diagnose energy in the first 20 seconds",
+      "when": "After the rep's first 2-3 sentences.",
+      "script": "Classify silently: chatty / crisp / dry / formal / dramatic / flat. Choose a tempo and register to land within 10% of theirs. Do not switch register mid-call without reason.",
+      "priority": 1
+    },
+    {
+      "name": "Set a private goal anchor sentence",
+      "when": "Before you speak your first substantive sentence.",
+      "script": "In your head: 'The one thing I need from this call is X.' Recite it before every turn. If you find yourself off-track three turns later, use `goal_re_anchor` to land back on it without breaking the energy.",
+      "priority": 2
+    },
+    {
+      "name": "Mirror tempo only at first",
+      "when": "Turns 1-3.",
+      "script": "Speak at their pace. Pause where they pause. Do NOT try jokes or slang yet — you haven't earned the read. Vocabulary and humour come once tempo locks in.",
+      "priority": 3
+    },
+    {
+      "name": "Tone-shift detector — REP SPEEDS UP",
+      "when": "Rep's sentences shorten, pauses disappear, they want to wrap.",
+      "script": "Speed up with them. Drop adjectives. Get to the goal in the next sentence — they're signalling 'I have a queue.' Hesitation here loses you the call.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — REP SLOWS DOWN",
+      "when": "Rep starts telling a story, shares an opinion, or volunteers context.",
+      "script": "Slow down with them. Give them the floor for 20-30 seconds. They're investing in the relationship — under-investing back is rude and loses leverage. THEN gently re-anchor.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — REP GETS PLAYFUL",
+      "when": "Rep cracks a joke or uses warm slang.",
+      "script": "Mirror with a LOW-RISK callback (`playful_mirror_low_risk`). Do not escalate the humour. You're acknowledging the invitation, not auditioning.",
+      "priority": 6
+    },
+    {
+      "name": "Re-anchor when you've drifted",
+      "when": "Three turns of chat with no goal progress.",
+      "script": "Use `chatty_redirect_warm` for warm reps, `goal_re_anchor` for crisp reps. The redirect should match the current energy, not interrupt it.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT adopt accents, regional slang, or in-group vocabulary you don't own. Mocking-by-accident is a call-killer.",
+    "Do NOT mirror profanity unless the operator has cleared it AND the context warrants it — usually it doesn't.",
+    "Do NOT match flirtation. Friendly is the ceiling.",
+    "Do NOT match a downward emotional spiral (rep getting more cynical, more defeated). Hold one level above to keep the call workable.",
+    "Do NOT keep matching energy if you've lost the goal — the goal beats the rapport."
+  ],
+  "success_signals": [
+    "Rep says 'okay we get along' or 'you're easy to deal with.'",
+    "Goal lands within the expected call duration even though the call FELT longer.",
+    "Rep volunteers extras (faster shipping, a credit, a notation) — they had to like you for that.",
+    "You finish the call and can still articulate the goal you came in with."
+  ],
+  "failure_signals": [
+    "You realise mid-call you no longer remember the goal sentence.",
+    "Rep is delighted with you but you've gotten nothing actionable.",
+    "You overshot on jokes and the rep pulled back to script voice.",
+    "You under-matched and the rep treats you as an interchangeable caller."
+  ],
+  "exit_strategy": {
+    "on_success": "Close in the rep's register — warm goodbye for warm reps, crisp 'thanks, have a good one' for crisp reps. Confirm goal outcome explicitly.",
+    "on_failure": "If you drifted, name it cleanly at the end ('I went down a rabbit hole — can you confirm [goal] before we go?'). Better an awkward 10 seconds than missing the goal.",
+    "follow_ups": [
+      "Self-debrief: which 10% mirror moves worked, which felt forced?",
+      "Note the rep's energy type for future calls to the same line — it's often consistent across calls."
+    ]
+  },
+  "required_user_info": [
+    "The ONE outcome that defines success — written out, one sentence.",
+    "Any topics that are NOT okay to mirror into (politics, religion, etc.).",
+    "Operator's tolerance for chit-chat — some want speed, some want relationships built."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

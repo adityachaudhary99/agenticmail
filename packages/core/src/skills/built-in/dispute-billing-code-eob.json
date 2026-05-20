@@ -1,0 +1,147 @@
+{
+  "id": "dispute-billing-code-eob",
+  "name": "Dispute a Billing Code on an Explanation of Benefits (EOB)",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "billing",
+    "eob",
+    "claims",
+    "appeals",
+    "phone-call",
+    "insurance",
+    "healthcare"
+  ],
+  "description": "Call the insurance company and/or provider's billing office to dispute an incorrect CPT/HCPCS/ICD-10 code, denied claim, or wrongly applied member responsibility on the operator's Explanation of Benefits. Includes filing for reprocessing and formal appeal when needed.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator received an EOB showing they owe more than expected, a claim denied, or a code that doesn't match what actually happened at the visit. Common scenarios: preventive visit coded as diagnostic (loses $0 copay), out-of-network coding error, downcoded service, modifier missing, wrong patient demographics on claim.",
+    "preconditions": [
+      "Operator's name, DOB (read-only), insurance member ID + group (read-only).",
+      "The EOB itself — claim number, date of service, billing provider name and NPI, CPT/HCPCS code(s), ICD-10 code(s), billed amount, allowed amount, insurance paid, member responsibility, denial/adjustment reason codes.",
+      "Operator's account of what actually happened at the visit (in plain language, not clinical recoding).",
+      "Whether operator has already received a bill from the provider, and the bill date (appeal clocks start ticking).",
+      "Whether prior auth was obtained for the service (if relevant)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "An EOB is NOT a bill. Many disputes can be resolved BEFORE the provider's bill arrives by getting the insurer to reprocess the claim. Move fast.",
+    "Coding errors usually live with the PROVIDER's billing office, not the insurer. The insurer paid based on what was submitted. The fix is: provider re-submits with corrected coding.",
+    "Coverage / network / member-responsibility errors usually live with the INSURER. The fix is: reprocess with corrected benefits applied.",
+    "Diagnose which side owns the issue BEFORE assigning blame. Calling the insurer to fix a coding mistake just gets you bounced back to the provider, and vice versa.",
+    "Always document: who you spoke to, badge ID, reference number, date/time, and the specific commitment they made. Disputes that drag on for months are won by the side with the paper trail.",
+    "Internal appeal first, then external review. Don't pay the disputed amount before the appeal is decided — paying often legally finalises the bill."
+  ],
+  "phrases": {
+    "opener_insurance": "Hi, I'm calling on behalf of [Operator], member ID [redacted]. I'm looking at EOB for claim [number], date of service [date], from provider [name]. The claim was processed in a way that doesn't match what happened at the visit, and I'd like to request a reprocess. Can you get me to a claims specialist?",
+    "opener_provider_billing": "Hi, I'm calling on behalf of [Operator]. I'm looking at the EOB for [date of service] and the coding doesn't match what happened. Can you connect me with someone who can review the CPT and diagnosis codes that were submitted?",
+    "diagnose_owner": "Just to align — based on what I'm describing, is this a CODING issue (your side / billing office) or a BENEFITS issue (insurance side)?",
+    "describe_factual_mismatch": "The EOB shows CPT [code] which describes [description]. What actually happened at the visit was [operator's plain-language description]. Those don't match, and I'd like the coding reviewed.",
+    "preventive_vs_diagnostic": "This was scheduled as a preventive / annual wellness visit. The CPT submitted was [diagnostic code], which is why member responsibility is non-zero. Can the provider's billing office re-bill with the appropriate preventive code, or add a modifier?",
+    "ask_for_reprocess": "I'd like to formally request a reprocess of this claim. What's the reference number for that request and the timeline?",
+    "request_internal_appeal": "If reprocessing doesn't resolve, I'd like to know the formal internal appeals process — the deadline, format required, and where to send documentation.",
+    "no_surprises_act_dispute": "Some or all of these charges may fall under the No Surprises Act if [out-of-network at in-network facility / emergency / ancillary]. Can you confirm the protections applied to this claim?",
+    "ask_about_hold_on_collections": "While this is in dispute, can you put a hold on collections / hold the bill from going to collections? The dispute is documented.",
+    "ask_for_reference_number": "Could you give me a reference number for this dispute, your name, and your badge or employee ID?",
+    "stall_research": "One moment — let me find the exact code on the EOB.",
+    "verify_readback": "Confirming: claim [number], date [date], dispute reason [coding mismatch / coverage error / network error], action [reprocess / appeal / re-bill], owner [insurer / provider], reference [number], expected resolution within [N] days. Rep [name + badge]. Right?",
+    "graceful_close": "Thank you. I'll follow up if I don't see resolution by [date]. Have a good day."
+  },
+  "tactics": [
+    {
+      "name": "Diagnose insurer vs. provider as the owner",
+      "when": "First substantive turn.",
+      "script": "Use `diagnose_owner`. Coding error → provider's billing. Benefits/network/eligibility error → insurer. Calling the wrong party first wastes a half-hour and warms up nothing useful.",
+      "priority": 1
+    },
+    {
+      "name": "Describe the mismatch factually",
+      "when": "Explaining the dispute.",
+      "script": "Use `describe_factual_mismatch`. Avoid 'this is wrong' or 'I shouldn't owe this'. Pin down: what was submitted vs. what actually happened, in concrete terms. Specific lands; outrage doesn't.",
+      "priority": 2
+    },
+    {
+      "name": "Spot preventive-coded-as-diagnostic early",
+      "when": "EOB shows non-zero member responsibility for what was supposed to be a wellness visit, screening, or vaccine.",
+      "script": "Use `preventive_vs_diagnostic`. This is one of the most common coding fixes. ACA preventive services are covered at $0 — if the provider used a diagnostic code (e.g. due to a problem discussed during the visit), often a modifier 33 or split-billing resolves it.",
+      "priority": 3
+    },
+    {
+      "name": "Invoke No Surprises Act when applicable",
+      "when": "Claim involves out-of-network providers at in-network facility, emergency care, or ancillary services.",
+      "script": "Use `no_surprises_act_dispute`. Operator may owe only the in-network cost-share by law. Insurer may not have applied this automatically.",
+      "priority": 4
+    },
+    {
+      "name": "Hold collections while disputing",
+      "when": "Bill has been received from provider.",
+      "script": "Use `ask_about_hold_on_collections`. Disputed bills should not progress to collections. Get this commitment documented with a reference number.",
+      "priority": 5
+    },
+    {
+      "name": "Always paper-trail",
+      "when": "Every call.",
+      "script": "Use `ask_for_reference_number`. Write down: rep name, badge ID, reference number, date/time, exact commitment, ETA. Disputes are won by documentation.",
+      "priority": 6
+    },
+    {
+      "name": "Pause and re-verify on conflicting answers",
+      "when": "Insurer says 'provider needs to re-bill', provider says 'insurer needs to reprocess'.",
+      "script": "Do not bounce indefinitely. Ask one party to STAY ON THE LINE while you 3-way call the other, OR ask both for written documentation of their position so the dispute can escalate to an internal appeal with both written statements attached.",
+      "priority": 7
+    },
+    {
+      "name": "Escalate to formal internal appeal",
+      "when": "Reprocess request fails or no movement in 30 days.",
+      "script": "Use `request_internal_appeal`. Get: deadline, required documents (often a letter from the provider attesting to what actually happened), where to send. Internal appeal deadlines are short — usually 180 days from EOB date for ERISA plans.",
+      "priority": 8
+    },
+    {
+      "name": "Move to external review if internal fails",
+      "when": "Internal appeal denied.",
+      "script": "Most plans allow an external (independent) review after internal denial. State insurance commissioner's office can route. Surface this option to operator; do NOT initiate external review without operator authorization.",
+      "priority": 9
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to financial responsibility on the operator's behalf, including agreeing to a payment plan or settlement amount.",
+    "NEVER mischaracterize what happened at the visit to get a more favorable code. That is fraud. Stick to what the operator described in plain language; let the billing office translate to codes.",
+    "NEVER pay the disputed amount before the dispute resolves unless operator explicitly authorizes (paying can legally finalize the bill in some jurisdictions).",
+    "NEVER demand the rep change their answer through volume or repetition. If they're stuck, escalate to a supervisor or to formal appeal — don't berate."
+  ],
+  "success_signals": [
+    "Owner correctly identified (insurer vs. provider) on first call.",
+    "Reprocess request filed with reference number and ETA.",
+    "Collections hold placed if bill was outstanding.",
+    "Coding correction agreed to and re-submission scheduled.",
+    "No Surprises Act protections applied where relevant."
+  ],
+  "failure_signals": [
+    "Insurer and provider each blame the other and neither will act.",
+    "Reprocess denied and operator has not authorized escalation to formal appeal.",
+    "Appeal deadlines passed before dispute could be filed.",
+    "Provider has already sent to collections — separate skill required (collections dispute)."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: dispute filed, owner, reference number, action committed, ETA, collections hold (if applicable), and the operator's next step (typically: wait for written resolution).",
+    "on_failure": "Politely close. Report the impasse and present escalation options to operator: formal internal appeal, external review, state insurance commissioner complaint, or pay-under-protest.",
+    "follow_ups": [
+      "Set a reminder for the resolution ETA + 3 days.",
+      "If formal appeal filed, calendar the deadline.",
+      "Keep all EOBs, bills, and call notes in a single thread for the operator's records."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name, DOB (read-only), insurance plan + member ID + group (read-only)",
+    "EOB: claim number, date of service, billing provider + NPI, CPT/HCPCS, ICD-10, billed/allowed/paid amounts, member responsibility, denial reason codes",
+    "Operator's plain-language description of what happened at the visit",
+    "Whether provider's bill has been received and the bill date",
+    "Whether prior auth was obtained for the service",
+    "Operator's authorization to escalate to formal appeal if needed"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

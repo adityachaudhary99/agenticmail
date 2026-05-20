@@ -1,0 +1,124 @@
+{
+  "id": "voter-registration-and-ballot",
+  "name": "Voter Registration, Mail-In / Absentee Ballot, or Polling-Place Lookup",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "voter-registration",
+    "absentee-ballot",
+    "mail-in-ballot",
+    "polling-place",
+    "elections",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call a county elections office or state Secretary of State elections division to register to vote, update voter registration (address / name / party), request or track a mail-in / absentee ballot, find a polling place, or resolve a registration-status problem before a deadline.",
+  "disclaimer": "Strictly nonpartisan. The agent will not recommend candidates, parties, or how to vote. The agent will not engage with claims about election fraud — for substantive election-integrity concerns, refer the user to their state Attorney General, the EAC, or the Cybersecurity & Infrastructure Security Agency (CISA). The agent is a procedural helper only.",
+  "context": {
+    "when_to_use": "User has moved and needs to update registration. User has never registered and needs to do so before a deadline. User needs an absentee/mail-in ballot for an upcoming election. User received a ballot but with errors (wrong name, wrong precinct). User cannot locate their polling place. User checked their registration status and shows 'inactive' or 'not found'.",
+    "preconditions": [
+      "Current legal name and DOB.",
+      "Current residential address (the ballot follows the address).",
+      "Driver's-license number or last 4 of SSN (one is usually required to register).",
+      "Prior registration address (if updating).",
+      "Election date in question.",
+      "Awareness of the registration deadline (often 15–30 days before election; same-day registration available in some states)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Election deadlines are unforgiving. Registration deadlines, ballot-request deadlines, and ballot-return deadlines (postmarked-by vs received-by) all differ. Capture the correct deadline + channel before any other negotiation.",
+    "The single source of truth for state-level rules is the Secretary of State (or equivalent) website. For county-level questions (polling place, ballot drop-box, election worker), the county elections office wins.",
+    "Online registration is faster than calling in most states (vote.gov links each state). Use the phone call only when online has failed or is unavailable.",
+    "Mail-in / absentee ballots have signature verification — the signature must match what's on file. Coach the user to sign as they signed on the registration / DMV record.",
+    "Be strictly nonpartisan. No candidate or party preferences. No characterizations of policy. The agent's job is to make sure the vote can be cast — not influence it."
+  ],
+  "phrases": {
+    "opener_register": "Hi, I'd like to [register to vote / update my registration]. My name is [NAME], DOB [DATE], residential address [ADDRESS]. Can we do that by phone today, or do I need the online form / mail-in registration card?",
+    "opener_ballot_request": "Hi, I'd like to request a mail-in / absentee ballot for the [DATE] election. My voter ID is [ID] (if known), or my registration is under [NAME / ADDRESS]. What's your process and the request deadline?",
+    "opener_ballot_track": "Hi, I requested a mail-in ballot on [DATE] but haven't received it. Can you check the status, and if it's been mailed, what's the next step if it doesn't arrive?",
+    "opener_polling_place": "Hi, I'm looking for my polling place for the [DATE] election. My registered address is [ADDRESS]. Can you confirm the polling location, hours, and any ID I need to bring?",
+    "opener_registration_issue": "Hi, I checked my voter-registration status and it shows [inactive / not found / wrong precinct]. The registration is under [NAME / DOB / ADDRESS]. Can we figure out what happened and fix it before [DEADLINE]?",
+    "ask_deadline": "Could you confirm the EXACT registration / ballot-request / ballot-return deadline, and whether 'by' means postmarked-by or received-by?",
+    "ask_id_requirement": "What ID will I need at the polling place (or to validate my mail-in ballot)?",
+    "graceful_close": "Thank you. Can I confirm: the action taken, my registration status, the polling place / drop-box address, the next deadline, and the confirmation number — and your name / ID?"
+  },
+  "tactics": [
+    {
+      "name": "Confirm the deadlines FIRST",
+      "when": "Any election-related call.",
+      "script": "Registration deadline, ballot-request deadline, ballot-return deadline (postmarked-by vs received-by), in-person voting hours. Write each down with the date and channel. Deadlines drive everything else.",
+      "priority": 1
+    },
+    {
+      "name": "Use online registration when possible",
+      "when": "Most states.",
+      "script": "vote.gov links each state's online portal. Online is faster and gives an instant confirmation. Use the phone call to resolve issues, not to perform what the portal can do in 5 minutes.",
+      "priority": 2
+    },
+    {
+      "name": "Diagnose 'inactive' / 'not found' status",
+      "when": "Registration lookup fails.",
+      "script": "Common causes: address change without update (NCOA purge), name change (marriage), recent move from another state, identity-match failure with DMV database. Each has a different fix. Get the rep to tell you which.",
+      "priority": 3
+    },
+    {
+      "name": "Use ballot-tracking if available",
+      "when": "Mail-in ballot in flight.",
+      "script": "Many states offer BallotTrax / ballot tracking. Confirm the user is enrolled — if the ballot is 'returned to sender', it must be re-requested before the deadline.",
+      "priority": 4
+    },
+    {
+      "name": "Have a backup plan: in-person voting",
+      "when": "Mail-in ballot in doubt.",
+      "script": "If the mail-in ballot hasn't arrived close to election day, ask about in-person voting options: surrender the unreceived mail ballot, vote provisionally, use early voting, or vote in person on Election Day. Each state's rules differ — get the specific path."
+    }
+  ],
+  "boundaries": [
+    "Do NOT recommend candidates, parties, or ballot measures.",
+    "Do NOT characterize policy positions or election outcomes.",
+    "Do NOT engage with election-fraud conspiracy claims — refer to the state AG, EAC, or CISA.",
+    "Do NOT share the user's SSN or DL with anyone who hasn't authenticated as the elections office (call outbound to the official number).",
+    "Do NOT register the user under an address they don't actually reside at — that's a felony in most states."
+  ],
+  "success_signals": [
+    "Registration confirmed active with the correct address.",
+    "Mail-in ballot request received and confirmed with an expected mailing date.",
+    "Polling place, hours, and ID requirements captured.",
+    "Inactive / mismatched registration is reactivated or corrected before deadline.",
+    "Ballot-tracking enrollment confirmed."
+  ],
+  "failure_signals": [
+    "Deadline has passed for the requested action — pivot to in-person voting or next-election registration.",
+    "Rep cannot find registration despite multiple lookups — try by DL last 4, by DOB, by prior address; if still nothing, file new registration immediately if within deadline.",
+    "Wait > 30 minutes near an election — call the state Secretary of State helpline (often staffed extra hours).",
+    "Inbound caller claiming elections office asking for sensitive data — possible voter-suppression scam; hang up and call back outbound."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: registration status, voter ID, polling place / drop-box address, deadlines, ID requirements, confirmation number, agent name/ID. Calendar each deadline with reminders 7 days, 2 days, and morning-of.",
+    "on_failure": "Capture next step: in-person voting plan, provisional ballot procedure, next election registration window. Provide the user the state Secretary of State election protection number (often 1-866-OUR-VOTE for nonpartisan election protection).",
+    "follow_ups": [
+      "Calendar ballot-arrival check; if not received by N days before election, escalate.",
+      "Calendar ballot-return method (drop-box vs mail vs in-person); confirm signature matches DMV.",
+      "Confirm ballot received and counted via ballot-tracker.",
+      "If polling-place vote: confirm correct precinct and ID readiness morning-of."
+    ]
+  },
+  "required_user_info": [
+    "Current legal name and DOB",
+    "Current residential address (and mailing address if different)",
+    "Driver's-license number or last 4 of SSN",
+    "Prior registration address (if updating)",
+    "Election date in question",
+    "Party preference (only if registering in a closed-primary state — purely procedural, not advisory)",
+    "Whether the user has any disability / language-access accommodation needs"
+  ],
+  "hang_up_and_call_back_signals": [
+    "Inbound call claiming elections office asking for sensitive data or telling the user the election was moved — voter-suppression scam; hang up and call the state Secretary of State.",
+    "Rep is reading from a script that conflicts with the state's published election rules — verify on the SOS website before acting.",
+    "Wait > 30 minutes near an election — try the SOS state-level helpline; counties are overwhelmed near deadlines.",
+    "User is being asked to register at a non-residential address — refuse and clarify the legal residential-address rule."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

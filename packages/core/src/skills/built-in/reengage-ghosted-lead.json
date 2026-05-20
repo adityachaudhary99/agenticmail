@@ -1,0 +1,115 @@
+{
+  "id": "reengage-ghosted-lead",
+  "name": "Re-engage a Lead Who Ghosted After First Contact",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "follow-up",
+    "ghosted",
+    "pipeline-rescue",
+    "phone-call",
+    "respect",
+    "outreach-sales"
+  ],
+  "description": "Call back a prospect who showed real interest in a first conversation and then stopped responding. The goal is to surface a clean answer — yes, no, or 'not now and here's why' — without nagging.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "Prospect had a real first conversation, agreed to a next step (or implied one), and has not responded to 2+ subsequent emails or calls over 2-3 weeks. The operator wants closure — not necessarily a deal.",
+    "preconditions": [
+      "Agent has the prospect's prior commitment in writing (exact wording).",
+      "At least one written follow-up has gone unanswered.",
+      "Enough time has passed that this isn't 'they're just busy this week'.",
+      "Operator has explicitly authorised one more phone attempt."
+    ],
+    "estimated_call_duration_minutes": 4
+  },
+  "principles": [
+    "Ghosting is almost always about THEM, not you. Internal priorities shifted, a champion left, budget moved. Don't take it personally and don't write angry.",
+    "The goal is a clean signal, not a save. A clear 'no' is a better outcome than another month of false hope.",
+    "Make it easy to say no. Permission to say no is the move that most reliably gets a yes from people who actually want to engage.",
+    "Reference the prior conversation specifically — vague follow-ups read as templates.",
+    "One call, one voicemail, one written follow-up. Then stop and shelf the lead. That cadence reads as professional; anything more reads as desperate."
+  ],
+  "phrases": {
+    "live_opener": "Hey [first name], it's [agent name] from [operator]'s side. I know we'd talked about [specific thing] back in [month] and then I went quiet on my end too — wanted to find out if [the thing] is still on your radar or if priorities shifted.",
+    "permission_to_say_no": "And honestly, the answer 'it's not happening' is totally fine — I'd rather know than keep sending you emails into the void.",
+    "voicemail_version": "Hey [first name], [agent name] following up on the [specific thing] we discussed in [month]. No pressure either way — really just want a clean answer on whether to keep this on the radar or close it out. My number is [number]. Reply by email or call back, either's fine. Talk soon.",
+    "soft_diagnostic": "Was it the [specific thing] that became a problem, or did something change on your side that I should know about?",
+    "graceful_close_yes": "Great — let me put one specific thing on the calendar so it doesn't drift again. [Specific time]?",
+    "graceful_close_no": "Totally fair. Appreciate you saying so straight. I'll close this out on my side. If anything changes in [reasonable window], my number is the same."
+  },
+  "tactics": [
+    {
+      "name": "Reference the exact prior commitment",
+      "when": "Opening sentence.",
+      "script": "Use `live_opener`. Quote what they said or what was agreed. Specificity says 'this is YOUR follow-up, not a templated one'.",
+      "priority": 1
+    },
+    {
+      "name": "Take partial blame, even if it's not yours",
+      "when": "Right after the opener.",
+      "script": "Phrases like 'I went quiet on my end too' or 'I should have followed up sooner' remove the shame from the prospect's side. People respond when they don't have to apologise.",
+      "priority": 2
+    },
+    {
+      "name": "Explicitly grant permission to say no",
+      "when": "Within the first 30 seconds.",
+      "script": "Use `permission_to_say_no`. This is THE move on a re-engagement call. It dramatically increases honest responses, including 'yes, let's keep going'.",
+      "priority": 3
+    },
+    {
+      "name": "Ask one diagnostic question — gently",
+      "when": "If they engage but seem uncertain.",
+      "script": "Use `soft_diagnostic`. If you learn 'champion left' or 'budget moved to Q3', that's gold for the operator's CRM regardless of this deal.",
+      "priority": 4
+    },
+    {
+      "name": "Close one way or the other on this call",
+      "when": "Conversation has wound down.",
+      "script": "Use either `graceful_close_yes` or `graceful_close_no`. Do not end on 'I'll send you something next week' — that's how you got here.",
+      "priority": 5
+    },
+    {
+      "name": "One-and-done cadence",
+      "when": "After this call, regardless of result.",
+      "script": "If they engage: one written follow-up with the specific next step. If they don't pick up: one voicemail using `voicemail_version`, then one written follow-up 3-5 business days later, then stop."
+    }
+  ],
+  "boundaries": [
+    "Do NOT guilt-trip ('I haven't heard from you in a while', 'just wanted to bump this for the third time').",
+    "Do NOT use fake urgency ('this offer expires', 'last chance').",
+    "Do NOT loop in their boss or escalate up the org without operator authorisation.",
+    "Do NOT pretend you happened to be calling about something else.",
+    "Do NOT exceed three total touches across all channels in the re-engagement cycle.",
+    "Do NOT re-attempt sooner than 90 days after a clean 'no' or after the close-out window expires."
+  ],
+  "success_signals": [
+    "Prospect picks up and gives a clear answer (yes or no).",
+    "Prospect explains what changed — even if the answer is no.",
+    "Prospect proposes a future window ('let me come back to you in Q3').",
+    "Prospect re-engages around a different problem the operator can help with."
+  ],
+  "failure_signals": [
+    "No pickup, no voicemail returned, no email response within 7 business days.",
+    "Prospect responds with 'sorry, I'll get back to you' and disappears again.",
+    "Prospect routes to a generic inbox / different person — the original champion is gone."
+  ],
+  "exit_strategy": {
+    "on_success": "If yes: schedule one concrete next step before ending the call, and send the invite within the hour. If no: thank them, close the loop, and update CRM with the reason.",
+    "on_failure": "After voicemail + written follow-up with no response, mark the lead as 'shelved — no further outreach for 90 days' and notify the operator.",
+    "follow_ups": [
+      "Update CRM with outcome and exact prospect quote about why (or 'no response after 3 touches').",
+      "If a future-window date was named, calendar a re-engagement attempt for that window.",
+      "If a champion-departure was discovered, route to research-the-replacement before any further outreach."
+    ]
+  },
+  "required_user_info": [
+    "Exact wording of the prospect's last commitment or last message",
+    "Dates and channels of all prior follow-up attempts",
+    "Operator's explicit authorisation for this re-engagement attempt",
+    "The 'shelved' policy: how long before another attempt is allowed",
+    "Whether the operator wants a postmortem on lost leads regardless of outcome"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

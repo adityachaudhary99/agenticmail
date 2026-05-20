@@ -1,0 +1,161 @@
+{
+  "id": "when-to-stop-being-polite",
+  "name": "When to Stop Being Polite — and What That Actually Looks Like",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adversarial-robustness",
+    "escalation",
+    "phone-call",
+    "boundary-setting",
+    "critical-reasoning"
+  ],
+  "description": "99% of calls succeed with patience, warmth, and curiosity. A small minority require a hard pivot: firm refusal, named consequences, regulatory escalation language, or immediate disengagement. This skill defines the narrow triggers for that pivot, and what 'no longer polite' looks like in practice — which is NOT rude, hostile, or threatening, but is deliberately formal, citing-rights, and unambiguous about non-cooperation.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "ONLY when a clearly bright-line condition is met (see triggers). Default posture remains warm and collaborative — this skill is the exception, not the rule.",
+    "preconditions": [
+      "Agent has confirmed at least one trigger condition with a specific recent example, not a vague sense.",
+      "Agent has authority from the user to formally escalate, lodge complaints, or disengage.",
+      "Agent has the user's relevant rights / protections clear (jurisdiction, regulator, statute if known)."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Politeness is leverage. You spend politeness when you've truly run out of other options — not when you're frustrated.",
+    "'Stopping being polite' does not mean becoming rude. It means becoming FORMAL — citing rights, naming consequences, declining to play within the framing the rep is using.",
+    "Hostility is never useful. Anger is never useful. Naming a specific regulator, requesting a specific form, or invoking a specific right IS useful.",
+    "Triggers must be SPECIFIC: a concrete observable behaviour, not a feeling. 'They were rude' is not a trigger; 'They lied about a written policy I have in hand' is.",
+    "Once you escalate formally, you cannot un-escalate cheaply. Make sure you mean it.",
+    "Even in the formal mode, leave the rep an off-ramp. People who feel cornered escalate; people who see a graceful exit comply."
+  ],
+  "phrases": {
+    "name_the_trigger": "I want to flag something. You just said [X], and the written [bill/contract/email] in front of me says [Y]. That gap is significant.",
+    "request_formal_record": "I'd like this conversation noted formally in the account record. Could you confirm a note has been added with [specific summary]?",
+    "decline_to_proceed": "Given that, I don't want to continue on this call. I'd like a supervisor, or I'll end the call and take this through [written / regulatory] channels.",
+    "regulatory_invocation": "If we can't resolve this here, my next step is to file a complaint with [CFPB / state insurance commissioner / FCC / state AG / FTC]. I'd rather not — could we try one more path first?",
+    "rights_invocation_billing": "Under [FCBA / FCRA / state statute], I'm formally disputing this charge. Please log the dispute, hold collection activity, and send confirmation in writing.",
+    "rights_invocation_debt": "If this is a debt-collection call, I'm asking under the FDCPA that you cease contacting me by phone and communicate only in writing.",
+    "hard_disengage": "I'm going to end this call now. Thank you."
+  },
+  "tactics": [
+    {
+      "name": "Confirm a hard trigger, not a soft frustration",
+      "when": "Before pivoting out of the warm mode.",
+      "script": "Triggers: (a) caught lie about a written fact you have in hand; (b) rep refusing identity verification on inbound call that's asking for sensitive info; (c) threats from the rep ('we'll send to collections today unless...'); (d) refusal to escalate AND refusal to provide refusal-source; (e) extracting personal data not relevant to the stated purpose; (f) repeated refusal across two calls + one supervisor on a clearly bright-line right. Anything else: stay warm.",
+      "priority": 1
+    },
+    {
+      "name": "Shift to formal register without becoming hostile",
+      "when": "Trigger confirmed.",
+      "script": "Slow down. Speak more precisely. Use full sentences. Name the specific behaviour. Stop using filler words like 'sorry' and 'just'. Tone is still calm — the change is in the formality, not the volume.",
+      "priority": 2
+    },
+    {
+      "name": "Name the gap on the record",
+      "when": "After trigger confirmation.",
+      "script": "Use `name_the_trigger`. The point is to put the rep on notice that the conversation is now being treated formally, while still giving them a chance to correct.",
+      "priority": 3
+    },
+    {
+      "name": "Invoke the specific right or regulator",
+      "when": "Trigger involves a regulated industry.",
+      "script": "Use `rights_invocation_billing` / `rights_invocation_debt` / `regulatory_invocation`. Cite the SPECIFIC statute or agency that applies. Generic threats ('I'll report you') carry less weight than 'I will file an FCC complaint reference Title 47, Section X'.",
+      "priority": 4
+    },
+    {
+      "name": "Demand a formal account note",
+      "when": "Before disengaging or escalating.",
+      "script": "Use `request_formal_record`. Make sure the company's own record reflects the dispute. This is critical for any later legal or regulatory action."
+    },
+    {
+      "name": "Leave an off-ramp",
+      "when": "Even in the formal mode.",
+      "script": "Offer ONE more path: a supervisor, a written summary, a 24-hour pause. Reps who see a graceful resolution take it. Reps who are cornered double down."
+    },
+    {
+      "name": "Hard disengage if needed",
+      "when": "Rep escalates abuse, persists in clear violation, or you are no longer being heard.",
+      "script": "Use `hard_disengage`. Do not slam. Do not insult. End. Document. Take it to writing or regulator."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep is curt / unfriendly / having a bad day.",
+      "consider": [
+        "Bad day, no policy issue — stay polite, do not escalate. This is NOT a trigger.",
+        "Hostile but providing correct service — stay polite.",
+        "Hostile AND withholding service the user is entitled to — combination triggers, but the hostility is not the reason; the withholding is.",
+        "Mirror-induced — you are being curt and they are matching you."
+      ],
+      "next_action": "Reset your own warmth first. Most 'rude reps' soften when met with consistent calm."
+    },
+    {
+      "observation": "Rep states something you can verify in writing is false.",
+      "consider": [
+        "Rep is mistaken, not malicious — usually true. Surface gently first per `detect-lies-and-contradictions`.",
+        "Rep is improvising under pressure — same.",
+        "Rep is following a script known to misrepresent — material; escalate formally if it costs the user money.",
+        "Rep is deliberately deceiving — rare; treat as material if pattern is clear."
+      ],
+      "next_action": "Try `detect-lies-and-contradictions` first. Only formally escalate if (a) the misstatement is material AND (b) the rep refuses to correct after one clean opportunity."
+    },
+    {
+      "observation": "Rep threatens consequences ('we'll send this to collections', 'we'll terminate your service today').",
+      "consider": [
+        "Standard, lawful collections language — not a trigger by itself.",
+        "Premature threat — would violate billing dispute rules if a dispute is on file.",
+        "False urgency — see `resist-urgency-manipulation`.",
+        "Genuine final notice — verify against any written notices the user has.",
+        "Designed to extract immediate payment to circumvent normal dispute process."
+      ],
+      "next_action": "Calmly ask: 'When was the written notice sent and what does it say?' If under active billing dispute, invoke `rights_invocation_billing`."
+    },
+    {
+      "observation": "Your own emotional temperature is rising.",
+      "consider": [
+        "Trigger is real and your reaction is calibrated — proceed but keep volume down.",
+        "Trigger is real and your reaction is overcalibrated — pause; cool down before escalating.",
+        "Trigger is not real and you're frustrated — DO NOT escalate; you'll regret it.",
+        "Manipulation working in reverse — rep deliberately provoking you so they can label you 'difficult'."
+      ],
+      "next_action": "Take a 10-second silent beat. Confirm the trigger is observable, specific, and recent. If yes, proceed formally. If no, stay polite or end the call cleanly."
+    }
+  ],
+  "boundaries": [
+    "NEVER raise your voice, threaten the rep personally, or use profanity. Formality has more force than anger.",
+    "NEVER threaten to 'report' someone vaguely. Either cite a specific regulator or don't invoke escalation.",
+    "NEVER invoke statute language you don't understand — get it right or don't say it.",
+    "DO disengage rather than fight, when the call is no longer recoverable.",
+    "DO loop the user in immediately if the formal mode is entered — they should know their call has crossed a threshold."
+  ],
+  "success_signals": [
+    "Rep self-corrects after the gap is named.",
+    "Supervisor takes over and recovers the situation.",
+    "Formal note is added to the account.",
+    "Rep agrees to send a written summary acknowledging the dispute.",
+    "Threatened action (collections, termination) is paused while dispute is open."
+  ],
+  "failure_signals": [
+    "Rep doubles down on the contested behaviour.",
+    "Supervisor confirms the rep's position without acknowledging the cited right.",
+    "Rep refuses to add a formal note.",
+    "Call ends with no record of the dispute."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture the corrected outcome in writing. Confirm the formal note. Step back to a polite register if the rest of the call continues — formality is a tool, not a default.",
+    "on_failure": "End the call cleanly. Move to written channels: certified letter, regulatory complaint, executive customer service. Provide the user with a clear summary including (a) what was alleged, (b) what was said by the rep, (c) what right or rule applies, (d) recommended next channel.",
+    "follow_ups": [
+      "If regulator was invoked, follow through — empty threats train future reps to ignore the invocation.",
+      "Pull all evidence collected per `mid-call-evidence-collection` for any complaint filing."
+    ]
+  },
+  "required_user_info": [
+    "Jurisdiction and relevant regulators / statutes the user is willing to invoke.",
+    "Explicit authority to escalate formally on the user's behalf.",
+    "Any prior dispute filings, written notices, or contractual provisions that bear on the trigger."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:10:17Z"
+}

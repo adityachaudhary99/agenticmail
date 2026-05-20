@@ -1,0 +1,114 @@
+{
+  "id": "ask-for-in-person-meeting",
+  "name": "Ask for an In-Person Meeting on a Cold Call",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meeting-request",
+    "in-person",
+    "field-sales",
+    "phone-call",
+    "next-step",
+    "outreach-sales"
+  ],
+  "description": "On an outbound call where the conversation is going well, ask for a face-to-face (or video) meeting in a way that feels like a small, low-friction step rather than a commitment escalation.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "The agent has the prospect live on the phone, the call is warm enough that interest signals exist (questions, second-degree engagement, time spent), and the operator's standing offer includes in-person or face-to-face meetings.",
+    "preconditions": [
+      "Operator has authorised the agent to propose specific times / locations.",
+      "Operator has a clear preferred meeting format (coffee, office visit, on-site demo, video).",
+      "Agent has at least one specific compelling reason in-person beats another phone call.",
+      "Agent knows the operator's actual calendar availability — not vague openness."
+    ],
+    "estimated_call_duration_minutes": 3
+  },
+  "principles": [
+    "Make it small. 'A 20-minute coffee' lands; 'a meeting' feels heavy. Frame the smallest version of the ask that fits.",
+    "Make it concrete. 'How about Tuesday at 9?' beats 'when works for you?'. Specific options collapse decisions; open calendars create procrastination.",
+    "Make it asymmetric. The operator (or agent) should be the one travelling, fitting around the prospect's schedule — not the other way around.",
+    "Give a real reason in-person is better than a call. Without it, the ask sounds like an upsell of commitment.",
+    "Two specific times is the magic number. One feels like take-it-or-leave-it; three or more triggers paradox-of-choice."
+  ],
+  "phrases": {
+    "the_pivot": "Can I suggest something? Rather than going back and forth on this on the phone, [operator] is going to be in [their city / region] on [day] — would it be useful to grab 20 minutes face-to-face? It'd be easier than trying to walk through [the thing] over a call.",
+    "two_options": "I've got Tuesday morning around 9, or Thursday around 2 — would either of those work, or should I look further out?",
+    "low_friction_alt": "Or if in-person is tough, a 20-minute video call would do the same job — just lets us share a screen.",
+    "specific_value": "The reason I'm suggesting in-person — [operator] usually likes to [walk through X live / show the actual artefact / meet your team]. Things land better than on a call.",
+    "soft_close_on_yes": "Great — I'll send a calendar invite within the hour. Coffee shop near your office, or do you prefer we come to you?",
+    "graceful_no": "Totally understand. Want me to keep this on the phone, then? I can find another 20 minutes in your week and we can do it that way."
+  },
+  "tactics": [
+    {
+      "name": "Time the ask to a warmth peak",
+      "when": "Right after the prospect says something that shows real interest (a clarifying question, a 'we've actually been thinking about that').",
+      "script": "Use `the_pivot`. Asking when the conversation has heat is night-and-day vs. asking at the end as a generic 'so... next steps?'.",
+      "priority": 1
+    },
+    {
+      "name": "Lead with a reason in-person is better",
+      "when": "Immediately after the pivot.",
+      "script": "Use `specific_value`. If you don't have a real reason in-person beats a call, you don't actually need an in-person meeting — propose another phone call instead.",
+      "priority": 2
+    },
+    {
+      "name": "Offer exactly two times",
+      "when": "Once the prospect signals openness.",
+      "script": "Use `two_options`. Two narrows the decision to a yes/no/B; more times trigger calendar comparison and ghosting.",
+      "priority": 3
+    },
+    {
+      "name": "Travel toward them, not the other way",
+      "when": "Discussing location.",
+      "script": "Default to coming to their office or a coffee shop near them. Asking the prospect to travel signals you don't value their time enough.",
+      "priority": 4
+    },
+    {
+      "name": "Offer a graceful video alternative",
+      "when": "Prospect hesitates on logistics but seems open to a longer conversation.",
+      "script": "Use `low_friction_alt`. Video isn't a defeat — it's the same 'dedicated 20 minutes with screen-share' commitment.",
+      "priority": 5
+    },
+    {
+      "name": "Accept the no without re-asking",
+      "when": "Prospect declines.",
+      "script": "Use `graceful_no`. Pivot to another phone call or a written follow-up. Pushing twice for in-person on the same call is pressure, not persistence."
+    }
+  ],
+  "boundaries": [
+    "Do NOT propose times the operator hasn't actually held on the calendar.",
+    "Do NOT ask the prospect to travel a meaningful distance for a first meeting unless they offer.",
+    "Do NOT bring a larger party (e.g. 'I'll bring our CEO') without operator authorisation.",
+    "Do NOT use in-person to escalate pressure. If it would shift the dynamic to 'cornered', stick with phone or video.",
+    "Do NOT confirm an in-person without confirming the operator's actual availability — last-minute cancellations cost the relationship."
+  ],
+  "success_signals": [
+    "Prospect picks one of the two offered times.",
+    "Prospect counter-proposes a specific alternative day/time.",
+    "Prospect asks who else from operator's side will attend.",
+    "Prospect suggests their office or a specific venue."
+  ],
+  "failure_signals": [
+    "Prospect says 'send something over and we'll see' — they're declining without saying no.",
+    "Prospect mentions calendar opacity ('let me check with my assistant') and doesn't volunteer a follow-up time.",
+    "Prospect agrees but is clearly hesitant — risk of cancellation is high."
+  ],
+  "exit_strategy": {
+    "on_success": "Send the calendar invite within 60 minutes, including a one-line agenda and the operator's mobile number for day-of changes. Re-confirm 24 hours before the meeting via a single short message.",
+    "on_failure": "Switch the ask to a second phone call with two specific time options, or a written deliverable they can review at their own pace.",
+    "follow_ups": [
+      "Calendar invite with agenda + travel logistics within 60 minutes of the call.",
+      "Reminder ping the day before (one line, not a re-pitch).",
+      "Post-meeting recap email within 24 hours of the meeting."
+    ]
+  },
+  "required_user_info": [
+    "Operator's real calendar windows (not vague openness)",
+    "Operator's preferred meeting format and default location",
+    "One concrete reason in-person is better than a phone call for THIS prospect",
+    "Whether the operator will attend solo or with others",
+    "Travel limits (e.g. 'will fly within US east coast, not further this month')"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

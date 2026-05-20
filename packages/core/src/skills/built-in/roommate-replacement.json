@@ -1,0 +1,121 @@
+{
+  "id": "roommate-replacement",
+  "name": "Add or Replace a Roommate on the Lease",
+  "version": "1.0.0",
+  "category": "real-estate",
+  "tags": [
+    "roommate",
+    "lease",
+    "co-tenant",
+    "subletter",
+    "addendum",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the landlord or property manager — as the master-leaseholder — to request adding a new roommate, replacing a departing roommate, or formalising an existing informal subletter, while preserving the existing lease terms and the master-leaseholder's deposit posture.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "User is the named tenant on a lease and wants to: add a new roommate mid-lease, replace one roommate with another, or convert an informal arrangement into a written addendum. Use BEFORE the new roommate moves in — moving them in without permission can trigger lease violation and eviction.",
+    "preconditions": [
+      "User has the current lease and knows the clauses on additional occupants / sublet / assignment.",
+      "User has the prospective roommate's full legal name, contact info, and consent for a background / credit check.",
+      "User knows the current rent split arrangement and whether it changes when the roommate joins.",
+      "User has a clear ask: ADD (lease stays, new person added), REPLACE (old roommate off lease, new on), or FORMALISE (existing informal occupant added retroactively)."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Most leases let the landlord screen new occupants but cannot unreasonably withhold consent — know the lease language before the call.",
+    "Keep the existing lease terms intact. Landlords sometimes try to 'reset' the lease (raise rent, change duration) when a roommate change is requested. Push back: it's an addendum, not a new lease.",
+    "Get the new roommate added to the lease, not just verbally approved. Verbal approval doesn't bind the landlord and doesn't give the new occupant tenant rights.",
+    "Clarify deposit treatment up front. Adding a roommate sometimes requires additional deposit; replacing one shouldn't.",
+    "If a roommate is leaving and money is owed (rent, deposit), settle that BETWEEN roommates before involving the landlord. Landlords stay out of roommate-to-roommate accounting.",
+    "Background-check fees are normal; demand for excessive new deposit or a rent bump is not."
+  ],
+  "phrases": {
+    "opener_add": "Hi, I'm the named tenant at [unit, address]. I'd like to add a roommate to the lease — what's the process and timeline?",
+    "opener_replace": "Hi, one of my roommates is moving out at [date] and I'd like to replace them with a new co-tenant. What's the process for swapping them on the lease?",
+    "opener_formalize": "Hi, I have someone currently staying with me and I'd like to get them added to the lease formally. What does that look like?",
+    "ask_for_lease_continuity": "I want to make sure this is an addendum to my current lease — same rent, same end date — not a new lease. Can you confirm?",
+    "ask_about_screening": "What's the screening process for the new roommate? Application fee, credit, income requirements — what should they expect?",
+    "ask_about_deposit": "Will any additional deposit be required, and if so, who pays it and when?",
+    "push_back_on_terms_change": "I'd like to keep the current rent and lease end date as is — the addendum is just adding a person, not renegotiating. Is that workable?",
+    "ask_for_addendum_in_writing": "Once the screening is done, can you send the addendum by email so we can both review before signing?",
+    "graceful_close": "Thank you. Next steps: [roommate name] will submit [application/fee/documents] by [date], you'll send the addendum by [date], we sign by [date]. Anything else I should send?"
+  },
+  "tactics": [
+    {
+      "name": "Open with the specific ask",
+      "when": "First substantive turn.",
+      "script": "Use the matching opener — ADD, REPLACE, or FORMALIZE. Each has different downstream implications; the landlord needs to know which.",
+      "priority": 1
+    },
+    {
+      "name": "Anchor on lease continuity",
+      "when": "Right after the opener.",
+      "script": "Use `ask_for_lease_continuity`. Locks the conversation as an addendum, not a re-negotiation. This is the single most important defensive move.",
+      "priority": 2
+    },
+    {
+      "name": "Walk the screening process",
+      "when": "After continuity is confirmed.",
+      "script": "Use `ask_about_screening`. Get the application fee, the documents needed, the turnaround. Pass this to the prospective roommate before they apply.",
+      "priority": 3
+    },
+    {
+      "name": "Clarify deposit treatment",
+      "when": "After screening is covered.",
+      "script": "Use `ask_about_deposit`. ADD may require additional deposit; REPLACE generally shouldn't (it transfers liability). FORMALIZE is in between.",
+      "priority": 4
+    },
+    {
+      "name": "Push back on rent / term increases",
+      "when": "Landlord proposes a new rent or new lease term as a condition.",
+      "script": "Use `push_back_on_terms_change`. Adding a roommate is not a re-leasing event. If landlord insists on a new lease, escalate to `ask_operator` — that's a renegotiation, not an addendum.",
+      "priority": 5
+    },
+    {
+      "name": "Lock the addendum in writing",
+      "when": "Before ending the call.",
+      "script": "Use `ask_for_addendum_in_writing`. Do not consider the new roommate approved until the addendum is signed by all parties."
+    }
+  ],
+  "boundaries": [
+    "Do NOT move the new roommate in before the addendum is signed.",
+    "Do NOT agree to a higher rent or a longer lease as a condition of adding a roommate unless the user has explicitly authorised it.",
+    "Do NOT agree to release the departing roommate from rent liability without a signed substitution. The landlord controls release; one tenant cannot release another.",
+    "Do NOT share the prospective roommate's SSN, income, or background-check results on the phone — those go through the formal application channel.",
+    "Do NOT take on the prospective roommate's screening risk (e.g. agreeing to cover their share if they default) without operator review."
+  ],
+  "success_signals": [
+    "Landlord agrees to keep lease terms intact and process via addendum.",
+    "Clear screening process with a known fee and timeline.",
+    "Addendum will be sent by email for review before signing.",
+    "Replacement: departing roommate formally released on signature."
+  ],
+  "failure_signals": [
+    "Landlord insists on a brand-new lease at higher rent.",
+    "Landlord refuses to add anyone (check lease language — sometimes lawful, sometimes not).",
+    "Landlord demands additional deposit beyond normal screening fees with no documentation.",
+    "Landlord won't put the addendum in writing."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm screening process, addendum delivery date, sign-by date, and that lease terms are unchanged. Email the prospective roommate the application instructions.",
+    "on_failure": "Do NOT move the roommate in. If the landlord is unreasonable, review the lease's 'additional occupant' clause with a tenant attorney; in some jurisdictions consent cannot be unreasonably withheld.",
+    "follow_ups": [
+      "Send the prospective roommate the screening requirements.",
+      "Settle any roommate-to-roommate money (rent, shared deposit) BEFORE the addendum signature.",
+      "Calendar the addendum delivery date and the sign-by date.",
+      "After signing, confirm with the bank / utilities which accounts need a name change."
+    ]
+  },
+  "required_user_info": [
+    "Current lease and clauses on additional occupants / assignment / sublet",
+    "Specific ask: ADD, REPLACE, FORMALIZE",
+    "Prospective roommate's full legal name and contact info",
+    "If REPLACE: departing roommate's move-out date and any money owed between roommates",
+    "Whether the user is willing to take on additional deposit or to absorb the new roommate's risk"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

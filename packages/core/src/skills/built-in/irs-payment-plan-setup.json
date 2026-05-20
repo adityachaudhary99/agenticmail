@@ -1,0 +1,134 @@
+{
+  "id": "irs-payment-plan-setup",
+  "name": "IRS: Payment Plan, Identity Verification, Refund Status, or Transcript Request",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "irs",
+    "taxes",
+    "payment-plan",
+    "installment-agreement",
+    "identity-verification",
+    "refund",
+    "transcript",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call the IRS to set up an installment agreement, complete an identity-verification (5071C / 4883C / 5747C) call, check refund status when the online tool stalls, or order a tax transcript that can't be pulled through Get Transcript Online.",
+  "disclaimer": "Not legal or tax advice. The agent will not advise on filing positions, deductions, or how to structure transactions. For substantive tax planning, refer to a CPA or enrolled agent. Identity-verification calls require the actual taxpayer on the line — the agent should facilitate, not impersonate.",
+  "context": {
+    "when_to_use": "Online IRS tools failed or are unavailable; the user received a notice (CP14, CP504, LT11, 5071C, 4883C, etc.); the user owes a balance they can't pay in full; the user's refund is delayed > 21 days from e-file acceptance; a lender or court requires a transcript.",
+    "preconditions": [
+      "User has the most recent notice (with notice number and the IRS phone number printed on it) in hand.",
+      "User has their full name, SSN, prior-year filing status, prior-year AGI, and current address as filed.",
+      "User has a copy of the return year in question (or the closest available).",
+      "User has bank routing/account info IF setting up direct-debit installment agreement.",
+      "User is physically present and available to authenticate IF this is an identity-verification call (the IRS will require the taxpayer's voice and answers to personal questions)."
+    ],
+    "estimated_call_duration_minutes": 90
+  },
+  "principles": [
+    "IRS hold times average 30–90 minutes during tax season (Jan–Apr). Off-season (Jun–Dec) is faster. Tuesday–Thursday mornings (7–9am local IRS time) are the lightest.",
+    "ALWAYS use the phone number printed on the IRS notice — generic 1-800-829-1040 routes randomly. Notice-specific numbers (e.g. 1-800-830-5084 for identity verification) get you a specialised rep faster.",
+    "Identity-verification calls REQUIRE the taxpayer's voice. Do not attempt to impersonate the user — the IRS may flag the account and freeze the refund longer.",
+    "Installment-agreement options scale with balance: <$10k = simple, <$25k = streamlined, $25k–$50k = streamlined with direct-debit, >$50k = full financial disclosure (Form 433). Know which bucket the user is in before calling.",
+    "Get the agent's badge number ('IRS ID') at the start of every IRS call — they will give it if asked and it makes follow-up calls vastly faster.",
+    "The IRS will NEVER demand immediate payment by gift card, wire, or cryptocurrency. Any such ask = scam. Hang up immediately."
+  ],
+  "phrases": {
+    "opener_payment_plan": "Hi, I'd like to set up an installment agreement. I received notice [NOTICE NUMBER] dated [DATE] for tax year [YEAR] showing a balance of [AMOUNT]. I can afford about [MONTHLY AMOUNT] a month. Can we set that up today?",
+    "opener_identity_verification": "Hi, I'm calling about notice [5071C / 4883C / 5747C] dated [DATE]. I need to complete identity verification so my return can be processed. The notice control number is [CONTROL NUMBER]. The taxpayer is on the line.",
+    "opener_refund": "Hi, my refund for tax year [YEAR] is past the 21-day window — it's been [N] days since the IRS accepted my e-file. The Where's My Refund tool just says 'still processing'. Can you check the account?",
+    "opener_transcript": "Hi, I need a [Return / Account / Wage and Income / Record of Account] transcript for tax year [YEAR]. I tried Get Transcript Online but it [failed / I don't have a Login.gov / IRS account]. Can you order one to be mailed?",
+    "ask_agent_id": "Could I get your name and IRS badge number for my records?",
+    "stall_documents": "Give me one second — I want to pull the notice up in front of me so I read the numbers correctly.",
+    "scam_check": "Just to confirm — you're calling from [INBOUND? if inbound, hang up immediately and call the official notice number back]. The IRS does not initiate first contact by phone, so I want to verify we're on the official line.",
+    "graceful_close": "Thank you. Before we hang up, can I confirm: the agreement type, the monthly amount, the payment date each month, when the first payment hits, and any confirmation/case number? And your name and badge again, please."
+  },
+  "tactics": [
+    {
+      "name": "Use the notice-specific phone line",
+      "when": "Always, if the user has a notice.",
+      "script": "The phone number on the notice routes to the team that owns the issue — much faster than the general 1040 line.",
+      "priority": 1
+    },
+    {
+      "name": "Authenticate before describing the issue",
+      "when": "Once a human picks up.",
+      "script": "Be ready to provide: SSN, name, address as filed, filing status, prior-year AGI. The rep cannot discuss any account specifics until authentication is complete.",
+      "priority": 2
+    },
+    {
+      "name": "Choose the right installment-agreement tier",
+      "when": "Setting up a payment plan.",
+      "script": "Match user's balance to the right product: short-term (≤180 days), guaranteed (<$10k), streamlined (<$50k with direct debit), partial-pay (financial hardship, requires 433-F), or non-collectible status (true hardship, requires 433-F). Default to streamlined if it fits — minimal paperwork.",
+      "priority": 3
+    },
+    {
+      "name": "Handle identity verification by transferring to the user",
+      "when": "ID-verification call.",
+      "script": "Get to the right queue, complete preliminary pleasantries, then hand the phone to the user when the rep asks for taxpayer-only answers (SSN, prior-year AGI, knowledge-based-authentication questions). Do not answer those for the user.",
+      "priority": 4
+    },
+    {
+      "name": "On a stuck refund, ask the rep to check for review flags",
+      "when": "Refund delayed > 21 days.",
+      "script": "Common holds: PATH Act (EITC/ACTC), identity verification (CP05/5071C), math-error notice in transit, offset (Treasury Offset Program for child support / student loans), amended-return queue. Ask explicitly: 'Is there a review code or hold on this account?'",
+      "priority": 5
+    },
+    {
+      "name": "For transcripts, prefer mail or fax",
+      "when": "Transcript request.",
+      "script": "Phone reps can mail a transcript to the address of record (5–10 business days). They cannot email it. If urgent, route the user to Get Transcript by Mail or fax to a verified IRS-acceptable destination (lender's secure fax)."
+    }
+  ],
+  "boundaries": [
+    "Do NOT advise on tax positions, deductions, credits, or how to amend a return. Refer to a CPA or enrolled agent.",
+    "Do NOT impersonate the taxpayer for identity-verification questions.",
+    "Do NOT agree to a monthly payment amount the user has not authorized.",
+    "Do NOT provide the user's SSN or DOB to any inbound caller claiming to be the IRS — only use the IRS number on a verified notice, called outbound.",
+    "Do NOT promise a refund date — even the rep can only estimate.",
+    "Do NOT engage with anyone demanding payment by gift card, wire, or crypto — that is definitionally a scam."
+  ],
+  "success_signals": [
+    "Rep authenticates the account and discusses specifics.",
+    "Installment agreement is set up with a confirmation number and a defined first-payment date.",
+    "Identity verification completes ('Your return is now being processed; allow 6–9 weeks.').",
+    "Refund hold is identified and a clear next step provided.",
+    "Transcript is ordered with a tracking expectation (5–10 business days by mail)."
+  ],
+  "failure_signals": [
+    "User cannot authenticate (mismatched address / prior-year AGI) — refer to Get Transcript by Mail to recover prior AGI, then retry.",
+    "Balance exceeds streamlined threshold and user is unprepared to disclose financials (Form 433-F) — schedule a follow-up after they gather records.",
+    "Rep places call on hold > 5 times without progress — likely a wrong-team routing.",
+    "Inbound caller claims to be IRS and demands payment — that is a SCAM, end call immediately."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: agent name + badge, agreement terms (monthly amount, debit date, start date, account-balance snapshot), and confirmation / case number. Verbally repeat the terms back. Calendar each scheduled debit and a check-in 1 week before the first one.",
+    "on_failure": "Capture: which authentication element failed, which IRS team would own the next step, and any case number. Provide the user with the exact prep list for the callback (mortgage statement for address verification, prior-year return for AGI, etc.).",
+    "follow_ups": [
+      "Confirm the first installment debit cleared.",
+      "If transcript was ordered, calendar arrival in 10 business days; if not received, call back with the case number.",
+      "If identity verification completed, calendar 9 weeks out to check refund / processing status.",
+      "If notice CP14 / CP504 / LT11 was active, watch for the next notice and respond before the 30-day deadline."
+    ]
+  },
+  "required_user_info": [
+    "Most recent IRS notice (number, date, control number, phone number printed)",
+    "SSN, full legal name, current address as filed",
+    "Filing status and prior-year AGI",
+    "Tax year(s) in question",
+    "Balance owed and proposed monthly payment (for installment agreement)",
+    "Bank routing / account (for direct-debit IA)",
+    "Whether the user has a CPA / EA / attorney on file (Form 2848 POA, if any)"
+  ],
+  "hang_up_and_call_back_signals": [
+    "Inbound call claiming to be IRS — IRS first contact is by mail; hang up and dial the number on the notice.",
+    "Demand for gift cards, wire transfer, or crypto — scam; hang up.",
+    "Rep cannot authenticate after 2 attempts — gather prior-year AGI via Get Transcript by Mail and retry next business day.",
+    "Hold > 90 minutes during tax season — call back at 7:00am local IRS time the next business day.",
+    "User cannot stay on the line for identity verification — reschedule when the taxpayer can be present; do not impersonate."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

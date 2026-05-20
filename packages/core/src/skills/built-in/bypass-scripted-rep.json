@@ -1,0 +1,142 @@
+{
+  "id": "bypass-scripted-rep",
+  "name": "Recognise and Bypass a Scripted Rep",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adversarial-robustness",
+    "script-detection",
+    "phone-call",
+    "negotiation",
+    "critical-reasoning"
+  ],
+  "description": "Detect when the rep is reading from a script or a decision tree (versus exercising judgement), and bypass the script by asking out-of-flow questions that force them to either escalate, consult, or break frame.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call with a Tier-1 customer-service rep, especially retention, cancellation, billing disputes, and any flow with a known 'save offer' or 'objection-handling' tree. Also applies to inbound sales calls.",
+    "preconditions": [
+      "Agent has heard at least 30 seconds of the rep's intro to assess scripted-ness.",
+      "Agent has a clear ask the script will probably refuse.",
+      "Agent has authority to escalate or refuse if the script holds."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "A script is a tree of expected user inputs with pre-written responses. Off-tree inputs cause the rep to either freeze, escalate, or improvise — all three of which help you.",
+    "Tier-1 reps usually cannot deviate; tier-2/retention/loyalty reps usually can. The script's job is to keep you with tier-1.",
+    "You are not trying to trick or frustrate the rep — you are trying to give them an exit they're allowed to take.",
+    "If you can name the script back to them, you instantly become a different kind of caller — one they're flagged to escalate, not retain.",
+    "Specific, narrow, factual questions break scripts faster than philosophical ones."
+  ],
+  "phrases": {
+    "out_of_script_question": "Out of curiosity — what specifically would I need to qualify for the [X] rate? Not asking you to give it to me, just trying to understand the criteria.",
+    "name_the_script": "I appreciate the offers — I can tell you have a few standard ones. Can we skip ahead to what's available beyond the front-line menu?",
+    "ask_for_decision_authority": "Just so I know what to ask for — what's the most you're personally able to discount, and at what point would you have to loop someone in?",
+    "request_specific_team": "Could you transfer me to the [retention | loyalty | account specialist | supervisor] team? Front-line and they often have different toolsets.",
+    "polite_decline_offer": "I appreciate that offer, but it doesn't get me where I need to be. What else is available?",
+    "ask_for_unscripted_advice": "If you were me, what would you do here? Off the record — what does someone in my position usually do?"
+  },
+  "tactics": [
+    {
+      "name": "Listen for script tells in the first 60 seconds",
+      "when": "Rep's opening monologue.",
+      "script": "Tells: identical phrasing to the website's FAQ; over-rehearsed cadence; refusal to acknowledge specific account details before completing a verification preamble; reading off a list of canned 'value props'. Each tell raises the script-probability.",
+      "priority": 1
+    },
+    {
+      "name": "Fire one out-of-script question early",
+      "when": "After verification, before the rep launches their pitch.",
+      "script": "Use `out_of_script_question` or any narrow factual question they have to look up. If they pause, type, and consult — they were on a script. If they answer fluently — they're a human with judgement, treat them differently.",
+      "priority": 2
+    },
+    {
+      "name": "Refuse the first save offer politely",
+      "when": "Rep delivers their first scripted discount/credit/offer.",
+      "script": "Use `polite_decline_offer`. The first offer is almost never the best one — scripts ladder. The second and third tiers are usually behind a refusal.",
+      "priority": 3
+    },
+    {
+      "name": "Name the script back",
+      "when": "Rep is clearly still on tree, repeating value props.",
+      "script": "Use `name_the_script`. Tone: friendly co-conspirator, not adversary. You're letting them know you know — gives them permission to escalate.",
+      "priority": 4
+    },
+    {
+      "name": "Ask for decision authority explicitly",
+      "when": "You've exhausted what this rep can offer.",
+      "script": "Use `ask_for_decision_authority`. Forces an honest answer about their cap — and creates a natural handoff to whoever sits above the cap."
+    },
+    {
+      "name": "Pull the unscripted-advice card",
+      "when": "Rep is friendly but stuck.",
+      "script": "Use `ask_for_unscripted_advice`. Sometimes reps will tell you the off-script path ('honestly, you'd do better calling back tomorrow and asking for the loyalty team') because the script doesn't cover empathy."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep is using stilted, identical phrasing to the company's FAQ.",
+      "consider": [
+        "They are reading a script — most common.",
+        "They are new and over-prepared — they may break script if asked kindly.",
+        "The call is being monitored or recorded for quality, so they're sticking close to approved language.",
+        "It's actually an IVR-assisted human, and a system is feeding suggestions onto their screen."
+      ],
+      "next_action": "Ask a narrow factual question that isn't on any FAQ. Their reaction reveals which case it is."
+    },
+    {
+      "observation": "Rep refuses to deviate from the menu of offers.",
+      "consider": [
+        "They literally cannot — their tool has only those buttons.",
+        "They can, but you haven't given them justification to override.",
+        "They're protecting a metric — handle time, save rate, NPS.",
+        "You're talking to acquisitions when you should be talking to retention.",
+        "Their authority cap genuinely covers all reasonable cases and you're an outlier."
+      ],
+      "next_action": "Ask `ask_for_decision_authority` directly. The honest answer routes you correctly."
+    },
+    {
+      "observation": "Rep abruptly drops the script and becomes a normal human.",
+      "consider": [
+        "You found their off-ramp and earned a candid conversation — best case.",
+        "They are about to deliver bad news and need to soften it.",
+        "They've decided to push you off the call as 'not retainable' and don't need to perform anymore.",
+        "Supervisor walked away from their desk."
+      ],
+      "next_action": "Match the new register but stay on goal. This is often the moment real movement happens."
+    }
+  ],
+  "boundaries": [
+    "Do NOT mock the script or the rep. Naming it ≠ ridiculing it.",
+    "Do NOT impersonate a tier or claim a status the user doesn't have ('I'm a premium customer').",
+    "Do NOT try to get the rep fired or reported — bypassing the script means going around it, not punishing the human reading it.",
+    "Do NOT keep firing out-of-script questions after they've escalated you — switch into normal-collaborator mode with the new rep."
+  ],
+  "success_signals": [
+    "Rep voluntarily transfers you to retention/loyalty/supervisor.",
+    "Rep starts using phrases that aren't on the company website.",
+    "Rep types, pauses, says 'let me check on something'.",
+    "Offer escalates after a polite refusal."
+  ],
+  "failure_signals": [
+    "Rep loops back to the same three offers no matter what you say.",
+    "Rep ends the call abruptly or threatens to.",
+    "Rep refuses to name what authority they have.",
+    "Hold times balloon — sign they're hoping you'll drop off."
+  ],
+  "exit_strategy": {
+    "on_success": "Take the escalated conversation seriously — the new rep is real authority. Drop the bypass tactics and negotiate cleanly.",
+    "on_failure": "End politely. Try `reset-by-callback` to roll the dice on a different rep, ideally at a different time of day.",
+    "follow_ups": [
+      "Note the rep's script tells for the next call's notes.",
+      "If a specific team was promised but no transfer happened, note the rep's name and the promise."
+    ]
+  },
+  "required_user_info": [
+    "What the user actually wants (the real ask).",
+    "Whether the user has authority to wait through escalations and holds.",
+    "Account-tier facts the rep will need (don't fabricate them)."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

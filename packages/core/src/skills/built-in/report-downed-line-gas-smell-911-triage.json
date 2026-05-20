@@ -1,0 +1,130 @@
+{
+  "id": "report-downed-line-gas-smell-911-triage",
+  "name": "Report a Downed Line or Gas Smell — 911 vs. Utility Hotline Triage",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "utility",
+    "emergency",
+    "downed-line",
+    "gas-leak",
+    "911",
+    "safety",
+    "phone-call",
+    "utility-telecom"
+  ],
+  "description": "Decide in the first 30 seconds whether a downed power line, gas smell, or other utility hazard is a 911 call, a utility emergency-hotline call, or both — and place the call(s) in the right order with the right information so dispatch reaches the right team fast.",
+  "disclaimer": "This skill saves lives. Do NOT delegate the decision to an AI agent — if the user reports any safety hazard, the AI should immediately advise the user to leave the area and call 911 themselves. The skill below describes what to say WHEN the user (or the agent assisting them remotely) is making those calls. If in any doubt: 911 first, utility second.",
+  "context": {
+    "when_to_use": "Any of: a downed wire (whether or not sparking), a wire across a vehicle / fence / pool, a gas smell indoors or outdoors, a 'rotten egg' / mercaptan odor, a carbon-monoxide alarm sounding, visible flame from a meter or transformer, water main break flooding a structure, or any pole fire / transformer fire.",
+    "preconditions": [
+      "User is in a SAFE LOCATION before making non-emergency calls (away from the hazard, outdoors if gas, well clear if downed line).",
+      "Phone has cellular signal — if landline is the only option and there's a gas smell, leave the structure first and use a neighbor's phone or cell outside.",
+      "Knowledge of the precise address or nearest cross street.",
+      "Description of the hazard (what, where, how long present, any visible damage or victims)."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "SAFETY FIRST. Move to a safe location before any call. For gas smell indoors: leave the building, do NOT operate light switches, garage doors, or anything that sparks (including the phone — leave, then dial). For downed wire: assume it's energised, stay at least 35 feet (10m) away, keep others back, never approach a vehicle in contact with a wire.",
+    "911 IS THE DEFAULT for any hazard with immediate life-safety risk: visible flame, downed wire near people / vehicles / structures, gas leak inside a building, CO alarm with symptomatic occupants, sparking transformer near combustibles. 911 dispatches fire/EMS AND co-notifies the utility — they have direct lines.",
+    "UTILITY EMERGENCY HOTLINE is the right first call only for hazards with NO immediate life-safety risk: a downed wire in an isolated rural field with nobody near, a faint outdoor gas odor at a meter, water main break with no people in danger. When in doubt, 911.",
+    "If you call 911 FIRST, you do NOT also need to call the utility immediately — 911 dispatch will. But call the utility within 30-60 minutes to (a) confirm they got the notification and (b) get a ticket number for follow-up.",
+    "Recognise wrong-queue: the utility's general customer service line is NOT the emergency hotline. Utilities publish a separate gas-emergency number (often 1-800-something) — use that, not the billing line. If you accidentally land in general care, say 'I have an emergency — gas leak / downed line' and they will transfer you immediately. Stay on the line; do NOT hang up to redial.",
+    "Be CONCRETE on the call. Address, what you see, how many people are or may be in danger, whether anyone is hurt. Reps and 911 dispatchers parse keywords — 'downed wire across a car' triggers a different response than 'a wire on the ground'."
+  ],
+  "phrases": {
+    "opener_911": "This is an emergency. I'm reporting [a downed power line / a gas leak / a transformer fire / a CO alarm with symptoms] at [precise address or cross street]. [Number] people may be at risk. The hazard started [time]. Nobody is touching the wire / nobody is in the building / [status of victims].",
+    "opener_utility_hotline": "I'm reporting [the hazard] at [address]. Not an active life-safety emergency, but I want it reported and to get a crew dispatched. Started [time]. I'm calling from a safe distance.",
+    "opener_post_911": "Hi, I already called 911 — fire / police are on the way. I'm following up with the utility to make sure you also have a ticket. The hazard is [description] at [address]. Can you confirm the dispatch and give me a ticket number?",
+    "queue_check_emergency": "Quick — am I on the emergency / gas-emergency line, or general customer service? If general, I need to be transferred to emergency immediately — there's [hazard] at [address].",
+    "describe_hazard": "Specifically what I see: [wire down / wire arcing / wire on a vehicle / strong rotten-egg smell / flame at meter / CO alarm sounding / etc.]. Conditions: [raining / windy / vehicles passing / structures nearby]. People: [nobody nearby / N people sheltered at [location] / N people I cannot account for].",
+    "ask_eta": "What's the ETA for a crew? I want to keep people back — should I expect minutes or longer?",
+    "ask_evacuation_radius": "How far back should I keep people? I'm currently at about [distance]. Should I widen or evacuate any structures?",
+    "ask_ticket": "Can I get a ticket / incident number? I'll be onsite keeping people back until crews arrive.",
+    "graceful_close": "Understood — ticket [number], crew ETA [time], evacuation distance [feet/meters]. I'll stay clear and keep others back."
+  },
+  "tactics": [
+    {
+      "name": "Move to safety BEFORE calling",
+      "when": "Before any call.",
+      "script": "For gas leak indoors: exit the building, do not flip switches, do not use door openers — those can spark. For downed wire: back away to ≥35 feet (10m). For CO alarm: leave the structure, take occupants outside, count heads. THEN call.",
+      "priority": 1
+    },
+    {
+      "name": "Default to 911 for life-safety risk",
+      "when": "Downed wire near people / structures / vehicles, gas leak indoors, transformer fire near combustibles, CO alarm with symptoms, anything sparking.",
+      "script": "Use `opener_911`. 911 co-notifies the utility — do not delay to find the utility's number first.",
+      "priority": 2
+    },
+    {
+      "name": "Utility hotline first only for isolated, non-life-safety hazards",
+      "when": "Wire down in an isolated field with no road / no people, faint outdoor odor at a meter, water main break with no structures threatened.",
+      "script": "Use `opener_utility_hotline`. Use the dedicated emergency-hotline number, NOT general customer service.",
+      "priority": 3
+    },
+    {
+      "name": "If you landed in the wrong queue, transfer DON'T redial",
+      "when": "You hit general customer service with an emergency.",
+      "script": "Use `queue_check_emergency`. State the emergency explicitly — that triggers an immediate transfer to the gas-emergency / outage-dispatch queue without losing the call. Redialling loses 2-5 minutes.",
+      "priority": 4
+    },
+    {
+      "name": "Describe concretely",
+      "when": "First substantive turn with dispatch.",
+      "script": "Use `describe_hazard`. Dispatchers triage by keywords — specifics like 'wire across a vehicle with occupants' vs. 'wire on grass' produce different crew loadouts and priority.",
+      "priority": 5
+    },
+    {
+      "name": "Get ETA and evacuation radius",
+      "when": "Before ending the call.",
+      "script": "Use `ask_eta` and `ask_evacuation_radius`. The user (or someone with them) is the on-scene safety perimeter until crews arrive."
+    },
+    {
+      "name": "Close the loop with the utility after a 911 call",
+      "when": "Within 30-60 minutes of the 911 call.",
+      "script": "Use `opener_post_911`. Even though 911 co-notifies, calling the utility directly produces a customer-side ticket for follow-up, credit, and verification that the response actually dispatched."
+    }
+  ],
+  "boundaries": [
+    "Do NOT approach a downed wire to 'check if it's live'. Assume it is.",
+    "Do NOT approach a vehicle in contact with a wire — tell occupants to STAY INSIDE the vehicle and not touch metal until crews arrive. Stepping out can complete the circuit and kill them.",
+    "Do NOT operate light switches, doorbells, garage doors, thermostats, or anything electrical inside a building with a gas smell. Sparks ignite gas.",
+    "Do NOT silence a CO alarm and go back to sleep. Evacuate, count occupants, call 911 from outside.",
+    "Do NOT delay calling because you're 'not sure if it's bad enough'. Reporting a possible hazard is free; not reporting one is sometimes fatal.",
+    "Do NOT discuss billing, account, or credit on an emergency call. That's a separate call after the hazard is cleared.",
+    "AGENT-SPECIFIC: An AI agent should NEVER take this call on the user's behalf for an active safety emergency. The agent's role is to tell the user to leave the area and call 911, and to coordinate follow-up calls AFTER the immediate danger is past."
+  ],
+  "success_signals": [
+    "911 dispatch confirmed with crews en route, OR utility emergency hotline ticket issued with crew ETA.",
+    "Evacuation radius known and being maintained.",
+    "All occupants accounted for in a safe location.",
+    "Follow-up ticket number captured from the utility (separate from the 911 incident number)."
+  ],
+  "failure_signals": [
+    "Hold time on the utility emergency line exceeds 5 minutes for an active hazard — hang up and call 911 instead.",
+    "Rep on a general customer-service line tries to handle the emergency without transferring — escalate immediately or hang up and call 911.",
+    "No ETA can be given and the hazard is escalating (fire spreading, more wires falling, gas smell intensifying) — call 911 and evacuate further.",
+    "User cannot reach a safe location to call from — instruct them to leave the area on foot if needed and call from any nearby safe spot."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm dispatch is en route, maintain the safety perimeter, log incident/ticket numbers. Stay on-scene at a safe distance until crews arrive. After resolution, use `outage-credit-applied` for any service-interruption credit and `dispute-usage-spike-meter-reread` if billing is affected.",
+    "on_failure": "If the utility cannot respond or the hazard is worsening, call 911 (again if necessary). Do not re-enter the area. If property damage occurred, document with photos (from a safe distance) for insurance and any negligence claim.",
+    "follow_ups": [
+      "After hazard cleared: confirm the utility's incident report exists and is accurate.",
+      "If property damage / spoilage: file the consequential-damage claim with the utility (separate process from service credit).",
+      "If a downed wire damaged property OR a gas leak caused evacuation: notify homeowner / renter insurance promptly.",
+      "If household has powered medical equipment and outage exceeded the equipment's battery: file medical-baseline paperwork to flag the account for future outages."
+    ]
+  },
+  "required_user_info": [
+    "Precise address or nearest cross street",
+    "Description of the hazard and what is visible",
+    "Number of people potentially affected",
+    "Whether anyone is injured or trapped",
+    "User's current location relative to the hazard",
+    "Phone number for callback"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

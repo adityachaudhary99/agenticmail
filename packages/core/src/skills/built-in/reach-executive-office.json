@@ -1,0 +1,137 @@
+{
+  "id": "reach-executive-office",
+  "name": "Reach the Office of the CEO / Executive Escalations",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "executive",
+    "CEO",
+    "office-of-the-president",
+    "corporate",
+    "phone-call",
+    "letter",
+    "customer-support"
+  ],
+  "description": "Get your case in front of the company's executive escalations team — the people whose job is to make consumer headaches disappear before they become reputational or regulatory ones. Used at the right altitude, this is the most reliable single move in the escalator's kit.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Standard support, supervisor, and at least one other channel (email/social) have failed to resolve a substantive issue. Issue justifies the asymmetry — typically multi-hundred-dollar disputes, multi-week service problems, fraud allegations, or accessibility failures. NOT for $20 complaints or first-pass issues.",
+    "preconditions": [
+      "User has 7+ days of documented attempts via standard support.",
+      "User has the executive's name (CEO, COO, CFO, or Chief Customer Officer — found in company press releases, SEC filings, or LinkedIn).",
+      "User can produce a clean, factual one-page summary of the issue.",
+      "Issue has materiality — money, time, harm — that justifies the executive's team spending hours on it."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "The CEO does not personally read your email. But the CEO's office has a small team — sometimes called 'Executive Customer Relations', 'Office of the President', 'Executive Escalations' — whose job is to read exactly these emails and dispatch them to senior escalation specialists. That team is who you're actually trying to reach.",
+    "Address the executive by name, even though the team will read it. The personalization signals you did your research, which sorts your email out of the generic-complaint pile.",
+    "Format matters enormously at this altitude. One page max. Timeline as bullet points. Specific case numbers. Specific names + IDs of reps. ONE SENTENCE stating what resolution you want. Executives' assistants triage by skimmability.",
+    "Tone is critical. The executive team will reject anything that reads as a rant or a threat — those go to legal, where they are slow-walked. The team will engage with anything that reads as reasonable, documented, and proportionate. Aim for: 'a thoughtful customer who has tried hard and deserves a closer look.'",
+    "Decision point — am I asking for an executive override, or am I asking for a senior escalation team to look at the case? You almost always want the second. Overrides are rare and read as entitled; case reviews are common and read as reasonable.",
+    "Most companies' executive emails follow predictable patterns: firstname.lastname@company.com, firstinitiallastname@, firstname@. If you can't find it, the corporate switchboard's main number often connects you to a receptionist who will route you to the Office of the President.",
+    "The executive escalation team has authority a tier-1 supervisor doesn't dream of: refunds, account credits, expedited replacements, escalation to engineering, even legal settlement authority for small dollar amounts. They use that authority to make problems go away — which means it's available if you frame the case well."
+  ],
+  "phrases": {
+    "email_subject": "Customer escalation — [Account #] — [issue in 5 words] — unresolved after [N] contacts",
+    "email_opening": "Dear [Mr./Ms. Last Name],\n\nI'm writing as a [N]-year customer who has been unable to resolve [issue] through your standard support channels. I'm hopeful your team can take a closer look.\n\nBelow is a one-page summary. I'd appreciate any review your office is able to give it.",
+    "email_timeline_format": "Timeline:\n  • [date] — Phone call to support, rep [name + ID], case [#]. Outcome: [one line].\n  • [date] — Email to support address. Auto-reply only.\n  • [date] — DM to @[CompanyHelp]. No response.\n  • [date] — Second phone call, supervisor [name + ID], case [#]. Outcome: [one line].",
+    "email_ask": "What I'm requesting:\n  [ONE sentence. Specific. Modest. Example: 'A review of my account to refund the duplicate $189 charge from [date] and update my service.']",
+    "email_closing": "Thank you for your team's time. I'd welcome any follow-up at [phone] or [email].\n\nSincerely,\n[Full name]\n[Account number]",
+    "switchboard_request": "Hi — I'm trying to reach the Office of the President / Executive Customer Relations team. I have an escalation that I've been unable to resolve through standard support. Could you direct me to the right contact?",
+    "switchboard_followup": "Thank you. Could I have a direct extension or email for that office? I'd like to send a one-page summary in addition to leaving a message.",
+    "phone_intro_to_exec_team": "Hi — this is [name], calling about an unresolved escalation on account [number]. I emailed [executive name]'s office on [date] about [issue]. I wanted to confirm you received it and ask when I should expect a response.",
+    "polite_closing_pressure": "I want to be clear that I prefer to resolve this directly with your team. I have an open complaint draft for [regulator/BBB], but I'd much rather close it as resolved than file it. What's the best path forward?"
+  },
+  "tactics": [
+    {
+      "name": "Build the one-page summary first",
+      "when": "Before any executive contact.",
+      "script": "Draft the one-pager: account, issue (one paragraph), timeline (bullet list), ask (one sentence), closing. Write it, walk away for 30 minutes, re-read. Cut anything emotional. Cut anything irrelevant. The one-pager is your weapon — invest the time.",
+      "priority": 1
+    },
+    {
+      "name": "Find the executive name + email",
+      "when": "Before sending.",
+      "script": "LinkedIn search for the CEO, COO, or Chief Customer Officer of the company. Company press releases. SEC filings for public companies. Then guess the email pattern (firstname.lastname@, firstinitiallastname@) — many sites confirm patterns. Or call switchboard and ask: see `switchboard_request`.",
+      "priority": 2,
+      "decision_point": "If you cannot reliably find the executive's name + plausible email — DO NOT send to a guessed address that bounces. Use the published 'Executive Relations' or 'Office of the President' email instead, addressed to 'Executive Team'. A bounced email burns the first-strike advantage."
+    },
+    {
+      "name": "Send the email — with the right CCs",
+      "when": "Ready to fire.",
+      "script": "Send to the executive. CC: the company's main support email (creates an internal cross-link), and your own personal address (creates a sent-record). Do NOT CC multiple executives — looks scattershot.",
+      "priority": 3
+    },
+    {
+      "name": "Call switchboard 24-48h after email",
+      "when": "Email sent but no response yet.",
+      "script": "Use `switchboard_request`. The phone call signals you're serious enough to follow up — and the receptionist sometimes flags the email to the team. Don't be aggressive; be polite and informed.",
+      "priority": 4,
+      "decision_point": "If the receptionist says 'we don't transfer to that office' or 'you have to email them' — accept it gracefully and confirm you've already emailed. Don't fight the receptionist. They're not the gatekeeper you think they are."
+    },
+    {
+      "name": "Handle the executive team's callback",
+      "when": "They reach out.",
+      "script": "Use `phone_intro_to_exec_team` if you initiated; otherwise let them lead. Be calm, factual, brief. Restate the issue and the ask in two sentences. Let them ask questions. Treat them as allies — they almost certainly have authority to fix this, and they want a clean close.",
+      "priority": 5
+    },
+    {
+      "name": "Apply soft pressure if needed",
+      "when": "Executive team responds but lowballs or stalls.",
+      "script": "Use `polite_closing_pressure`. The mention of a 'draft complaint' is not a threat if it's true — you actually have a draft. The phrase 'I prefer to resolve this directly' reads as reasonable, not combative.",
+      "priority": 6,
+      "decision_point": "If the executive team is engaging in good faith — soft pressure stays soft. Don't escalate the tone unless they stall for >5 business days post-contact. Aggressive followup at this altitude burns the goodwill that got you the engagement."
+    },
+    {
+      "name": "Close cleanly when resolved",
+      "when": "Resolution offered.",
+      "script": "Confirm in writing: 'My understanding is that [resolution] will be processed by [date]. Could you confirm in reply? Thanks again for your team's help on this.' Get a case number from THIS contact (executive cases have their own numbering in most systems).",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT send the email to multiple executives in parallel — it looks scattershot and burns the personalization advantage.",
+    "Do NOT use the executive's personal/non-corporate email even if you find one. Corporate domain only.",
+    "Do NOT threaten or use language a lawyer would use (cease and desist, damages, etc.) — these get routed to legal, which slows everything down.",
+    "Do NOT exceed one page. Two-page complaints get tldr'd to summary by an assistant who may miss your key facts.",
+    "Do NOT name reps as 'incompetent' or 'rude' — describe what happened factually ('rep [name] said [exact quote]'). Let the executive team draw their own conclusions.",
+    "Do NOT escalate to the executive office for trivial issues. The team has long memory; you want them to take your next escalation seriously too.",
+    "Do NOT post the executive's email publicly on social media. It will get them spammed, the company will block your address, and you destroy the channel for everyone else."
+  ],
+  "success_signals": [
+    "Reply from an Executive Customer Relations / Office of the President team within 5 business days.",
+    "Reply names a single point-of-contact assigned to your case.",
+    "Phone call from someone with title like 'Senior Customer Advocate' or 'Executive Resolution Specialist'.",
+    "Resolution offered is at or near your stated ask (executives' teams usually meet you closer to your ask than tier-1 ever would).",
+    "Specific new case number generated, separate from prior support case numbers."
+  ],
+  "failure_signals": [
+    "Auto-reply 'we've received your email' followed by silence for >7 business days.",
+    "Email routed back to standard support queue (you'll see a tier-1 reply, not an executive team reply).",
+    "Phone callback from someone who reads from the standard support script — you got escalated to a 'fancy tier-1', not a real executive team.",
+    "Reply that's a blanket 'we stand by our original decision' with no analysis.",
+    "Engagement that goes silent after one good initial reply — sometimes a sign the team triaged your case as low-priority."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm resolution in writing, get the case number and the contact's direct line for any follow-up. Send a brief thank-you note within 48h of resolution executing — this preserves the relationship for any future issues.",
+    "on_failure": "If executive office stalls or refuses, you've nearly exhausted internal channels. Pivot to `invoke-regulator-firmly` (regulator complaint), small-claims court for clear dollar disputes, or attorney consultation for larger ones.",
+    "follow_ups": [
+      "Calendar a verification check for the date the executive team promised the resolution would take effect.",
+      "If the resolution involves multiple steps (refund + service change + apology letter), track each one separately.",
+      "Keep the executive contact's name + email in a personal log — companies sometimes change executive teams, but a good contact often refers you to their replacement.",
+      "If you filed a draft regulator complaint as part of the pressure — close it out or update it to reflect resolution. Honest updates preserve your credibility."
+    ]
+  },
+  "required_user_info": [
+    "Complete documented timeline",
+    "Account number + customer-tenure approximate years",
+    "Executive's full name + likely email pattern (or willingness to research)",
+    "Specific, modest, single-sentence ask",
+    "Materiality of the issue stated in concrete terms (dollar amount, days of service lost, etc.)"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

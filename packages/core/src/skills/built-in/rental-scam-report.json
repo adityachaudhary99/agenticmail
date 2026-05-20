@@ -1,0 +1,125 @@
+{
+  "id": "rental-scam-report",
+  "name": "Report and Protect Against a Rental or Tenant-Screening Scam",
+  "version": "1.0.0",
+  "category": "real-estate",
+  "tags": [
+    "scam",
+    "fraud",
+    "tenant-screening",
+    "rental-fraud",
+    "ftc",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the right institutions — listing platform, bank / payment provider, local police non-emergency, FTC and state attorney general consumer-fraud line — after a suspected rental or tenant-screening scam, to limit the financial damage, freeze fraudulent payments, and preserve evidence for recovery and prosecution.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination. Scam recovery is time-sensitive — payment reversals often have 24–72 hour windows.",
+  "context": {
+    "when_to_use": "User has either: (a) sent money / ID / sensitive documents to a 'landlord' or 'property manager' who now seems suspicious, (b) discovered a listing they applied to is a re-posted scam, (c) been pressured to pay before viewing and paid, (d) been charged repeated 'screening fees' on different listings that all turn out fake, or (e) suspects identity theft from a fake rental application. Time is critical — payment reversals depend on speed.",
+    "preconditions": [
+      "User can describe what was paid, when, by what method, and to whom.",
+      "User has saved copies of the listing, the messages with the scammer, and any documents sent.",
+      "User has access to their bank / card account / wire-transfer service.",
+      "User has NOT continued sending money or signing further documents."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Stop the bleed first. Before any reporting, lock the payment method (freeze card, halt wire, dispute transaction). Reporting waits — payment reversal does not.",
+    "Order matters: bank/card FIRST (fastest reversal window), platform SECOND (takedown + paper trail), police THIRD (case number for everything else), regulators FOURTH (FTC, state AG, IC3).",
+    "Wire transfers and gift-card payments are the hardest to reverse and are scammer favorites. Zelle / Cash App / Venmo to a stranger has very limited recovery. Credit cards have the strongest chargeback rights.",
+    "If ID, SSN, or full bank account info was shared, the user has an identity-theft exposure — that is its own track (credit freezes at all three bureaus, IRS PIN, IdentityTheft.gov report).",
+    "Do not contact the scammer to 'try to get it back.' That gives them another chance to extract money or threaten the user. Cut comms, route through institutions.",
+    "Save everything before any account is closed. Screenshot the listing, the messages, the email headers — once you report, platforms often delete the listing within hours."
+  ],
+  "phrases": {
+    "opener_bank": "Hi, I need to report a fraudulent transaction and request a chargeback / payment reversal. On [date], I sent [amount] via [method] to [recipient]. I now believe this was a rental scam. Can you freeze the recipient and start a dispute?",
+    "opener_platform": "Hi, I'm calling to report a fraudulent listing on your platform — listing [URL or ID]. I applied / paid based on the listing and the 'landlord' shows the hallmarks of a scam. Can you take the listing down and flag the account?",
+    "opener_police": "Hi, I'm calling the non-emergency line to file a report on a rental scam. I'd like a case number — I need it for my bank dispute and for the FTC.",
+    "opener_ftc": "Hi, I'd like to file a consumer-fraud report at reportfraud.ftc.gov / by phone. I have a rental scam — [one-sentence summary]. Police case number is [#].",
+    "ask_for_chargeback_window": "What's the deadline for filing this dispute, and what evidence do you need from me?",
+    "ask_for_freeze_recipient": "Can you flag the recipient account so other victims' funds aren't routed there?",
+    "ask_about_identity_exposure": "I also shared [ID document / SSN / bank info] with the scammer. What identity-theft protection should I activate immediately?",
+    "request_case_number": "Can I get a case / claim / report number for my records? I'll need it for cross-reporting to other agencies.",
+    "decline_scammer_contact": "I'm not going to contact the scammer directly — I'll let your team handle outreach. Re-engaging could compromise the investigation.",
+    "graceful_close": "Thank you. To confirm: case / dispute number [#], next step [action], expected resolution timeline [days]. I'll watch for your follow-up."
+  },
+  "tactics": [
+    {
+      "name": "Freeze the payment first",
+      "when": "Always step 1.",
+      "script": "Use `opener_bank`. Call the bank, card issuer, or wire service IMMEDIATELY. For wires especially, the recall window is often hours, not days. Don't make any other call until this one is in motion.",
+      "priority": 1
+    },
+    {
+      "name": "Take down the listing",
+      "when": "After payment is frozen.",
+      "script": "Use `opener_platform`. Get the listing removed and the scammer's account suspended so others aren't victimised. Save the listing URL / screenshots BEFORE it's taken down.",
+      "priority": 2
+    },
+    {
+      "name": "File a police report for the case number",
+      "when": "Same day if possible.",
+      "script": "Use `opener_police`. A case number unlocks bank disputes, FTC follow-up, and identity-theft remediation. Even if police won't actively investigate small-dollar scams, the case number itself is the unlock.",
+      "priority": 3
+    },
+    {
+      "name": "Activate identity-theft protections IF ID/SSN/bank info was shared",
+      "when": "Any sensitive personal data was sent to the scammer.",
+      "script": "Use `ask_about_identity_exposure`. Steps: credit freeze at all three bureaus, IdentityTheft.gov report, IRS Identity Protection PIN if SSN exposed, bank account number change if account routing was sent.",
+      "priority": 4
+    },
+    {
+      "name": "Cross-report to regulators",
+      "when": "After case number obtained.",
+      "script": "Use `opener_ftc`. Report to FTC (reportfraud.ftc.gov), state attorney general's consumer-fraud unit, and IC3 (ic3.gov) if any internet-based payment was involved. These don't get money back directly but feed the broader investigation.",
+      "priority": 5
+    },
+    {
+      "name": "Cut off the scammer",
+      "when": "Always.",
+      "script": "Use `decline_scammer_contact`. Block their phone, email, and platform accounts. Do not respond to threats or 'we'll work it out' messages — those are continuation-of-fraud attempts."
+    }
+  ],
+  "boundaries": [
+    "Do NOT contact the scammer to 'work it out' — every interaction risks more money or more personal information.",
+    "Do NOT pay any 'release fee,' 'tax,' or 'transfer fee' someone calls to demand on the recovery side — that's a recovery scam layered on the rental scam.",
+    "Do NOT share new account or card info on inbound calls claiming to be your bank fraud department — call back on the number from the back of the card.",
+    "Do NOT delete the original messages with the scammer — those are evidence. Screenshot first, archive, then block.",
+    "Do NOT post the scammer's contact info publicly — it can compromise active investigations and create defamation exposure if you have the wrong party."
+  ],
+  "success_signals": [
+    "Bank initiates chargeback or wire recall within the dispute window.",
+    "Listing taken down by the platform.",
+    "Police case number issued same day.",
+    "Credit freezes active at all three bureaus if ID was exposed.",
+    "FTC / state AG / IC3 reports filed and confirmation numbers captured."
+  ],
+  "failure_signals": [
+    "Payment method has no reversal option (gift cards, crypto, some peer-to-peer apps after holding period).",
+    "Platform claims they have no responsibility for off-platform payment (still report — the listing takedown matters).",
+    "Police refuse to issue a case number for a 'civil matter' — ask for a supervisor or file online if available.",
+    "Bank dispute denied due to authorised-payment carve-out — escalate to the bank's fraud-investigation team, file an FTC complaint, and consult a consumer-protection attorney."
+  ],
+  "exit_strategy": {
+    "on_success": "All four channels in motion: bank dispute filed, listing taken down, police case number, FTC / state AG / IC3 reports submitted. Identity-theft protections activated if applicable. Operator emails a recap with all case numbers.",
+    "on_failure": "Even when recovery fails, document everything for tax-loss purposes and to build the FTC case file that may eventually feed enforcement. Consider a consumer-protection attorney consult for amounts above $1,000.",
+    "follow_ups": [
+      "Save all messages, listing screenshots, payment receipts, ID copies sent, email headers — in a single folder, unedited.",
+      "Calendar a 7-day check-in on the bank dispute.",
+      "If ID was exposed: pull credit reports from all three bureaus at the 30-day mark and again at 90 days.",
+      "Tell trusted contacts the scammer may impersonate you (especially if email or social was compromised).",
+      "If applying to a new rental after the scam, use known-reputable platforms and never pay before viewing."
+    ]
+  },
+  "required_user_info": [
+    "What was paid: amount, date, method, recipient (account name / number / handle)",
+    "What was shared: ID documents, SSN, bank account, employer info",
+    "Listing platform, URL, and any saved screenshots",
+    "Communication record with the scammer (emails, texts, app messages)",
+    "Bank / card issuer name and account access ready",
+    "Whether the user has already contacted the scammer post-suspicion (and what was said)"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

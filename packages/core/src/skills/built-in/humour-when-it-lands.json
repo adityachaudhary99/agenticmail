@@ -1,0 +1,127 @@
+{
+  "id": "humour-when-it-lands",
+  "name": "When Humour Lands and When It Offends — The Rules",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "humour",
+    "rapport",
+    "tone",
+    "phone-call",
+    "risk",
+    "calibration",
+    "emotional-intelligence"
+  ],
+  "description": "Use humour on a call to build rapport, defuse tension, and become memorable in a good way — without landing on the wrong side of someone's day. The rules for when a joke is leverage and when it is a tax.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call where rapport meaningfully changes the outcome — retention lines, customer service with discretion, sales calls inbound, first-meeting introductions, doctors' offices, contractors. Skip entirely on calls with: emergency services, bereavement-adjacent contexts, formal legal proceedings, and any line where the rep is visibly stressed or rushed.",
+    "preconditions": [
+      "You have a baseline read of the rep's energy.",
+      "You are not the one who needs the humour — you are reading whether the other person would welcome it.",
+      "You have a way to recover if a joke lands badly."
+    ],
+    "estimated_call_duration_minutes": 0
+  },
+  "principles": [
+    "Humour is a SIDE EFFECT of warmth, not a tool to manufacture it. Trying to be funny is the fastest way to be unfunny.",
+    "Self-deprecating > situation-observational > everything else. Never punch at the rep, the company (to the rep), or anyone not present.",
+    "Wait for the invitation. The rep cracks the first joke, you echo gently. Going first is high-risk and almost never necessary.",
+    "Dry > broad. Subtle humour leaves the rep an exit ('was that a joke?') without forcing a laugh.",
+    "ONE joke per call segment. Repeated humour reads as audition.",
+    "If a joke misses, do not double down or explain it. Move on cleanly. Explaining a joke is the second-worst social move on a phone call.",
+    "Phone calls strip ~30% of comedic timing. What's funny in person is mid on a phone. Calibrate down."
+  ],
+  "phrases": {
+    "safe_self_deprecating": "I am NOT a morning-call kind of person, you've caught me on my second coffee — bear with me.",
+    "safe_situational": "Of course the form asks for that — it always asks for the one thing I don't have in front of me.",
+    "echo_their_joke_low_risk": "Ha — yeah, fair.",
+    "echo_their_joke_warm": "Okay, I needed that — thank you.",
+    "recover_after_miss": "Anyway — back to it.",
+    "decline_a_dark_joke": "Mm — okay. So, on [topic]…"
+  },
+  "tactics": [
+    {
+      "name": "Wait one full turn before any humour",
+      "when": "Always.",
+      "script": "Do not joke in the first 30 seconds. You haven't read the rep yet. Premature humour is the most common miss.",
+      "priority": 1
+    },
+    {
+      "name": "Tone-shift detector — REP CRACKS A JOKE",
+      "when": "Rep makes a self-deprecating remark, a dry observation, or a small absurd aside.",
+      "script": "Echo gently (`echo_their_joke_low_risk` or `echo_their_joke_warm`). Do NOT try to top them. Echoing reads as warmth; topping reads as competition.",
+      "priority": 2
+    },
+    {
+      "name": "Use situational over personal",
+      "when": "You feel a window for one light remark.",
+      "script": "Use `safe_situational`. Joking about the form, the hold music, the weather is low-risk. Joking about the rep's accent, name, mood, or company is high-risk.",
+      "priority": 3
+    },
+    {
+      "name": "Self-deprecating as the safest opening",
+      "when": "You need to break the ice and the rep is neutral.",
+      "script": "Use `safe_self_deprecating`. A joke at YOUR expense costs the rep nothing — they can laugh without complicity. Universal safe move.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — JOKE LANDED",
+      "when": "Rep audibly laughs, you hear a smile in their voice, they riff back.",
+      "script": "Do not press the advantage. Move to the task immediately. Humour bought you rapport — spending it on the goal is the play.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — JOKE MISSED",
+      "when": "Silence, a flat 'okay,' a return to script voice.",
+      "script": "Use `recover_after_miss`. Do NOT acknowledge the miss directly ('sorry, that was a bad one' makes it worse). Just keep moving. The rep will pretend it didn't happen if you do.",
+      "priority": 6
+    },
+    {
+      "name": "Tone-shift detector — REP GETS DARK",
+      "when": "Rep makes a joke that's racist, sexist, cruel, or about a serious topic.",
+      "script": "Do not laugh. Do not lecture. Use `decline_a_dark_joke` — a non-response and a hard pivot back to task. The non-laugh IS the response.",
+      "priority": 7
+    },
+    {
+      "name": "No callbacks late in the call",
+      "when": "After the first joke has been used.",
+      "script": "Resist the urge to callback the joke later. Repeated humour is auditioning. One joke per call segment is the ceiling."
+    }
+  ],
+  "boundaries": [
+    "Do NOT joke about: the rep's accent, name, perceived age/gender, location, or workload.",
+    "Do NOT joke about the operator's situation if it's sensitive (medical, legal, grief).",
+    "Do NOT use political, religious, or geopolitical humour. Ever. The downside cost dwarfs the upside.",
+    "Do NOT use sarcasm directed at the rep — even gentle sarcasm reads sharp on the phone.",
+    "Do NOT laugh at jokes that are racist, sexist, or otherwise cruel, even out of social reflex.",
+    "Do NOT use humour as deflection from a real question the rep asked."
+  ],
+  "success_signals": [
+    "Rep audibly laughs and the next sentence is more open.",
+    "Rep volunteers a story or aside they wouldn't have shared with a stiff caller.",
+    "Rep uses your name unprompted afterwards.",
+    "You feel slightly lighter and the rep does too — and the goal still landed."
+  ],
+  "failure_signals": [
+    "Silence after the joke.",
+    "Rep's tone gets MORE formal after the joke than before.",
+    "You explained the joke.",
+    "You used humour three times to deflect a real question."
+  ],
+  "exit_strategy": {
+    "on_success": "End the call with one warm beat (callback NOT recommended — a simple 'genuinely, thank you for being a good sport about all this' is enough).",
+    "on_failure": "If a joke offended, do not apologise extensively — one quiet 'sorry, that wasn't the right read' and back to task. Over-apologising amplifies the mistake.",
+    "follow_ups": [
+      "Self-debrief: what made the joke land or miss? Log it for future calls to the same line.",
+      "Note which industries / call types reward humour and which don't — pattern over time matters more than any single call."
+    ]
+  },
+  "required_user_info": [
+    "Any topics absolutely off-limits for the operator (personal sensitivities, ongoing situations).",
+    "The operator's preferred style — some want crisp business calls and would be uncomfortable with humour even when it would work.",
+    "Cultural context — humour translates very unevenly across languages and regions."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

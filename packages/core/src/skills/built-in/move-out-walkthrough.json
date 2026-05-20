@@ -1,0 +1,114 @@
+{
+  "id": "move-out-walkthrough",
+  "name": "Request and Document a Move-Out Walkthrough",
+  "version": "1.0.1",
+  "category": "real-estate",
+  "tags": [
+    "move-out",
+    "walkthrough",
+    "inspection",
+    "security-deposit",
+    "documentation",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the landlord or property manager to schedule a joint move-out walkthrough (also called a pre-move-out or final inspection) — and lock in the conditions, attendees, and documentation that protect the tenant's security deposit.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "User has given notice of move-out (or is about to). Ideally schedule the walkthrough 5–10 days BEFORE the actual move-out so the tenant has time to cure any issues the landlord flags. Some states (e.g. California) give the tenant a STATUTORY RIGHT to a pre-move-out inspection — ask the operator to check.",
+    "preconditions": [
+      "User has given written notice of move-out OR has a confirmed lease end date.",
+      "User has move-in photos / video (or the original move-in inspection sheet).",
+      "User has 2–3 windows of availability for the walkthrough.",
+      "User has reviewed the lease for any specific move-out clauses (carpet cleaning, hole patching, paint touch-up requirements)."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "A pre-move-out walkthrough is a tenant's strongest deposit-protection tool. Schedule it.",
+    "Have the walkthrough BEFORE you move your stuff out — the empty unit reveals more, but doing it 5–10 days early gives time to cure flagged issues.",
+    "Bring a written checklist and a camera. Photograph every flagged item with the landlord present, timestamped.",
+    "If the landlord won't do a joint walkthrough, do a SOLO walkthrough with timestamped photos / video of every wall, appliance, floor, fixture, and outlet — that record is admissible.",
+    "Get the landlord to sign or initial a walkthrough checklist if possible. If not, email a recap immediately.",
+    "Never accept verbal 'oh that's fine' assurances — those are the items that come back as deductions. Insist on written acknowledgment."
+  ],
+  "phrases": {
+    "opener": "Hi, my move-out is [date] and I'd like to schedule a pre-move-out walkthrough with you. In my jurisdiction tenants are generally entitled to one — and even where it's not required, it protects both of us. What times work in the next [5–10 days]?",
+    "confirm_purpose": "Just so we're aligned: the goal is to walk the unit together, identify anything you'd flag as damage so I can cure it before move-out, and agree on the move-in baseline. Sound good?",
+    "ask_who_attends": "Will it be you or another team member doing the walkthrough? Could I get their name?",
+    "ask_for_checklist": "Do you have a standard walkthrough form, or should I bring my own checklist?",
+    "ask_for_post_walkthrough_summary": "After the walkthrough can you email me a written list of anything you flagged, and what I'd need to do to cure it? I want to make sure we have the same record before move-out.",
+    "deflect_no_walkthrough": "No worries if it's not standard for you. I'll do a solo walkthrough with photos then — and I'll email the photos to you the same day so we have a shared record.",
+    "graceful_close": "Great — putting [day/time] in my calendar. I'll bring my move-in photos and a checklist. See you then."
+  },
+  "tactics": [
+    {
+      "name": "Open by naming the right and the timing",
+      "when": "First substantive turn.",
+      "script": "Use the `opener`. Naming the legal frame ('tenants are generally entitled') signals the tenant knows the process without being adversarial.",
+      "priority": 1
+    },
+    {
+      "name": "State the purpose explicitly",
+      "when": "After scheduling is initiated.",
+      "script": "Use `confirm_purpose`. Pre-naming the goal — cure flagged items, agree on baseline — prevents the walkthrough from devolving into a vague conversation.",
+      "priority": 2
+    },
+    {
+      "name": "Identify the attendee and ask for their checklist",
+      "when": "Once a window is selected.",
+      "script": "Use `ask_who_attends` and `ask_for_checklist`. Knowing the form in advance lets the tenant address items the landlord cares about.",
+      "priority": 3
+    },
+    {
+      "name": "Pre-arm the written summary",
+      "when": "Before ending the call.",
+      "script": "Use `ask_for_post_walkthrough_summary`. The post-walkthrough email is the document that wins (or prevents) the deposit dispute.",
+      "priority": 4
+    },
+    {
+      "name": "Fall back to solo walkthrough",
+      "when": "Landlord refuses to do a joint walkthrough.",
+      "script": "Use `deflect_no_walkthrough`. Then do a thorough solo walkthrough with timestamped photos and video and email a full set to the landlord same day with a written summary. The refusal itself helps the tenant's posture if disputed later."
+    }
+  ],
+  "boundaries": [
+    "Do NOT skip the walkthrough because the landlord seems friendly — friendly landlords change their mind when they see a contractor quote.",
+    "Do NOT sign any move-out condition document on the spot unless you've reviewed it. Take it home and review.",
+    "Do NOT agree to verbal-only assurances about what's 'fine.' Get every flagged item in writing.",
+    "Do NOT raise unrelated complaints (rent disputes, prior issues) during the walkthrough — it muddies the record.",
+    "Do NOT pay any move-out fees on the walkthrough call — those belong in the final accounting."
+  ],
+  "success_signals": [
+    "Joint walkthrough scheduled BEFORE move-out date.",
+    "Landlord agrees to send a written list of flagged items afterwards.",
+    "Landlord names the attendee and is willing to use a checklist.",
+    "Pre-move-out gives the tenant time to cure any flagged item before final."
+  ],
+  "failure_signals": [
+    "Landlord refuses any walkthrough.",
+    "Landlord schedules walkthrough only on move-out day (no time to cure).",
+    "Landlord refuses to send written summary.",
+    "Landlord insists on signed releases or waivers at the walkthrough."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm date, time, attendee name, and that a written summary will follow. Operator should email a recap within 1 hour confirming the appointment.",
+    "on_failure": "Plan and execute a solo walkthrough with full photo / video documentation. Email the landlord a same-day recap with photos attached, noting the request for a joint walkthrough was declined.",
+    "follow_ups": [
+      "Bring move-in photos / video to the walkthrough on phone or printed.",
+      "Bring a written checklist covering every room, appliance, wall, floor, fixture.",
+      "Take a new photo of every item the landlord flags WITH the landlord visible if possible.",
+      "Send a recap email within 24 hours summarising what was flagged and the cure plan.",
+      "Calendar a follow-up cure-by date if anything was flagged."
+    ]
+  },
+  "required_user_info": [
+    "Move-out date and notice date",
+    "Move-in photos / video / inspection sheet",
+    "Lease copy with any move-out clauses highlighted",
+    "Two or three pre-move-out walkthrough windows",
+    "Landlord name + property manager number"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

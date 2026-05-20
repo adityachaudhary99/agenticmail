@@ -1,0 +1,126 @@
+{
+  "id": "early-lease-termination",
+  "name": "Negotiate Early Lease Termination Without Penalty",
+  "version": "1.0.1",
+  "category": "real-estate",
+  "tags": [
+    "lease-break",
+    "early-termination",
+    "military",
+    "relocation",
+    "domestic-violence",
+    "habitability",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the landlord or property manager to negotiate an early lease termination using one of the statutory protections (military SCRA, domestic-violence, habitability) or, where no statute applies, to negotiate a buy-out — while preserving the tenant's legal posture and avoiding a deficiency judgment.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination. Statutory protections vary by jurisdiction.",
+  "context": {
+    "when_to_use": "User needs to break a lease before the end date. Best outcomes come from one of: (a) Servicemembers Civil Relief Act (SCRA) protections for military PCS / deployment, (b) state statutes for domestic violence or stalking, (c) habitability-based constructive eviction after documented failures, (d) job-relocation clauses already in the lease, or (e) negotiated buy-out where no statute applies. Each path has different evidence and notice requirements.",
+    "preconditions": [
+      "User has the lease and has identified any early-termination clauses.",
+      "User has identified which path applies (military, DV, habitability, relocation clause, plain buy-out).",
+      "User has gathered the supporting documentation appropriate to the path (PCS orders, protective order, habitability complaint case number, relocation letter).",
+      "User has a desired move-out date and a realistic flexibility window.",
+      "User understands that landlords can pursue a deficiency judgment for unpaid rent through the lease end date if the lease is broken without a protected path."
+    ],
+    "estimated_call_duration_minutes": 22
+  },
+  "principles": [
+    "Lead with the path, not the apology. If you have an SCRA-qualifying order or a habitability case number, name it early — the conversation shifts immediately.",
+    "Statutory paths are not negotiations — they're notices. The landlord can verify, but cannot legally refuse.",
+    "For non-statutory paths, frame the buy-out as the landlord's best alternative: market re-let cost, vacancy time, and turnover all factor in. A 1–2 month buy-out is often cheaper than a 4-month vacancy + listing fees.",
+    "Mitigation matters. In most jurisdictions, the landlord has a legal DUTY TO MITIGATE — they must try to re-rent the unit rather than just collect rent from the breaking tenant. Mention this if the landlord refuses to re-list.",
+    "Get the termination agreement in writing BEFORE moving out. A signed mutual-release is the document that prevents a deficiency claim from showing up months later.",
+    "NEVER accept a verbal-only release. Move-out without a signed release is the most common path to a surprise judgment 6–12 months later."
+  ],
+  "phrases": {
+    "opener_military": "Hi, I'm a tenant at [unit, address] and I'm calling to give notice under the Servicemembers Civil Relief Act. I've received [PCS / deployment / activation] orders effective [date]. I'll be sending you a copy of the orders and a written notice. The termination is effective 30 days after the next rent due date.",
+    "opener_dv": "Hi, I'm a tenant at [unit, address] and I need to terminate my lease early under [state] domestic-violence / stalking statute. I have [protective order / police report] documenting the qualifying circumstance. I'll send written notice and the supporting documents.",
+    "opener_habitability": "Hi, I'm calling about [unit, address]. Given the [habitability issues — case number / inspector report / repeated failure to repair], I'm exercising my right to terminate due to constructive eviction. I want to discuss how we wrap this up cleanly.",
+    "opener_relocation_clause": "Hi, I'm a tenant at [unit, address]. My lease includes a job-relocation clause — I've received an offer letter from [employer] requiring relocation to [city] by [date]. I'd like to invoke that clause.",
+    "opener_buyout": "Hi, I'm a tenant at [unit, address]. I need to move out before my lease ends, and I want to talk about a fair buy-out — no statute applies, I just need to leave. What does that look like?",
+    "ask_about_re_let_process": "How quickly can you re-list the unit? Your duty to mitigate means you'd be looking for a replacement tenant anyway — I'd rather we treat any month it's re-rented as ending my obligation.",
+    "propose_buyout": "I'm willing to pay [1–2 months] of rent as a clean buy-out, forfeit the deposit if needed, and help market the unit. In exchange I'd want a written mutual release effective [move-out date]. Does that work?",
+    "ask_for_mutual_release": "Before I move anything out, I need a signed mutual release stating that the lease is terminated effective [date], my deposit treatment is [terms], and neither party has further obligations. Can you send that for review?",
+    "decline_holdback": "I can't agree to leave the deposit as an open balance against future charges. The release needs to be final — full and final settlement.",
+    "graceful_close_resolved": "Thank you. To confirm: lease terminates [date], buy-out [amount] paid by [date], mutual release signed before move-out. I'll watch for the document.",
+    "graceful_close_unresolved": "Okay, sounds like we're stuck for today. I'm going to send you written notice and the supporting documentation by certified mail and email — that starts the clock on my end. Let's keep talking."
+  },
+  "tactics": [
+    {
+      "name": "Identify the path and lead with it",
+      "when": "First substantive turn.",
+      "script": "Use the matching opener. The path determines whether this is a notice (SCRA, DV, habitability, relocation clause) or a negotiation (buy-out). Mixing them weakens both.",
+      "priority": 1
+    },
+    {
+      "name": "Send written notice + documentation as the parallel act",
+      "when": "Always, regardless of how the call goes.",
+      "script": "Statutory paths require written notice. Have the operator send certified mail + email with the supporting docs the same day. Without written notice, no statute starts the clock.",
+      "priority": 2
+    },
+    {
+      "name": "Invoke the duty to mitigate",
+      "when": "Landlord threatens to hold you to the full lease term.",
+      "script": "Use `ask_about_re_let_process`. Most jurisdictions require the landlord to try to re-rent — your liability ends when they do (or when they reasonably could have).",
+      "priority": 3
+    },
+    {
+      "name": "Propose a specific, concrete buy-out",
+      "when": "No statute applies and the user just needs out.",
+      "script": "Use `propose_buyout`. Anchor with 1–2 months + deposit. Most landlords accept 2 months because re-letting takes about that long anyway.",
+      "priority": 4
+    },
+    {
+      "name": "Insist on mutual release",
+      "when": "Any termination deal — statutory OR negotiated.",
+      "script": "Use `ask_for_mutual_release`. This is the single document that prevents a 'you still owe us $X' letter from arriving 6 months later. Do NOT move out without it.",
+      "priority": 5
+    },
+    {
+      "name": "Refuse open-ended deposit holdback",
+      "when": "Landlord wants to keep the deposit as 'security against future charges.'",
+      "script": "Use `decline_holdback`. A release that doesn't settle the deposit isn't a release — it's a deferral. Hold for written terms.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT move out before the signed mutual release is in hand if any money is in dispute.",
+    "Do NOT use a statutory path you don't actually qualify for — falsifying SCRA or DV claims is a crime and destroys credibility.",
+    "Do NOT verbally agree to pay a buy-out amount above what the user pre-authorised.",
+    "Do NOT discuss new tenancy plans, new income, or financial position — those reduce sympathy and leverage.",
+    "Do NOT sign a release that contains a non-disparagement clause or a waiver of habitability claims without operator review."
+  ],
+  "success_signals": [
+    "Landlord acknowledges the statutory path and accepts the notice.",
+    "Landlord agrees to a specific buy-out amount and a release date.",
+    "Mutual-release document sent for review in writing.",
+    "Landlord commits to actively re-list and credit any re-rent month."
+  ],
+  "failure_signals": [
+    "Landlord disputes the statutory path even with documentation — escalate to tenant attorney before move-out.",
+    "Landlord demands more than 3 months' rent as a buy-out with no re-let credit.",
+    "Landlord refuses any written release.",
+    "Landlord threatens collections / deficiency judgment without acknowledging duty to mitigate."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm termination date, payment amount (if any), deposit treatment, and that mutual release will be signed before move-out. Operator emails the recap within 1 hour and sends the written notice + documents same day.",
+    "on_failure": "Send the written notice + documentation by certified mail and email regardless — this starts statutory clocks and creates the record. Consult a tenant attorney before move-out if a deficiency judgment is being threatened.",
+    "follow_ups": [
+      "Send written notice + supporting docs (PCS orders, protective order, habitability case number, relocation letter) by certified mail AND email same day.",
+      "Calendar the statutory effective date.",
+      "Once mutual release is signed, schedule the move-out walkthrough (see `move-out-walkthrough`).",
+      "After move-out, keep the mutual release in a permanent file — it's the document that defeats any future collection attempt."
+    ]
+  },
+  "required_user_info": [
+    "Lease copy and any early-termination clauses",
+    "Path: SCRA (with orders), DV (with order / police report), habitability (with case number), relocation clause, plain buy-out",
+    "Desired move-out date and flexibility window",
+    "Buy-out budget if a negotiated path is needed",
+    "Deposit amount and whether the user is willing to forfeit it as part of the deal"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,128 @@
+{
+  "id": "late-add-petition",
+  "name": "Petition to Late-Add or Late-Drop a Course",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "registrar",
+    "petition",
+    "late-add",
+    "late-drop",
+    "advising",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call an academic advisor, dean's office, or registrar to add or drop a course past the published deadline — by petition, instructor consent, or dean's signature.",
+  "disclaimer": "Late-add and late-drop policies vary widely; some schools require an instructor signature only, others require a college-level committee. Financial-aid impact (full-time vs. part-time) and tuition refund schedules are separate from academic petitions — handle both.",
+  "context": {
+    "when_to_use": "The published add/drop deadline has passed and the user needs to (a) add a course they were attending but never officially registered, (b) drop a course that's tanking their GPA before final grades, (c) swap a section due to a schedule conflict that emerged after the deadline, or (d) replace a class that turned out to be misadvised (wrong level, missing prerequisite, taught very differently than catalog).",
+    "preconditions": [
+      "User can articulate WHY the deadline was missed in one sentence (illness, work change, advising error, family emergency, instructor unresponsive).",
+      "User has the course CRN / section number, instructor name, and current grade/standing if available.",
+      "User knows the financial implications: tuition refund window, financial-aid full-time threshold (usually 12 credits undergrad), insurance / housing thresholds.",
+      "User has checked the school's petition form — most late-add/drop petitions require a written petition AND a signature from the instructor, advisor, and sometimes a dean."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Late petitions live on documented circumstances, not on regret. 'I should have dropped earlier' is weak; 'I was hospitalized March 3–8, here's the discharge summary' is strong.",
+    "The earlier you petition past the deadline, the easier the approval. Two weeks late is a paperwork exercise; ten weeks late is a battle.",
+    "Instructor support is the single highest-leverage signature. If the instructor backs the petition, advisors and deans almost always defer.",
+    "There are usually TWO deadlines: add/drop (administrative) and withdraw (a W on the transcript). Past add/drop, the realistic ask is often 'late withdrawal' not 'late drop' — know the difference.",
+    "Financial-aid full-time status is a cliff, not a slope. Dropping from 12 to 9 credits mid-term can trigger Pell/Stafford recalculation. Loop the financial-aid office BEFORE confirming a drop.",
+    "Dean's offices grant exceptions for what registrars can't. If front-line advising says no, the assistant dean for student academic affairs is the real target."
+  ],
+  "phrases": {
+    "opener_late_add": "Hi, I'm in week [N] of [course] but I never officially added it — I thought I was registered. I'd like to start a late-add petition. Can you tell me what your office needs from me, and who has signature authority?",
+    "opener_late_drop": "Hi, I'd like to petition for a late drop / late withdrawal from [course]. The standard deadline was [date]. The reason is [one-line cause]. What's the process and what documentation do you require?",
+    "ask_instructor_first": "Before I file the petition — does it make sense for me to talk to the instructor first to confirm they'll sign? My understanding is that an instructor-supported petition has a better chance.",
+    "ask_about_W": "Past the withdrawal deadline, what are my options? A W on the transcript is fine; an F is the outcome I'm trying to avoid.",
+    "documented_cause": "I have [doctor's note / death certificate / employer letter / police report] for [dates]. Should I submit it with the petition or attach it later?",
+    "ask_aid_impact": "If I drop this course, my credit load goes from [X] to [Y]. Could you check whether that drops me below full-time for financial-aid purposes, and if so, what the recalculation would look like?",
+    "ask_for_dean": "If the registrar's office can't approve this at the front-line level, could the petition be routed to the assistant dean for student affairs / academic standards? I want to make sure it gets a substantive review.",
+    "graceful_close_success": "Thank you. To confirm: I'm submitting [form] with [signatures and documents] by [date]. You'll route it to [committee/dean], and I can expect a decision by [date]. Is there an email I can use to check status?",
+    "graceful_close_failure": "Okay. Could you put in writing what specifically would have made the petition successful, and whether I can re-petition in a future term? And is there a path to grade replacement if I retake the course later?"
+  },
+  "tactics": [
+    {
+      "name": "Lock in instructor support first",
+      "when": "Before any administrative call.",
+      "script": "Use `ask_instructor_first` framing during the call, but the actual ask is to the instructor by email/office hours: 'Will you sign / email support for my late-add or late-drop petition for [reason]?' Get a yes in writing before filing.",
+      "priority": 1
+    },
+    {
+      "name": "Distinguish drop vs. withdrawal",
+      "when": "The user says 'I want to drop it' past the drop deadline.",
+      "script": "Use `ask_about_W`. A 'drop' removes the course from the transcript (and refunds tuition by schedule). A 'withdrawal' leaves a W on the transcript with no GPA impact. Past the drop deadline, the realistic ask is usually W. Make sure the user understands which they're requesting.",
+      "priority": 2
+    },
+    {
+      "name": "Document the cause specifically",
+      "when": "Petition asks 'why now and not by the deadline?'",
+      "script": "Use `documented_cause`. Dates on documents must straddle or precede the deadline you missed. A doctor's note dated AFTER the deadline still works if symptoms began before. Get explicit dates.",
+      "priority": 3
+    },
+    {
+      "name": "Pre-clear financial aid",
+      "when": "Drop would cross a credit-load threshold.",
+      "script": "Use `ask_aid_impact`. Call financial aid SEPARATELY before finalizing the drop — registrar won't model aid impact, and a 'Return to Title IV' calculation after the fact can owe the student thousands.",
+      "priority": 4
+    },
+    {
+      "name": "Escalate to the dean's office",
+      "when": "Registrar or advising says no but the cause is documented and serious.",
+      "script": "Use `ask_for_dean`. Dean-level review is standard for documented medical, mental-health, family-emergency, or advising-error cases. Specifically ask for 'assistant dean for student affairs' or 'academic standards committee' — not just 'the dean'.",
+      "priority": 5
+    },
+    {
+      "name": "Ask about retroactive add/drop windows",
+      "when": "Issue is discovered in a later term.",
+      "script": "Some schools allow retroactive petitions up to one academic year (or longer for medical). Don't assume the door is closed just because the term ended."
+    },
+    {
+      "name": "Ask about grade replacement / repeat policy as a fallback",
+      "when": "Late-drop is denied and the user is heading toward a poor grade.",
+      "script": "Many schools allow a course to be retaken with the new grade replacing or averaging with the old. This is a separate process from late-drop and may be the better path if the petition fails."
+    }
+  ],
+  "boundaries": [
+    "Do NOT submit a late-add petition for a course the user did not actually attend — registrars cross-check attendance and falsifying it is academic dishonesty.",
+    "Do NOT fabricate documentation. Verification calls to doctors / employers happen and the consequences are academic misconduct, not just denial.",
+    "Do NOT drop a course without confirming financial-aid impact in writing.",
+    "Do NOT promise the instructor anything beyond what the operator has authorized (e.g. completing missed work).",
+    "Do NOT skip the petition form. Verbal yeses from a registrar don't post in the system."
+  ],
+  "success_signals": [
+    "Petition number / case number is issued.",
+    "Instructor agrees to sign or send a supporting email.",
+    "Advisor confirms the petition will route to dean / committee, not be denied at front desk.",
+    "Financial-aid impact is modeled and is acceptable (or zero).",
+    "Decision turnaround is named (commonly 5–10 business days)."
+  ],
+  "failure_signals": [
+    "Instructor refuses to sign for a late-add.",
+    "Petition is past the school's outer deadline (commonly 1 year retroactive).",
+    "Drop would drop user below half-time, triggering immediate loan repayment.",
+    "Multiple prior petitions on file — schools tighten on repeat askers.",
+    "Course is required for an upcoming deadline (graduation, prerequisite for next term) and dropping creates a worse problem."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: form submitted, signatures collected, decision date, who signs final, financial-aid status confirmed. Get the petition reference number.",
+    "on_failure": "Get the denial in writing with specific reasoning. Pivot to: incomplete grade (talk to instructor), grade replacement next term, medical withdrawal (different process), or appeal to dean if not yet tried.",
+    "follow_ups": [
+      "Email the operator the petition number, decision date, and financial-aid impact memo.",
+      "If approved: verify the course status changes in the student-information system and on the transcript.",
+      "If denied: research grade-replacement / repeat policy and incomplete-grade option as next steps."
+    ]
+  },
+  "required_user_info": [
+    "Course CRN, section, instructor name",
+    "Reason for missing the deadline (one sentence)",
+    "Documentation available (with dates)",
+    "Current credit load and whether drop crosses a threshold",
+    "Whether instructor has been contacted and their stance",
+    "Petition form (school's specific name) and any prior submissions"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

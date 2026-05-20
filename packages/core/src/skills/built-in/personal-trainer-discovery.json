@@ -1,0 +1,138 @@
+{
+  "id": "personal-trainer-discovery",
+  "name": "Personal-Trainer / Coach Discovery Call: Certifications, Methodology, Fit",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "fitness",
+    "personal-trainer",
+    "coach",
+    "certification",
+    "intake",
+    "discovery-call",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Place a discovery call with a personal trainer, strength coach, or remote fitness coach to verify certifications, probe methodology, surface package structure / commitment lengths / cancellation, and assess fit BEFORE the operator pays for a package or signs a multi-month commitment.",
+  "disclaimer": "Personal training is an unregulated field in most jurisdictions. 'Certified' alone is meaningless — the issuing body matters. This skill does not give medical clearance; if the operator has cardiac, orthopaedic, neurological, or pregnancy-related concerns, they should clear with a physician first.",
+  "context": {
+    "when_to_use": "Operator is choosing between trainers (in-person, hybrid, or online-only) and wants to vet a candidate before paying for a package. Useful for new-to-training operators, return-from-injury, sport-specific goals, weight-loss / body-composition goals, and post-rehab strength work.",
+    "preconditions": [
+      "Operator has clear goals stated in 2-3 sentences (e.g. 'add 10 lb of muscle in 6 months', 'run sub-25 5k', 'return to lifting after L4-L5 disc protrusion cleared by PT').",
+      "Operator has training history summary (years training, current routine, recent injuries).",
+      "Operator has a realistic time-per-week and budget-per-month range.",
+      "Operator has medical clearance for vigorous exercise, OR a flagged contraindication for the trainer to acknowledge."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Certification body matters: NSCA-CSCS, NASM-CPT, ACSM-CPT, ACE, PN, RKC, USA-W are reputable; weekend-warrior certificates are not. Coaches without exam-based certs need a strong track record to compensate.",
+    "Methodology fit is more predictive than certifications. A great hypertrophy coach is wrong for an ultrarunner. Ask what kind of clients the coach gets results with.",
+    "Programming, not personality, is what the operator is paying for. Ask to see a sample programme or block structure for someone with similar goals.",
+    "Communication channels and response times define the experience. Slack, app, text, weekly check-ins — pin them down.",
+    "Multi-month packages without a kill-switch are a major risk in a deregulated market. Cancellation, refunds, and credit-for-unused sessions belong in writing.",
+    "Scope of practice. A trainer is not a physiotherapist, dietitian, or psychologist. Coaches who 'diagnose your bloodwork' or write meal plans without a dietitian credential are out of scope."
+  ],
+  "phrases": {
+    "opener": "Hi — calling for someone who's looking for a coach for [goal in one sentence]. Got a few minutes? I'd like to ask a bit about your background and how you usually work with people.",
+    "credentials_probe": "Could you tell me which certifications you hold and from which bodies, plus any specialty creds — corrective exercise, pre/post-natal, athletic performance, nutrition? And how long you've been coaching full-time?",
+    "methodology_probe": "What's your programming philosophy in 2-3 sentences? Who's the operator-profile you get the strongest results with, and what does that programme typically look like?",
+    "similar_client_probe": "Could you describe a recent client similar to the operator — their starting point, the programme you ran, and the outcome at 12 weeks? Anonymous is fine.",
+    "scope_probe": "What's in scope and out of scope for your coaching — programming, technique coaching via video, nutrition guidance, recovery, sleep? And where do you refer out?",
+    "package_probe": "How do packages work — month-to-month, 3-month minimum, 6-month commitment? What's billed, when, and through what platform?",
+    "cancellation_probe": "What's the cancellation policy mid-package? Can the operator pause for travel or injury? Are unused sessions refundable or credited?",
+    "communication_probe": "What channels do we use between sessions, and what's your realistic response time? How often are programme reviews and adjustments?",
+    "medical_clearance_probe": "The operator has [specific consideration: 'recent disc injury cleared by PT', 'mild hypertension', 'past ankle reconstruction']. How do you typically work with someone in that situation, and do you require physician clearance?",
+    "sample_request": "Could you send a sample first-week programme for an operator with these goals, plus a one-page bio with your certifications and a couple of references?",
+    "stall_to_check": "Let me share the package details with the operator before we commit — they'll want to see the cancellation terms in writing.",
+    "graceful_close": "Thank you — please email a sample programme, the package terms in writing, and the cancellation policy. The operator will review and follow up within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Verify certifications and tenure",
+      "when": "Opening 3 minutes.",
+      "script": "Use `credentials_probe`. Note any reputable body (NSCA, NASM, ACSM, ACE, PN, RKC). Be politely sceptical of weekend-only certs as the sole credential.",
+      "priority": 1
+    },
+    {
+      "name": "Probe methodology with a real comparable",
+      "when": "After credentials.",
+      "script": "Use `methodology_probe` and `similar_client_probe`. The pattern is: who do you serve best, what programme do you actually run, what did the last similar client's 12 weeks look like? Vague answers are a signal.",
+      "priority": 2
+    },
+    {
+      "name": "Stay in scope",
+      "when": "Mid-call.",
+      "script": "Use `scope_probe`. Coaches who write meal plans (without RD credential), interpret bloodwork, or treat injuries are out of bounds. A good coach knows where to refer.",
+      "priority": 3
+    },
+    {
+      "name": "Surface medical considerations early",
+      "when": "Before discussing programming detail.",
+      "script": "Use `medical_clearance_probe` for any flagged concern. A coach who responds 'sure I can train through that' without clearance or modification protocol is a red flag.",
+      "priority": 4
+    },
+    {
+      "name": "Package and cancellation in writing",
+      "when": "Money comes up.",
+      "script": "Use `package_probe` and `cancellation_probe`. Get the cancellation policy in writing before any payment. Refundable / credit-for-unused / pause-for-travel are the three knobs to confirm.",
+      "priority": 5
+    },
+    {
+      "name": "Request a sample programme",
+      "when": "Late in the call.",
+      "script": "Use `sample_request`. A coach who has nothing to show is either new or coasting. A one-week sample isn't proprietary — it's a sales tool."
+    },
+    {
+      "name": "Defer commitment",
+      "when": "Coach pitches a discount for signing today.",
+      "script": "Use `stall_to_check`. 'Sign now and save' is a sales tactic. Real coaches honour their pricing for at least 48 hours."
+    }
+  ],
+  "boundaries": [
+    "Do NOT sign a multi-month commitment or pay for a package mid-call. Use ask_operator.",
+    "Do NOT provide credit card or bank details to 'hold the spot'. Reputable coaches do not require deposits to schedule a first paid session.",
+    "Do NOT share the operator's full medical history with a coach who lacks the credentials to act on it. Share what's relevant to programming.",
+    "Do NOT accept nutrition prescription or bloodwork interpretation from a coach without dietitian / clinical credentials.",
+    "Do NOT bypass medical clearance the operator's physician has indicated is needed.",
+    "Do NOT engage a coach whose methodology centres on supplements they sell, MLM products, or proprietary food / device purchases."
+  ],
+  "success_signals": [
+    "Verifiable certifications from reputable bodies, named on the call.",
+    "Clear ideal-client profile that maps to the operator's goal.",
+    "Specific recent client comparable, with starting point, programme, and outcome.",
+    "Scope clearly bounded — refers out for nutrition / rehab / mental health.",
+    "Written package terms with cancellation, refund / credit, and pause clauses.",
+    "Sample programme will be sent before commitment.",
+    "Acknowledges medical considerations with a sensible plan (modify, clear with physician, refer)."
+  ],
+  "failure_signals": [
+    "Vague or unverifiable credentials.",
+    "Cannot describe a typical programme structure or block.",
+    "Multi-month commitment with no cancellation or pause language.",
+    "Out-of-scope offers (nutrition prescription, bloodwork reading, supplement sales).",
+    "Discount-pressure to sign on the call.",
+    "Dismissive of operator's flagged injury, condition, or physician guidance.",
+    "Refusal to share a sample programme or references."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm coach will email: sample first-week programme, bio with certifications, written package terms, cancellation policy, references, and the platform/app stack. Operator reviews and decides within [timeframe]. Note rate, billing cadence, communication channels, and named scope.",
+    "on_failure": "Politely close. If the failure was scope-related, ask if the coach can refer to a colleague who handles the operator's goal. Report back with specifics on why this candidate isn't a fit.",
+    "follow_ups": [
+      "Email the operator: coach name, certifications, methodology fit assessment, package terms, cancellation policy, sample programme attached, red/green flags, recommended next step.",
+      "If proceeding: schedule the first paid session AFTER package terms are reviewed; never before.",
+      "Calendar a 4-week and 12-week check-in to assess fit independently of the coach's self-assessment."
+    ]
+  },
+  "required_user_info": [
+    "Goal in 2-3 sentences: outcome + deadline + constraint",
+    "Training history: years training, current routine, performance markers",
+    "Recent or ongoing injuries / medical considerations and any physician clearance status",
+    "Time available per week and preferred days/times",
+    "Budget per month and willingness for a multi-month commitment",
+    "In-person, hybrid, or fully remote preference",
+    "Operator's preferred communication channels and response-time expectations"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

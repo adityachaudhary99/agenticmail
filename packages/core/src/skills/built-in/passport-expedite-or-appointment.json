@@ -1,0 +1,123 @@
+{
+  "id": "passport-expedite-or-appointment",
+  "name": "Passport: Expedite Request, Appointment Booking, or Lost-Passport Report",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "passport",
+    "state-department",
+    "expedite",
+    "lost-passport",
+    "appointment",
+    "travel",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call the National Passport Information Center (NPIC) or a Regional Passport Agency to book an urgent in-person appointment, escalate an in-flight application, report a lost or stolen passport, or get a status update beyond what the online tracker shows.",
+  "disclaimer": "Not legal or immigration advice. For dual-citizenship, visa, or admissibility questions, refer to the receiving country's consulate or an immigration attorney. The agent will not advise on whether to travel or how to handle international entry/exit issues.",
+  "context": {
+    "when_to_use": "Travel is within 14 calendar days (life-or-death = within 72 hours) and the user needs an in-person Regional Passport Agency appointment. Online status hasn't updated in > 2 weeks past the published processing window. Passport was lost or stolen and the user needs both a replacement plan and a fraud report.",
+    "preconditions": [
+      "User has the application locator number (if one was issued).",
+      "User has proof of imminent travel: itinerary, ticket, or e-ticket confirmation (PDF in hand).",
+      "Photo ID (driver's license or other government ID).",
+      "If life-or-death case: documentation of the family emergency (hospital letter, death certificate, mortuary contact).",
+      "Form DS-64 (lost/stolen) for lost-passport reports.",
+      "Two callback options — NPIC frequently disconnects mid-call."
+    ],
+    "estimated_call_duration_minutes": 60
+  },
+  "principles": [
+    "NPIC = 1-877-487-2778. Hours are Mon–Fri 8am–10pm ET, Sat 10am–3pm ET. Call AT OPENING for the lightest queue.",
+    "Regional Passport Agency in-person appointments open on a rolling basis 2 weeks before travel. The pool refreshes — keep redialing or have the agent watch for slots if the first attempt has none.",
+    "Life-or-death emergencies (death, serious illness/injury) go through a special line (1-202-647-4000 after-hours) — the standard NPIC line will NOT take these efficiently.",
+    "Expedite by mail (≈ 5–7 weeks at time of writing) is NOT the same as an in-person Regional Agency appointment (same-day to 2 weeks). Don't conflate them.",
+    "Lost-or-stolen passports must be reported (DS-64) and that report INVALIDATES the lost document — only file if you've truly looked everywhere."
+  ],
+  "phrases": {
+    "opener_appointment": "Hi, I need an in-person appointment at the Regional Passport Agency. I'm traveling on [DATE], which is in [N] days. My application locator is [LOCATOR] (if applicable). Can you check what's available?",
+    "opener_status": "Hi, I'm calling about application locator [LOCATOR]. The online tracker still shows [STATUS] and we're past the published [routine/expedited] window. Can you check the file?",
+    "opener_life_or_death": "Hi, this is a life-or-death emergency. My [relationship] is [seriously ill / has died] and I need to travel internationally within [HOURS]. I have [documentation type] ready to send. What's the next step?",
+    "opener_lost": "Hi, I need to report a lost passport and request a replacement. The passport number is [NUMBER], issued [DATE]. I've completed Form DS-64. What's the fastest way to get a replacement given that I [do / do not] have imminent travel?",
+    "ask_for_agency_transfer": "Could you transfer me to the [CITY] Regional Passport Agency directly? I want to see if they have any walk-in or same-day appointments.",
+    "stall_documents": "Give me one moment to bring up my itinerary.",
+    "graceful_close": "Thank you. Can I confirm the appointment date/time, the office address, the exact documents I need to bring, the fee, and a confirmation number — plus your name and ID?"
+  },
+  "tactics": [
+    {
+      "name": "Triage the urgency level",
+      "when": "First minute.",
+      "script": "Bucket: (a) life-or-death (< 72h, family emergency) → special line; (b) urgent travel (3–14 days) → Regional Agency in-person; (c) expedited (2–8 weeks) → mail-in expedite + courier; (d) routine. Route appropriately — wrong bucket = wrong line = wasted hour.",
+      "priority": 1
+    },
+    {
+      "name": "For urgent travel, ask for ANY Regional Agency, not just the closest",
+      "when": "User can travel domestically to get the passport.",
+      "script": "If LA has no slots and Houston does, and the user can fly to Houston, that may beat waiting. Some Agencies serve walk-ins; some are appointment-only.",
+      "priority": 2
+    },
+    {
+      "name": "Confirm the in-person doc list",
+      "when": "Appointment booked.",
+      "script": "Standard: DS-11 (new) or DS-82 (renewal), proof of citizenship (certified birth cert or prior passport), photo ID + photocopy, passport photo (2×2 inches), travel itinerary, payment for fees + expedite. Walking in without one of these = appointment wasted.",
+      "priority": 3
+    },
+    {
+      "name": "For lost passports, file DS-64 even if travel is imminent",
+      "when": "Lost/stolen report.",
+      "script": "Without DS-64 on file, the new passport process is stalled. File the report, then immediately move to the urgent-travel in-person appointment flow.",
+      "priority": 4
+    },
+    {
+      "name": "Document every reference number",
+      "when": "Any call segment.",
+      "script": "Locator, appointment confirmation, agent name + ID, case number for status escalations. These are gold for follow-up if the call drops."
+    }
+  ],
+  "boundaries": [
+    "Do NOT advise on whether the user can enter a destination country (visa, six-month-validity rule, entry stamps) — refer to the destination consulate or IATA Timatic.",
+    "Do NOT promise an appointment can be obtained — slots are real-time and limited.",
+    "Do NOT pay the expedite fee or appointment fee without explicit user authorization.",
+    "Do NOT file DS-64 on speculation — it invalidates the passport. Confirm the user has searched thoroughly.",
+    "Do NOT engage with anyone claiming to sell expedited appointments outside the official channels — common scam."
+  ],
+  "success_signals": [
+    "Appointment is booked at a named Regional Agency, with date/time + doc list captured.",
+    "Application status escalation produces a movement (passport mailed / new estimated date).",
+    "Lost passport report (DS-64) is on file and a replacement path is scheduled.",
+    "Life-or-death case is moved to the appropriate special-handling team."
+  ],
+  "failure_signals": [
+    "No Regional Agency has any appointments within travel window — escalate to congressional rep / senator's caseworker (legitimate channel for travel emergencies).",
+    "Status escalation produces no information beyond what the online tracker shows.",
+    "NPIC line disconnects > 2 times — try first-thing morning or Saturday.",
+    "User is being asked to pay an unfamiliar third party — likely scam; redirect to travel.state.gov."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: appointment date/time/office/address, document list, fee, confirmation number, NPIC agent name + ID. Repeat doc list back to the user. Send the user the official Regional Agency address and a what-to-bring checklist.",
+    "on_failure": "Capture the obstacle, advise the user on the congressional-rep escalation path (most US Senators' offices have a passport caseworker), and confirm next NPIC-callback window.",
+    "follow_ups": [
+      "Calendar appointment with 24h and 2h reminders.",
+      "Calendar mail-out estimate; if not received, call NPIC with the locator.",
+      "If congressional escalation was used, follow up with the caseworker after 48 hours.",
+      "If passport was lost, calendar a check that DS-64 invalidation propagated (check Online Status Check)."
+    ]
+  },
+  "required_user_info": [
+    "Application locator number (if available)",
+    "Full legal name, DOB, place of birth, current passport number (if any)",
+    "Travel date and itinerary",
+    "Type of request: new / renewal / lost-replacement / name change",
+    "Documents in hand (birth cert, prior passport, photo ID, passport photo)",
+    "Payment method authorized for fees + expedite",
+    "Whether the user can travel domestically to a Regional Agency"
+  ],
+  "hang_up_and_call_back_signals": [
+    "NPIC line disconnected mid-call — call back immediately; the locator preserves your progress.",
+    "Rep cannot find the application by locator — verify locator on the user's online account first; possibly a typo.",
+    "Suspect scam offer for paid 'expedite appointments' — hang up; only book via travel.state.gov or NPIC.",
+    "If at 7+ days from travel with no Regional Agency slot — escalate to congressional caseworker (Senator's state office), then re-engage NPIC."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

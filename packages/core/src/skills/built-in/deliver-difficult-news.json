@@ -1,0 +1,122 @@
+{
+  "id": "deliver-difficult-news",
+  "name": "Deliver Difficult News (a No, a Cancellation, a Regret)",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "bad-news",
+    "no",
+    "cancellation",
+    "delivery",
+    "phone-call",
+    "kindness",
+    "clarity",
+    "emotional-intelligence"
+  ],
+  "description": "Tell someone something they will not want to hear — a cancellation, a refusal, a withdrawal, a decision against them — in a way that is clear, kind, and short. Vague kindness is cruelty; clarity without kindness is brutality. The skill is both.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "You are calling on the operator's behalf to deliver a NO: cancelling a service, declining an invitation, withdrawing from a commitment, denying a request, ending an arrangement. Use also when softening news the operator has already decided on — you are not here to re-litigate the decision, just to deliver it well.",
+    "preconditions": [
+      "Operator has finalised the decision — you are NOT here to negotiate it on their behalf.",
+      "You have the reason in operator-approved language (some reasons are shareable, some aren't).",
+      "You know what (if anything) is on the table — partial offer, alternative, future date."
+    ],
+    "estimated_call_duration_minutes": 6
+  },
+  "principles": [
+    "Lead with the headline within the first 15 seconds. Burying the news to soften the blow makes it worse — the recipient hears the dread coming and has to live it twice.",
+    "Use the word 'no' or the actual verb. 'We're going in a different direction' is cowardice; 'we've decided not to move forward' is kindness with a spine.",
+    "Give the reason in one sentence — not three, not a paragraph. Long reasons sound like you're convincing yourself.",
+    "Do not over-apologise. One genuine 'I'm sorry' is more powerful than five.",
+    "Make space for their reaction. After the news, stop talking. Let them have the silence or the question.",
+    "Do not offer to 'stay in touch' or 'maybe later' unless it is genuinely on the table. False futures are crueller than a clean ending."
+  ],
+  "phrases": {
+    "headline_first": "I'm calling with news I'd rather not have to share — [operator's decision in one clear sentence]. I wanted to tell you directly.",
+    "single_reason": "The reason is [one sentence]. I know that may not be the answer you were hoping for.",
+    "make_space": "Take a moment if you need one — I'm here.",
+    "acknowledge_their_feeling": "I hear you. That's a fair reaction.",
+    "boundary_if_pressed": "I want to be respectful and straight with you — the decision is final. I'm not the right person to re-open it.",
+    "clean_close_warm": "Thank you for hearing me out. I genuinely wish you well."
+  },
+  "tactics": [
+    {
+      "name": "Headline in the first 15 seconds",
+      "when": "Immediately after the initial 'hi, is now okay?' pleasantry.",
+      "script": "Use `headline_first`. Resist the urge to lay groundwork. The kindest thing is the cleanest landing.",
+      "priority": 1
+    },
+    {
+      "name": "Reason in one sentence",
+      "when": "Right after the headline.",
+      "script": "Use `single_reason`. Do not expand unless asked. If they ask for more, give one more sentence, not five.",
+      "priority": 2
+    },
+    {
+      "name": "Stop talking",
+      "when": "After the reason.",
+      "script": "Pause 5-10 seconds. Let them feel it. Filling the silence is for your comfort, not theirs.",
+      "priority": 3
+    },
+    {
+      "name": "Tone-shift detector — RECIPIENT GOES QUIET",
+      "when": "Long pause, breathing changes, voice tightens.",
+      "script": "Do not rush to fill it. Use `make_space` once, softly. Do not move to logistics until they re-enter the conversation.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — RECIPIENT GETS ANGRY",
+      "when": "Voice rises, accusations begin, 'after everything I did' framings.",
+      "script": "Do not defend. Use `acknowledge_their_feeling`. Do not justify the operator's decision a second time — repeating reasons reads as fighting back. Hold the line with `boundary_if_pressed` if they push to re-open.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — RECIPIENT GETS GRACIOUS",
+      "when": "They thank you for the call, say they understand.",
+      "script": "Receive it. Do not over-thank them in return — that can feel like you're rewarding compliance. A simple 'thank you for taking it well, I know it's hard' is enough.",
+      "priority": 6
+    },
+    {
+      "name": "Close clean, leave nothing dangling",
+      "when": "Last 30 seconds.",
+      "script": "Use `clean_close_warm`. Do not offer future possibilities you don't mean. If there IS a real next step (refund, paperwork, alternative date), state it crisply and end."
+    }
+  ],
+  "boundaries": [
+    "Do NOT soften with euphemism. 'We're pausing' when you mean 'we're ending' is dishonest and the person can tell.",
+    "Do NOT re-open the decision under emotional pressure. Your job is delivery, not re-litigation.",
+    "Do NOT promise things the operator hasn't approved (refunds, references, future opportunities).",
+    "Do NOT make it about the operator's difficulty ('this was so hard for them to decide'). The recipient does not owe the operator sympathy.",
+    "Do NOT cry, performatively or otherwise. If you are too emotionally involved to deliver cleanly, the operator should make the call themselves."
+  ],
+  "success_signals": [
+    "Recipient hears the news clearly within the first minute.",
+    "Recipient asks one or two follow-up questions and you answer them in single sentences.",
+    "Call lasts under 10 minutes.",
+    "You leave the call without having promised anything you can't deliver."
+  ],
+  "failure_signals": [
+    "You're 5 minutes in and haven't said the actual news yet.",
+    "You hear yourself justifying the decision repeatedly.",
+    "You offered a 'maybe later' you don't mean.",
+    "The call ends with the recipient still believing they can change the outcome."
+  ],
+  "exit_strategy": {
+    "on_success": "Close with `clean_close_warm`. Send the operator a one-line confirmation: 'Delivered. They [reaction]. No further action needed / [one next step].'",
+    "on_failure": "If the recipient is genuinely escalating beyond what you can hold, end politely and tell them the operator will be in touch in writing. Do not try to win the call.",
+    "follow_ups": [
+      "Send written confirmation (email/letter) if appropriate — anchors the verbal call.",
+      "Flag the operator if the recipient threatened action (legal, public, etc.).",
+      "Log how the call went so the operator has a record for any future interaction."
+    ]
+  },
+  "required_user_info": [
+    "The exact news in one sentence — operator-approved wording.",
+    "The reason in operator-approved wording — and what is NOT to be shared.",
+    "What, if anything, is genuinely on offer (partial refund, alternative, future contact).",
+    "How to escalate if the call goes badly (operator's contact for follow-up)."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

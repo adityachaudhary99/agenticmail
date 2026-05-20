@@ -1,0 +1,137 @@
+{
+  "id": "hold-time-strategy",
+  "name": "Hold-Time Strategy — Wait, Hang Up, or Call Back",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "phone-call",
+    "hold-time",
+    "queue-strategy",
+    "timing",
+    "patience",
+    "tactical",
+    "customer-support"
+  ],
+  "description": "Decide when to hold, when to hang up, and when to call back at a different hour. Queue dynamics, time-of-day patterns, and call-center staffing curves create predictable windows — using them shortens a 90-minute ordeal to a 20-minute call.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "You are about to call a support line, OR you are currently on hold and deciding whether to stay. Especially relevant for telco, ISP, airlines, banks, government agencies, and any service with notoriously bad hold times.",
+    "preconditions": [
+      "User has time flexibility — at least 2 hours of total availability across one or more calls.",
+      "User has tracked any prior hold times for this company (rough estimate is fine).",
+      "User has access to a speakerphone or wireless headset — being trapped at a desk for 60 minutes is much worse than being on hold while doing other tasks."
+    ],
+    "estimated_call_duration_minutes": 35
+  },
+  "principles": [
+    "Call volume is predictable. Peak: 11am-2pm local time (lunch breaks) and the first 30 minutes after open. Trough: first 30 minutes after open IF you call BEFORE the rush (typically 7-8am local), late afternoon (4-5pm local), and the last hour before close. Saturday morning is usually quieter than weekday peak.",
+    "Day-of-week matters. Monday is the worst day for most services — everyone calls about the weekend's problems. Thursday and Friday afternoons are often the quietest weekdays. Weekends vary by service: financial/banking lines may be skeleton-crew; consumer goods/airlines may be normal.",
+    "Hold time is not free — it costs attention even if you're doing other work. Estimate the total ATTENTION cost (not just elapsed time): a 45-minute hold while you're trying to work is often more expensive than a 75-minute hold while you're doing laundry.",
+    "The 'callback' option offered by some IVRs (press 1 to hold your place in line) is almost always better than holding live — accept it whenever available. The callback usually preserves your position and frees your attention.",
+    "Decision point — every 15 minutes on hold, ask: 'do I have evidence I'm progressing in the queue?' If no (no estimated wait given, or the estimate keeps growing), hanging up is rational. If yes, continue.",
+    "Calling back can sometimes route you better than holding. Different queues have different staffing; the IVR sometimes routes by call volume — calling at a quieter time can land you in a less-loaded specialist queue.",
+    "Some hold-times are deliberate. Companies known for long holds often staff just enough to handle the customers who don't give up — the hold IS the filter. Once you understand that, you can choose to be the customer who waits, or you can route around the hold entirely (chat, email, escalation channel)."
+  ],
+  "phrases": {
+    "ask_for_estimate": "Before I commit to holding — could you give me an estimated wait time? Or is there a callback option in lieu of holding?",
+    "request_callback_position": "I'd prefer not to hold for 40 minutes. Can I be put in a callback queue with my place preserved? Or could you schedule me a callback at a specific time today?",
+    "the_strategic_hangup": "Thank you — I'm going to call back at a different hour rather than hold. Could you note that I called at [time] about [issue] so the next rep has context?",
+    "midcall_pivot": "I've been on hold 30 minutes. Could you check the queue depth and tell me realistically how much longer? If it's more than another 15 minutes, I'd rather schedule a callback.",
+    "after_hours_inquiry": "What are your peak hours? I'd like to call back at a quieter time if possible.",
+    "channel_alternative": "While I'm holding — is there a chat or email option that would resolve this faster? I'd be happy to use whichever channel is least busy right now.",
+    "first_call_advantage": "Hi, I'm calling first thing this morning to get ahead of any backlog from yesterday. I have [issue] and I'd like to keep this efficient."
+  },
+  "tactics": [
+    {
+      "name": "Pick the call window deliberately",
+      "when": "Before placing the call.",
+      "script": "Default windows: weekday 7:30-9:00am local (pre-rush), 4:00-5:30pm local (post-rush). Avoid Monday morning. Avoid lunch hour. For 24/7 services, late-night (10pm-midnight) is often empty queues — but staff may be junior. Decide whether you need expertise (call peak) or just throughput (call trough).",
+      "priority": 1,
+      "decision_point": "If the issue is complex or needs senior judgment, the FASTEST queue may have the LEAST capable reps. Sometimes you want to call peak to reach a tenured agent. Match the time to the issue, not just to availability."
+    },
+    {
+      "name": "Always ask for an estimate",
+      "when": "Immediately when a hold is offered.",
+      "script": "Use `ask_for_estimate`. Many IVRs and reps will give you a number if asked — and an honest number lets you make a real decision instead of sunk-cost-ing into a 90-minute hold.",
+      "priority": 2
+    },
+    {
+      "name": "Take the callback option if offered",
+      "when": "IVR mentions a callback or rep can offer one.",
+      "script": "Use `request_callback_position`. Callbacks are almost always better than live holding — your time becomes free, and the callback typically arrives near the original ETA. Risks: some callbacks expire if you don't answer immediately; some lose your queue position.",
+      "priority": 3,
+      "decision_point": "Take callback ONLY if (a) you can answer when they call, and (b) the callback preserves queue position or is scheduled. If neither, prefer live hold."
+    },
+    {
+      "name": "Set a hold budget — and stick to it",
+      "when": "When you accept a hold.",
+      "script": "Decide BEFORE you start: 'I will hold for X minutes, then re-evaluate.' Without a budget, sunk cost takes over. With a budget, you make a clear decision at the checkpoint.",
+      "priority": 4
+    },
+    {
+      "name": "Re-evaluate at the checkpoint",
+      "when": "Hold budget reached.",
+      "script": "Use `midcall_pivot`. Ask for honest queue depth. If the rep can't or won't give you a number, that's evidence the queue is poorly managed — hang up.",
+      "priority": 5,
+      "decision_point": "If the rep says 'just a few more minutes' for the second time, the estimate is unreliable. Treat each 'just a few more' as +10 minutes of additional hold — and if you don't have +10 to give, end the call cleanly."
+    },
+    {
+      "name": "Strategic hangup with breadcrumb",
+      "when": "You've decided to give up on this call.",
+      "script": "Use `the_strategic_hangup`. Leaving a note on your account ('called at X about Y') is sometimes possible even if you didn't reach a rep — it's evidence of effort for any future escalation.",
+      "priority": 6
+    },
+    {
+      "name": "Switch channels mid-hold",
+      "when": "Hold is long AND you discover the company has a faster channel.",
+      "script": "Use `channel_alternative`. Some companies' chat is faster than phone — they routed support resources there. Email is rarely fast but creates a paper trail. Use chat/email IN PARALLEL with holding, not as a replacement (you may hit both at once and pick whichever lands first).",
+      "priority": 7
+    },
+    {
+      "name": "Learn the rhythm for future calls",
+      "when": "After the call (success or fail).",
+      "script": "Log: time of call, total hold time, time-to-first-rep, time-to-resolution. After 2-3 calls you have your own dataset on this company's actual queue rhythm — far more accurate than generic advice.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "Do NOT vent frustration at the rep when they pick up — they didn't make you wait, the staffing did. Venting destroys your one chance to get help.",
+    "Do NOT hold longer than 60 minutes without a clear reason (specific specialist queue, or you can confirm you're #1-2 in line).",
+    "Do NOT hang up and call back in the same minute hoping for a different agent — most queues route by phone number for ~5-10 minutes, and you'll just get the same queue position.",
+    "Do NOT accept the same 'hold a few more minutes' from a rep for the third time. That's a stall pattern — see `detect-fake-escalation-loops`.",
+    "Do NOT abandon a confirmed callback by not answering the callback call. Some companies blacklist your number from callbacks if you miss two.",
+    "Do NOT take any escalation action (regulator, executive office) just because of hold time alone — long holds are annoying but not actionable. They become evidence when paired with substantive refusals."
+  ],
+  "success_signals": [
+    "Rep gives you an honest ETA when you ask.",
+    "Callback option is offered and preserves queue position.",
+    "Live rep picks up in <15 minutes from initial call.",
+    "Hold music is interrupted with periodic position updates ('you are caller number 3').",
+    "Different/quieter hold tone after a transfer — you've left the main queue."
+  ],
+  "failure_signals": [
+    "No ETA offered, or ETAs that keep increasing.",
+    "Hold music with no position updates and no rep check-ins for 20+ minutes.",
+    "Hold then disconnect (line drops while holding) — common stall pattern.",
+    "Rep picks up briefly, says 'one moment', then puts you on a fresh hold cycle.",
+    "Callback option offered but with a scheduled window 'within the next 24-72 hours' (effectively a ghost callback)."
+  ],
+  "exit_strategy": {
+    "on_success": "Once a rep is on the line, transition to the appropriate escalation skill (`get-past-tier-1-script` or `request-supervisor-gracefully`). Log total time-to-rep for future planning.",
+    "on_failure": "Hang up cleanly, log the attempt, schedule a retry at a strategically different hour. If two attempts at different hours both fail to reach a rep, pivot channels — `multi-channel-escalation`.",
+    "follow_ups": [
+      "Track hold-time data points in a personal log. After 3 attempts, you'll know this company's real rhythm.",
+      "If hold times consistently exceed 45 minutes, that itself is evidence for an FCC/regulator complaint (some industries have service-level obligations) — but verify jurisdiction first.",
+      "Consider whether the issue actually needs a phone call. Many issues are better-served by chat, email, or even a written letter to the corporate office."
+    ]
+  },
+  "required_user_info": [
+    "User's available time window for the call",
+    "Whether speakerphone or headset is available (free attention while holding)",
+    "Time zone of the call center (often different from user's time zone)",
+    "Whether prior calls to this company succeeded — and at what time of day",
+    "Whether the user can accept callbacks during work hours"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,119 @@
+{
+  "id": "court-clerk-administrative-inquiry",
+  "name": "Court Clerk's Office: Case Status, Filing Fees, or Hearing Reschedule",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "court",
+    "clerk",
+    "case-status",
+    "filing-fee",
+    "hearing-reschedule",
+    "administrative",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call a court clerk's office to perform STRICTLY ADMINISTRATIVE tasks: confirm a case number, ask about a filing fee, request a hearing reschedule (continuance) where allowed by local procedure, or obtain a copy of a court record. This skill does NOT and will not provide legal advice.",
+  "disclaimer": "Not legal advice. Court-clerk skills are explicitly limited to administrative actions (filing, scheduling, status checks) — agent must NEVER advise on case strategy, evidence, or pleadings. If the user needs help understanding what a motion means, how to respond to a charge, or whether to plead, refer them to an attorney, a self-help center, or a legal-aid organization.",
+  "context": {
+    "when_to_use": "User needs to verify, schedule, or pay something with the court that does NOT require legal judgment. Examples: 'Is my case still on the docket for Tuesday?', 'What's the filing fee for a small-claims complaint?', 'How do I request a continuance for a traffic ticket?', 'How do I get a certified copy of a divorce decree?'",
+    "preconditions": [
+      "User has the case number OR the full name on the case and the approximate filing date.",
+      "User knows which court (county, division — civil/criminal/family/traffic).",
+      "User has the docket / hearing date in question (for reschedules).",
+      "If paying a fee, user has a payment method the court accepts (many clerks do NOT take credit cards by phone)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Clerks are not allowed to give legal advice and will end the call if you ask for it. Frame every question administratively: 'Where is this form?', 'What's the fee?', 'How do I file X?' — NOT 'Should I file X?'",
+    "Court divisions are siloed. Civil clerks cannot help with criminal matters and vice versa. Identify the division on the case caption before calling.",
+    "Continuance/reschedule rules are LOCAL. Some courts require a written motion; some allow a phone request once; some require the opposing party's agreement first. Ask the clerk what THIS court requires — do not assume.",
+    "Always read the case number to the clerk slowly and ask them to confirm. Misread digits send you to the wrong file.",
+    "If the matter is criminal or family and time-sensitive (failure-to-appear risk, protective-order hearing, custody), refer immediately to an attorney or legal aid — administrative-only is not enough."
+  ],
+  "phrases": {
+    "opener_status": "Hi, I'm calling to check the status of a case. The case number is [NUMBER], filed in [DIVISION]. Can you confirm whether the [HEARING TYPE] on [DATE] is still on the calendar?",
+    "opener_fee": "Hi, I'd like to know the current filing fee for a [TYPE OF FILING] in [DIVISION], and what forms of payment you accept.",
+    "opener_reschedule": "Hi, I have a hearing scheduled for [DATE] in case [NUMBER]. I'd like to ask about your court's procedure for requesting a continuance — is it a phone request, a written motion, or something else?",
+    "opener_records": "Hi, I'd like to request a [certified / uncertified] copy of [DOCUMENT TYPE] for case [NUMBER]. What's your process, what's the per-page or per-document fee, and how long does delivery take?",
+    "boundary_redirect": "I understand. I'm only asking about the administrative procedure — I'm not asking what I should do legally. Could you just tell me the steps the court requires?",
+    "stall_lookup": "One moment — I want to read the case number back to you to make sure I have it right.",
+    "graceful_close": "Thank you. Before we hang up: can I have your name (or initials), the date of this call, and a reference or instruction number if there is one? I want to log this in case I need to follow up."
+  },
+  "tactics": [
+    {
+      "name": "Identify the right division first",
+      "when": "Within the first 30 seconds.",
+      "script": "Confirm civil / criminal / family / traffic / probate. If you reached the wrong division, politely ask for the direct number to the correct one.",
+      "priority": 1
+    },
+    {
+      "name": "State the question administratively",
+      "when": "Always.",
+      "script": "Phrase every question as 'What is the procedure?' or 'What is the fee?' — never 'What should I do?' or 'What does this mean?'. Clerks must refuse the latter.",
+      "priority": 2
+    },
+    {
+      "name": "Ask about local-rule variations",
+      "when": "Reschedule, fee waiver, or filing format.",
+      "script": "'Does this court have a local rule on [continuances / fee waivers / electronic filing]?' Clerks will direct you to the local rules PDF or the standing order.",
+      "priority": 3
+    },
+    {
+      "name": "Confirm the docket entry in real time",
+      "when": "Status check.",
+      "script": "Ask the clerk to read back the most recent docket entry and the next scheduled event. Capture exactly: 'Hearing on [date] at [time] in [courtroom] before [judge].'",
+      "priority": 4
+    },
+    {
+      "name": "Get the self-help center number",
+      "when": "User has substantive questions beyond admin scope.",
+      "script": "Most county courts have a 'self-help' or 'family law facilitator' office. Ask the clerk for that direct number and end this call cleanly — do not try to be the substitute for it."
+    }
+  ],
+  "boundaries": [
+    "Do NOT advise on case strategy, evidence, what to plead, or whether to hire an attorney.",
+    "Do NOT interpret court orders or rulings.",
+    "Do NOT fill out legal pleadings on the user's behalf.",
+    "Do NOT predict outcomes ('the judge will probably …').",
+    "Do NOT pay a fee without the user's explicit pre-authorization for the exact amount.",
+    "Do NOT impersonate the user to a degree that would constitute unauthorized practice of law — identify as the user's assistant if asked."
+  ],
+  "success_signals": [
+    "Clerk confirms the hearing date / docket entry verbatim.",
+    "Clerk provides the exact fee and accepted payment methods.",
+    "Clerk identifies the correct form number for a continuance or other admin request.",
+    "Clerk schedules a hearing reschedule on the spot OR provides the written-motion path."
+  ],
+  "failure_signals": [
+    "Clerk indicates the question requires legal advice and politely declines — this is a CORRECT outcome; refer the user to counsel.",
+    "Case number is not found in the system after multiple attempts (possibly wrong court).",
+    "Hearing is < 48 hours away and a reschedule requires a written motion the user has not filed — escalate to operator immediately.",
+    "Matter involves a failure-to-appear, bench warrant, or active protective order — STOP and refer to an attorney or public defender."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture the clerk's name/initials, the date/time of the call, the exact next step (form number, fee amount, deadline), and any reference number issued. Repeat back the next hearing date/time/courtroom before hanging up.",
+    "on_failure": "Document where the call hit a wall (legal-advice boundary, wrong division, missing record). Refer the user to a licensed attorney, legal aid, or the court's self-help center. Provide the self-help center's direct number if obtained.",
+    "follow_ups": [
+      "Calendar the hearing date with a 48-hour and 24-hour reminder.",
+      "If a written motion is required, escalate to operator to either prepare it (with an attorney) or seek legal aid.",
+      "If a fee must be paid, confirm payment method/timing with the operator before submitting."
+    ]
+  },
+  "required_user_info": [
+    "Case number (preferred) OR full name on the case + approximate filing date",
+    "Court (county + division)",
+    "Current scheduled hearing date if relevant",
+    "Type of filing or document needed",
+    "Payment method (only if a fee is anticipated)",
+    "Whether the user has counsel (if yes, defer ambiguous questions to counsel)"
+  ],
+  "hang_up_and_call_back_signals": [
+    "You realize you are in the wrong division (criminal vs civil, etc.) — end politely and dial the correct number.",
+    "The clerk has placed you on hold > 3 times to look up a single case — likely a wrong-court problem; verify the court before continuing.",
+    "The question has drifted into legal-advice territory — stop, hang up, and route the user to counsel; do not try to extract advice from a different clerk."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

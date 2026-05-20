@@ -1,0 +1,147 @@
+{
+  "id": "tactical-empathy-labeling",
+  "name": "Tactical Empathy and Labeling (Voss Method)",
+  "version": "1.0.1",
+  "category": "negotiation",
+  "tags": ["voss", "tactical-empathy", "labeling", "de-escalation", "phone-call", "real-time"],
+  "description": "Use labels — short verbal observations of the counterparty's emotion or position — to defuse hostility, surface hidden objections, and earn the right to ask for movement. Labels are the workhorse move of Chris Voss-style hostage-negotiation transferred to commercial calls.",
+  "disclaimer": "Labels work because they signal you UNDERSTAND, not that you AGREE. Never label and then immediately ask for a concession in the same breath — it reads as manipulation. Pause first.",
+  "context": {
+    "when_to_use": "Any voice negotiation where the counterparty is emotional, defensive, scripted, or stalling. Especially powerful in the first 2 minutes (sets tone) and after a hard 'no' (defuses).",
+    "preconditions": [
+      "You can hear the rep's tone (this is a voice-channel skill; email labels work but at half strength).",
+      "You have the emotional bandwidth to sit through 3-5 seconds of silence after each label.",
+      "You are NOT in a hurry — labels paced too fast feel rehearsed and corrode trust."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Labels begin with 'It seems like…', 'It sounds like…', or 'It looks like…' — NEVER 'I feel…' or 'I think…'. The 'I' versions make it about you; the 'It' versions make it about them.",
+    "Negative emotions evaporate when named aloud by a third party. Positive emotions amplify when named — so label the negatives, be sparing with the positives.",
+    "After every label: silence for 3-5 seconds. Do not rescue the silence. The counterparty will either confirm, correct, or elaborate — all three are wins.",
+    "Labels are not guesses you need to be right about. A wrong label still earns engagement: 'No, it's not that — it's actually…' just told you what it REALLY is.",
+    "The goal of a label is not agreement. It is the response 'that's right' (real understanding) — distinct from 'you're right' (a brush-off).",
+    "Stack labels when the counterparty is heated. Two or three back-to-back labels with pauses can fully drain an angry call before you ever make an ask."
+  ],
+  "phrases": {
+    "label_frustration": "It sounds like you've had this conversation a few times today.",
+    "label_constraint": "It seems like your hands are pretty tied on the system side.",
+    "label_pride": "It sounds like you take this seriously — you want to get it right the first time.",
+    "label_skepticism": "It looks like there's something about my request that's not adding up for you.",
+    "label_pressure": "It sounds like there's a clock on your end I'm not seeing.",
+    "label_third_party": "It seems like the policy is coming from above you, not from you.",
+    "accusation_audit": "Before we go further, you're probably thinking I'm just another customer trying to talk you down, this is going to take forever, and I'm not going to be reasonable. Is that fair?",
+    "follow_up_calibrated": "Help me understand what I'm missing here."
+  },
+  "tactics": [
+    {
+      "name": "Open with an accusation audit",
+      "when": "First 60 seconds of any call where you anticipate the rep being defensive (retention, billing dispute, supervisor escalation).",
+      "script": "Use the `accusation_audit`. Naming every negative thing they might think about you BEFORE they think it defangs each one. Pause. Wait for the surprised laugh or 'no, no, it's fine'.",
+      "priority": 1
+    },
+    {
+      "name": "Label the emotion, then shut up",
+      "when": "Rep raises voice, sighs, or expresses frustration.",
+      "script": "Pick the closest label from `phrases`. Deliver it in a downward-inflected calm voice. Then count to five in your head before saying anything else.",
+      "priority": 2
+    },
+    {
+      "name": "Label the constraint, not the person",
+      "when": "Rep says 'I can't do that' or 'the system won't let me'.",
+      "script": "Use `label_constraint` or `label_third_party`. This separates the rep from the policy and turns them into a co-conspirator looking for a workaround, not the wall blocking you.",
+      "priority": 3
+    },
+    {
+      "name": "Mislabel deliberately to extract truth",
+      "when": "You suspect the rep is hiding the real reason for a no.",
+      "script": "Offer a label you suspect is slightly OFF. They will correct you — and the correction is the real reason. Example: 'It sounds like this is a pricing-team decision' (when you actually suspect retention authority); they say 'no, retention CAN do it, they just won't on month-to-month accounts' → you now know the unlock.",
+      "priority": 4
+    },
+    {
+      "name": "Pursue 'that's right'",
+      "when": "After 2-3 labels have landed.",
+      "script": "Summarize the rep's position back to them in your own words. Aim for them to say 'that's right'. That phrase is the inflection point — once they hear you UNDERSTAND, they start helping you solve the problem.",
+      "priority": 5
+    }
+  ],
+  "decision_tree": {
+    "description": "Run this WHILE the rep is talking. Match the last 1-2 sentences to a branch and execute. Do not wait for them to finish their full turn — most decisions are made in the 2 seconds before you speak.",
+    "branches": [
+      {
+        "if_you_hear": "Sigh, raised pitch, 'look, ma'am/sir…', sharp pace.",
+        "interpretation": "Rep is escalating emotionally OR has been scolded by their last caller.",
+        "say": "Use `label_frustration`. Then SILENCE for 5 seconds.",
+        "do_not": "Do not apologize. Do not justify your ask. Do not fill silence."
+      },
+      {
+        "if_you_hear": "'I can't', 'the system', 'policy', 'I'm not allowed'.",
+        "interpretation": "Rep is signaling lack of authority, not lack of willingness.",
+        "say": "Use `label_third_party`. Then ask the calibrated follow-up: 'Who on your end usually handles exceptions like this?'",
+        "do_not": "Do not argue with the policy. The rep didn't write it."
+      },
+      {
+        "if_you_hear": "'I understand' said quickly with no warmth.",
+        "interpretation": "Counterfeit empathy. The rep is performing a script.",
+        "say": "Break the script: 'Right — okay, and off-script for a second, what would you actually do in my position?'",
+        "do_not": "Do not accept the scripted empathy as real engagement."
+      },
+      {
+        "if_you_hear": "'That's right' (verbatim) after one of your labels or summaries.",
+        "interpretation": "BREAKTHROUGH. You have full alignment.",
+        "say": "Immediately make your ask — this is the highest-leverage moment of the call.",
+        "do_not": "Do not over-celebrate or oversell. Plant the ask and pause."
+      },
+      {
+        "if_you_hear": "'You're right' (verbatim).",
+        "interpretation": "Brush-off. They want you off the line, not in alignment.",
+        "say": "Reset with another label or calibrated question. Do NOT make your ask yet.",
+        "do_not": "Do not mistake 'you're right' for agreement. It's the opposite."
+      },
+      {
+        "if_you_hear": "Silence longer than 5 seconds after your label.",
+        "interpretation": "Rep is thinking, or the label landed too hard.",
+        "say": "Nothing. Wait. If silence passes 12 seconds, soften with `follow_up_calibrated`.",
+        "do_not": "Do not rescue the silence at 6 seconds — that's exactly when they were about to speak."
+      },
+      {
+        "if_you_hear": "'No, it's not that, it's actually…' (correcting your label).",
+        "interpretation": "Gold. They just gave you the real reason for their resistance.",
+        "say": "Label what they just told you back to them. Now you're inside their actual frame.",
+        "do_not": "Do not feel embarrassed about the wrong label — it was the tool that got the truth."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT label and ask for a concession in the same breath. Pause is mandatory.",
+    "Do NOT use labels you don't believe — fake empathy is audible.",
+    "Do NOT label more than 3 times without a substantive ask. It starts to feel like you're stalling.",
+    "Do NOT label trauma or personal hardship the rep volunteers — that's not a tactical opening, that's a human moment. Be human back."
+  ],
+  "success_signals": [
+    "Rep says 'that's right' or 'exactly' after a label.",
+    "Rep's tone softens — slower pace, lower pitch within 30 seconds of first label.",
+    "Rep starts volunteering information you didn't ask for ('honestly, between us…').",
+    "Rep references a workaround unprompted.",
+    "Rep refers to you by name without checking the account."
+  ],
+  "failure_signals": [
+    "Rep doubles down after each label — they may be trained to detect Voss tactics; switch to direct.",
+    "Rep audibly reads from a script through 3+ labels — call may need supervisor escalation.",
+    "Your labels keep getting 'no, that's not it' and you have no theory for what IS it — you're guessing, not listening."
+  ],
+  "exit_strategy": {
+    "on_success": "Once 'that's right' lands and the ask is granted, stop selling. Confirm details and exit.",
+    "on_failure": "If labels aren't landing after 4 attempts, you're probably misreading the call. Pivot to calibrated questions (`02-calibrated-questions`) and let THEM tell you what frame to use.",
+    "follow_ups": [
+      "Log which labels worked and which didn't for next call.",
+      "If supervisor escalation needed, brief the supervisor with the rep's name and the 'that's right' summary — it primes them."
+    ]
+  },
+  "required_user_info": [
+    "Whether the call is voice or text (this skill is voice-optimized).",
+    "Any prior relationship or history with the counterparty.",
+    "The emotional stakes for the user (informs how much patience to budget)."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

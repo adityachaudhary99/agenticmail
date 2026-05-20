@@ -1,0 +1,141 @@
+{
+  "id": "multi-channel-escalation",
+  "name": "Multi-Channel Escalation Sequencing",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "multi-channel",
+    "social-media",
+    "email",
+    "phone",
+    "twitter",
+    "linkedin",
+    "strategy",
+    "customer-support"
+  ],
+  "description": "Use phone, email, social media, and written letters in the right ORDER and the right COMBINATION. Each channel has different routing, different staffing, and different leverage. Wrong order wastes weeks; right order resolves in days.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "A single channel (typically phone) hasn't resolved the issue after 1-2 good-faith attempts. The issue has enough materiality to be worth a multi-day, multi-channel push. Especially effective when the company has a visible brand and active social media presence.",
+    "preconditions": [
+      "User has documented timeline of prior attempts (dates, names, case numbers).",
+      "User has at least one social media account or willingness to make one.",
+      "User has the company's published support email AND its executive-relations or social-care contact handles (researchable in 10 min).",
+      "User has 3-7 days to let the channels work — multi-channel is not a same-day strategy."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Channels are sorted by COST and SPEED, not by what feels right. Roughly: chat (cheapest, fastest if available) → phone (free for you, expensive for the company) → email (slow but documented) → social public (FAST + reputational pressure) → written letter (slow, formal, legally weighty) → executive/regulator (most expensive, most powerful). Use cheaper/faster channels first; escalate when they fail.",
+    "Social media is the highest-leverage modern channel for routine consumer disputes. Companies staff social-care teams with senior agents and explicit escalation authority — because public visibility forces it. A polite, factual public tweet at @CompanyHelp often outperforms 3 hours on hold.",
+    "Email is slow but creates a paper trail. Send email IN PARALLEL with phone or social — not as your only channel. The phrase 'I emailed your support address on [date]' is leverage even before anyone reads the email.",
+    "Direct messages (DMs) often work better than public posts. Many companies' social-care teams reply faster to a polite DM with case details than to a public post. But the public post creates the leverage that gets the DM answered quickly. Combination > either alone.",
+    "Decision point — before each new channel, ask: 'is this channel actually used by this company?' Some companies are dead on Twitter, alive on Reddit. Some answer email in 2 days; others in 6 weeks. Spend 5 minutes verifying before committing.",
+    "Channel-stacking is force multiplication. Phone call open + email sent same day + tweet referencing both = three separate notifications hitting three separate teams who don't want to be the one who let the customer escalate further.",
+    "Tone has to STAY professional across channels. The same factual, calm tone wins in all of them. A combative tweet undoes the leverage your calm email built."
+  ],
+  "phrases": {
+    "email_template_subject": "Formal escalation — [Account #] — [one-line issue] — case ref [prior case #]",
+    "email_template_body_intro": "Hello,\n\nI'm writing to escalate a service issue that has not been resolved through prior phone contact. Timeline below.\n\nAccount: [number]\nIssue: [one paragraph, factual]\nPrior contacts: [date — rep name — case # — outcome]; [repeat for each]\nRequested resolution: [one sentence]\n\nI'd appreciate a response within [5 business days]. If unresolved, my next step will be [next channel — be specific, not threatening].",
+    "tweet_template_public": "@[CompanyHelp] hi — I've been trying to resolve [one-line issue] for [N weeks] across [N calls]. Account on file, case ref [###]. Can someone DM me to get this moving? Happy to take this to DMs.",
+    "tweet_template_dm": "Hi — sending case context here so we can keep details off the public timeline. Account: [number] / Email on file: [email] / Issue: [paragraph] / Prior case refs: [list] / What I'm asking for: [one sentence] / What I've tried: [bullet list]. Thanks for any help.",
+    "linkedin_inmail_to_exec": "Hi [Name] — apologies for the cold message. I'm a long-time [company] customer and have been unable to resolve [issue] across [N contacts]. I know this isn't your direct area but I'd appreciate even a forward to the right person at your organization. Case ref [#] for your team. Thank you.",
+    "letter_template_opening": "Dear [Office of the President / Customer Relations]: I am writing as a formal escalation regarding [issue], which has not been resolved through your customer service channels. Attached is a complete timeline including dates, representative names, and case reference numbers. I am requesting a written response within 14 days.",
+    "phone_referencing_paper_trail": "Just for context — I've already emailed your support team on [date] and sent a DM to your social-care team on [date]. I'm calling now to give your phone team a chance to resolve this before all three channels return responses."
+  },
+  "tactics": [
+    {
+      "name": "Audit channels before committing",
+      "when": "Before launching multi-channel.",
+      "script": "5-minute research: (1) Is the company's Twitter/X handle responsive in the last 30 days? Check replies. (2) Is the company's support email a real inbox or a no-reply? (3) Does the executive team have public LinkedIn presence? (4) Are there subreddits or Better Business Bureau threads showing what channel has worked for others? Pick the live channels — skip the dead ones.",
+      "priority": 1,
+      "decision_point": "If a channel looks dead (Twitter handle that hasn't replied in 6 months, email address that bounces) — DO NOT use it. A dead channel is wasted effort AND tells the company you don't know which channels are real, weakening your credibility."
+    },
+    {
+      "name": "Standard sequence — phone+email same day, social if no movement in 48h",
+      "when": "Day 1.",
+      "script": "Morning: phone call (using prior skills). Same afternoon: send formal escalation email (template above). Save the email send confirmation. Wait 48h business-hours. If no movement → Day 3: post the tweet AND send the DM.",
+      "priority": 2
+    },
+    {
+      "name": "Reference the paper trail on every channel",
+      "when": "Every contact after Day 1.",
+      "script": "Use `phone_referencing_paper_trail` or its variant for the channel. The fact that you have multiple channels open is itself leverage — companies prefer to resolve once, not respond on five tracks.",
+      "priority": 3,
+      "decision_point": "If, after referencing the paper trail, the agent visibly engages (looks up the email, references the tweet) — that channel is now active. Keep them engaged; don't add more channels until you see whether this one resolves."
+    },
+    {
+      "name": "Use social-DM, not just public posts",
+      "when": "Tweet has been up >2h with no reply, OR you want to share details that don't belong public.",
+      "script": "Use `tweet_template_dm`. Most companies' social-care teams respond faster to DMs (lower public-relations risk for them to engage substantively). The public tweet creates urgency; the DM enables resolution.",
+      "priority": 4
+    },
+    {
+      "name": "LinkedIn for executives (carefully)",
+      "when": "Phone + email + social all unresolved after 7 business days.",
+      "script": "Use `linkedin_inmail_to_exec`. Target: VP of Customer Experience, Chief Customer Officer, or anyone with 'customer' in their title — NOT the CEO directly (too high, ignored or filtered). Keep it polite, brief, factual. Most executives forward these to a senior escalation specialist within hours.",
+      "priority": 5,
+      "decision_point": "LinkedIn outreach burns a one-time card. Don't do it for trivial issues. Reserve for cases where the dollar amount or harm justifies the asymmetry — and only after the standard channels have demonstrably failed."
+    },
+    {
+      "name": "Written letter for formality",
+      "when": "Issue is large (multi-thousand dollar, multi-month) and digital channels haven't worked.",
+      "script": "Use `letter_template_opening`. Send by certified mail to corporate HQ (Office of the President / Customer Relations). Include timeline, evidence, and a 14-day response window. Certified mail creates legal record of receipt — that's why it's part of regulator / litigation prep.",
+      "priority": 6
+    },
+    {
+      "name": "Consolidate to the channel that responded",
+      "when": "Any channel produces an actual response.",
+      "script": "Stop adding channels. Concentrate on the one that's working. Multiple parallel responses can contradict each other and the company may close the rest as 'duplicate'. Acknowledge the responsive channel ('thank you for getting back to me — I'd like to consolidate the conversation here').",
+      "priority": 7
+    },
+    {
+      "name": "Close all channels with the resolution",
+      "when": "Resolution reached on one channel.",
+      "script": "Send a brief, polite update on each OTHER open channel: 'Resolved via [channel] on [date], case [ref]. Closing this thread. Thanks.' Keeps your record clean and prevents stale escalations from re-opening confused tickets later.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "Do NOT post unverified accusations on social. Public posts are searchable forever — defamation isn't free.",
+    "Do NOT post identifying information (account numbers, full addresses, screenshots with PII) publicly. Use DMs for that.",
+    "Do NOT spam multiple executives at once with LinkedIn InMail. One targeted message > five mass messages.",
+    "Do NOT contradict yourself across channels — same facts, same ask, same timeline everywhere. Contradictions are used to discredit you.",
+    "Do NOT skip the cheaper channels and go directly to social/executive/regulator first. Skipping the ladder destroys the 'I tried' narrative that makes higher channels work.",
+    "Do NOT keep adding channels after one starts working — pick the responsive channel and pursue it.",
+    "Do NOT use multi-channel for a $20 dispute. The strategy's overhead is real; reserve for issues that justify it (>$200 OR significant service disruption OR principle-of-the-thing matters more than the dollar amount)."
+  ],
+  "success_signals": [
+    "Social-care DM responds within 24h with case ownership.",
+    "Email reply from an actual person (not auto-reply) with a name + case + commitment.",
+    "Phone rep on a re-call references the email or tweet without prompting — meaning the channels are visible internally.",
+    "Executive-level callback from a phone number you didn't dial.",
+    "Tone shift from 'we'll look into it' to 'here's what we can do' on any channel."
+  ],
+  "failure_signals": [
+    "All channels respond with the same boilerplate (often verbatim) — you've hit a centralized response queue with no real authority.",
+    "Auto-replies on email but no human follow-up after 5 business days.",
+    "Public tweet gets no response within 48h on a normally-responsive handle.",
+    "DM gets a generic 'thanks for reaching out, please call [number]' — that's a channel-loop back to phone, the channel that already failed.",
+    "Letter sent certified mail, signature received, no response in 14 business days."
+  ],
+  "exit_strategy": {
+    "on_success": "Consolidate to the responsive channel. Get specific commitment in writing. Close other channels with brief updates. Calendar a follow-up to verify the resolution actually executed.",
+    "on_failure": "If all standard channels exhausted: escalate to `invoke-regulator-firmly` (if applicable) and/or `reach-executive-office` (direct corporate). For very large dollar amounts, consult an attorney about formal demand letter or small claims.",
+    "follow_ups": [
+      "Save all channel correspondence (emails, tweet links, DM screenshots, certified mail receipts) in one folder — this is your evidence package.",
+      "If issue resolves, send a closing message of thanks on the responsive channel. Goodwill on a responsive channel makes the NEXT issue (if there is one) faster.",
+      "If issue remains unresolved after 14-30 days across multiple channels — that itself is grounds for a regulator complaint citing pattern of non-response."
+    ]
+  },
+  "required_user_info": [
+    "Complete timeline of prior contacts",
+    "Account number + login email + phone on file",
+    "Verified company contact info for each channel (phone, email, social handles, corporate address)",
+    "Social media account (or willingness to create one)",
+    "Time horizon available (7+ business days for full sequence)"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

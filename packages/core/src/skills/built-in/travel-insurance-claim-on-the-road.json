@@ -1,0 +1,114 @@
+{
+  "id": "travel-insurance-claim-on-the-road",
+  "name": "File a Travel-Insurance Claim While Still Traveling",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["insurance", "claim", "trip-delay", "trip-cancellation", "medical", "documentation"],
+  "description": "Open a travel-insurance claim before you get home — capture documentation while it's fresh, meet notification deadlines, and get advance payment for emergency expenses when supported.",
+  "disclaimer": "Coverage varies wildly by policy. Always read your specific policy language for definitions of 'delay', 'covered reason', and per-day caps. The amounts and timelines below are typical for major carriers (Allianz, AXA, Travel Guard, World Nomads, IMG) and credit-card-issued coverage (Chase Sapphire Reserve, Amex Platinum, Capital One Venture X) but are not universal.",
+  "context": {
+    "when_to_use": "User is mid-trip and has experienced a delay (>6 hr typical), cancellation, medical event, lost baggage, theft, or emergency evacuation. Filing now (vs. when home) captures fresher evidence and meets the policy's notification window (often 24-72 hr for medical, 30 days for delays).",
+    "preconditions": [
+      "User has the policy number or knows which credit card issued the coverage.",
+      "User has a phone with camera (everything will be photographed).",
+      "User is safe — medical first, claim second."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Document while it's happening. Photograph every receipt the moment you get it. Take a photo of the airport board / hospital sign / police station / hotel marquee — these add credibility.",
+    "Notify the insurer within 24-48 hours of a major event. Most policies require 'prompt notification' and some void coverage for late notice on medical claims.",
+    "Credit-card-issued insurance is usually the easiest path. Chase Sapphire Reserve and Preferred bundle trip cancellation, trip delay (6+ hr), and lost luggage — claim through the issuer's benefits administrator (eClaimsLine for Chase Reserve, Amex Travel Insurance for Platinum-tier).",
+    "Get carrier-issued written confirmation of the cause. 'Delay due to mechanical' written on the airline letter is worth a lot. 'Delay due to weather' is also okay — most policies cover both.",
+    "Save EVERY receipt — meals, ground transport, basic toiletries, replacement clothing. Per-day delay caps are typically $200-$500/day, but you can't claim what you can't prove.",
+    "If the insurer offers an advance / emergency payment for medical or repatriation, take it — these are designed for in-trip emergencies and don't reduce your final settlement."
+  ],
+  "phrases": {
+    "opener_delay": "I'd like to open a trip-delay claim. Policy/card [number]. My flight [number] was [delayed / cancelled] on [date], with [hours] of delay. The cause as posted by the airline is [reason]. I'm currently in [city] and incurring covered expenses.",
+    "opener_medical": "I need to open a medical claim and ask about advance payment. I'm being treated for [condition] at [facility] in [city]. Policy number [code]. What documentation do I need to send now?",
+    "opener_lost_baggage": "I'd like to open a baggage delay claim. Airline [carrier] PIR [property irregularity report number]. Bag was due [date], not yet delivered. I need to know the per-item / per-day cap so I can buy essentials.",
+    "ask_for_per_day_cap": "What's the per-day reimbursement cap for delay expenses? And what categories count — meals, transport, lodging, toiletries, clothing?",
+    "ask_for_advance": "Given this is mid-trip and the medical cost is [amount], can you advance payment directly to the provider, or do I pay and submit?",
+    "ask_for_documentation_list": "Can you email me a checklist of documents you need for this claim — boarding passes, receipts, carrier letter, police report — so I can collect them all before I leave [country]?",
+    "graceful_close_success": "Thanks. Confirmed: claim number [code], my submission deadline is [date], and I'll upload through your portal. Anything else I should capture right now?",
+    "graceful_close_failure": "Okay — I'll keep collecting documentation and submit fully when I'm back. Please send the email confirmation of this conversation."
+  },
+  "tactics": [
+    {
+      "name": "Identify your coverage source",
+      "when": "Step zero.",
+      "script": "Three possible sources: (1) Standalone policy (Allianz, World Nomads, IMG, AXA, Travel Guard — you bought it). (2) Credit-card benefit (Chase Sapphire Reserve/Preferred, Amex Platinum/Gold, Capital One Venture X) — covered if you paid the trip on that card. (3) Employer or membership (AAA, AmEx Global Assist). They stack — claim against each.",
+      "priority": 1
+    },
+    {
+      "name": "Capture evidence in real time",
+      "when": "Throughout the disruption.",
+      "script": "Photo of: airport board showing the delay, boarding pass, the airline's delay/cancellation email, every receipt (meals, taxi, hotel, replacement essentials), the bag tag receipt for lost luggage, police report for theft. Time-stamped photos beat memory.",
+      "priority": 2
+    },
+    {
+      "name": "Notify within the policy window",
+      "when": "Same day or within 24-48 hours.",
+      "script": "Call or email the insurer's claims line. eClaimsLine (Chase) accepts via phone or upload. Amex Travel Insurance: 1-800-228-9792. Allianz: 1-866-884-3556. Most have 24/7 lines. The conversation creates a record that you reported promptly.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for the documentation checklist upfront",
+      "when": "First contact with the insurer.",
+      "script": "Have them email you the doc checklist for your specific claim type. Collect everything BEFORE leaving the country — police reports from a foreign jurisdiction are very hard to get retroactively.",
+      "priority": 4
+    },
+    {
+      "name": "Use advance / emergency payments for medical",
+      "when": "Hospitalized or in active medical care.",
+      "script": "Most policies (and Amex/Chase) offer direct-payment to providers OR emergency advance. Don't pay $30,000 out-of-pocket and hope for reimbursement — call the insurer first; many will pay the hospital directly via guarantee-of-payment letter."
+    },
+    {
+      "name": "Stack claims when eligible",
+      "when": "Multiple coverages apply.",
+      "script": "Example: cancelled flight → EU261 cash + carrier rebook + insurance trip-delay reimbursement for meals/hotel. Each is independent. Insurance coordinates with carrier compensation but does not nullify it."
+    },
+    {
+      "name": "Keep duplicate digital + paper records",
+      "when": "Throughout.",
+      "script": "Email photos of receipts to yourself. Use a cloud notes app. When you get home, your phone could be lost or wet — cloud backups protect the claim."
+    }
+  ],
+  "boundaries": [
+    "Do NOT exaggerate the delay or the cause; insurers verify with the carrier.",
+    "Do NOT submit duplicate claims to two insurers for the same expense — they share data, and double-recovery is fraud.",
+    "Do NOT discard receipts even if you think they're under the cap — caps may apply per-day or per-category.",
+    "Do NOT pay a foreign hospital without first asking the insurer if they can issue a guarantee-of-payment.",
+    "Do NOT skip filing a Property Irregularity Report (PIR) at the airline counter for lost/delayed bags — the PIR is the foundation of the claim."
+  ],
+  "success_signals": [
+    "Claim number issued in real time.",
+    "Documentation checklist arrives in email within an hour.",
+    "Insurer offers direct payment to provider for medical.",
+    "Per-day cap is generous (≥$300/day) for your destination's cost-of-living."
+  ],
+  "failure_signals": [
+    "Insurer says delay length doesn't meet the threshold (some policies need 12+ hours).",
+    "Cause of disruption isn't a 'covered reason' (e.g., civil unrest excluded on cheaper policies).",
+    "Hospital won't accept guarantee-of-payment.",
+    "Policy excludes the country (e.g., US-bought policies sometimes exclude Cuba, Iran, North Korea, Russia)."
+  ],
+  "exit_strategy": {
+    "on_success": "Submit the documentation as soon as you have it (don't wait for the trip to end if the claim is closeable in pieces). Track the claim number weekly.",
+    "on_failure": "If denied, request the written reason. Many denials are overturned on appeal with one more document (carrier letter, doctor's note, police report). The insurance ombudsman or your state insurance commissioner is the next escalation.",
+    "follow_ups": [
+      "If a medical event, get a copy of your medical records before leaving the foreign hospital — translated if possible.",
+      "If a credit-card claim, the issuer often pays faster than standalone insurers (Chase Sapphire Reserve trip-delay is typically paid in 7-14 days).",
+      "If the trip was paid partially on multiple cards, the card that paid the disrupted segment is the one to claim against."
+    ]
+  },
+  "required_user_info": [
+    "Policy number or credit card used for the trip",
+    "Insurer name and 24/7 claims phone number",
+    "Description of the event (date, location, cause as documented by carrier/provider)",
+    "Expected delay or hospital duration",
+    "Receipts collected so far",
+    "Whether emergency medical evacuation may be needed"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

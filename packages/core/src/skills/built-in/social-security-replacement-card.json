@@ -1,0 +1,122 @@
+{
+  "id": "social-security-replacement-card",
+  "name": "Social Security: Replacement Card, Benefit Estimate, or Direct-Deposit Change",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "social-security",
+    "ssa",
+    "replacement-card",
+    "direct-deposit",
+    "benefit-estimate",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call the SSA national line or a local field office to request a replacement Social Security card, get a benefit estimate, or change direct-deposit details on an active benefit. Most card replacements are now done via my Social Security online — this skill is for cases where the online flow fails or in-person ID is required.",
+  "disclaimer": "Not legal or financial advice. The agent will not advise on when to start benefits, spousal-claiming strategy, or disability-determination strategy — those require an SSA claims rep, a financial planner, or an attorney specialising in SSA matters.",
+  "context": {
+    "when_to_use": "User cannot complete the request through my Social Security online (account locked, ID.me/Login.gov rejection, no online account possible due to credit-freeze conflict). User needs an in-person appointment confirmed. User received SSA correspondence and wants to confirm authenticity. User wants to change banking info on an active benefit.",
+    "preconditions": [
+      "User has their Social Security Number (will only be read aloud after rep authenticates).",
+      "User has full legal name, date of birth, place of birth, and mother's maiden name.",
+      "User has current address on file and any prior address (for KBA questions).",
+      "For direct-deposit changes: new bank routing number, account number, and account type.",
+      "Patience: SSA wait times average 30–60 minutes on the 1-800-772-1213 line."
+    ],
+    "estimated_call_duration_minutes": 45
+  },
+  "principles": [
+    "SSA is one of the most ID-strict federal agencies. Direct-deposit changes especially are a fraud target — expect rigorous authentication and possibly a mailed confirmation that delays the change.",
+    "The national 800 number gets you a general claims rep. Local field offices get you someone who can pull your file faster — but the field-office line is harder to reach. Try the national line first; if escalation is needed, ask for the local office direct number.",
+    "Best call times: Wednesday–Friday after 4pm Eastern, or first thing Tuesday–Friday morning. Avoid Monday and the first week of any month (peak benefit-payment questions).",
+    "If the user is a representative payee, that triggers different authentication and forms — establish payee status up front.",
+    "SSA will NOT threaten arrest, demand gift cards, or call out of the blue saying your SSN is suspended. Any such contact is a scam."
+  ],
+  "phrases": {
+    "opener_card": "Hi, I'd like to request a replacement Social Security card. The online process [didn't work / isn't available for me] because [reason]. Can we start that by phone, or do I need an in-person appointment?",
+    "opener_estimate": "Hi, I'd like a benefit estimate for retirement at ages 62, 67, and 70. Can you pull that and read me the figures?",
+    "opener_dd_change": "Hi, I'd like to change the direct-deposit account on my Social Security benefit. The new bank is [BANK], routing [ROUTING], account [LAST 4 ONLY until authenticated]. Can we do that today?",
+    "ask_for_field_office": "Could I have the direct phone number for my local field office? I think this might need an in-person appointment.",
+    "authentication_ready": "I have my SSN, DOB, place of birth, mother's maiden name, and current address ready when you need them.",
+    "stall_documents": "One moment — I want to read the numbers off my [bank statement / SSA letter] so I get them right.",
+    "graceful_close": "Thank you. Can I confirm: what was changed, when it takes effect, whether I'll receive written confirmation in the mail, and a confirmation or case number — and your name and ID?"
+  },
+  "tactics": [
+    {
+      "name": "Try my Social Security online first if not already done",
+      "when": "Before any call.",
+      "script": "Card replacement, benefit estimate, and DD change are all online-eligible in most states. The line is busy; the website is fast. Only call if the online flow has actually failed.",
+      "priority": 1
+    },
+    {
+      "name": "Establish account type up front",
+      "when": "First minute with a human.",
+      "script": "Tell the rep: retirement / SSDI / SSI / survivors / representative-payee. Different programs route to different specialists.",
+      "priority": 2
+    },
+    {
+      "name": "For DD changes, expect a hold-and-mail",
+      "when": "Bank-info change.",
+      "script": "SSA typically requires the change to be made by phone WITH a mailed confirmation that takes 30–60 days, OR via my Social Security with stronger online ID. Tell the user this delay is normal and not failure.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for an in-person appointment if ID is the blocker",
+      "when": "Card replacement requires original-document ID inspection.",
+      "script": "If the user cannot prove identity online (no driver's license that matches, foreign-document case, name change), the rep can schedule an in-person appointment at the local field office. Get the appointment confirmation number and the list of documents required.",
+      "priority": 4
+    },
+    {
+      "name": "Use SSA-1099 / award letter as backup ID",
+      "when": "User has trouble authenticating on the phone.",
+      "script": "Reps can sometimes use the most recent SSA-1099 or benefit-award letter as a secondary authenticator. Have it ready."
+    }
+  ],
+  "boundaries": [
+    "Do NOT advise on the optimal age to claim benefits, spousal/widow(er) strategy, or whether to file for disability — refer to a financial planner or SSA claims rep.",
+    "Do NOT share the user's SSN until the rep has been confirmed as SSA and has asked specifically.",
+    "Do NOT initiate a DD change without explicit, real-time authorization from the user — banking changes are a top SSA fraud vector.",
+    "Do NOT engage with any inbound caller claiming SSA — call back via 1-800-772-1213 or the local field-office published number.",
+    "Do NOT claim a card or appointment is set until you have a written or verbal confirmation number."
+  ],
+  "success_signals": [
+    "Rep schedules an in-person appointment with a confirmation number.",
+    "Card replacement is accepted by phone and mailed within 10–14 business days.",
+    "Benefit estimate is read aloud at ages 62, 67, 70 and matches my Social Security online (sanity check).",
+    "DD change is accepted with a verbal confirmation number and a mailed confirmation in 30–60 days.",
+    "Rep confirms no fraud flag on the account."
+  ],
+  "failure_signals": [
+    "Rep cannot authenticate the user after 2 attempts — schedule an in-person appointment with original documents.",
+    "DD change request is rejected because account is under fraud monitoring — handle in person.",
+    "User is told the change can only be made online but the user cannot pass Login.gov / ID.me — escalate to field-office in-person.",
+    "Hold > 90 minutes — call back later in the week or after 4pm Eastern."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: change made, effective date, confirmation/case number, agent name + ID. Note whether a mailed confirmation will arrive (and the expected window). Verbally repeat back banking changes digit-by-digit if applicable.",
+    "on_failure": "Capture next step: in-person appointment (date, time, office address, documents to bring), alternative online flow, or follow-up call window. Provide the operator the documents list for the in-person visit.",
+    "follow_ups": [
+      "Calendar the in-person appointment with a 24-hour reminder.",
+      "Calendar arrival of the replacement card (10–14 business days).",
+      "Confirm the first DD-changed payment landed in the new account (next benefit-payment date).",
+      "If a mailed confirmation does not arrive within the quoted window, call back with the confirmation number."
+    ]
+  },
+  "required_user_info": [
+    "Social Security Number",
+    "Full legal name, DOB, place of birth, mother's maiden name",
+    "Current address (and prior address for KBA)",
+    "Program type (retirement / SSDI / SSI / survivor / representative-payee)",
+    "For DD changes: bank name, routing number, account number, account type (checking/savings)",
+    "Whether the user has online my Social Security access",
+    "Documents available for in-person ID (DL, passport, birth certificate, naturalization papers)"
+  ],
+  "hang_up_and_call_back_signals": [
+    "Inbound call claiming SSA — SSA does not call to suspend SSNs, demand payment, or threaten arrest; hang up and call 1-800-772-1213.",
+    "Rep insists on full SSN before identifying themselves and the office — request name, office, and ID; if refused, hang up.",
+    "Wait > 90 minutes — try Tue–Fri 4–6pm Eastern.",
+    "User cannot answer authentication questions — gather prior addresses, prior SSA-1099, and retry."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,128 @@
+{
+  "id": "transcript-request",
+  "name": "Request a Transcript from the Registrar",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "registrar",
+    "transcript",
+    "sealed",
+    "rush",
+    "records",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call a college / high school registrar to request an official transcript — sealed vs. unsealed, electronic vs. paper, standard vs. rush — and unblock holds, payment friction, or third-party-recipient quirks that stall the request.",
+  "disclaimer": "Schools may withhold transcripts for unpaid balances, library fines, or other holds. FERPA governs who can request transcripts on behalf of an adult student — the registrar will require either the student's authorization or proof of legal guardianship for a minor.",
+  "context": {
+    "when_to_use": "The user needs an official transcript sent to a third party (grad school, employer, licensing board, NCAA Eligibility Center, another college for transfer credit) and either (a) the online portal isn't producing the right delivery method, (b) there's a hold blocking the order, or (c) the deadline is tight enough that standard 5-10 business day processing won't work.",
+    "preconditions": [
+      "User has Student ID, dates of attendance, and (if changed) the name on the record at time of attendance.",
+      "User has the exact recipient name, address, email, and any institutional code (CEEB / SAO / Parchment / Credentials Inc. / National Student Clearinghouse).",
+      "User knows whether the recipient REQUIRES a sealed paper transcript or accepts e-transcript (this varies — bar exams and some grad schools still require paper-sealed).",
+      "User has a credit card or can pay the fee — most registrars charge $5–$25 per copy plus rush fees."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "The registrar's first answer is the policy answer. Discretionary exceptions exist — but you have to ask, and you have to give them a reason.",
+    "Rush isn't always available, but expedited delivery (FedEx overnight) almost always is — they're different fees and different services.",
+    "Holds block transcripts even if you've paid. The hold has to be lifted in the system. If you paid yesterday, the bursar's update may not have synced — ask the registrar to call the bursar directly.",
+    "Sealed means the envelope is unbroken with the registrar's signature/stamp across the flap. If a recipient requires 'sealed', a PDF you forwarded yourself does NOT count.",
+    "Many third-party recipients (LSAC, AMCAS, AACOMAS, CSDCAS, NCAA) want the transcript sent to THEM, not to you. Routing through the user defeats the purpose and often gets rejected.",
+    "Errors on transcripts (wrong grade, missing course, name change) require a correction request from the original department — the registrar publishes what departments certify. Call the department first."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to order an official transcript. My name is [name], Student ID [ID], I attended from [year] to [year]. Could you walk me through the options for getting it to [recipient] by [date]?",
+    "ask_about_holds": "Could you check whether there are any holds on my account that would block a transcript order? I want to clear those before I submit so the order doesn't bounce.",
+    "rush_request": "I have a hard deadline of [date]. Is rush processing available, or expedited shipping, or both? What's the realistic total turnaround if I order today?",
+    "sealed_clarification": "The recipient is asking for a sealed transcript. Just to confirm — what your office sends is the official sealed copy that they consider unopened, correct? Either by mail or via a secure e-transcript provider?",
+    "third_party_routing": "The transcript needs to go directly from your office to [LSAC / AMCAS / NCAA / etc.]. Their school code is [code]. Can you confirm you have that recipient in your system and that the e-transcript will route correctly?",
+    "fee_waiver_ask": "I'm a current student / alum applying for [graduate school / a fellowship / a job]. Do you have a fee-waiver process for active applications, or a flat number of free transcripts per year?",
+    "supervisor_request": "Thanks for checking — could I speak with the Registrar or an Associate Registrar? I have a deadline issue and I want to make sure I'm not missing any options.",
+    "graceful_close_success": "Thank you. To confirm: order placed under reference [number], delivery to [recipient] via [method] by [date], total $[amount] charged to [card]. May I have an email confirmation, and your name in case I need to follow up?"
+  },
+  "tactics": [
+    {
+      "name": "Check for holds before ordering",
+      "when": "First substantive turn.",
+      "script": "Use `ask_about_holds`. Common silent holds: unpaid library fines under $20, unreturned lab equipment, parking tickets, missing health-insurance waiver, missing exit-counseling for federal loans. Clearing these first prevents a failed order.",
+      "priority": 1
+    },
+    {
+      "name": "Clarify sealed vs. e-transcript expectation",
+      "when": "Recipient's instructions are ambiguous.",
+      "script": "Use `sealed_clarification`. Some bar associations and a few grad programs still reject e-transcripts. When in doubt, order both — paper for the file, e-transcript for speed.",
+      "priority": 2
+    },
+    {
+      "name": "Use the recipient's institutional code",
+      "when": "Sending to LSAC, AMCAS, AACOMAS, CSDCAS, NCAA, Parchment, Credentials Inc., or National Student Clearinghouse.",
+      "script": "Use `third_party_routing`. These services have school-specific codes that route the transcript directly into the user's application file. Sending to a generic mailing address means manual matching and weeks of delay.",
+      "priority": 3
+    },
+    {
+      "name": "Ask about rush AND expedited shipping separately",
+      "when": "Deadline is tight (< 7 business days).",
+      "script": "Use `rush_request`. Rush = faster processing inside the registrar's office. Expedited = faster shipping after it leaves. They stack. Some offices also offer 'same-day in-person pickup' that's faster than either.",
+      "priority": 4
+    },
+    {
+      "name": "Ask about fee waivers",
+      "when": "User is unemployed, low-income, currently enrolled, applying to grad school via a fee-waiver program (LSAC FAP, AAMC FAP), or has limited copies/year built into tuition.",
+      "script": "Use `fee_waiver_ask`. Most schools include 2–5 free transcripts per lifetime or per year; alums sometimes forget this benefit exists.",
+      "priority": 5
+    },
+    {
+      "name": "Escalate to the Associate Registrar for exceptions",
+      "when": "Hold can't be lifted same-day, or rush isn't normally offered but deadline is critical.",
+      "script": "Use `supervisor_request`. The Registrar and Associate Registrar can override processing-queue rules, hand-deliver to the bursar to clear a hold, or authorize same-day issuance in a way front-desk staff cannot.",
+      "priority": 6
+    },
+    {
+      "name": "Request a 'pending' transcript if final grades aren't in yet",
+      "when": "User is a current-term student and needs a transcript before finals post.",
+      "script": "Ask whether the registrar offers an 'in-progress' or 'partial' transcript that shows current registration. Some grad-school applications accept these as interim records."
+    }
+  ],
+  "boundaries": [
+    "Do NOT request a transcript on someone else's behalf unless you have FERPA authorization in writing (or are legal guardian of a minor) — the registrar will refuse and may flag the account.",
+    "Do NOT alter or open a sealed transcript. Doing so voids the seal and the recipient will refuse it.",
+    "Do NOT promise to pay a hold during the call without operator approval — confirm the dollar amount and the bursar's payment channel first.",
+    "Do NOT ask the registrar to fix a grade. That's a faculty / department / academic-standards-committee process; registrar only records what's certified.",
+    "Do NOT email an unsealed PDF to a recipient that required sealed and claim it counts — it doesn't, and re-submitting late may miss the deadline."
+  ],
+  "success_signals": [
+    "Order reference number issued.",
+    "Hold check returns clean.",
+    "Registrar confirms electronic delivery to the recipient's institutional code.",
+    "Email confirmation lands in the user's inbox before the call ends.",
+    "Rush + expedited combined delivery is in writing."
+  ],
+  "failure_signals": [
+    "Hold can't be cleared until the bursar reopens the next business day — and the deadline is tomorrow.",
+    "Registrar says e-transcript isn't supported for this recipient and paper-only via mail won't arrive in time.",
+    "Account is in the archive and physical records require 4–6 weeks to retrieve (common for schools that have changed student-information systems).",
+    "Name on record doesn't match the user's current legal name and recipient requires matching name — needs a name-change petition first."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm order number, method, recipient, fee, ETA. Ask for email confirmation. Save a screenshot of the tracking page if e-transcript.",
+    "on_failure": "Get the specific blocker in writing. Decide with the operator: (a) pay the hold same-day and re-order, (b) request a deadline extension from the recipient, (c) escalate to the Registrar, (d) request an in-progress / unofficial transcript as a stopgap.",
+    "follow_ups": [
+      "Email the operator the order number, ETA, and any tracking link.",
+      "If recipient requires confirmation of receipt, set a check-in 2 business days after expected delivery.",
+      "Document the registrar's email so future transcript orders can skip the phone tree."
+    ]
+  },
+  "required_user_info": [
+    "Student ID, full legal name, and name-at-attendance if different",
+    "Dates of attendance and degree(s) awarded",
+    "Recipient name, address/email, institutional code if applicable",
+    "Sealed paper vs. e-transcript requirement",
+    "Hard deadline date",
+    "Payment method",
+    "Any known holds (library, bursar, parking, etc.)"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

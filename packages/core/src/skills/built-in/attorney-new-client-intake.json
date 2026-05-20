@@ -1,0 +1,133 @@
+{
+  "id": "attorney-new-client-intake",
+  "name": "New-Client Intake With a Specialist Attorney",
+  "version": "1.0.1",
+  "category": "legal-admin",
+  "tags": [
+    "legal",
+    "attorney",
+    "lawyer",
+    "intake",
+    "consultation",
+    "phone-call",
+    "fee-agreement",
+    "professional-services"
+  ],
+  "description": "Place an intake / discovery call with a specialist attorney's office to triage whether the matter is a fit, whether the consult is free or paid, what the fee structure looks like, and to surface conflicts of interest BEFORE the operator signs anything.",
+  "disclaimer": "Nothing said on this call is legal advice — the call is to evaluate the attorney, not to receive counsel. Engagement only begins once a signed fee agreement exists. Do not sign or pay anything mid-call without the operator's explicit approval via ask_operator.",
+  "context": {
+    "when_to_use": "The operator needs a lawyer in a specific practice area (employment, family, immigration, IP, criminal, estate, PI, etc.) and is screening candidates. Use BEFORE the operator has committed to retaining the firm. Pair with `attorney-fee-agreement-review` (separate skill) once a written engagement letter arrives.",
+    "preconditions": [
+      "Operator has summarised the matter in 2-4 sentences (facts, jurisdiction, opposing party if any).",
+      "Operator has a rough budget range and timeline.",
+      "Operator has confirmed the firm appears to practice in this area (website / referral / bar directory).",
+      "Operator has provided the names of every adverse party so the firm can run a conflicts check."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "You are vetting them as much as they are vetting you. A good lawyer welcomes informed questions; a defensive one is a red flag.",
+    "Free 15-minute intakes are screening calls, not legal advice. Don't expect a strategy session — expect fit + fees + conflicts.",
+    "Fee structure (hourly vs flat vs contingency vs hybrid) shapes everything downstream. Get clarity in writing before signing anything.",
+    "Conflicts of interest disqualify firms instantly. Surface every adverse name and entity upfront so the firm can clear conflicts.",
+    "Specialisation matters more than the marquee firm. A solo who lives in this practice area often beats a generalist at a big shop.",
+    "Engagement begins with a signed fee agreement — never with a verbal yes. Until then, nothing is privileged and nothing is owed."
+  ],
+  "phrases": {
+    "opener": "Hi — calling for [operator's first name or 'a client'] looking for [practice area] representation. Before I get into the details, can I check a couple of things — do you handle this kind of matter, and is the initial consult free or paid?",
+    "conflicts_disclosure": "Before we go further, the adverse parties / other interested parties are: [list]. Could you check for conflicts before I share any privileged-adjacent facts?",
+    "fee_probe": "Could you walk me through how the firm bills for this kind of matter — hourly, flat-fee, contingency, or hybrid? And what's the rate of the attorney who'd actually be working the file, plus any associate or paralegal rates?",
+    "scope_probe": "What does the engagement typically cover, and what falls outside scope? For example, would [foreseeable next step] be billed separately?",
+    "retainer_probe": "What's the upfront retainer, and is it refundable if unused? Where is it held — trust account or operating account?",
+    "specialisation_probe": "How many matters like this has the firm handled in the last two years, and would the attorney on the line today be the one actually doing the work?",
+    "timeline_probe": "Realistically, what's the timeline from engagement to [first meaningful milestone — filing, demand letter, hearing, closing]?",
+    "stall_to_check": "Let me check with [operator] before I commit to anything on fees or signatures — I want to make sure they hear the numbers directly.",
+    "graceful_close": "Thank you, this was really helpful. Could you send the engagement letter and fee schedule in writing? [Operator] will review and we'll come back with a decision in [timeframe]. What's the best email for that?"
+  },
+  "tactics": [
+    {
+      "name": "Front-load conflicts and fit",
+      "when": "First 2 minutes of the call.",
+      "script": "Use the `opener` then the `conflicts_disclosure`. If the firm has a conflict, the call ends in 90 seconds with no facts shared — protecting both sides. If they handle this area, proceed.",
+      "priority": 1
+    },
+    {
+      "name": "Pin down WHO does the work",
+      "when": "After fit is confirmed.",
+      "script": "Use the `specialisation_probe`. Big-firm intake often pitches the partner; the work gets done by a second-year associate. Find out who actually owns the file day-to-day and what their rate is.",
+      "priority": 2
+    },
+    {
+      "name": "Make the fee math concrete",
+      "when": "Fee structure has been described in the abstract.",
+      "script": "Ask: 'For a matter that resolves in [typical scenario], what does the total bill usually land at — low end and high end?' Push past 'it depends' once; a competent attorney can give a range.",
+      "priority": 3
+    },
+    {
+      "name": "Probe the retainer mechanics",
+      "when": "An upfront retainer is mentioned.",
+      "script": "Use `retainer_probe`. Trust-account retainers (held until earned) are standard and refundable; 'evergreen' retainers that auto-replenish need explicit operator consent. Earned-on-receipt retainers can be a red flag for small consumer matters.",
+      "priority": 4
+    },
+    {
+      "name": "Listen for hedge language",
+      "when": "Throughout the call.",
+      "script": "An honest lawyer says 'I don't know yet, here's what I'd need to know'. A bad one promises outcomes. Note any guarantee of result — most bars prohibit this and it's a discipline risk.",
+      "priority": 5
+    },
+    {
+      "name": "Defer signature to the operator",
+      "when": "Intake coordinator tries to send DocuSign mid-call.",
+      "script": "Use the `stall_to_check` phrase. NEVER e-sign on the operator's behalf. Ask them to email the engagement letter; the operator reviews offline. This is non-negotiable.",
+      "priority": 6
+    },
+    {
+      "name": "Ask about malpractice insurance",
+      "when": "Near end of call, after fees.",
+      "script": "Ask: 'Does the firm carry professional liability insurance?' Many solos in some states do not — not disqualifying, but the operator should know."
+    }
+  ],
+  "boundaries": [
+    "Do NOT sign an engagement letter, fee agreement, or e-sign mid-call. ALWAYS use ask_operator first.",
+    "Do NOT pay a retainer or provide payment details on this call. Funds flow only after the operator has reviewed the written agreement.",
+    "Do NOT share privileged facts before conflicts are cleared.",
+    "Do NOT accept a verbal-only fee quote — get it in writing before any commitment.",
+    "Do NOT disclose the operator's settlement floor, walk-away number, or maximum budget. Those are not the attorney's business until retained.",
+    "Do NOT let the firm use this call as billable time. Confirm the consult is free (or the agreed flat rate) at the start."
+  ],
+  "success_signals": [
+    "The firm runs a conflicts check on the spot or commits to a same-day result.",
+    "The attorney who would handle the matter speaks personally, not just an intake coordinator.",
+    "Fees are quoted as a range with assumptions, not as a vague 'it depends'.",
+    "Retainer is held in a trust account and is refundable to the extent unearned.",
+    "Engagement letter will be emailed for offline review.",
+    "Attorney names a specific next step and timeline."
+  ],
+  "failure_signals": [
+    "Pressure to sign or pay during the call.",
+    "Refusal to disclose the actual working attorney's name or rate.",
+    "Outcome guarantees ('we always win these').",
+    "Vague conflicts handling ('we'll figure that out later').",
+    "Earned-on-receipt retainer with no refund mechanism on a small matter.",
+    "Intake coordinator who will not transfer you to an attorney before payment."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the firm will email the engagement letter, fee schedule, and a written summary of conflicts clearance. Note attorney name, bar number if mentioned, hourly rate(s), retainer amount, and quoted timeline. Tell the firm the operator will respond within [timeframe].",
+    "on_failure": "Politely close. If conflicts existed, thank them for clearing it quickly. If fit was wrong, ask for one or two referrals to firms that do handle this area — most lawyers will give them.",
+    "follow_ups": [
+      "Email the operator: firm name, attorney name, fee structure, retainer, timeline, red/green flags, recommended next step.",
+      "If proceeding: calendar 48-hour review window for the engagement letter before any signature.",
+      "If declining: note the firm in operator's records with reason, so they aren't re-contacted by mistake."
+    ]
+  },
+  "required_user_info": [
+    "Practice area and 2-4 sentence matter summary",
+    "Full list of adverse parties and other interested entities (for conflicts check)",
+    "Jurisdiction (state, sometimes county)",
+    "Approximate budget range and time horizon",
+    "Whether the operator has talked to other attorneys about this matter (relevant for conflicts and strategy)",
+    "Operator's preferred email for the engagement letter"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

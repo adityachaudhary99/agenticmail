@@ -1,0 +1,113 @@
+{
+  "id": "bookmark-close",
+  "name": "The Bookmark Close",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "closing",
+    "bookmark",
+    "recording",
+    "summary",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "End the call with a single, complete, recorded sentence that bookmarks the entire conversation: who, what, when, where, the reference numbers, and the rep's own words. The bookmark is a 20-second clip an agent (or human) can replay months later to reconstruct the agreement in full — without re-listening to a 30-minute call.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "The LAST tactical move before the formal goodbye. Use after readback, lock-in, ownership, written confirmation request, sweep, and any upsell refusal — once everything substantive is locked. The bookmark is the closing artifact.",
+    "preconditions": [
+      "All other closing skills have been run (or deliberately skipped with reason).",
+      "You have collected: rep name + ID, case/reference number, the locked amounts/dates/conditions, ownership of next steps.",
+      "Call is still being recorded."
+    ],
+    "estimated_call_duration_minutes": 2
+  },
+  "principles": [
+    "The bookmark is ONE sentence, said clearly, with all the load-bearing facts. Not a paragraph; not a list. A sentence the future-self can transcribe in 20 seconds.",
+    "Speak it slowly. The bookmark exists to be found and transcribed later — clarity matters more than conversational pace.",
+    "Include the rep's affirmative response in the recording. 'Yes that's correct' from the rep makes the bookmark mutually attested.",
+    "Reference numbers go INSIDE the bookmark. A future search for the case number lands directly on the bookmark clip.",
+    "Bookmark = single source of truth on the call. If anything else in the call contradicts the bookmark, the bookmark wins."
+  ],
+  "phrases": {
+    "opener": "Just to bookmark this for both of us before we hang up — let me state the full picture in one sentence so it's on the line cleanly.",
+    "bookmark_template": "On [date], on a call with [rep name], operator ID [ID], case [reference number], we agreed: [primary terms — amount, effective date, duration, conditions], with next steps [owner / deadline / verification], and a written confirmation expected by [arrival window]. Can you confirm that's an accurate summary?",
+    "rep_affirm_request": "I'd appreciate a clear 'yes that's correct' on the line if you agree — saves us both a long lookup later if there's ever a question.",
+    "amend_after_correction": "Okay, with that adjustment: [restate full bookmark with correction]. Confirmed?",
+    "rep_refusal_to_affirm": "If you can't confirm the summary as I've stated it, what specifically should I change? I want the bookmark to match what we agreed to, exactly.",
+    "graceful_close_success": "Perfect. Thanks for your time today, [rep name]. Have a good rest of your shift.",
+    "graceful_close_failure": "If the bookmark can't be confirmed, I'm going to leave the call open as unresolved on my side and follow up through [written / supervisor / complaint channel]. Thank you for your time."
+  },
+  "tactics": [
+    {
+      "name": "Announce the bookmark",
+      "when": "Everything else closed; just before goodbye.",
+      "script": "Use the `opener` phrase. Signalling the bookmark shifts the rep into final-attestation mode rather than wrap-up mode — they slow down, listen, and engage.",
+      "priority": 1
+    },
+    {
+      "name": "Deliver the bookmark in one sentence",
+      "when": "Opener delivered.",
+      "script": "Use the `bookmark_template` phrase, filling every field with the actual data captured during the call. Do NOT fabricate — leave fields out rather than guess. Speak slowly and clearly.",
+      "priority": 2
+    },
+    {
+      "name": "Get the rep's affirmation on the recording",
+      "when": "Bookmark stated.",
+      "script": "Use the `rep_affirm_request` phrase. A mumbled 'mhm' is not enough — request a clear 'yes that's correct'. Two-sided affirmation makes the bookmark mutually attested.",
+      "priority": 3
+    },
+    {
+      "name": "Handle corrections by re-stating the full bookmark",
+      "when": "Rep corrects any field.",
+      "script": "Use the `amend_after_correction` phrase. Never accept piecemeal corrections — always restate the full bookmark so there's one clean recorded sentence with the correct content.",
+      "priority": 4
+    },
+    {
+      "name": "Probe a refusal to affirm",
+      "when": "Rep declines to say the bookmark is accurate.",
+      "script": "Use the `rep_refusal_to_affirm` phrase. Refusal to confirm a clean summary at this stage is a major red flag — branch to `recover-summary-refusal`.",
+      "priority": 5
+    },
+    {
+      "name": "Close cleanly on success",
+      "when": "Rep affirms the bookmark.",
+      "script": "Use the `graceful_close_success` phrase. Address the rep by name as a final courtesy — leaves a positive impression that pays off on the next call.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT bookmark facts that weren't actually agreed to. The bookmark is summary, not negotiation.",
+    "Do NOT pad the bookmark with editorial. 'And I really appreciate you helping me with this' belongs in the goodbye, not the bookmark.",
+    "Do NOT bookmark before all other closing steps are run — bookmarking incomplete agreements creates an authoritative-looking record of an incomplete close.",
+    "Do NOT accept silence as affirmation. The bookmark requires explicit rep agreement."
+  ],
+  "success_signals": [
+    "Rep clearly states 'yes that's correct' or similar affirmation.",
+    "Rep adds a small detail that improves the bookmark.",
+    "Rep references the bookmark by reference number later in the conversation.",
+    "Call audio shows a clean 30-60 second bookmark segment near the end."
+  ],
+  "failure_signals": [
+    "Rep dodges affirmation ('looks fine', 'sounds right' without 'yes').",
+    "Rep corrects the bookmark in a way that materially changes the agreement.",
+    "Rep cannot recall the reference number or rep ID stated in the bookmark.",
+    "Call drops or audio quality degrades during the bookmark — re-run before closing."
+  ],
+  "exit_strategy": {
+    "on_success": "Save the bookmark timestamp and a transcription. Treat this as the canonical record of the call. All future follow-ups should reference the bookmark.",
+    "on_failure": "Do NOT close without an affirmed bookmark. Branch to `recover-summary-refusal` for the refusal path, or escalate to a supervisor who can affirm the summary on the rep's behalf.",
+    "follow_ups": [
+      "Save the bookmark transcription with the user's record-keeping system, indexed by reference number and date.",
+      "If the written confirmation arrives and matches the bookmark verbatim, file the call as fully closed.",
+      "If the written confirmation differs from the bookmark, the bookmark is the authoritative version — quote it (and its timestamp) in any dispute."
+    ]
+  },
+  "required_user_info": [
+    "All fields needed to populate the bookmark template: rep name, ID, case number, locked terms, next-step ownership, written confirmation window",
+    "Confirmation that the call is being recorded so the bookmark exists as an artifact",
+    "User-side storage for the bookmark transcription"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

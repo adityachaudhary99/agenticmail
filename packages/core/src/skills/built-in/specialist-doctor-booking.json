@@ -1,0 +1,136 @@
+{
+  "id": "specialist-doctor-booking",
+  "name": "Specialist-Doctor Referral Booking With Limited Availability",
+  "version": "1.0.1",
+  "category": "medical-admin",
+  "tags": [
+    "healthcare",
+    "specialist",
+    "physician",
+    "referral",
+    "insurance",
+    "in-network",
+    "intake",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Call a specialist's office (cardiology, derm, GI, ortho, neuro, endocrine, ENT, etc.) to book a referral appointment, verify in-network status with the operator's plan, confirm the right sub-specialist, and navigate waitlists / cancellation lists without committing to a deposit or no-show fee structure the operator hasn't approved.",
+  "disclaimer": "This call is logistical only. Do not describe symptoms in detail to a scheduler — clinical info belongs in the chart and with the clinician. Schedulers are NOT a HIPAA-protected channel for full medical history; give only what's needed to book.",
+  "context": {
+    "when_to_use": "Operator has a referral (or self-pay path) to a specialist and needs to book. Particularly valuable when waitlists are long, sub-specialists differ (e.g. interventional vs general cardiology), and insurance authorisation steps must be confirmed.",
+    "preconditions": [
+      "Operator has the referring provider's name, NPI, and a copy of the referral or order, if required by their plan.",
+      "Operator has the specialist's full name and (ideally) NPI / state license number.",
+      "Operator has insurance details: insurer, member ID, group, plan type (HMO/PPO/EPO), and whether a prior-auth has been initiated.",
+      "Operator has a 1-2 sentence reason for the visit in lay terms ('chest pain on exertion', 'recurrent migraines') — no detailed history."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Sub-specialty matters. 'Cardiologist' is not one job — interventional, electrophysiology, heart-failure, and general adult cardiology are different practices. Match the specialist to the question.",
+    "In-network status is the single biggest cost driver. Verify against the plan, not just the insurer name. Same insurer + wrong plan = out-of-network bill.",
+    "Referral and prior-authorisation are different things. HMOs typically require a written referral; many plans also require prior-auth for imaging or procedures. The clinic should know what the operator's plan needs.",
+    "Cancellation lists are powerful. A 6-month wait often becomes a 2-week wait if the operator is reachable for short-notice openings.",
+    "No-show fees are real, often $50-$200, and frequently buried in the new-patient packet. Surface them BEFORE booking, not after.",
+    "Telehealth options exist for some specialties. If the visit is consultative (not procedural), ask — it often shortens the wait substantially."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm calling for a patient who was referred to Dr. [last name] for [HIGH-level reason, e.g. 'evaluation of recurrent migraines']. Before we book, could I quickly check in-network status with [insurer / plan] and whether anything's needed on the referral side?",
+    "insurance_probe": "Could you verify Dr. [name] is in-network with [insurer], plan type [HMO/PPO/EPO], plan name [if known]? And what's the new-patient copay or coinsurance estimate based on the plan?",
+    "referral_probe": "Does the operator's plan require a written referral from the PCP, and do you already have it on file? If not, what's the fastest way to get it to you?",
+    "prior_auth_probe": "If imaging or a procedure is anticipated, who initiates the prior-auth — your office or the operator's PCP? And what's the typical turnaround?",
+    "sub_specialist_probe": "Could you confirm Dr. [name]'s sub-specialty? The referring physician mentioned [reason], and I want to make sure we're matching to the right sub-area before booking.",
+    "availability_probe": "What's the next available new-patient slot, and is there a cancellation or wait-list option for earlier openings? The operator can be reachable within [hours] for short-notice slots.",
+    "telehealth_probe": "Is a telehealth consult available for the first visit, and would it count toward the same evaluation?",
+    "no_show_probe": "What's the no-show / late-cancel policy, and is there a fee? When and how is that communicated to the operator?",
+    "records_probe": "What records do you need before the first visit — labs, imaging, prior notes? And what's the secure way to send them?",
+    "stall_to_check": "Let me confirm the time slot with the operator before locking it in — they'll need to clear their calendar.",
+    "graceful_close": "Thank you — could you email the new-patient packet, cancellation policy, and the records request list? The operator will confirm the slot within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Verify in-network first",
+      "when": "First minute.",
+      "script": "Use `insurance_probe`. Stop the call if the answer is 'out of network' unless the operator has authorised self-pay. Schedulers can usually verify with the plan name in 60 seconds.",
+      "priority": 1
+    },
+    {
+      "name": "Confirm sub-specialty match",
+      "when": "After insurance.",
+      "script": "Use `sub_specialist_probe`. If the sub-specialty is wrong, ask for an in-network colleague who matches and put the original on a backup list.",
+      "priority": 2
+    },
+    {
+      "name": "Resolve referral + prior-auth path",
+      "when": "Before locking a slot.",
+      "script": "Use `referral_probe` and `prior_auth_probe`. Many HMO plans require a paper trail BEFORE the visit; without it, the visit can be denied retroactively.",
+      "priority": 3
+    },
+    {
+      "name": "Ask about the cancellation list",
+      "when": "When the soonest slot is too far out.",
+      "script": "Use `availability_probe`. Be explicit about the operator's reachability window. Cancellation lists are often informal — make sure the scheduler notes it.",
+      "priority": 4
+    },
+    {
+      "name": "Surface no-show fees",
+      "when": "Before agreeing to a slot.",
+      "script": "Use `no_show_probe`. Many specialist offices charge $75-$200 for missed appointments. The operator should know the policy in writing before booking.",
+      "priority": 5
+    },
+    {
+      "name": "Prep records ahead",
+      "when": "After slot is tentatively held.",
+      "script": "Use `records_probe`. Note the secure transmission path (portal, fax, ROI form). Records arriving late frequently push first visits."
+    },
+    {
+      "name": "Defer the final confirm",
+      "when": "Scheduler offers a slot now.",
+      "script": "Use `stall_to_check`. Confirm verbally that the slot will be held briefly, but the operator confirms the time. NEVER book without operator confirmation — missed appointments cost real money."
+    }
+  ],
+  "boundaries": [
+    "Do NOT share the operator's full medical history, medications, diagnoses, or test results with a scheduler. They don't need it to book.",
+    "Do NOT provide a credit card on file without the operator's explicit approval via ask_operator.",
+    "Do NOT confirm a slot the operator hasn't seen. Missed specialist appointments often incur fees and delay care.",
+    "Do NOT bypass referral or prior-auth requirements 'to get in faster'. The visit can be denied and billed to the operator at full self-pay.",
+    "Do NOT identify the operator's exact symptoms or diagnoses by name in casual conversation with non-clinical staff.",
+    "Do NOT instruct the practice to send records to an email address — only secure portals, faxes, or designated ROI channels."
+  ],
+  "success_signals": [
+    "Scheduler verifies in-network status against the specific plan name.",
+    "Sub-specialty is confirmed as a match for the referring concern.",
+    "Referral / prior-auth path is clear, with named owners and timelines.",
+    "Cancellation list is offered with realistic call-back expectations.",
+    "Cancellation / no-show policy is provided in writing.",
+    "Records request and secure transmission path are documented."
+  ],
+  "failure_signals": [
+    "Scheduler cannot confirm in-network status against the specific plan.",
+    "Sub-specialty mismatch and no alternative offered.",
+    "First available slot is months out with no cancellation list option.",
+    "Refusal to send the cancellation / no-show policy in writing.",
+    "Scheduler pressing for credit card on file before the operator has reviewed terms.",
+    "Insistence on emailing records to an unencrypted address."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm scheduler will email: new-patient packet, cancellation policy, prior-auth status, records request, and a hold-time on the slot. Note the appointment date, the sub-specialist name and NPI, the in-network confirmation reference (if given), and the cancellation list addition.",
+    "on_failure": "Politely close. Ask the scheduler if they can recommend an in-network sub-specialist colleague at the same or adjacent practice. Report back to the operator with the gap (insurance, sub-specialty, or availability).",
+    "follow_ups": [
+      "Email the operator: specialist name, sub-specialty, in-network status, referral/prior-auth state, slot offered, cancellation policy, records to send, next-step actions.",
+      "Operator independently verifies coverage with insurer via member portal or phone before the visit.",
+      "Calendar a 24-48 hour confirmation window for the operator to lock in the slot."
+    ]
+  },
+  "required_user_info": [
+    "Specialist's full name, sub-specialty if known, and practice / city",
+    "Referring provider name and NPI (if HMO plan)",
+    "Insurance: insurer, member ID, group, plan type, plan name",
+    "High-level reason for visit in 1-2 sentences — not detailed clinical history",
+    "Operator's availability windows and short-notice reachability hours",
+    "Whether telehealth is acceptable for a first visit",
+    "Existing records (labs, imaging, prior notes) and where they currently live"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

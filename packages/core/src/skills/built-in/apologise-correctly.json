@@ -1,0 +1,126 @@
+{
+  "id": "apologise-correctly",
+  "name": "Apologise Correctly — Own It Without Over-Apologising",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "apology",
+    "ownership",
+    "credibility",
+    "phone-call",
+    "calibration",
+    "emotional-intelligence"
+  ],
+  "description": "Deliver an apology that is real, proportionate, and complete. Under-apologising leaves the wound open; over-apologising performs guilt and destroys credibility. Most callers do one or the other — almost nobody does it right.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "You (or the operator) genuinely owe an apology on a call — a missed appointment, an error, a late payment, a tone slip, a misunderstanding caused by your side. Also: when the rep is owed acknowledgement for something they didn't cause but had to absorb.",
+    "preconditions": [
+      "The fault is at least partly yours — never apologise for things that are not yours to own.",
+      "You know what specifically went wrong, in one sentence.",
+      "You are calm enough to apologise as a peer, not as a supplicant."
+    ],
+    "estimated_call_duration_minutes": 3
+  },
+  "principles": [
+    "A correct apology has THREE parts: (1) ownership ('I/we did X'), (2) acknowledgement of impact ('that caused Y'), (3) repair or change ('here's what I'm doing about it'). Skip any part and it's incomplete.",
+    "Do not say 'I'm sorry IF' or 'I'm sorry YOU FELT.' Those are conditional non-apologies and the listener always hears it.",
+    "Say 'sorry' ONCE in the sentence. Multiple 'sorry's signal anxiety, not contrition.",
+    "Specific > general. 'I'm sorry I missed the 3pm window' lands; 'I'm sorry for any inconvenience' is corporate noise.",
+    "Don't explain unless asked. Explanations sound like excuses, even when they're true.",
+    "Do not over-apologise for minor things — it inflates the weight of every later apology you make.",
+    "After the apology, get back to the task. Lingering apologies make the other person comfort YOU."
+  ],
+  "phrases": {
+    "three_part_apology_full": "I'm sorry — I [specific thing I did]. I can see that [impact on you]. [What I'm doing about it].",
+    "three_part_apology_short": "That's on me. I [specific]. Here's how I'd like to fix it: [repair].",
+    "apology_for_minor": "Apologies — that was my mistake. Let me try again.",
+    "decline_undue_apology_request": "I can tell this is frustrating and I want to help — but I don't think [specific event] is something I should apologise for. What I CAN do is [reasonable response].",
+    "acknowledge_their_absorption": "I know I'm not the cause of this and you didn't have to take it as gracefully as you did — thank you.",
+    "pivot_back_to_task": "So with that said — let's get [task] sorted."
+  },
+  "tactics": [
+    {
+      "name": "Use the three-part structure",
+      "when": "The apology is for something substantive.",
+      "script": "Use `three_part_apology_full`. Ownership + impact + repair. Do not drop the repair — apology without action is performance.",
+      "priority": 1
+    },
+    {
+      "name": "One 'sorry' per apology",
+      "when": "Always.",
+      "script": "Count it. Multiple 'sorry's reads as nervous, and shifts the rep into comforting you instead of accepting the apology.",
+      "priority": 2
+    },
+    {
+      "name": "Be specific",
+      "when": "Always.",
+      "script": "'Sorry I missed the appointment' not 'sorry for the inconvenience.' Specificity proves you understand what happened.",
+      "priority": 3
+    },
+    {
+      "name": "Tone-shift detector — REP RECEIVES THE APOLOGY",
+      "when": "Voice softens, 'no worries' or 'these things happen' or just a moment of quiet acknowledgement.",
+      "script": "Accept the acceptance. Do NOT apologise again. Use `pivot_back_to_task`. Lingering on the apology now makes the rep manage your guilt.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — REP IS UNMOVED",
+      "when": "Rep is still cold or sharp after a full apology.",
+      "script": "Do not re-apologise harder. Add ONE concrete repair beyond what you originally offered. If still no movement, accept that some apologies are not received in the moment and proceed to task. Time often lands the apology that the call didn't.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — REP DEMANDS MORE APOLOGY",
+      "when": "Rep is using your apology as a lever to get you to admit more, or to apologise for things that weren't your fault.",
+      "script": "Use `decline_undue_apology_request`. Holding the line on what you DO and DON'T own is part of a credible apology. People who apologise for everything end up trusted on nothing.",
+      "priority": 6
+    },
+    {
+      "name": "Apologise to a rep for OPERATOR error",
+      "when": "The operator caused the issue and you're calling on their behalf.",
+      "script": "Own it on the operator's behalf cleanly: 'On [operator's] side, we missed the deadline — I'm sorry about that. What's the best path to make it right?' Do not throw the operator under the bus AND do not deny their part.",
+      "priority": 7
+    },
+    {
+      "name": "Acknowledge the rep's absorption",
+      "when": "The rep had to absorb something not their fault (a complaint, a delay caused by their company).",
+      "script": "Use `acknowledge_their_absorption`. Reps remember the few callers who notice. This is not an apology FROM you, but it's apology-adjacent emotional work that pays off."
+    }
+  ],
+  "boundaries": [
+    "Do NOT apologise for things that aren't yours. False apology is a credibility leak.",
+    "Do NOT apologise for asking a legitimate question.",
+    "Do NOT apologise for taking up the rep's time on a normal call — it's their job, and the apology rings hollow.",
+    "Do NOT chain apologies ('sorry, sorry, sorry'). Once, clean, done.",
+    "Do NOT use apology as a manipulation tactic to extract favours.",
+    "Do NOT apologise on behalf of someone (the operator) without authorisation if it admits significant liability."
+  ],
+  "success_signals": [
+    "Rep audibly softens after a single apology.",
+    "Rep says 'I appreciate that' or 'thank you for saying that.'",
+    "Call returns to task within 30 seconds of the apology.",
+    "You did not feel the urge to apologise again afterwards."
+  ],
+  "failure_signals": [
+    "You apologised three or more times in the call.",
+    "Rep is now comforting you.",
+    "You apologised for something that wasn't your fault and now the rep expects more concessions.",
+    "Apology was so general the rep didn't recognise it as one."
+  ],
+  "exit_strategy": {
+    "on_success": "Pivot back to the task with `pivot_back_to_task` and complete it. Do not call back later to apologise again.",
+    "on_failure": "If the apology genuinely didn't land and it matters, follow up in writing — a written apology can land where a verbal one didn't, partly because the recipient controls when they read it.",
+    "follow_ups": [
+      "Make the repair real. An apology without follow-through erodes credibility faster than no apology.",
+      "Log what you apologised for — if you find yourself apologising for the same thing repeatedly, the issue is upstream of the apology."
+    ]
+  },
+  "required_user_info": [
+    "What specifically went wrong, in one sentence — operator's truthful account.",
+    "What repair the operator is authorised to offer.",
+    "Whether there are legal / compliance reasons to phrase the apology carefully (in some jurisdictions, certain apology phrasings affect liability)."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

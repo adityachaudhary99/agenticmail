@@ -1,0 +1,126 @@
+{
+  "id": "request-credit-limit-increase",
+  "name": "Request a Credit-Limit Increase",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "credit-limit",
+    "credit-card",
+    "utilization",
+    "credit-score",
+    "phone-call",
+    "soft-pull",
+    "hard-pull",
+    "banking-finance"
+  ],
+  "description": "Call a credit-card issuer to request a credit-limit increase (CLI) — framed and timed to maximize approval odds and minimize hard inquiries on the user's credit report.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User wants more credit headroom on an existing card — typically to lower their utilization ratio (improves credit score), absorb a large planned purchase, or unlock travel-redemption thresholds. Don't request a CLI on the same call as a hardship inquiry — those flag opposite risk signals.",
+    "preconditions": [
+      "Card account is at least 6 months old (most issuers require seasoning).",
+      "Last 6 statements have been paid on time, ideally in full.",
+      "User has not requested a CLI on this card in the last 6 months (cooldown).",
+      "User knows whether the issuer does soft-pull vs hard-pull CLIs (Cap One, Discover, AmEx = soft; Chase, Citi = often hard).",
+      "User has updated income on file (recent raise / new job) — issuers cap CLI by reported income."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Ask BEFORE you call: 'Is this a soft inquiry or a hard inquiry?' If hard, weigh the score hit against the limit gain — and against the operator's CLI policy.",
+    "Frame the ask around UTILITY, not need. 'I'd like more room for upcoming travel / a planned purchase' beats 'I'm running out of room' — the latter signals stress and gets declined.",
+    "Update income FIRST. The CLI algorithm caps your new limit at a multiple of household income on file; if income is stale, update it before requesting the increase.",
+    "Pick a specific target. 'I'd like to go from $X to $Y' gives the rep a number to evaluate. Vague asks ('as much as possible') often default to the smallest tier.",
+    "If asked WHY: rotate among 'lower utilization for credit-health', 'upcoming planned purchase', 'travel / large reservation', 'consolidating to fewer cards'. NEVER say 'because I'm carrying a balance and need room'.",
+    "If declined, ask the reason in writing (Adverse Action Notice required under Reg B / ECOA) so the user can fix the actual gating factor."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to request a credit-limit increase on my [card name] account. Before we start, can you confirm whether your CLI process uses a soft inquiry or a hard inquiry on my credit report?",
+    "update_income_first": "Before we run the CLI, I'd like to update my income on file. My current annual income is [amount]. Can you update that and then evaluate the increase against the new figure?",
+    "specific_ask": "I'm currently at $[current limit] and I'd like to go to $[target]. Can you submit that request?",
+    "frame_reason": "I'm planning [upcoming travel / a large reservation / a planned purchase] and I'd like the headroom. I also like to keep my utilization low for credit-health reasons.",
+    "ask_about_pull_type": "Just to confirm — this CLI request will be processed as a soft inquiry only, with no hard inquiry on my credit report?",
+    "ask_for_adverse_action": "Okay — under the Equal Credit Opportunity Act, can you send me the Adverse Action Notice with the specific reason for the decline? I'd like to address whatever the gating factor is before reapplying.",
+    "counter_offer_accept": "Thanks — I'll take the $[counter] increase. Can you confirm the new limit, the effective date, and whether this will appear in my next statement cycle?",
+    "graceful_close": "Thank you. Can you confirm the new limit in writing, the effective date, and that no hard inquiry was placed? I'd also like the rep name and a reference number."
+  },
+  "tactics": [
+    {
+      "name": "Confirm pull type before agreeing",
+      "when": "First substantive turn.",
+      "script": "Use `opener` + `ask_about_pull_type`. If the answer is 'hard pull', pause: confirm with the operator whether the score hit is acceptable before authorizing. Many users would skip the request rather than absorb a hard inquiry.",
+      "priority": 1
+    },
+    {
+      "name": "Update income first",
+      "when": "After confirming pull type, before submitting the CLI.",
+      "script": "Use `update_income_first`. CLI algorithms cap the increase against reported income — updating stale income unlocks a higher ceiling.",
+      "priority": 2
+    },
+    {
+      "name": "Anchor with a specific number",
+      "when": "Rep asks 'how much would you like?'",
+      "script": "Use `specific_ask`. Aim 50-100% above current limit for healthy accounts; 25-50% for accounts under 1 year old. Don't anchor too low.",
+      "priority": 3
+    },
+    {
+      "name": "Frame around utility, not stress",
+      "when": "Rep asks 'why are you requesting this?'",
+      "script": "Use `frame_reason`. Stay away from any wording that implies financial strain — that flips the algorithm against you.",
+      "priority": 4
+    },
+    {
+      "name": "Take partial wins",
+      "when": "Rep offers a smaller increase than asked.",
+      "script": "Use `counter_offer_accept`. A partial CLI still lowers utilization. Note the date — most issuers require 6 months before the next request."
+    },
+    {
+      "name": "Demand the reason on decline",
+      "when": "CLI is declined.",
+      "script": "Use `ask_for_adverse_action`. The Adverse Action Notice (Reg B / ECOA) tells the user the specific gating factor (utilization, recent inquiries, derogatory marks, low income on file) so it's fixable next time."
+    },
+    {
+      "name": "Lock in the writeback",
+      "when": "Approved.",
+      "script": "Use `graceful_close`. New limit + effective date + 'no hard inquiry' confirmed + rep name + reference number."
+    }
+  ],
+  "boundaries": [
+    "Do NOT authorize a hard inquiry without explicit operator approval — it can shave 5-10 points off the score for ~12 months.",
+    "Do NOT misrepresent income — federal crime, and issuers can verify via tax-transcript pulls.",
+    "Do NOT bundle this call with a hardship / payment-plan call — opposite risk signals to the issuer.",
+    "Do NOT request CLIs on multiple cards on the same day — looks like credit-seeking behavior.",
+    "Do NOT share full SSN — last 4 plus card info is sufficient for almost all issuers."
+  ],
+  "success_signals": [
+    "Rep confirms soft inquiry only.",
+    "Income update accepted without further documentation.",
+    "CLI approved at requested or partial amount.",
+    "New limit effective immediately or next cycle.",
+    "Reference number issued."
+  ],
+  "failure_signals": [
+    "Rep insists on a hard inquiry as the only path (decline politely, end call).",
+    "Account flagged for 'recent CLI request' (you're inside the cooldown — reschedule).",
+    "Income request triggers documentation demand (W-2, paystub) — escalate or defer.",
+    "Decline without an Adverse Action reason on request."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm new limit, effective date, pull type, reference number, rep name. Tell the operator the new utilization ratio (statement balance / new limit) so they can track score impact.",
+    "on_failure": "Get the Adverse Action Notice in writing. Wait the issuer's cooldown (usually 6 months), address the gating factor (utilization, on-time payments, income), then retry.",
+    "follow_ups": [
+      "Calendar: re-evaluate in 6 months once cooldown clears.",
+      "Watch the next 1-2 statements to confirm the new limit appears correctly on the credit report.",
+      "If a hard inquiry was placed against the user's intent, dispute it with the bureau."
+    ]
+  },
+  "required_user_info": [
+    "Card account last 4",
+    "Current limit and target limit",
+    "Updated annual income (gross household)",
+    "Whether operator approves a hard inquiry if required",
+    "Date of last CLI request on this card"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

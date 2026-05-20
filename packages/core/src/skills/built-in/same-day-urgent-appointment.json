@@ -1,0 +1,130 @@
+{
+  "id": "same-day-urgent-appointment",
+  "name": "Get a Same-Day Urgent Appointment Without Going to the ER",
+  "version": "1.0.1",
+  "category": "medical-admin",
+  "tags": [
+    "urgent-care",
+    "same-day",
+    "scheduling",
+    "phone-call",
+    "triage",
+    "healthcare"
+  ],
+  "description": "Call the operator's primary care office or in-network urgent care to secure a same-day or next-morning appointment for a non-life-threatening issue — avoiding both ER bills and 'soonest is in three weeks' deferral.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. If symptoms suggest a life-threatening emergency (chest pain, stroke signs, anaphylaxis, severe bleeding, difficulty breathing), surface immediately to the operator and recommend calling 911 / going to the ER rather than continuing this call.",
+  "context": {
+    "when_to_use": "Operator has an acute non-life-threatening issue (UTI, sore throat, mild injury, medication reaction, worsening chronic condition) and needs to be seen today or tomorrow. The goal is to avoid an unnecessary ER visit ($1,500-$5,000+) AND avoid 'we can fit you in three weeks'.",
+    "preconditions": [
+      "Operator's name, DOB (read-only), and insurance plan + member ID are provided.",
+      "Operator has described the issue in their own words — not as a self-diagnosis.",
+      "Operator's PCP name and practice, if they have one.",
+      "Operator's geographic constraints (how far can they travel today).",
+      "Whether the operator can do telehealth or must be seen in person.",
+      "A red-flag symptom checklist has been reviewed — if ANY are present, this skill exits to ER recommendation, NOT to scheduling."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Triage symptoms BEFORE dialling. If the operator's description includes chest pain + arm pain, sudden severe headache, slurred speech, one-sided weakness, blue lips, allergic-reaction throat tightness, or uncontrolled bleeding — this skill aborts and routes to 911/ER. Do not call the PCP to triage.",
+    "Most PCP offices hold 'same-day' or 'acute' slots that don't appear on the public schedule. Ask for them by name.",
+    "Describe symptoms factually and specifically. 'Burning when urinating for 36 hours, no fever' lands a UTI appointment; 'feeling kind of off' does not.",
+    "Telehealth is faster than in-person for many acute issues — but NOT for things requiring physical exam (suspected fracture, ear infection in a child, rash needing visual diagnosis by trained eye).",
+    "If PCP can't see operator today, the right escalation is usually in-network URGENT CARE — NOT the ER. Know the difference and steer the rep accordingly."
+  ],
+  "phrases": {
+    "triage_check": "Before I dial, I want to verify with the operator: is the symptom causing trouble breathing, chest pain, stroke signs, severe allergic reaction, or uncontrolled bleeding? [If yes → abort skill, recommend 911.]",
+    "opener": "Hi, I'm calling on behalf of [Operator]. They're an established patient with Dr. [Name]. They're dealing with [factual symptom + duration] and need to be seen today or tomorrow if at all possible. Do you have any same-day or acute-slot openings?",
+    "ask_for_acute_slot": "Do you hold any same-day or 'acute' appointments that aren't on the public schedule? Even if it means waiting in the office, we can come in.",
+    "telehealth_pivot": "If you have no in-person slots, would a telehealth visit today work? Or could a nurse triage by phone and call something in if appropriate?",
+    "ask_about_urgent_care": "If the office is fully booked, can you recommend an in-network urgent care nearby? We'd rather go there than the ER.",
+    "symptom_recap": "To make sure the triage nurse has it: the operator reports [symptom], onset [time], severity [mild/moderate], and they have not [taken any new medications / had any recent procedures / had this before].",
+    "stall_research": "One moment — the operator is right here, let me confirm one detail.",
+    "verify_readback": "So that's [date] at [time] with [provider], at [address], and the visit type is [in-person / telehealth]. Confirmation [number]. Operator should plan for what kind of arrival window?",
+    "graceful_decline": "Understood, thank you. We'll head to [in-network urgent care] instead."
+  },
+  "tactics": [
+    {
+      "name": "Red-flag triage BEFORE the call",
+      "when": "Before dialling any number.",
+      "script": "Run `triage_check` with the operator. If any red flag is present, ABORT this skill and route to 911 / ER via `ask_operator`. Do not call the PCP to triage an emergency.",
+      "priority": 1
+    },
+    {
+      "name": "Open as established patient with factual symptoms",
+      "when": "First substantive turn with reception.",
+      "script": "Use `opener`. Lead with established-patient status (gets priority over walk-ins), follow with a factual symptom statement (not a self-diagnosis), and explicitly ask for same-day. Do not embellish symptoms to get seen sooner.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for the hidden acute slot",
+      "when": "Receptionist says 'next available is [days/weeks] out'.",
+      "script": "Use `ask_for_acute_slot`. The phrase 'acute slot' or 'same-day' is staff vocabulary — using it signals you know the practice's own workflow. Often unlocks reserved capacity.",
+      "priority": 3
+    },
+    {
+      "name": "Request a nurse triage callback",
+      "when": "Reception cannot book today but issue is acute.",
+      "script": "Ask: 'Can a nurse call us back to triage by phone? She may be able to call something in, recommend at-home steps, or escalate to a same-day slot.' Nurse callbacks bypass scheduler queues.",
+      "priority": 4
+    },
+    {
+      "name": "Pivot to telehealth if appropriate",
+      "when": "Issue does not obviously require physical exam.",
+      "script": "Use `telehealth_pivot`. Surface to operator via `ask_operator` if you're unsure whether the symptom needs in-person exam. Do NOT make that call yourself.",
+      "priority": 5
+    },
+    {
+      "name": "Pause and re-verify on suspicious 'go to the ER' deflection",
+      "when": "Practice tries to push operator to the ER for a clearly non-emergency issue (e.g. routine UTI, mild rash).",
+      "script": "Do not just accept the deflection. Politely push back: 'Honestly, this doesn't seem ER-level to me — is there a nurse who could take another look, or an urgent care you'd recommend?' Practices sometimes default to ER routing because it's the easiest disposition for them — at the operator's financial expense.",
+      "priority": 6
+    },
+    {
+      "name": "Steer to in-network urgent care as the escalation",
+      "when": "PCP truly cannot see today.",
+      "script": "Use `ask_about_urgent_care`. Verify in-network status with operator's plan before committing — out-of-network urgent care can bill $500-$1,000+ vs. $50-$150 in-network.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to financial responsibility on the operator's behalf.",
+    "NEVER embellish or invent symptoms to get seen sooner — that is medical fraud and corrupts the chart.",
+    "NEVER offer the operator a diagnosis, dosing change, or treatment advice. If the rep asks 'is the patient taking X right now?' — read only from the medication list the operator provided.",
+    "NEVER agree on the operator's behalf to skip ER if the operator described red-flag symptoms — when in doubt, ABORT and surface to operator."
+  ],
+  "success_signals": [
+    "Same-day or next-morning slot booked with PCP or in-network urgent care.",
+    "Nurse triage callback scheduled with a specific window.",
+    "Telehealth slot confirmed for an issue genuinely suited to virtual care.",
+    "Operator confirmed where to go and what to bring (ID, insurance card, current medication list)."
+  ],
+  "failure_signals": [
+    "Operator's symptoms now seem ER-appropriate — exit skill, recommend 911 / ER.",
+    "No same-day slot anywhere in-network and operator's symptoms are deteriorating.",
+    "Practice insists on a referral or paperwork that cannot be obtained in time.",
+    "Insurance issue blocks urgent care visit and operator has not authorised out-of-pocket cost."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: location, time, provider/clinician type, what to bring (insurance card, medication list, photo ID), and any pre-visit steps (e.g. drink water for a urine sample). Note any pre-arrival paperwork or check-in process.",
+    "on_failure": "Politely close. Report to operator the options that DO exist (urgent care, telehealth, nurse line) with cost estimates, and let the operator choose. If symptoms worsen mid-call, recommend the ER without delay.",
+    "follow_ups": [
+      "Confirm the operator made it to the visit; otherwise, retry scheduling.",
+      "After the visit, follow up on any prescribed medications via `pharmacy-callback` skill if needed.",
+      "Log the practice's same-day responsiveness for future reference."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name and DOB (read-only)",
+    "Insurance plan + member ID (read-only)",
+    "Symptom description in operator's words + onset time",
+    "PCP name and practice (if any)",
+    "Geographic constraints (how far operator can travel)",
+    "Whether telehealth is acceptable for this issue",
+    "Confirmation that no red-flag symptoms are present"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

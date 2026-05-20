@@ -1,0 +1,137 @@
+{
+  "id": "invoke-regulator-firmly",
+  "name": "Invoke a Regulator Without Sounding Combative",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "regulator",
+    "FCC",
+    "CFPB",
+    "BBB",
+    "state-AG",
+    "PUC",
+    "compliance",
+    "phone-call",
+    "customer-support"
+  ],
+  "description": "Reference the appropriate regulator (FCC, CFPB, state PUC, state Attorney General, BBB, FTC) as a step in the escalation ladder — not as a threat. Used correctly, it changes a 'no' to a callback from the executive office within hours. Used incorrectly, it gets you flagged as a litigant and hardens every future interaction.",
+  "disclaimer": "Not legal advice. Filing a regulatory complaint is your right as a consumer, but only file one with truthful facts — false complaints are themselves a violation and undermine future complaints from real victims. If your situation involves potential fraud, large dollar amounts, or personal harm, consult an attorney before relying on this script.",
+  "context": {
+    "when_to_use": "You've already escalated to a supervisor (or the rep has refused to escalate) AND the company's behavior plausibly falls in a regulator's jurisdiction: telecom billing/service (FCC, state PUC), banking/credit (CFPB), broad consumer fraud (state AG, FTC), business practices (BBB — weak but visible). Don't invoke a regulator over a $20 dispute; do invoke when the harm is real and the company is stonewalling.",
+    "preconditions": [
+      "User has already attempted internal escalation (supervisor, retention, or written complaint) at least once.",
+      "User has a documented timeline of the issue (dates, names, case numbers).",
+      "The issue actually falls within the named regulator's jurisdiction — see `principles`.",
+      "User is willing to actually file the complaint if the company doesn't move. Empty threats are detectable and counterproductive."
+    ],
+    "estimated_call_duration_minutes": 18
+  },
+  "principles": [
+    "Match the regulator to the harm. FCC: telecom service, robocalls, wireless billing. CFPB: banks, credit cards, debt collectors, credit reporting, mortgages. State PUC: utilities (electric, gas, water, and in some states, landline phone). State AG: deceptive practices, consumer fraud, big-ticket disputes. FTC: scams, deceptive ads, identity theft (notes complaints but doesn't usually pursue individual cases). BBB: low legal weight but high PR visibility — companies often resolve to protect their rating.",
+    "The phrase 'I'll be filing a complaint' is weaker than 'I've already filed a complaint and wanted to give you a chance to resolve before it escalates'. Companies have entire teams whose job is to respond to filed complaints — once a case number exists, you get routed to those teams automatically.",
+    "Never threaten. Inform. 'I'm planning to file with the CFPB' is a statement of intent, not a threat. 'You'll be sorry when I file' is a threat — and it triggers a defensive script that locks the company down legally.",
+    "Tone matters more than content. Slow, calm, factual delivery (think: a CPA describing a tax issue) reads as serious. Raised voice + regulator name = read as 'angry customer making noise' and ignored.",
+    "Regulator references work BEST when you can cite a specific statute, regulation, or rule that the company's behavior arguably violates. You don't need to be right — you need to sound informed enough that the rep escalates rather than risk it.",
+    "Decision point — every time: am I still trying to RESOLVE THIS CALL, or am I now DOCUMENTING FOR THE COMPLAINT? Those are different goals with different scripts. Don't mix them.",
+    "Companies often have a separate 'regulatory response' team that handles formal complaints. Getting routed there is the goal — they have authority front-line reps don't."
+  ],
+  "phrases": {
+    "set_up_the_reference": "Before we go further, I want to be transparent: if we can't resolve this today, my next step is to file a formal complaint with [regulator] under [type of issue]. I'd much rather resolve it here, but I want you to know what's next so we can both make informed decisions.",
+    "soft_factual": "I've documented the timeline carefully — [N] calls since [date], case numbers [list]. At some point this stops being a customer service issue and becomes a regulatory one. I'd like to avoid that, but I need to see real movement today.",
+    "already_filed": "I'd like to note for the record: I filed a complaint with [regulator] on [date], reference number [number]. I'm calling to give your team an opportunity to resolve this directly, which the regulator's process specifically allows.",
+    "specific_rule_reference": "My understanding is that under [specific rule, e.g. 'FCC's truth-in-billing rules' / 'CFPB Reg E for unauthorized transactions' / 'state-AG's deceptive practices statute'], [company action] may not be compliant. I'd like to give your team a chance to address it before I escalate.",
+    "ask_for_regulatory_team": "Does your company have a specific team that handles regulatory complaints or formal disputes? I'd like to be routed there directly.",
+    "documenting_for_complaint": "Could you state your name and employee ID one more time for my records? I'm building a documented timeline either way, and I want to make sure I credit your team accurately.",
+    "graceful_close_unresolved": "Thanks for your time. I'll be filing the complaint today with the case number we discussed. If your team gets back to me before then, I'll update it to reflect a resolution."
+  },
+  "tactics": [
+    {
+      "name": "Verify regulator-fit before referencing",
+      "when": "Before mentioning any regulator on the call.",
+      "script": "Silently confirm: does the issue fall under this regulator's actual jurisdiction? (See `principles` for the match-up.) Referencing the wrong regulator instantly destroys credibility. If you're not sure, use 'consumer protection authorities' as a placeholder until you can be specific.",
+      "priority": 1,
+      "decision_point": "If no regulator clearly fits — DO NOT bluff. Use `reach-executive-office` instead. A bluffed regulator reference is worse than no reference at all."
+    },
+    {
+      "name": "Set up the reference calmly",
+      "when": "After a supervisor has said no, OR mid-supervisor-call if the supervisor is clearly stalling.",
+      "script": "Use `set_up_the_reference`. The phrase 'I want to be transparent' is critical — it signals you're informing, not threatening. Pacing matters: deliver this line at half your normal speed.",
+      "priority": 2
+    },
+    {
+      "name": "Cite a specific rule (if you can)",
+      "when": "Rep dismisses the regulator reference as bluster.",
+      "script": "Use `specific_rule_reference`. Even an approximate citation ('something under Reg E') beats a generic one. Don't fabricate — admit if you're not sure, but name the regulator's domain.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for the regulatory response team",
+      "when": "Rep takes the reference seriously (audible pause, change in tone).",
+      "script": "Use `ask_for_regulatory_team`. Most large companies have one. Getting routed there bypasses 3+ tiers of escalation and lands you with someone whose job is to resolve before the complaint becomes a formal letter to the company's compliance office.",
+      "priority": 4,
+      "decision_point": "If the rep says 'we don't have a separate team for that' — that may be true (small company) or a stall. Test by saying 'who in your organization handles formal regulatory complaints?' If they can't name a function, the complaint really WILL need to be filed externally."
+    },
+    {
+      "name": "File-first variant",
+      "when": "You've already filed (genuine, not bluff).",
+      "script": "Use `already_filed`. This is the most powerful phrasing — it converts 'angry customer' into 'documented complainant', which most CRMs flag with a specific routing rule.",
+      "priority": 5
+    },
+    {
+      "name": "Switch to documenting mode",
+      "when": "Mid-call, you realize resolution is unlikely.",
+      "script": "Use `documenting_for_complaint`. Stop arguing — start collecting. Names, IDs, timestamps, exact wording of refusals. The call is now evidence, not negotiation.",
+      "priority": 6,
+      "decision_point": "Once you switch to documenting mode, do NOT switch back. Mixing 'I'm collecting evidence' with 'I still want resolution' confuses the rep and makes both objectives weaker. Finish the call in documenting mode and pivot to filing."
+    },
+    {
+      "name": "Close gracefully whether or not it worked",
+      "when": "End of call.",
+      "script": "Use `graceful_close_unresolved` if no resolution. Leaving the door open ('I'd be happy to update the complaint to reflect resolution') is genuine pressure — the company knows the complaint is coming, and the only way to make it disappear is to resolve before you file.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT fabricate a regulator reference. Citing a regulator that has no jurisdiction destroys your credibility AND can be argued in some states as a form of misrepresentation.",
+    "Do NOT threaten to 'sue' as part of this skill — that's a separate altitude and most reps are trained to immediately hand the call to legal, which actually stops negotiation entirely.",
+    "Do NOT raise your voice or use sarcasm. Regulators take calm, factual complaints seriously; agencies routinely close 'angry rant' complaints without action.",
+    "Do NOT name a specific employee in the eventual complaint unless they personally engaged in clearly improper conduct. Naming a rep for refusing a discretionary credit is overreach.",
+    "Do NOT file complaints with multiple regulators at once unless the issue genuinely spans jurisdictions. Forum-shopping weakens every individual filing.",
+    "Do NOT use the BBB as your primary regulatory reference if the issue actually involves a federal regulator — the BBB has no enforcement power and reps know it.",
+    "Do NOT bluff 'I've already filed' if you haven't. A confident rep will ask for the case number, and if you can't produce one, you've burned the most powerful tool in the kit."
+  ],
+  "success_signals": [
+    "Audible pause from the rep after the regulator is mentioned.",
+    "Rep says 'let me get someone from our compliance / regulatory / legal-response team'.",
+    "Rep proactively offers a credit, callback, or resolution they didn't offer pre-reference.",
+    "Rep takes your contact info and says 'someone will reach out within [timeframe]' — note the timeframe.",
+    "Call gets transferred OUT of the standard support queue (different hold music or no hold music)."
+  ],
+  "failure_signals": [
+    "Rep says 'feel free to file' in a flat tone — they've heard the bluff before and aren't moving. Time to actually file.",
+    "Rep tries to talk you out of filing ('there's no need to do that, ma'am') without offering a resolution.",
+    "Rep says 'we'll wait for the regulator to contact us' — that's a polite hang-up signal.",
+    "Rep escalates to legal which immediately tries to obtain settlement-like language from you. Be careful — say only 'I want to keep this in regulator/customer-service channels for now'.",
+    "Multiple 'I'll have someone call you' promises that don't materialize."
+  ],
+  "exit_strategy": {
+    "on_success": "Get the name + ID + direct number of whoever offered the resolution. Confirm in writing (email to a published support address) within 24h citing the call + their commitment + your case number. If you had filed pre-resolution, update the complaint to reflect resolution.",
+    "on_failure": "End politely. File the complaint within 24-48h while details are fresh. Include: timeline, case numbers, names + IDs of reps spoken to, exact refusals, and what resolution you sought. Send the company a written notice of filing.",
+    "follow_ups": [
+      "If you committed to filing — file. Don't make the threat empty. Empty threats burn future credibility.",
+      "Set a 30-day calendar reminder to check status of the complaint — most regulators respond within 30-60 days.",
+      "If the company resolves before regulator responds, notify the regulator with the resolution. Honest closure preserves your credibility for future complaints.",
+      "Keep all complaint case numbers + the regulator's response in a long-term file — patterns of complaints against the same company strengthen everyone's leverage."
+    ]
+  },
+  "required_user_info": [
+    "Full timeline of the dispute with dates",
+    "All prior case/ticket numbers and rep names",
+    "The specific harm (financial amount, service outage duration, etc.)",
+    "Which regulator(s) have jurisdiction — or willingness to research",
+    "Whether the user is genuinely prepared to file (do not bluff)"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

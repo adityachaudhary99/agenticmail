@@ -1,0 +1,123 @@
+{
+  "id": "negotiate-rent-renewal",
+  "name": "Negotiate Rent at Lease Renewal",
+  "version": "1.0.1",
+  "category": "real-estate",
+  "tags": [
+    "rent",
+    "renewal",
+    "negotiation",
+    "landlord",
+    "phone-call",
+    "comparables",
+    "housing-tenancy"
+  ],
+  "description": "Call the landlord or property manager to negotiate a renewal offer down (or hold it flat) using market comparables and tenancy track record — without threatening to move out unless the user is actually willing to.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "User has received a renewal offer (or knows their lease ends soon) and the proposed rent is above market or above what they want to pay. Most effective 45–75 days before lease expiry, when the landlord is exposed to vacancy risk but not yet panicked.",
+    "preconditions": [
+      "User has the current rent and the proposed new rent in writing.",
+      "User has 2–4 verified comparables (same neighborhood, similar bed/bath, listed in the last 30 days).",
+      "User knows their walk-away number — the rent at which they would actually move.",
+      "User has a clean payment record (no late fees in the past 12 months) OR knows where the record stands."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Vacancy is expensive for landlords — turnover cost (cleaning, paint, listing, 1–2 months empty) often exceeds the increase they're asking for. Use that, gently.",
+    "Lead with track record, not threats. 'I've paid on time for 24 months and I want to stay' is leverage; 'I'll leave if you don't drop it' is a bluff unless the user means it.",
+    "Specific comparables beat vague claims. 'A unit at [address] just listed at $X' lands. 'I've seen cheaper places' does not.",
+    "Anchor below your target. If you want $2,300, ask for $2,200. The landlord will counter up; meet in the middle near your real number.",
+    "Get the agreed rent and any concessions in writing (renewal addendum or email) BEFORE signing — verbal promises don't survive a building-management changeover."
+  ],
+  "phrases": {
+    "opener": "Hi, I got the renewal letter and wanted to talk through it before signing. I've been here [X years/months], paid on time every cycle, and I want to stay — but the new number is higher than what I'm seeing in the neighborhood right now. Can we work something out?",
+    "present_comps": "I pulled a few comparable listings nearby — there's a [bed/bath] at [address] listed for [amount], and another at [address] for [amount]. I think a fair renewal for me would be [target amount].",
+    "value_to_landlord": "If I renew, you avoid turnover — no painting, no listing fees, no vacancy month. That's real money. I'm asking you to share some of that savings with me.",
+    "stall_thinking": "Let me think about that for a moment.",
+    "counter_to_split": "Okay — could we meet in the middle at [midpoint]? Same lease length, same on-time payments.",
+    "ask_for_concessions": "If the rent number is fixed, are there other things you could include — a month of parking, a pet-fee waiver, carpet cleaning, or a shorter renewal term so we can revisit?",
+    "ask_for_writing": "Great, can you send me the updated renewal addendum by email today so I can sign it this week?",
+    "graceful_close_walk": "Thanks for talking it through. I need to think about this with my household before I commit. Can you hold the offer open until [date]?"
+  },
+  "tactics": [
+    {
+      "name": "Open with tenure and intent to stay",
+      "when": "First substantive turn.",
+      "script": "Use the `opener`. Lead with how long they've been a tenant and a clean-payment claim — landlords value reliable rent.",
+      "priority": 1
+    },
+    {
+      "name": "Present comparables with addresses",
+      "when": "After opener.",
+      "script": "Use `present_comps`. Always cite at least two real, current listings. Vague references get dismissed.",
+      "priority": 2
+    },
+    {
+      "name": "Make the cost-of-turnover argument",
+      "when": "If the landlord pushes back on the comparables.",
+      "script": "Use `value_to_landlord`. Frame the savings to THEM — not the cost to the tenant — and ask for a share.",
+      "priority": 3
+    },
+    {
+      "name": "Silence after the ask",
+      "when": "Immediately after stating the target rent.",
+      "script": "Wait 3–5 seconds. Landlords often counter into the silence.",
+      "priority": 4
+    },
+    {
+      "name": "Pivot to concessions if rent is fixed",
+      "when": "Landlord won't move the rent number.",
+      "script": "Use `ask_for_concessions`. Free parking, pet-fee waiver, deep clean, appliance upgrade, or a 6-month lease so the user can revisit. Non-rent concessions often have a separate budget line.",
+      "priority": 5
+    },
+    {
+      "name": "Lock the deal in writing",
+      "when": "Verbal agreement reached.",
+      "script": "Use `ask_for_writing`. Do NOT consider the deal real until there's a signed renewal addendum or at minimum an email from the landlord stating the new terms."
+    },
+    {
+      "name": "Reserve the walk-away",
+      "when": "Landlord won't move on rent OR concessions and the offer exceeds the user's walk-away number.",
+      "script": "Use `graceful_close_walk` and report back. DO NOT give notice to vacate on this call unless the user explicitly authorised it — that's a separate decision."
+    }
+  ],
+  "boundaries": [
+    "Do NOT threaten to move out unless the user has explicitly authorised it AND has a realistic alternative.",
+    "Do NOT invent comparables. Landlords often know the market better than the tenant and will check.",
+    "Do NOT sign or verbally commit to a renewal on the phone — always ask for the addendum in writing.",
+    "Do NOT disclose personal financial details (raises, new job, savings) — they reduce your leverage.",
+    "Do NOT accept a rent reduction in exchange for waiving repair obligations, habitability rights, or the security deposit. Hold via `ask_operator`."
+  ],
+  "success_signals": [
+    "Landlord proposes a counter below the original renewal number.",
+    "Landlord offers concessions (parking, fee waivers, upgrades) even if rent holds.",
+    "Landlord asks for a shorter or longer term in exchange — they're negotiating.",
+    "Landlord agrees to send an updated addendum in writing."
+  ],
+  "failure_signals": [
+    "Landlord refuses to discuss and says 'take it or leave it' with no movement after two asks.",
+    "Landlord insists on a verbal-only agreement and refuses to email the new terms.",
+    "Landlord retaliates with talk of non-renewal or eviction threats (note this — it may be illegal in some jurisdictions).",
+    "Counter is still above the user's walk-away number."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the new rent, lease length, any concessions, the renewal-addendum delivery method, and a sign-by date. Ask for the agent's name and a confirmation number or case ID.",
+    "on_failure": "Thank the landlord, ask them to hold the original offer open for a stated number of days, and end politely. Report to operator with what was offered and the walk-away gap.",
+    "follow_ups": [
+      "Email the operator the agreed rent + any concessions + the addendum-delivery date.",
+      "Calendar reminder 24 hours before the sign-by date.",
+      "Calendar reminder 75 days before the NEXT lease expiry to start the cycle again."
+    ]
+  },
+  "required_user_info": [
+    "Current rent and proposed renewal rent (in writing)",
+    "Target rent, midpoint, and walk-away rent",
+    "2–4 verified comparable listings (address + rent + bed/bath)",
+    "Length of current tenancy and payment history",
+    "Whether the user is willing and able to actually move if negotiation fails"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

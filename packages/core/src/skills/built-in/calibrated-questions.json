@@ -1,0 +1,155 @@
+{
+  "id": "calibrated-questions",
+  "name": "Calibrated Questions: Make Them Solve Your Problem",
+  "version": "1.0.0",
+  "category": "negotiation",
+  "tags": ["voss", "calibrated-questions", "how-questions", "what-questions", "phone-call", "real-time"],
+  "description": "Open-ended questions starting with 'how' or 'what' that force the counterparty to do the cognitive work — and frequently to invent the solution you wanted. The single highest-ROI verbal move in negotiation.",
+  "disclaimer": "Calibrated questions are a power tool. Used clumsily ('how am I supposed to do that?' as a whine instead of a real question) they sound passive-aggressive. Tone must be genuinely curious.",
+  "context": {
+    "when_to_use": "Any time you would otherwise make a counter-argument, an accusation, or a demand. Substitute a calibrated question instead. Most valuable when the counterparty has just said 'no', 'I can't', or 'that's not possible'.",
+    "preconditions": [
+      "You have at least one calibrated question pre-loaded for the likely objections.",
+      "You can deliver the question with curious-flat tone — not whiny, not aggressive.",
+      "You have patience for silence after the question (3-8 seconds is normal)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Start with 'how' or 'what'. Never 'why' — 'why' triggers defensiveness across every language. 'Why did you do that?' = accusation. 'What led to that decision?' = invitation.",
+    "Avoid yes/no questions entirely. Yes is non-committal; no is a wall; calibrated questions produce information.",
+    "The best calibrated questions make THEIR no MY problem to solve — and force them to either help solve it or admit there's room.",
+    "Calibrated questions slow the call down. That asymmetry favors the patient party — which is you, if you've prepared.",
+    "After asking, do not soften, qualify, or rephrase. The question must stand alone in the silence.",
+    "Use calibrated questions to gather, then to commit: 'How will we know it's working?' converts a verbal agreement into an implementation plan."
+  ],
+  "phrases": {
+    "core_how_am_i": "How am I supposed to do that?",
+    "core_what_would_it_take": "What would it take to get there?",
+    "discover_constraints": "What's the biggest challenge you face in approving something like this?",
+    "discover_authority": "Who on your end has handled an exception like this before?",
+    "discover_process": "How does this normally work for customers in my situation?",
+    "discover_value": "What does success look like for you on a call like this?",
+    "test_a_no": "What about it doesn't work for you?",
+    "expand_the_pie": "What else might we put on the table that would make this easier?",
+    "force_creativity": "If price were fixed, what else could move?",
+    "commitment_check": "How will we make sure this actually happens after we hang up?"
+  },
+  "tactics": [
+    {
+      "name": "Substitute, don't argue",
+      "when": "You feel the urge to say 'but…' or 'that's not fair'.",
+      "script": "Replace the argument with a calibrated question. 'But I've been a customer for 8 years!' becomes 'How does loyalty factor in to what you can offer?'",
+      "priority": 1
+    },
+    {
+      "name": "Convert no into a workshop",
+      "when": "Rep says no.",
+      "script": "Respond with `test_a_no`. They will tell you the specific obstacle. Address THAT, not the global no.",
+      "priority": 2
+    },
+    {
+      "name": "Outsource creativity",
+      "when": "You're stuck and don't have a next move.",
+      "script": "Use `force_creativity` or `expand_the_pie`. The rep often invents the workaround for you — and people defend ideas that came out of their own mouth.",
+      "priority": 3
+    },
+    {
+      "name": "Surface the real decision-maker",
+      "when": "Rep keeps citing policy or authority limits.",
+      "script": "Use `discover_authority`. Not 'can I talk to your supervisor' (combative) but 'who has handled this kind of exception' (curious). Different door, same room.",
+      "priority": 4
+    },
+    {
+      "name": "Lock in the deal with an implementation question",
+      "when": "Verbal agreement is reached.",
+      "script": "Use `commitment_check`. Forces the rep to spell out the system actions, the timing, and the confirmation — converting talk into commitment and exposing any quietly-missing steps.",
+      "priority": 5
+    }
+  ],
+  "decision_tree": {
+    "description": "When the counterparty produces a blocking move, match it to a branch BEFORE you respond. Calibrated questions are interruption-proof — you can deliver one inside 1.5 seconds of pause.",
+    "branches": [
+      {
+        "if_you_hear": "Flat 'no' with no reason.",
+        "interpretation": "Wall is rhetorical, not actual. The rep is testing if you'll fold.",
+        "say": "`test_a_no`: 'What about it doesn't work for you?'",
+        "do_not": "Do not accept the no. Do not argue with the no. Question it."
+      },
+      {
+        "if_you_hear": "'I can't go any lower / further.'",
+        "interpretation": "Either truth or a polite final-offer feint. The question separates them.",
+        "say": "`core_how_am_i`: 'How am I supposed to make this work on a [budget/target] of X?'",
+        "do_not": "Do not name a counter-number. Make THEM produce one."
+      },
+      {
+        "if_you_hear": "'Policy / system / can't do that.'",
+        "interpretation": "Authority constraint, not capability constraint.",
+        "say": "`discover_authority`: 'Who on your end has handled an exception like this before?'",
+        "do_not": "Do not demand a supervisor. Ask who has done it before — names route you differently than escalations."
+      },
+      {
+        "if_you_hear": "Long script delivered with no breaks.",
+        "interpretation": "Rep is on rails. The script is designed to terminate negotiation.",
+        "say": "Interrupt gently at the next breath: 'Quick question — `discover_process`: how does this normally work for customers in my situation?'",
+        "do_not": "Do not wait for the script to end. The end of the script is the call-end button."
+      },
+      {
+        "if_you_hear": "'What's your budget / what were you hoping for?'",
+        "interpretation": "They are asking YOU to anchor. Dangerous if you haven't decided.",
+        "say": "Deflect with a calibrated question: 'What would be a typical range for someone in my situation? I want to make sure I'm framing this fairly.'",
+        "do_not": "Do not name a number first if you can avoid it. See `03-anchor-and-counter-anchor`."
+      },
+      {
+        "if_you_hear": "'Take it or leave it.'",
+        "interpretation": "Ultimatum — almost always a bluff in commercial contexts.",
+        "say": "`core_what_would_it_take`: 'What would it take to move off that position?' delivered curious, not hostile.",
+        "do_not": "Do not flinch. Do not accept. Do not threaten to leave (that's a separate skill — see `10-walkaway-threats`)."
+      },
+      {
+        "if_you_hear": "Genuine creative offer ('what if we did X instead?').",
+        "interpretation": "They are negotiating. Engage fully.",
+        "say": "`force_creativity`: 'I like where that's going — what else might we put on the table to bridge the rest of the gap?'",
+        "do_not": "Do not jump to accept the first creative offer — there's usually a better one one question deeper."
+      },
+      {
+        "if_you_hear": "Verbal yes / agreement.",
+        "interpretation": "Risky moment — the deal isn't real until it's specified.",
+        "say": "`commitment_check`: 'How will we make sure this actually happens after we hang up?'",
+        "do_not": "Do not hang up on a verbal yes. Verbal yes + no implementation question = no deal in 50% of cases."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT ask 'why' questions. Substitute 'what led to' or 'how did you get there'.",
+    "Do NOT chain 4+ calibrated questions in a row — it starts to feel like an interrogation.",
+    "Do NOT use 'how am I supposed to do that?' as sarcasm. It must be curious or it fails.",
+    "Do NOT ask a calibrated question and then answer it yourself in the silence. Wait."
+  ],
+  "success_signals": [
+    "Rep produces a workaround or exception you hadn't named.",
+    "Rep says 'good question, let me check' — they're now solving your problem.",
+    "Rep volunteers the name of the actual decision-maker.",
+    "Rep starts asking calibrated questions back at you — engagement is mutual.",
+    "Silence after your question lasts 5+ seconds — they're thinking, which is what you want."
+  ],
+  "failure_signals": [
+    "Rep robotically repeats the original no after 3 calibrated questions — you may be talking to someone with truly zero authority; escalate.",
+    "Rep gets visibly annoyed by the question pattern — your tone may have drifted to combative; reset with a label.",
+    "You can't think of the next calibrated question — switch to labeling (`01-tactical-empathy-labeling`) to buy time."
+  ],
+  "exit_strategy": {
+    "on_success": "Once the rep produces the solution, confirm with `commitment_check` and exit cleanly.",
+    "on_failure": "If 3+ calibrated questions don't move the call, the rep likely has neither authority nor latitude. Politely close, log the attempt, escalate via different channel.",
+    "follow_ups": [
+      "Save the calibrated questions that worked for this provider/industry — patterns repeat.",
+      "Note which questions produced new information vs. which were dead ends."
+    ]
+  },
+  "required_user_info": [
+    "What the user actually wants (the question is calibrated to a goal — you need the goal).",
+    "Any specific constraints the user has (budget, timing) so questions don't accidentally over-promise.",
+    "User's tolerance for silence — some operators want to be coached in real time to NOT rescue the silence."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

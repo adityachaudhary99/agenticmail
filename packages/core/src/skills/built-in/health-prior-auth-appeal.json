@@ -1,0 +1,131 @@
+{
+  "id": "health-prior-auth-appeal",
+  "name": "Appeal a Health-Insurance Prior-Authorization Denial",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "health",
+    "prior-auth",
+    "denial",
+    "appeal",
+    "medical-necessity",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Push a denied prior-authorization (PA) request back through the carrier's appeal pipeline. Force a peer-to-peer review, surface the medical-necessity criteria the denial actually cited, and start the formal written appeal with deadlines. Most PA denials are overturned on appeal — but only if appealed.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "A health insurer has denied prior auth for a procedure, medication, imaging, or referral that the prescribing clinician has ordered. Use AFTER receiving the denial and BEFORE the procedure date or medication runaround.",
+    "preconditions": [
+      "User has the denial letter or denial reference number.",
+      "User has the prescribing clinician's name, NPI, and office contact.",
+      "User has the CPT/HCPCS code (procedure) or NDC (medication) being denied.",
+      "User knows whether the plan is fully-insured (state-regulated) or self-funded ERISA (federal — different appeal rules).",
+      "User has the policy's evidence-of-coverage document or member handbook."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "PA denials are issued against medical-necessity criteria (often Milliman/MCG or InterQual). The criteria are written; demand to know which the denial cites.",
+    "Peer-to-peer (P2P) review is the fastest unlock — your clinician talks to the carrier's medical director. Schedule it.",
+    "Internal appeal first, then external review (state or federal). Most plans must offer both.",
+    "Expedited appeal is available when delay would jeopardize health (e.g. cancer treatment, post-op infection). Use it when applicable — 72-hour decisions instead of 30 days.",
+    "The denying physician's specialty matters. A primary-care MD denying an oncology drug is challengeable on its face.",
+    "Documenting prior failed therapies is often the key to overturning step-therapy denials."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling about a prior-authorization denial — reference [number], member ID [id], for [procedure/medication, CPT/NDC code]. I want to start the appeal and request a peer-to-peer review with my [clinician name].",
+    "ask_criteria": "What specific medical-necessity criteria — Milliman, MCG, InterQual, or your internal policy — were used to evaluate this request? Could you send me the criteria document and the specific criteria that weren't met?",
+    "request_p2p": "I'd like to schedule a peer-to-peer review between my prescribing [specialist] and your medical director. What's the soonest available slot, and who do I have my clinician's office contact?",
+    "request_expedited": "Given that delay could [jeopardize my health / cause irreversible harm / lead to hospitalization], I'd like to file this as an expedited appeal. The standard is 72 hours for expedited internal appeals. Can we proceed on that timeline?",
+    "ask_reviewer_specialty": "What was the specialty of the physician who issued the denial? Was it the same specialty as my prescribing clinician?",
+    "request_written_appeal_path": "Please walk me through the formal appeal process: internal appeal deadline, external review path, what evidence I can submit, and where to send it.",
+    "decline_substitution": "Thanks, but my clinician has already considered [alternative] and ruled it out because [reason]. I'd like to stay focused on the originally prescribed treatment.",
+    "graceful_close": "Thank you. To confirm: peer-to-peer is scheduled for [date/time], appeal deadline is [date], expedited status is [confirmed/pending], and the criteria document will be sent to [email] by [date]."
+  },
+  "tactics": [
+    {
+      "name": "Open with the appeal request, not the complaint",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase. Two deliverables: P2P scheduled + appeal opened. Don't get pulled into re-arguing the underlying clinical question with a phone rep.",
+      "priority": 1
+    },
+    {
+      "name": "Demand the specific criteria",
+      "when": "Rep says 'not medically necessary' without specifics.",
+      "script": "Use the `ask_criteria` phrase. The clinician needs the exact criteria the denial cited to build the P2P case and the written appeal.",
+      "priority": 2
+    },
+    {
+      "name": "Schedule the peer-to-peer",
+      "when": "Once the denial is confirmed.",
+      "script": "Use the `request_p2p` phrase. P2P often overturns the denial in a single 15-minute call between the clinician and the medical director.",
+      "priority": 3
+    },
+    {
+      "name": "Escalate to expedited if clinically warranted",
+      "when": "Delay would harm the user's health.",
+      "script": "Use the `request_expedited` phrase. Documented urgency unlocks 72-hour timelines. Clinician's office can submit a letter of medical necessity stating the urgency.",
+      "priority": 4
+    },
+    {
+      "name": "Challenge the reviewer's specialty",
+      "when": "Drug or procedure is specialty-specific.",
+      "script": "Use the `ask_reviewer_specialty` phrase. A non-specialist denial is grounds for a same-specialty re-review on appeal — and is itself appealable.",
+      "priority": 5
+    },
+    {
+      "name": "Map the full appeal ladder",
+      "when": "Mid-call.",
+      "script": "Use the `request_written_appeal_path` phrase. Internal appeal → external review → state DOI / federal IRO depending on plan type. Each rung has a deadline and a clock.",
+      "priority": 6
+    },
+    {
+      "name": "Decline 'alternative' substitutions",
+      "when": "Rep suggests a cheaper drug or different procedure.",
+      "script": "Use the `decline_substitution` phrase. The phone rep is not the clinician. Substitutions belong in P2P with documented clinical reasoning, not on a service call.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT speculate about pre-existing conditions, prior symptoms, or family history on this call.",
+    "Do NOT accept the denial as final — internal appeal is a right under both ERISA and ACA-regulated plans.",
+    "Do NOT skip the expedited option if the clinical situation is urgent — the standard 30-day clock can cause real harm.",
+    "Do NOT agree to a 'voluntary withdrawal' of the PA request, which can extinguish appeal rights.",
+    "Do NOT disclose mental-health, substance-use, HIV, or other specially-protected diagnoses unless directly relevant to the appeal.",
+    "Do NOT make clinical decisions on the call. Substitutions, dose changes, and 'trying alternatives first' route through the clinician."
+  ],
+  "success_signals": [
+    "P2P is scheduled with the carrier's medical director.",
+    "Criteria document is committed for delivery.",
+    "Expedited status is granted when requested.",
+    "Carrier confirms same-specialty reviewer for the appeal.",
+    "Appeal deadline and submission method are clearly documented."
+  ],
+  "failure_signals": [
+    "Rep refuses to schedule P2P.",
+    "Rep won't disclose which criteria set was used.",
+    "Carrier asserts the denial is 'final' before internal appeal.",
+    "Expedited request is denied without medical justification."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm P2P time, criteria-doc ETA, appeal deadline, expedited status. Email a recap to the user AND the prescribing clinician's office (so they can prepare for P2P).",
+    "on_failure": "Document the obstruction. Route to `ask_operator` with options: (1) written appeal with letter of medical necessity, (2) state DOI complaint (if fully-insured) or DOL complaint (if ERISA self-funded), (3) external IRO review, (4) state insurance commissioner.",
+    "follow_ups": [
+      "Email the clinician's office with the criteria document and P2P time so they can prepare.",
+      "Calendar the appeal deadline with 7-day and 1-day reminders.",
+      "Send a recap to the user with next-step ownership.",
+      "If P2P fails, immediately initiate written internal appeal."
+    ]
+  },
+  "required_user_info": [
+    "Denial reference number and member ID",
+    "Procedure CPT/HCPCS code or medication NDC",
+    "Prescribing clinician's name, NPI, office phone",
+    "Letter of medical necessity from clinician (request from office if missing)",
+    "Plan type — fully-insured vs ERISA self-funded",
+    "Whether clinical situation warrants expedited appeal"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

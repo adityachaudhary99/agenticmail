@@ -1,0 +1,129 @@
+{
+  "id": "request-supervisor-gracefully",
+  "name": "Request a Supervisor Without Burning the Rep's Goodwill",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "supervisor",
+    "phone-call",
+    "rapport",
+    "warm-transfer",
+    "customer-support"
+  ],
+  "description": "Ask for a supervisor in a way that the front-line rep transfers you with positive notes, not as a 'difficult customer'. The same words said two different ways produce wildly different downstream calls.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "You've given the current rep a fair shot (at least one full exchange of ask + response), and you need authority they don't have. Use after `get-past-tier-1-script` confirms you've hit the ceiling, OR directly when the issue is obviously above the rep's pay grade (six-figure refunds, account closures, multi-month service credits).",
+    "preconditions": [
+      "Rep has given a substantive 'no' or 'I can't do that' at least once.",
+      "User is calm and willing to spend another 15-30 minutes.",
+      "User has the case/account number ready to repeat to the supervisor (you WILL re-verify)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "How you ask determines how you arrive. A respectful supervisor request gets you a warm intro ('this is a great customer who's been patient'); a hostile one gets you a cold intro ('escalation, refused to accept policy').",
+    "Praise the current rep on the way out. Supervisors hear EVERY customer complain about their reps; a customer who compliments theirs stands out and arrives pre-credited with reasonability.",
+    "Never use the word 'demand'. Even when you have the right to demand, the word triggers a defensive posture in the rep that they will carry into the handoff note.",
+    "Frame the escalation as 'I want to be sure', not 'you're wrong'. Supervisors exist to confirm; reps don't lose points when supervisors confirm them. They DO lose points when supervisors overturn them, so the rep is incentivized to hand you off only if they expect to be backed up — give them a reason to expect collaboration instead.",
+    "The supervisor's job is risk management, not customer service. They escalate decisions when the alternative (regulator complaint, public review, executive escalation) costs the company more. Hint at that future without threatening it.",
+    "Repetition is a tell. Reps trained to 'overcome objections' use a 3-strike script (refuse, refuse with rationale, refuse with empathy). Counting strikes lets you predict when the rep is at the end of their objection list and ready to transfer."
+  ],
+  "phrases": {
+    "praise_then_pivot": "You've been really patient with this, and I can tell you've done what you can within your tools. Could you bring in your supervisor — not because you've done anything wrong, but because I want to be sure we've explored everything before I make a call on this?",
+    "the_calibration_ask": "I want to calibrate my expectations. If your supervisor were on the line right now, is there ANYTHING they could do that you can't? If yes, let's get them on. If genuinely no, I want to know so I can decide what to do next.",
+    "the_collaborative_frame": "I think we both want the same outcome here — I keep my service and you close this ticket as resolved. To get there, can we loop in someone with broader authority?",
+    "the_documented_ask": "I'd like to formally request a supervisor. Could you note in the file that I made that request at [time]? I want to make sure the request is on the record.",
+    "respond_to_no_supervisor": "I understand they're not at the desk this moment. What's the soonest they're available for a callback, and could you schedule that for me with a case number?",
+    "respond_to_overconfidence": "I hear you that the answer would be the same. I'd still like the supervisor to confirm that — not because I doubt you, but because it's the kind of decision I'd rather hear from the person who owns the policy.",
+    "graceful_handoff_close": "Before you transfer me — thank you. Genuinely. Could you give the supervisor a quick brief so I don't have to start over? And could I get your name and ID for my notes so I can credit you if this works out?"
+  },
+  "tactics": [
+    {
+      "name": "Earn the ask before making it",
+      "when": "Before the first supervisor request.",
+      "script": "Spend at least one substantive turn working with the rep — accept one of their suggestions if reasonable, try one of their workflows. Reps transfer cooperative customers more willingly than customers who escalated on entry.",
+      "priority": 1,
+      "decision_point": "If the rep actually solves it during this earning round — STOP. Don't escalate out of habit. Many calls resolve at tier-1 if you let them."
+    },
+    {
+      "name": "Praise → pivot",
+      "when": "First supervisor request.",
+      "script": "Use `praise_then_pivot`. The praise is genuine — the rep IS limited by their tools, that's the company's design, not their failure. Naming that openly converts them from gatekeeper to ally.",
+      "priority": 2
+    },
+    {
+      "name": "Calibrate authority",
+      "when": "Rep says 'the supervisor will say the same thing'.",
+      "script": "Use `the_calibration_ask`. It's a fair question: if supervisors genuinely can't do more, you need to know that to pivot to a different channel. If they can, the rep just told on themselves.",
+      "priority": 3,
+      "decision_point": "If the rep's honest answer is 'no, they genuinely cannot do more' AND you trust them — believe it. Pivot to `multi-channel-escalation` or `invoke-regulator-firmly`. If the rep waffles ('well, technically yes but...'), keep pushing for the transfer."
+    },
+    {
+      "name": "Document the request",
+      "when": "Rep tries to deflect more than once.",
+      "script": "Use `the_documented_ask`. Asking for the request to be logged is a quiet signal that you'll follow up — most companies' policies REQUIRE that documented supervisor requests be honored, and the rep knows it.",
+      "priority": 4
+    },
+    {
+      "name": "Handle 'supervisor unavailable'",
+      "when": "Rep claims no supervisor is around.",
+      "script": "Use `respond_to_no_supervisor`. Get a callback scheduled with a case number — that's a contractual breadcrumb. Then add: 'And if the callback doesn't happen by [time], can I call back and reference that case number?' Locks the loop.",
+      "priority": 5,
+      "decision_point": "If callback doesn't materialize within the promised window + 30 minutes: do NOT call back to the same queue. Use `multi-channel-escalation` — email + social, in parallel."
+    },
+    {
+      "name": "Counter 'they'll say the same'",
+      "when": "Rep insists the answer is fixed.",
+      "script": "Use `respond_to_overconfidence`. The fact that you'd still like to hear it from the supervisor is a perfectly reasonable preference and impossible to refuse without sounding obstructive.",
+      "priority": 6
+    },
+    {
+      "name": "Set up the warm handoff",
+      "when": "Rep agrees to transfer.",
+      "script": "Use `graceful_handoff_close`. Ask the rep to brief the supervisor BEFORE you go on hold — that way the supervisor arrives with the rep's framing, which (because you treated them well) will be favorable.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT raise your voice or speak over the rep — even once. It's the single fastest way to get cold-transferred or hung up on.",
+    "Do NOT say 'I want a supervisor' as your first sentence. It triggers the deflection script.",
+    "Do NOT lie about the rep ('he was rude to me') to escalate. The call is recorded and the supervisor will hear the truth.",
+    "Do NOT name-drop the CEO, regulators, or lawsuits in this skill — that's a different altitude. See `invoke-regulator-firmly` and `reach-executive-office`.",
+    "Do NOT accept 'we don't have supervisors' as a final answer — every customer-facing operation has someone with more authority. The phrasing might change ('shift lead', 'on-duty manager', 'escalation specialist'), but the role exists.",
+    "Do NOT spend more than ~3 attempts on supervisor request in one call. If three respectful asks fail, the rep is going to wear you down faster than you wear them down. End politely and switch channels."
+  ],
+  "success_signals": [
+    "Rep says 'one moment, let me grab them'.",
+    "Rep gives a specific callback time AND a case number.",
+    "Rep starts speaking more slowly and softly — they've shifted out of script.",
+    "Supervisor introduces themselves by full name + title (a sign they're real and accountable).",
+    "Supervisor opens with 'I've been briefed' rather than 'tell me what's going on' — warm handoff worked."
+  ],
+  "failure_signals": [
+    "Rep claims 'I AM the supervisor' on first ask without prior context (see `bypass-i-am-the-supervisor`).",
+    "Rep agrees to transfer, you go on hold, and the line drops or routes back to the IVR.",
+    "Rep promises a callback that doesn't happen within window + 30 min.",
+    "Supervisor arrives but reads the same script verbatim — you've been handed to another tier-1 wearing a title.",
+    "Rep refuses to give a name or ID after being asked twice."
+  ],
+  "exit_strategy": {
+    "on_success": "Get supervisor's name, title, employee ID, direct callback number (or scheduling). Restate the problem and the resolution you want in two sentences. Stop talking — supervisors negotiate against silence, not against more arguments.",
+    "on_failure": "Politely end the call with a documented case number. Wait 24-48 hours and pivot: `multi-channel-escalation` if it's a service issue, `invoke-regulator-firmly` if you have a real regulator angle, `reach-executive-office` if the dollar amount or harm is significant.",
+    "follow_ups": [
+      "Email the company's published support address within 24h restating the call + case number + the supervisor's promised action. Creates a paper trail.",
+      "If a callback was promised: set a calendar alert for the promise time + 30 minutes. If missed, immediately call back referencing the case number.",
+      "Log the rep's name + ID + the supervisor's name + ID for future calls. Continuity matters."
+    ]
+  },
+  "required_user_info": [
+    "Account number / login email",
+    "Current rep's name and ID (if already on a call)",
+    "Specific outcome wanted (one sentence)",
+    "Any prior case numbers from earlier interactions",
+    "User's preferred callback window"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

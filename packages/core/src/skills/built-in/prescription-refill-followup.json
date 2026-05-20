@@ -1,0 +1,132 @@
+{
+  "id": "prescription-refill-followup",
+  "name": "Follow Up on a Delayed Prescription or Refill",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "pharmacy",
+    "prescription",
+    "refill",
+    "phone-call",
+    "medication",
+    "healthcare"
+  ],
+  "description": "Call the prescriber's office and/or pharmacy to chase down a refill that's stuck — the e-script that 'was sent' but never arrived, the controlled-substance refill the doctor hasn't authorized, the prior-auth that's been pending for a week.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator has a refill that has not arrived, is delayed, or is being held up by a process step (prior auth, prescriber sign-off, pharmacy stock, insurance). NOT for starting a new prescription or changing dose — those are clinical decisions and route to the operator's prescriber directly.",
+    "preconditions": [
+      "Operator's name, DOB (read-only), pharmacy name + location.",
+      "Exact medication name, strength, dose form (tablet/capsule/liquid/inhaler) as the operator stated it — do NOT abbreviate or guess.",
+      "Prescriber name and clinic.",
+      "How many doses operator has left (used for urgency assessment, NOT for dose advice).",
+      "Whether this is a controlled substance (CII-CV) — those have different refill rules.",
+      "Last fill date if known, and what the operator was told about the delay so far."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Refills get stuck in 4 places, and you need to know which one before you can unstick: (a) prescriber hasn't authorized, (b) pharmacy hasn't received or processed, (c) insurance prior auth pending, (d) drug out of stock at that pharmacy. Diagnose first.",
+    "Call the pharmacy first — they can tell you EXACTLY where the script is in the queue, including whether the prescriber has responded.",
+    "Controlled substances (Adderall, opioids, benzos, etc.) have legal requirements that no amount of pressure changes — a kind, well-prepared call still has to wait for the prescriber to sign in-system.",
+    "If you're running out before the prescriber can refill, ask the pharmacy about an 'emergency supply' or 'bridge fill' — many states allow 3-7 days. This is a process question, not a clinical one.",
+    "Never accept the pharmacy saying 'the doctor changed your prescription' on this call. Verify with the prescriber directly — substitution errors and miscommunication are common."
+  ],
+  "phrases": {
+    "opener_pharmacy": "Hi, I'm calling on behalf of [Operator]. We have a refill for [medication, strength, dose form] from Dr. [prescriber] that hasn't come through. Can you check exactly where it is in your system — whether you've received it, whether it's awaiting prescriber approval, or whether there's an insurance hold?",
+    "opener_prescriber": "Hi, I'm calling for [Operator], patient of Dr. [Name]. They have a refill request pending for [medication, strength, dose form] that the pharmacy says is awaiting the prescriber's sign-off. Can you check the queue and confirm it's been sent?",
+    "diagnose_stage": "So just to be clear on where it's stuck: is this on the PRESCRIBER side, the PHARMACY side, or the INSURANCE side?",
+    "ask_about_bridge_fill": "If the prescriber can't sign off today, is there a bridge fill or 3-day emergency supply you can do? Operator is down to [X doses].",
+    "verify_substitution_claim": "You mentioned the prescription was changed by the doctor — to what specifically, and when? I'll need to verify with the prescriber before we accept that change.",
+    "pa_status_check": "If there's a prior authorization pending, what's the reference number, when was it submitted, and who needs to act next?",
+    "stock_check": "If you don't have it in stock, can you tell me which nearby pharmacy in the same chain does? Or should we transfer the script?",
+    "controlled_substance_check": "I understand this is a controlled substance and there are limits on what you can do over the phone. What does the prescriber need to do, and what's the soonest that can happen?",
+    "stall_research": "One moment — let me check what the operator has on hand.",
+    "verify_readback": "So: [medication] from Dr. [name], stuck at [stage], next action is [what], by [who], by [when]. Pickup expected [date]. Did I get that right?",
+    "graceful_close": "Thank you. Could you note in the system that we called and that the operator is low? That'll help if anyone else looks at this."
+  },
+  "tactics": [
+    {
+      "name": "Diagnose the stuck stage first",
+      "when": "First substantive turn — usually with the pharmacy.",
+      "script": "Use `opener_pharmacy` + `diagnose_stage`. Until you know WHERE the script is stuck, calling the prescriber is wasted effort. Pharmacies have full visibility on queue status; prescribers often don't.",
+      "priority": 1
+    },
+    {
+      "name": "Pause and re-verify any 'doctor changed it' claim",
+      "when": "Pharmacy says the prescription was changed by the doctor.",
+      "script": "Use `verify_substitution_claim`. Do NOT accept this on the pharmacy's word. Hang up, call the prescriber, confirm what was actually ordered and why. Substitution errors are common and can be harmful. This is a hard boundary — if you cannot reach the prescriber to verify, surface to `ask_operator` before any pickup.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for a bridge fill if running out",
+      "when": "Operator is < 3 days of doses remaining and the refill won't resolve in time.",
+      "script": "Use `ask_about_bridge_fill`. Many states allow pharmacists to dispense a small emergency supply of non-controlled, ongoing medications. Worth asking — costs the pharmacy nothing.",
+      "priority": 3
+    },
+    {
+      "name": "Track the prior auth if that's the blocker",
+      "when": "Pharmacy says PA is pending.",
+      "script": "Use `pa_status_check`. Then call the prescriber's office and use the `referral-prior-authorization` skill to chase the PA. Pharmacy cannot move a PA forward — only the prescriber + insurance can.",
+      "priority": 4
+    },
+    {
+      "name": "Solve out-of-stock with a transfer, not a wait",
+      "when": "Pharmacy doesn't have the drug.",
+      "script": "Use `stock_check`. Operator can have the script transferred to a sister branch or another chain that has stock. Verify in-network status with the operator's insurance before transferring.",
+      "priority": 5
+    },
+    {
+      "name": "Set realistic expectations for controlled substances",
+      "when": "Medication is a controlled substance.",
+      "script": "Use `controlled_substance_check`. Legal/DEA rules constrain everyone. The right move is to set up the prescriber's sign-off proactively and stop pushing the pharmacy for things they cannot legally do.",
+      "priority": 6
+    },
+    {
+      "name": "Escalate to a pharmacist (not tech) for clinical questions",
+      "when": "Pharmacy tech can't answer something substantive.",
+      "script": "Politely ask to speak with the pharmacist on duty. Techs handle queue questions; pharmacists handle interactions, substitutions, and bridge-fill decisions.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from the pharmacy without verifying with the prescriber directly — route to `ask_operator` if verification cannot happen on this call.",
+    "NEVER authorise a substitution (brand→generic, one drug→another, dose change, frequency change) on the operator's behalf. Substitutions are clinical decisions.",
+    "NEVER discuss dose adjustments, interactions, or whether the operator should keep taking the medication — those are prescriber/pharmacist conversations, not agent conversations.",
+    "NEVER agree to controlled-substance early refills, partial fills, or any departure from what the e-script says without explicit operator approval AND prescriber confirmation.",
+    "NEVER pressure pharmacy staff to ignore an insurance hold or PA requirement — that's how prescriptions get flagged and rejected entirely."
+  ],
+  "success_signals": [
+    "Exact stuck stage identified (prescriber / pharmacy / insurance / stock).",
+    "Concrete next step assigned with an owner and timeline.",
+    "Bridge fill obtained if operator was running out.",
+    "If substitution was claimed: verified or rejected with the prescriber directly."
+  ],
+  "failure_signals": [
+    "Pharmacy and prescriber give contradictory accounts of where the script is.",
+    "Controlled substance refill cannot be authorized in operator's clinical window.",
+    "Prior auth denied and prescriber unwilling to appeal — surface to operator.",
+    "Operator is out of medication and no bridge fill available — escalate as clinical urgency to prescriber on-call."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: medication, strength, dose form, prescriber, pharmacy, expected pickup time, any bridge fill, any PA reference number. Operator knows exactly when and where to pick up.",
+    "on_failure": "Politely close. Report blocker clearly — separate facts from claims (e.g. 'pharmacy says doctor changed it; this was NOT verified with prescriber'). Present options to operator.",
+    "follow_ups": [
+      "If PA pending, set a callback for 2-3 business days later.",
+      "If transferred to a different pharmacy, confirm pickup the same day.",
+      "If clinical urgency, escalate to prescriber's on-call line — do not wait for next business day."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name, DOB (read-only)",
+    "Pharmacy name + branch location",
+    "Exact medication name, strength, dose form (operator's words)",
+    "Prescriber name + clinic",
+    "Doses remaining (for urgency, not dose advice)",
+    "Insurance plan + member ID (read-only) if a PA is involved",
+    "Whether the medication is a controlled substance"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

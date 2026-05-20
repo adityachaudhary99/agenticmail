@@ -1,0 +1,126 @@
+{
+  "id": "equipment-swap-cable-router-modem",
+  "name": "Equipment Swap: Cable Box / Router / Modem — Drop-Off vs. Mail-In Decision",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "telecom",
+    "cable",
+    "isp",
+    "equipment",
+    "return",
+    "swap",
+    "phone-call",
+    "utility-telecom"
+  ],
+  "description": "Call a cable / ISP provider to swap or return rented equipment (modem, router/gateway, cable box, voice adapter, security gateway) — deciding between in-store drop-off and mail-in return, locking in tracked receipts, and stopping equipment-lease charges on the right date.",
+  "disclaimer": "Equipment lease fees continue billing until the provider's system marks the device as RETURNED, not when you hand it off. Drop-off receipts and mail-in tracking are the only proof of return; without them, the provider can charge $100-$500 per device as 'unreturned'.",
+  "context": {
+    "when_to_use": "User is returning equipment because: (a) cancelling service entirely, (b) replacing leased gear with personally-owned gear to drop the rental fee, (c) swapping a malfunctioning device for a working one, or (d) upgrading hardware. NOT for installing brand-new service (that's a different workflow).",
+    "preconditions": [
+      "Complete inventory of equipment to return: device, model, MAC address (or serial), all power adapters, all remotes, all cables that came with it.",
+      "Account number and account holder name.",
+      "Current monthly equipment lease charge (so you can verify it drops off after return).",
+      "Whether the swap is concurrent (new device first, return old) or sequential (return old, then activate new).",
+      "If replacing with personally-owned modem: model number to confirm provisioned compatibility."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "In-store drop-off at a CARRIER-OWNED store is the gold standard. Walk out with a printed receipt that lists every device's serial number and the timestamp. That receipt is your proof.",
+    "UPS Store drop-off (carrier-funded label) is the second-best. UPS scans the device serial against the carrier's return manifest — get a tracking number AND keep the receipt slip.",
+    "Mail-in via carrier-supplied box is the third-best — slower, but works. Photograph the device before sealing AND save the tracking number.",
+    "Authorised resellers (Best Buy, Walmart, third-party stores) are the worst option — they often can't formally accept returns and the device can sit in a back room for weeks while billing continues.",
+    "Recognise wrong-queue: 'tech support' often can't process returns; 'equipment services' or 'account services' is the right team.",
+    "Always ask: 'on what date does the lease fee stop billing?' Returning the device does not stop the bill automatically — there's an internal de-provisioning step that the rep can confirm or schedule."
+  ],
+  "phrases": {
+    "opener": "Hi, I need to return equipment on account [number]. The device is [model + MAC/serial], plus the [power adapter / remote / cables]. I want to confirm the return method and the date the lease fee stops billing.",
+    "queue_check": "Are you the equipment / account-services team? I want to be with whoever can formally close out the device and stop the lease charge.",
+    "transfer_request": "Could you do a warm transfer to equipment services and stay on the line until they pick up? I don't want to lose my hold position.",
+    "ask_return_options": "What are my return options — carrier-owned store drop-off, UPS Store with pre-paid label, mail-in kit? I'd prefer whichever gives me a tracked receipt that gets the device marked returned fastest.",
+    "ask_lease_stop_date": "When will the equipment lease fee stop billing — date of return scan, end of current cycle, or some other trigger? I want to confirm it doesn't keep charging through the next cycle.",
+    "ask_required_accessories": "What exactly needs to be returned with the device — power adapter, remotes, cables, original box? I want to avoid a 'missing accessory' charge.",
+    "personal_modem_compatibility": "I'm planning to replace the gateway with my own [make/model]. Can you confirm it's on your approved-device list and what info I'll need to provision — MAC address, account PIN, anything else?",
+    "swap_overlap": "If this is a swap (not a return), can the new device ship before I return the old one — so I don't lose service? What's the return window after the new device arrives?",
+    "lock_in_writing": "Please email me: return reference number, return method, what's required in the box, lease-fee stop date, and the deadline by which the device must be received. I want it in writing.",
+    "graceful_close": "Thanks — return reference [number], method [store / UPS / mail], lease stops [date], items required [list], return deadline [date]. I'll send tracking once it's on its way."
+  },
+  "tactics": [
+    {
+      "name": "Pick the highest-trust return method available",
+      "when": "After options are listed.",
+      "script": "Rank: (1) carrier-owned store with printed receipt > (2) UPS Store with pre-paid label and tracking > (3) carrier-supplied mail-in box with tracking > (4) authorised reseller (avoid). Use `ask_return_options` to surface the choices.",
+      "priority": 1
+    },
+    {
+      "name": "Pin the lease-stop date",
+      "when": "Within the first 5 minutes.",
+      "script": "Use `ask_lease_stop_date`. 'When you scan it in' and 'end of billing cycle' are both common answers — knowing which one applies tells you when to expect the lease fee to fall off.",
+      "priority": 2
+    },
+    {
+      "name": "Inventory accessories explicitly",
+      "when": "Before going to the store / sealing the box.",
+      "script": "Use `ask_required_accessories`. Missing power adapter: $20-$40 charge. Missing remote: $20. Missing cables: $5-$10. These accumulate.",
+      "priority": 3
+    },
+    {
+      "name": "Recognise wrong-queue / tech support trap",
+      "when": "Rep starts running diagnostics or troubleshooting the device.",
+      "script": "Use `queue_check`. Tech support's job is to keep the device in service; equipment services' job is to take it out. Different queues.",
+      "priority": 4
+    },
+    {
+      "name": "If swapping, get overlap right",
+      "when": "Not a pure return — also activating a new device.",
+      "script": "Use `swap_overlap`. The new device shipped before the old return = no service gap. Ask the return-window length (typically 14-30 days after new device arrival).",
+      "priority": 5
+    },
+    {
+      "name": "If switching to personal modem, verify compatibility",
+      "when": "Returning a leased gateway to use personal gear.",
+      "script": "Use `personal_modem_compatibility`. Mid-call confirmation prevents the 'I returned it and now my own modem won't activate' loop."
+    }
+  ],
+  "boundaries": [
+    "Do NOT drop equipment at an authorised reseller (Best Buy, Walmart, third-party) unless the rep explicitly confirms it appears in their return manifest. Many resellers cannot accept returns even though they sold the device.",
+    "Do NOT leave the store without a printed receipt listing each device's serial number.",
+    "Do NOT mail a device without tracking and without photographing it first (device + serial label + accessories).",
+    "Do NOT toss a device because you 'paid it off' — leased devices remain provider-owned regardless of how long you've had them.",
+    "Do NOT cancel autopay until the return is confirmed and the lease fee has fallen off two consecutive bills."
+  ],
+  "success_signals": [
+    "Return reference number issued.",
+    "Return method confirmed with tracking expectation.",
+    "Required accessories listed explicitly.",
+    "Lease-fee stop date confirmed.",
+    "Written confirmation email arrives."
+  ],
+  "failure_signals": [
+    "Rep cannot give a lease-fee stop date.",
+    "Rep says 'just drop it off, you'll be fine' with no reference number or written record.",
+    "Return method is mail-in but no pre-paid label is provided.",
+    "Personal modem is NOT on the approved list (and the user expected it would be)."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference number, return method, deadline. Within 24 hours: complete the return and capture the receipt or tracking number. Watch the next 2 bills to verify the lease fee dropped.",
+    "on_failure": "If a return method cannot be confirmed, escalate to a supervisor in equipment services. If the provider keeps deflecting, mail the device with tracking AND signature confirmation to the executive office address (publicly listed for most major carriers) with a cover letter referencing the case number.",
+    "follow_ups": [
+      "Day of return: photograph the device + serial + accessories before drop-off / sealing.",
+      "Within 7 days: verify the provider's system shows the device as 'received' — call back referencing the return reference number if not.",
+      "Next billing cycle: confirm the lease fee has dropped off. If not, dispute that line on the bill and escalate.",
+      "Cycle after that: confirm no 'unreturned equipment' charge appears."
+    ]
+  },
+  "required_user_info": [
+    "Account number and account holder name",
+    "Device(s) to return — model, MAC address or serial, accessories",
+    "Current monthly equipment lease amount",
+    "Whether also activating a replacement (and if so, what)",
+    "Nearest carrier-owned store and UPS Store",
+    "Best email for written confirmation"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

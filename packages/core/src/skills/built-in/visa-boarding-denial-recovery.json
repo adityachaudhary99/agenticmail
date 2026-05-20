@@ -1,0 +1,115 @@
+{
+  "id": "visa-boarding-denial-recovery",
+  "name": "Visa / Boarding-Denied Recovery — When the Gate Agent Is Wrong",
+  "version": "1.0.0",
+  "category": "travel",
+  "tags": ["visa", "boarding-denial", "timatic", "esta", "schengen", "transit", "embassy"],
+  "description": "A gate agent has refused to board you over a visa, passport, or entry-rule issue. They are sometimes right and often wrong (TIMATIC misread, transit-rule confusion, passport-validity overcautious). This skill walks through verifying entry rules, pushing back politely, escalating to the duty manager, and rerouting via another carrier if denial holds.",
+  "disclaimer": "Final entry decisions are made by the destination country's border authorities, not by airlines. This skill helps reverse erroneous AIRLINE denials based on misreads of standard sources like TIMATIC/Sherpa. Always carry the actual entry-rule text printed out for the destination country.",
+  "context": {
+    "when_to_use": "User is at check-in or the gate, has been told they cannot board because of a visa, passport-validity, transit-visa, or ESTA/eTA issue. User believes (with documentation) that the entry rule allows the trip.",
+    "preconditions": [
+      "User has the passport, any required visa, and the trip's onward/return documentation.",
+      "User can pull up the destination government's official immigration page from a phone.",
+      "User has time before the flight closes (this conversation takes 20-40 minutes typically)."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Airlines use TIMATIC (a Sabre / IATA database) and increasingly Sherpa to determine boarding eligibility. The data is sometimes stale or misread. The destination government's own site is the source of truth.",
+    "Airlines are financially liable for transporting passengers refused entry — they're the ones who pay the return-flight cost and INAD (inadmissible passenger) fines, often $5,000-$15,000+. That's why they're cautious. Address that fear directly: 'I can show you the rule that confirms I'm admissible.'",
+    "Passport-validity rules trip up more travelers than any other. Common standards: 6 months beyond travel for most of Asia + Schengen; 3 months beyond travel for some; valid for trip duration for others (UK, US). Check the destination, not the assumption.",
+    "Transit visa confusion is the second biggest source of erroneous denials. Schengen requires nothing for most airside transit, but a few nationalities need an 'Airport Transit Visa' (ATV / Visa A). UK requires a Direct Airside Transit Visa (DATV) for many nationalities even airside. China offers 24/72/144-hour visa-free transit at specific ports.",
+    "The duty manager is the person who can override a gate agent on TIMATIC interpretation. Ask for them by title, calmly.",
+    "If denial holds, your options are: rebook through a different routing where you're clearly admissible, return home and apply for the proper visa, or visit the destination embassy. The airline must refund a denied-boarding ticket if the denial was their error."
+  ],
+  "phrases": {
+    "opener": "I understand you're seeing an issue. Can we walk through the entry rule together? I have the destination government's own page on my phone showing I'm admissible.",
+    "request_timatic_recheck": "Could you re-pull TIMATIC for my passport country [code] traveling to [destination], with my onward ticket and visa type [type]? I think the entry being shown may not match my exact case.",
+    "show_official_source": "Here's the [destination country] immigration page — it says [exact rule]. My situation matches because [reasons]. The TIMATIC summary may be outdated.",
+    "ask_for_duty_manager": "Could you ask your station duty manager or supervisor to take a second look? I'm not trying to push past you — I want their eyes on the rule too.",
+    "address_airline_risk": "I understand you're concerned about an INAD fine. The rule itself says I'm admissible. If you'd like, I can sign a waiver acknowledging I take responsibility — but the rule should hold.",
+    "ask_for_written_denial": "If we can't move forward, can you give me a written denied-boarding notice citing the specific rule? I'll need it for the refund and to plan the next step.",
+    "escalate_offsite": "If your team is firm here, I'd like to call [destination country] embassy/consulate. They can sometimes provide a clarification letter in real time.",
+    "graceful_close_success": "Thank you for taking the time to recheck. Could you put a note on my PNR that this was resolved at [station] so I don't hit the same issue on rebooking or return?",
+    "graceful_close_failure": "I understand. Please give me the written denial and process the refund per your involuntary denied-boarding policy."
+  },
+  "tactics": [
+    {
+      "name": "Pull the destination's official immigration page",
+      "when": "First 30 seconds of the conversation.",
+      "script": "On your phone, open the destination country's immigration / foreign-affairs site. US: travel.state.gov. UK: gov.uk/check-uk-visa. Schengen: ec.europa.eu/home-affairs. Singapore: ica.gov.sg. China: nia.gov.cn. Show the exact text of the rule that covers your case. Government source > TIMATIC summary.",
+      "priority": 1
+    },
+    {
+      "name": "Ask for a TIMATIC recheck with full inputs",
+      "when": "Right after presenting the source.",
+      "script": "TIMATIC's answer depends on inputs: passport-issuing country, destination, layover countries, visa held, onward ticket. A miss on any input gives the wrong answer. Politely ask the agent to re-enter all inputs out loud so you can verify together.",
+      "priority": 2
+    },
+    {
+      "name": "Address the airline's INAD exposure",
+      "when": "Agent is hesitant but not refusing.",
+      "script": "Acknowledge their risk: 'I know if I'm denied at the border you're stuck with the return and a fine.' Then point at the rule again. Agents soften when you name the fear they can't say aloud.",
+      "priority": 3
+    },
+    {
+      "name": "Escalate to the duty manager",
+      "when": "Gate agent has made a firm call and shift won't budge.",
+      "script": "By title: 'station duty manager', 'shift supervisor', 'gate supervisor'. Not 'manager' (vague). Be calm — duty managers will side with the agent if you've been hostile.",
+      "priority": 4
+    },
+    {
+      "name": "Call the destination embassy or consulate",
+      "when": "Time permits and the denial is borderline.",
+      "script": "Many embassies issue real-time clarification letters or 24/7 calls for traveler emergencies. Examples that have done so: Singapore ICA, UK Home Office, German Auswärtiges Amt. The agent will often accept embassy confirmation by phone."
+    },
+    {
+      "name": "Reroute through a different transit point",
+      "when": "Denial is specifically about transit, not destination.",
+      "script": "Example: UK DATV issue → reroute via DUB (Ireland), CDG (France), or non-stop. Schengen transit visa issue → reroute via DOH, DXB, IST, or non-stop. The destination is still reachable; just not via this routing."
+    },
+    {
+      "name": "Document everything",
+      "when": "Whether you succeed or fail.",
+      "script": "If denied: written denial, agent name, time, station, your boarding pass, the rule text you presented. If accepted after escalation: note on PNR. Both protect you on the return flight or future trips."
+    }
+  ],
+  "boundaries": [
+    "Do NOT raise your voice or threaten — boarding denial can escalate to a no-fly note on your record.",
+    "Do NOT lie about your itinerary, return ticket, or visa status. Border systems share data; getting caught is worse than being denied.",
+    "Do NOT board with a borderline case if you're not confident — getting refused at destination border means being returned at your cost and a possible multi-year entry ban.",
+    "Do NOT assume the gate agent is wrong; they're usually right. Verify before pushing.",
+    "Do NOT skip getting the written denial if you fail — it's required for refund and insurance."
+  ],
+  "success_signals": [
+    "Agent re-runs TIMATIC and the new result allows boarding.",
+    "Duty manager reads the official rule and approves.",
+    "Embassy confirms over the phone and the airline accepts.",
+    "Agent issues a boarding pass with a note explaining the override."
+  ],
+  "failure_signals": [
+    "Both gate agent AND duty manager firmly stand on the denial.",
+    "The official rule is genuinely ambiguous or has been recently changed.",
+    "Time runs out (flight closes) before resolution.",
+    "Embassy / consulate is unreachable (weekend / holiday in destination country)."
+  ],
+  "exit_strategy": {
+    "on_success": "Board, but bring printed copies of the rule + the conversation notes — you may need to repeat the conversation on the return leg.",
+    "on_failure": "Get the written denial and the refund. Decide: apply for the proper visa and rebook, reroute via a permissive transit, or cancel the trip and claim insurance trip-cancellation (if applicable).",
+    "follow_ups": [
+      "If the denial was wrong, file a written complaint with the airline citing the rule + TIMATIC misread. Refunds and rebookings have been granted retroactively.",
+      "If you suspect the issue will recur (e.g. you fly this route monthly), email the airline's Special Services / INAD desk a clarification request so the system updates.",
+      "If denied entry was at a foreign border (not by the airline), that's a different document trail — keep all paperwork for future visa applications which will ask about prior denials."
+    ]
+  },
+  "required_user_info": [
+    "Passport country and validity expiry date",
+    "Destination country and trip purpose (tourism, transit, business, study, work)",
+    "Length of stay and onward ticket details",
+    "Visa or ETA held (type, validity, entry count remaining)",
+    "Transit countries on the routing",
+    "The exact reason the gate agent stated for denial"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

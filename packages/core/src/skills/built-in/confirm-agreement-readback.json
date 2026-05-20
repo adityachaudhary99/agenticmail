@@ -1,0 +1,134 @@
+{
+  "id": "confirm-agreement-readback",
+  "name": "Read Back the Agreement in Your Own Words",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "closing",
+    "readback",
+    "verification",
+    "drift",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Before saying goodbye, restate the entire agreement back to the rep in YOUR own words and have them confirm — yes or no — each numbered item. This catches the drift that creeps in over a 30-minute call where 'first three months' quietly became 'first month' and a credit somehow became a 'pending review'.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "End of any call where commitments, dollar amounts, dates, or conditions were discussed. ALWAYS run this before exit_strategy.on_success — never skip it because the rep sounds friendly. Friendly + drift is the most common loss pattern.",
+    "preconditions": [
+      "An agreement of some kind has been verbally reached, OR the rep has stated what they're 'about to do'.",
+      "You have notes (in memory or on screen) of each numeric / dated / conditional item discussed during the call.",
+      "Call recording is in progress — readback is most valuable as a recorded artifact."
+    ],
+    "estimated_call_duration_minutes": 4
+  },
+  "principles": [
+    "Restate in YOUR words, not theirs. Parroting their phrasing preserves the same ambiguity you're trying to expose.",
+    "Number the items out loud. 'One: …. Two: …. Three: ….' forces a discrete yes/no on each rather than a global 'yeah sounds right'.",
+    "Pause AFTER each item for explicit confirmation. A continuous monologue lets the rep nod along and miss the one item that's wrong.",
+    "Listen for 'well, technically…' and 'sort of' — these are the leaks. Stop and pin them down before continuing.",
+    "If the rep corrects you, RE-READ the corrected version back. Do not assume the correction landed verbatim — corrections also drift.",
+    "Silence is NOT consent. If the rep stops responding while you read back an item — restate it and demand a verbal yes. A nod the recording can't hear is not an agreement.",
+    "An unnamed third party did not approve anything. 'My supervisor said it's fine' / 'I just got chat approval' is unverified until you have the supervisor's name + ID + the channel that approval came through, OR the change is reflected on the line by the original rep with a specific reference number."
+  ],
+  "phrases": {
+    "opener": "Before we wrap up, I want to read back what I've understood so we're aligned. I'll go item by item — please correct me on anything that's off, even small wording.",
+    "item_template": "Item [N]: [your restatement]. Is that correct?",
+    "drift_catch": "I think I heard something slightly different earlier — can we pin that down? Is it [version A] or [version B]?",
+    "soft_correction_probe": "When you say 'usually' / 'normally' / 'should' — is that a guarantee for my case specifically, or a general policy that might not apply?",
+    "post_correction_reread": "Okay, with that correction, let me re-read just that item: [restatement]. Confirmed?",
+    "final_lock": "Great. So to summarise everything: [one-sentence rollup]. We're aligned on all of that, yes?",
+    "verify_phantom_approval": "You mentioned a supervisor approved that — could I get the supervisor's name and ID, and confirm that approval is keyed into the system with a reference number? I want to be sure I can quote the right person if the next bill doesn't match.",
+    "resist_rush": "I hear you're short on time — but I'd rather we finish the readback than have to call back next week. Two more minutes. Item [N] was…",
+    "graceful_close_success": "Perfect, thank you for being patient with the readback. I find it saves us both a follow-up call later.",
+    "graceful_close_failure": "I'm hearing some uncertainty on items [X, Y]. Can we pause here and get a supervisor or escalation contact who can confirm in writing? I don't want to hang up on something fuzzy."
+  },
+  "tactics": [
+    {
+      "name": "Announce the readback before doing it",
+      "when": "Immediately after the rep's last commitment, before any goodbye signals.",
+      "script": "Use the `opener` phrase. Telegraphing the readback gets the rep into a confirming mindset — and signals (politely) that you're treating this as a binding moment.",
+      "priority": 1
+    },
+    {
+      "name": "Number each item and force a discrete yes/no",
+      "when": "Working through the agreement.",
+      "script": "Use the `item_template` phrase for each commitment. Wait for a 'yes' or 'correct' before moving on. Treat a hum or 'mhm' as ambiguous — ask again: 'Sorry, just want a clear yes on that one.'",
+      "priority": 2
+    },
+    {
+      "name": "Surface drift with the soft_correction_probe",
+      "when": "The rep uses hedging words: 'usually', 'normally', 'should', 'in most cases'.",
+      "script": "Use the `soft_correction_probe` phrase. Hedging is where post-call denials live. Pin the rep to a specific commitment for THIS account.",
+      "priority": 3
+    },
+    {
+      "name": "Re-read after every correction",
+      "when": "The rep corrects an item mid-readback.",
+      "script": "Use the `post_correction_reread` phrase. Never assume a corrected item is now correct — re-state it and re-confirm. Two-pass corrections catch second-order drift.",
+      "priority": 4
+    },
+    {
+      "name": "Final one-sentence rollup",
+      "when": "All items confirmed individually.",
+      "script": "Use the `final_lock` phrase. This creates one cleanly-recorded summary statement that a future agent or human can replay if the company disputes the agreement.",
+      "priority": 5
+    },
+    {
+      "name": "Escalate on lingering uncertainty",
+      "when": "Two or more items remain fuzzy after the readback round.",
+      "script": "Use `graceful_close_failure`. Do NOT close the call on an unresolved item — schedule a supervisor or written follow-up instead. Closing fuzzy is functionally identical to no agreement at all.",
+      "priority": 6
+    },
+    {
+      "name": "STOP and re-evaluate on manufactured urgency",
+      "when": "Rep injects time pressure mid-readback — 'I have to go in 30 seconds', 'the system will time out', 'my next call is starting', 'this offer expires when we hang up'.",
+      "script": "Use `resist_rush`. Manufactured urgency is the #1 weapon against a readback. The right response is to slow down, not speed up. If the rep insists they must end the call NOW, treat the agreement as UNCONFIRMED — log every item as 'pending readback' and refuse to act on it until a callback or written confirmation completes the verification. Do NOT accept a deal you were not allowed to verify.",
+      "priority": 7,
+      "decision_point": "If the rep ends the call mid-readback citing urgency — assume that was the point. The unverified portion is null. Recover via `request-written-confirmation` AND a callback with `capture-rep-identity` referencing the failed readback timestamp."
+    },
+    {
+      "name": "Verify any 'supervisor approved' claim",
+      "when": "Rep mentions, during or after the readback, that an off-line manager / supervisor / floor lead / system override / one-time exception was granted — but that person was not on the call.",
+      "script": "Use `verify_phantom_approval`. Phantom approvals are how 'we agreed to a $200 credit' becomes 'I don't see any approval in the system' two weeks later. Require: (a) the approver's name AND ID, (b) the timestamp the approval was keyed in, (c) a reference number specific to the approval, AND (d) confirmation that the approval is visible in the account note the rep is reading from — not 'I'll add it after we hang up'. If any of the four is missing, treat the item as UNCONFIRMED.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "Do NOT skip the readback because the call is running long or the rep sounds impatient. The readback IS the deliverable.",
+    "Do NOT accept 'yeah, all that' as confirmation of a multi-item readback. Discrete yes per item.",
+    "Do NOT treat silence after an item as a yes — restate and force a verbal confirmation.",
+    "Do NOT rephrase the rep's correction into your own words on the second pass — quote them this time so the recording shows the rep's exact wording.",
+    "Do NOT add new asks during the readback. Readback is verification only — new asks belong before this step or on a separate call.",
+    "Do NOT let a rep collapse the readback by claiming an offer 'expires' the moment you hang up — real, durable concessions outlast the call. Anything that genuinely evaporates the second you stop talking was bait."
+  ],
+  "success_signals": [
+    "Rep confirms each numbered item with a clear 'yes' or 'correct'.",
+    "Rep volunteers a correction you'd missed — proves the readback is working as intended.",
+    "Rep offers to send a written summary unprompted.",
+    "Rep references your readback by item number ('on your item three…')."
+  ],
+  "failure_signals": [
+    "Rep rushes ('yes yes yes, that's all fine') without engaging with individual items.",
+    "Rep refuses to confirm specific items, only general 'we'll process this'.",
+    "Rep changes terms on the readback that were different earlier — and resists writing the new version down.",
+    "Audio quality drops or the rep claims they have to go — common stall to dodge being on record.",
+    "Rep cites manufactured urgency to cut the readback short ('offer expires when we hang up', 'system about to lock', 'next caller waiting').",
+    "Rep references an off-line approver ('my supervisor said it's fine') but cannot produce that approver's name, ID, or a reference number tied to the approval."
+  ],
+  "exit_strategy": {
+    "on_success": "Pair this skill's output with `capture-rep-identity` and `request-written-confirmation` — readback alone is necessary but not sufficient. Log the confirmed rollup verbatim in the call notes.",
+    "on_failure": "Do not say goodbye on unresolved items. Escalate to supervisor, request a written summary before hanging up, or schedule a callback with a ticket number you control.",
+    "follow_ups": [
+      "Save the recorded readback timestamp in case of a dispute.",
+      "Cross-check the written confirmation (when it arrives) against the readback transcript word-by-word."
+    ]
+  },
+  "required_user_info": [
+    "Running notes of each commitment made during the call (amounts, dates, conditions)",
+    "Confirmation that the call is being recorded on your side OR theirs",
+    "Authority from the user to keep the rep on the line for an extra 3-5 minutes for verification"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

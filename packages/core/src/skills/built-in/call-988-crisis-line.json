@@ -1,0 +1,106 @@
+{
+  "id": "call-988-crisis-line",
+  "name": "Call 988 — Suicide & Crisis Lifeline",
+  "version": "1.0.1",
+  "category": "emergency-services",
+  "tags": [
+    "988",
+    "suicide",
+    "crisis",
+    "mental-health",
+    "lifeline",
+    "emergency_services"
+  ],
+  "description": "Place a call to 988, the US Suicide & Crisis Lifeline, on behalf of someone in mental-health crisis when they have asked the agent to do so or have authorised it. 988 is staffed by trained crisis counsellors and is a safer first call than 911 for most mental-health crises.",
+  "disclaimer": "ABSOLUTE rules. (1) The operator must have explicitly authorised this call, and the agent must consider whether the operator themselves can talk to the counsellor (the counsellor's value is the direct human-to-human contact — the agent should facilitate, not replace). (2) If there is an IMMEDIATE risk to life — active suicide attempt in progress, medical overdose, weapon at hand — that's call-911-medical-emergency. (3) 988 will involve emergency services ONLY when imminent risk is established; it is otherwise a confidential counselling line. (4) Identify as an AI on the first sentence.",
+  "context": {
+    "when_to_use": "Operator is in mental-health distress and has asked the agent to dial 988 because they can't / don't want to dial themselves (panic too high, fear of saying it out loud, language barrier, hand-injury, etc.). OR a third party the operator is with is in crisis and the operator wants the agent to bridge to 988 while they tend to the person.",
+    "preconditions": [
+      "Operator's explicit authorisation for this call.",
+      "Whether the operator themselves wants to talk to the counsellor (vast majority of cases — yes, the agent's job is to hand them over).",
+      "If a third party is in crisis: their location and the operator's relationship + whether the third party knows the call is happening.",
+      "Confirmation this is NOT an active life-threatening event (those go to 911)."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "988 counsellors are trained for this. The agent's job is to BRIDGE — get the operator on the line with the counsellor. The agent is not the support.",
+    "Identify as an AI on the first sentence so the counsellor adapts their script.",
+    "If the operator can talk, hand them the line as soon as the counsellor is ready. Stay on the line in case the operator drops or needs you to relay.",
+    "Stay calm. Slow down. Counsellors set the pace; follow theirs.",
+    "If at ANY point you (the agent) judge the situation has crossed into imminent life-threat (operator describes active attempt, becomes unresponsive, talks about a weapon they have right now), tell the counsellor immediately. They are trained to escalate; you facilitate.",
+    "Confidentiality matters. Don't narrate the call back to a third party unless the operator authorised it."
+  ],
+  "phrases": {
+    "tell_operator_we_are_bridging": "I'm dialing 988 now. As soon as the counsellor picks up I'm going to introduce them and then step back. You'll talk directly with them. I'll stay quietly on the line in case anything goes wrong. Is that okay?",
+    "opener": "Hi — I'm an AI assistant calling on behalf of <operator>. They're in distress and asked me to dial 988 for them. They're here on the line and would like to speak with you directly. Should I hand them over?",
+    "opener_third_party": "Hi — I'm an AI assistant calling on behalf of <operator>. They are with someone in mental-health distress at <location> and asked me to bridge the call to 988 so you can speak with that person directly. May I introduce them?",
+    "stay_quiet_pivot": "I'll be quiet now. I'll only come back on if my operator needs me to relay something or if there's an emergency. Counsellor, you have the floor.",
+    "interject_for_imminent_risk": "(Quiet, calm) Counsellor — I need to interrupt. My operator just said <verbatim concerning statement>. I'm flagging it because I think it crosses the imminent-risk line.",
+    "graceful_close": "Counsellor, my operator says they're okay to continue with you directly. I'll disconnect now unless you'd like me to stay. Thank you."
+  },
+  "tactics": [
+    {
+      "name": "Brief the operator on the bridge plan",
+      "when": "Before dialing.",
+      "script": "Use `tell_operator_we_are_bridging`. The operator needs to know the agent is going to step back; otherwise they may freeze on the line expecting the agent to talk for them.",
+      "priority": 0
+    },
+    {
+      "name": "Identify + hand over fast",
+      "when": "Counsellor answers.",
+      "script": "Use `opener`. Don't summarise the whole situation for the counsellor — they'll get it directly from the person. Hand off in 30 seconds.",
+      "priority": 1
+    },
+    {
+      "name": "Step back",
+      "when": "After handoff.",
+      "script": "Use `stay_quiet_pivot`. Stay on the line silent. Listening for distress signals, not contributing.",
+      "priority": 2
+    },
+    {
+      "name": "Interject ONLY for imminent risk",
+      "when": "Operator describes active suicidal action, becomes unresponsive, or you hear something that crosses into 'this is happening right now'.",
+      "script": "Use `interject_for_imminent_risk`. The counsellor is trained to escalate to 911 from there. Don't try to handle it yourself."
+    },
+    {
+      "name": "Disconnect on counsellor's word",
+      "when": "Counsellor + operator both confirm the agent can step off.",
+      "script": "Use `graceful_close` and end_call. Stay on the line until both confirm."
+    }
+  ],
+  "boundaries": [
+    "NEVER place this call without explicit operator authorisation.",
+    "NEVER pretend to BE the operator. You are bridging, not impersonating.",
+    "NEVER offer the operator clinical advice ('have you tried…?', 'this is normal because…') — that's the counsellor's role.",
+    "NEVER share the contents of the call with anyone afterwards unless the operator explicitly authorised it.",
+    "NEVER end_call without both the counsellor and operator confirming.",
+    "If imminent life risk: it's call-911-medical-emergency, not 988."
+  ],
+  "success_signals": [
+    "Counsellor and operator are talking directly.",
+    "Counsellor confirms you can step off, operator confirms it too.",
+    "If 911 was needed: counsellor handled the escalation."
+  ],
+  "failure_signals": [
+    "Operator goes quiet for an extended period after handoff — gently check ('still with us?').",
+    "Operator says they want the agent to talk for them — you can do brief relay, but encourage them to speak directly when they're ready; counsellors are trained for vulnerable callers.",
+    "Operator describes imminent risk — use `interject_for_imminent_risk` and let the counsellor escalate."
+  ],
+  "exit_strategy": {
+    "on_success": "Disconnect on mutual confirmation. Email the operator (via their persona's emergency-contact-preferences) a brief, neutral note that the bridge happened — not the content of the call. Counsellor confidentiality matters.",
+    "on_failure": "If imminent risk escalation happened, the counsellor handled it; document only that an escalation happened, not the content.",
+    "follow_ups": [
+      "Email operator a neutral, supportive note 24-48h later via schedule_callback or the bridge's email path — only if they pre-authorised follow-up contact in their persona.",
+      "Do NOT discuss the call's content with third parties or other agents."
+    ]
+  },
+  "required_user_info": [
+    "Operator's explicit authorisation for this 988 bridge",
+    "Whether the operator themselves will speak with the counsellor (yes is default)",
+    "If a third party: their location, relationship to operator, awareness",
+    "Operator's emergency contact preferences from their persona file (for post-call neutral follow-up)",
+    "Confirmation this is not an active life-threat (which would be 911 instead)"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

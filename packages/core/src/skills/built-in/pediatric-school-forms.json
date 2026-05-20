@@ -1,0 +1,141 @@
+{
+  "id": "pediatric-school-forms",
+  "name": "Pediatric / School-Required Forms: Sports Physicals, Immunizations, Medical Forms",
+  "version": "1.0.1",
+  "category": "medical-admin",
+  "tags": [
+    "pediatric",
+    "school-forms",
+    "sports-physical",
+    "immunizations",
+    "phone-call",
+    "healthcare"
+  ],
+  "description": "Call the pediatrician (or school health office) to obtain, complete, or submit school-required medical forms — sports physicals, immunization records, medication-at-school authorizations, allergy/asthma action plans, and entry physicals — before deadlines that schools rarely flex on.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator. The operator is the parent/guardian — they sign and they decide.",
+  "context": {
+    "when_to_use": "Parent/guardian operator needs to get a school form completed, signed, or submitted by a specific deadline. Common: sports physical pre-season, immunization records for school entry, asthma/allergy action plans, medication administration authorization for school nurse, return-to-school after illness.",
+    "preconditions": [
+      "Child's full name and DOB (read-only — provided by operator, not guessed).",
+      "Pediatrician name and clinic.",
+      "Insurance plan + member ID (read-only) — most well-child / sports physicals are preventive (covered at $0); deductible status may matter for re-checks.",
+      "The actual school form, in hand or accessible — name of form, school's deadline, what blanks the doctor must fill, what the parent fills, what needs notarization/witness.",
+      "Operator's preferred outcome: in-person appointment, telehealth where allowed, form-completion-only based on existing records.",
+      "Date of child's most recent well-visit (may satisfy a sports physical requirement if recent enough)."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Pediatric scheduling has its own rhythm: well-visits and sports physicals book out FAR in advance in late summer / early fall. Calling in August for a Sept 1 deadline is hard mode.",
+    "Many schools accept a recent well-child visit (within 12 months) in lieu of a separate sports physical. Check the form's fine print — that path saves a whole appointment.",
+    "Forms can sometimes be filled from existing chart records without a new visit (especially immunizations). Ask 'can your nurse complete this from the chart?' before booking.",
+    "Vaccine exemption / personal-belief paperwork varies WILDLY by state and school. Stay neutral and procedural; route any policy / belief discussion to the operator. Agent does not advise on whether to vaccinate.",
+    "Deadlines on school forms are often hard. Surface the deadline to every staff member you talk to — it changes their urgency ladder."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm calling for [parent name] about their child [Child name], DOB [date], who sees Dr. [Pediatrician]. The school needs [form name] back by [deadline]. What's the fastest way to get it completed in time?",
+    "ask_existing_visit_satisfies": "The form asks for a physical exam within the last [N months]. The child had a well-visit on [date]. Does that satisfy the requirement, or does the school need a separate sports physical?",
+    "ask_chart_completion": "If a new visit isn't needed, can the nurse or medical assistant complete the form from the existing chart and have Dr. [Pediatrician] sign? Especially immunization records and historical sections — those don't need a new exam.",
+    "request_immunization_record": "Could you send the official immunization record in the format the school requires — typically the state immunization registry printout or a signed form?",
+    "ask_about_specific_action_plan": "The form is an [asthma action plan / allergy action plan / seizure action plan / diabetes care plan]. That needs Dr. [Pediatrician]'s clinical input — what's the process to get it completed? Does the child need to come in, or can it be reviewed from the chart?",
+    "medication_at_school_auth": "We also need the school-medication authorization form for [medication]. Could Dr. [Pediatrician] complete and sign that — and is there a separate self-administration consent the operator needs to sign?",
+    "deadline_surface": "Just to flag — the school deadline is [date]. If the timeline you're describing doesn't fit, what other options do we have?",
+    "ask_about_form_pickup": "Once it's signed, how do we get it back? Portal download, faxed to the school directly, picked up in person?",
+    "stall_research": "One moment — let me check the exact wording on the form.",
+    "verify_readback": "So: [form] for [child name], to be completed by [appointment / chart review / Dr.'s signature only], by [date], delivered via [portal / fax / pickup]. Did I get that right?",
+    "graceful_close": "Thank you. I'll follow up with the operator and we'll [book the appointment / wait for the chart-completion / pick up the form] accordingly."
+  },
+  "tactics": [
+    {
+      "name": "Check whether existing records satisfy the requirement",
+      "when": "First substantive turn, before booking anything.",
+      "script": "Use `ask_existing_visit_satisfies`. Many schools accept a recent annual well-visit. Skipping an unnecessary appointment saves time, copay, and a parental workday.",
+      "priority": 1
+    },
+    {
+      "name": "Request chart-only completion when feasible",
+      "when": "Form is largely historical or documentation (immunizations, prior physical).",
+      "script": "Use `ask_chart_completion`. The nurse or MA can often complete these and route to the pediatrician for signature without a visit.",
+      "priority": 2
+    },
+    {
+      "name": "Get the immunization registry printout",
+      "when": "Form requires immunization status.",
+      "script": "Use `request_immunization_record`. Schools often accept the state immunization registry printout (e.g. CAIR, IIS) which providers can pull instantly. Avoids back-and-forth on individual vaccine dates.",
+      "priority": 3
+    },
+    {
+      "name": "Treat action plans (asthma / allergy / seizure / diabetes) as clinical, not paperwork",
+      "when": "Form is a clinical action plan.",
+      "script": "Use `ask_about_specific_action_plan`. These require the pediatrician to specify medications, doses, triggers, and emergency steps. Agent FACILITATES — does not write any clinical content. Pediatrician + operator finalize together.",
+      "priority": 4
+    },
+    {
+      "name": "Surface school deadline early and often",
+      "when": "Any staff member quotes a turnaround.",
+      "script": "Use `deadline_surface`. Schools rarely flex; pediatric offices often have an expedited pathway for upcoming deadlines (especially in August). Asking unlocks it.",
+      "priority": 5
+    },
+    {
+      "name": "Stay neutral on vaccine exemption topics",
+      "when": "Conversation drifts to vaccine exemption / personal-belief forms.",
+      "script": "Acknowledge the operator's request neutrally, ask the office for the procedural pathway (which form, which signatures, where it gets filed), do NOT discuss policy or belief content. Surface any clinical conversation to the operator + pediatrician.",
+      "priority": 6
+    },
+    {
+      "name": "Pause and re-verify if the office says the child needs vaccines or services the operator did not request",
+      "when": "Office uses the form request to flag a missing service.",
+      "script": "Capture the information factually ('the office notes the child is due for [vaccine/screening]'), surface to operator. Do NOT decline or authorize on the operator's behalf — that's a parent decision.",
+      "priority": 7
+    },
+    {
+      "name": "Pin down form delivery to the school",
+      "when": "Form is being completed.",
+      "script": "Use `ask_about_form_pickup`. Confirm whether the pediatrician's office sends directly to the school, gives it to the parent, or posts to the portal. Forms lost in transit at this stage are common.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the child's or operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure (including vaccines), sign anything, or commit to financial responsibility on the operator's behalf. The parent/guardian operator is the only signer for a minor.",
+    "NEVER complete clinical sections of any form — only the pediatrician/clinician does that. The agent's role is to schedule, follow up, and route paperwork, not to fill in 'has asthma' or 'no allergies'.",
+    "NEVER state or imply a child's medical history, condition, or status beyond what the operator has explicitly provided. Especially: sensitive categories (mental health, substance use, sexual health) for adolescent patients have legal access rules that vary by state.",
+    "NEVER take a position on vaccine policy, exemption, or hesitancy. Procedural pathway only; clinical and values discussion goes to the operator + pediatrician.",
+    "NEVER bypass an adolescent patient's confidential-services protections (commonly age 12+ for certain services). If a form touches those areas, surface to operator with the relevant legal context."
+  ],
+  "success_signals": [
+    "Pathway identified: appointment, chart-completion, or signature-only.",
+    "Deadline communicated and accepted by the office.",
+    "Form delivery method confirmed (portal, fax to school, pickup).",
+    "Any clinical action plan routed to pediatrician with operator's input acknowledged.",
+    "Immunization record requested in school-acceptable format."
+  ],
+  "failure_signals": [
+    "No appointments before the school deadline and chart-completion not available.",
+    "Form requires services the operator has not authorized (e.g. a vaccine the parent has declined).",
+    "Office cannot complete a clinical action plan in time and operator must escalate.",
+    "Form lost or misrouted between office and school."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: form, pathway, timeline, delivery method, who signs what. Operator knows whether to expect an appointment booking or a completed form returning by [date].",
+    "on_failure": "Politely close. Report blocker (capacity, missing services, clinical requirement). Present options: alternate clinic that can complete the form, request school deadline extension in writing, or escalate to pediatric office manager.",
+    "follow_ups": [
+      "Confirm the form was actually completed by 2 business days before deadline.",
+      "Verify the school received it (call school nurse if delivery was provider-direct).",
+      "Keep a copy for the operator's records — schools sometimes lose them."
+    ]
+  },
+  "required_user_info": [
+    "Child's name, DOB (read-only)",
+    "Operator's relationship to child (parent / guardian / authorized adult)",
+    "Pediatrician name + clinic",
+    "Insurance plan + member ID (read-only)",
+    "The form itself (name, school, deadline, sections needing clinician)",
+    "Date of child's most recent well-visit",
+    "Operator's preference on appointment vs. chart-only vs. expedited",
+    "Any medications, conditions, or accommodations the form references (operator-provided)"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

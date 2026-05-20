@@ -1,0 +1,129 @@
+{
+  "id": "verify-out-of-network-coverage",
+  "name": "Verify Out-of-Network Coverage Before a Planned Visit",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "health",
+    "out-of-network",
+    "verification",
+    "benefits",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Call a health insurer to pre-verify out-of-network (OON) coverage for a planned visit, procedure, or admission. Get the OON deductible, coinsurance, allowed-amount methodology, and any pre-auth or notification requirements — IN WRITING via a reference number that survives later disputes.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "The user is planning to see a provider, get a procedure, or be admitted out-of-network and wants to know what the carrier will actually pay before incurring the cost. Use for elective visits, second opinions, specialist consults, and planned admissions.",
+    "preconditions": [
+      "Member ID and group number ready.",
+      "Provider's name, NPI, tax ID, and address ready.",
+      "CPT/HCPCS code(s) for the planned service (the provider's billing office can supply).",
+      "Date of the planned service.",
+      "User's OON benefit summary if available (PPO vs EPO/HMO — many plans have ZERO OON coverage except emergencies)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "OON benefits are calculated against an 'allowed amount' that is almost NEVER the provider's billed charge. Understanding the methodology (Medicare rate × N, UCR, Fair Health) is the entire game.",
+    "Balance billing for the difference between billed and allowed is legal in most non-emergency OON contexts. The No Surprises Act covers SOME scenarios (emergency, OON-at-INN-facility) but not planned OON visits.",
+    "Verbal verification is NOT binding on most plans. The phrase 'verification is not a guarantee of payment' is in nearly every member handbook — but a reference number creates a paper trail for disputes.",
+    "Ask for the allowed-amount METHODOLOGY, not just a number. 'Reasonable and customary' is a methodology category, not an answer.",
+    "Single-case agreements (SCAs) and gap exceptions exist — if no in-network provider has the right expertise, the carrier may agree to cover OON at INN rates."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to verify out-of-network benefits for a planned [visit / procedure] on [date] with provider [name, NPI]. The CPT codes are [codes]. Could you give me a reference number for this verification call?",
+    "ask_oon_deductible_coinsurance": "What's my out-of-network deductible — individual and family — and how much have I met year-to-date? After deductible, what's the OON coinsurance, and what's the OON out-of-pocket max?",
+    "ask_allowed_amount_methodology": "What allowed-amount methodology does the plan use for OON claims? Medicare-based — and if so, what multiple? UCR? Fair Health? And what's the projected allowed amount for CPT [code]?",
+    "ask_balance_billing_exposure": "If the provider's billed charge is higher than the allowed amount, am I balance-billed for the difference? Does the No Surprises Act apply to this scenario?",
+    "ask_preauth_requirements": "Does this service require prior authorization, advance notification, or any other paperwork before the visit? Even though it's out of network?",
+    "ask_single_case_agreement": "Is there a process for requesting a single-case agreement or gap exception so this visit is covered at in-network rates? What's the criteria and submission path?",
+    "request_written_summary": "Could you email or mail a written summary of this verification — reference number, OON benefits, allowed-amount methodology, and any pre-auth requirements?",
+    "graceful_close": "Thank you. To confirm: reference number [N], OON deductible remaining [amount], OON coinsurance [%], OOP max remaining [amount], allowed-amount methodology [method], pre-auth [required/not required], balance billing [applies/does not apply]. Written summary by [date]."
+  },
+  "tactics": [
+    {
+      "name": "Get a reference number first",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase. The reference number is the call's primary deliverable — without it, the carrier has no record that the verification happened.",
+      "priority": 1
+    },
+    {
+      "name": "Capture the four numbers",
+      "when": "Right after the reference number.",
+      "script": "Use the `ask_oon_deductible_coinsurance` phrase. OON deductible YTD, OON coinsurance %, OON out-of-pocket max YTD, OON max billed cap if any. Write them down.",
+      "priority": 2
+    },
+    {
+      "name": "Force the methodology",
+      "when": "After the cost-share numbers.",
+      "script": "Use the `ask_allowed_amount_methodology` phrase. Don't accept 'reasonable and customary' — push for 'Medicare x 140%' / 'UCR 80th percentile' / 'Fair Health 70th percentile' or the equivalent. Then ask for the projected allowed amount on the specific CPTs.",
+      "priority": 3
+    },
+    {
+      "name": "Confirm balance-billing exposure",
+      "when": "Mid-call.",
+      "script": "Use the `ask_balance_billing_exposure` phrase. Worst case for planned OON: provider bills $10k, allowed is $3k, plan pays 60% of $3k = $1.8k, user owes $8.2k. Surface this math before the visit.",
+      "priority": 4
+    },
+    {
+      "name": "Check pre-auth even for OON",
+      "when": "Mid-call.",
+      "script": "Use the `ask_preauth_requirements` phrase. Skipping OON pre-auth can drop a benefit tier or trigger denial. Get the form, deadline, and submission method.",
+      "priority": 5
+    },
+    {
+      "name": "Probe for a single-case agreement",
+      "when": "If in-network options are limited or none for the specialty.",
+      "script": "Use the `ask_single_case_agreement` phrase. SCAs can convert OON cost-shares into INN cost-shares when the expertise isn't available in-network.",
+      "priority": 6
+    },
+    {
+      "name": "Get it in writing",
+      "when": "Before ending the call.",
+      "script": "Use the `request_written_summary` phrase. Verbal verification is plausibly deniable; written verification with a reference number is leverage if the claim later prices differently.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT treat verbal verification as a guarantee of payment — the call sets up dispute leverage, not a contract.",
+    "Do NOT discuss specific clinical reasons for the OON visit beyond what's needed for pre-auth.",
+    "Do NOT speculate about prior conditions or symptoms.",
+    "Do NOT commit the user to the visit on the call — the call is for information.",
+    "Do NOT agree to a 'voluntary downgrade' to in-network if the clinical need genuinely requires OON.",
+    "Do NOT share more PII than the carrier needs to look up benefits."
+  ],
+  "success_signals": [
+    "Reference number issued.",
+    "All four cost-share numbers captured (deductible, coinsurance, OOP max, plus methodology).",
+    "Allowed-amount methodology disclosed with specific multiple or percentile.",
+    "Pre-auth requirements disclosed with form and deadline.",
+    "Single-case agreement path identified if applicable.",
+    "Written summary committed."
+  ],
+  "failure_signals": [
+    "Rep refuses to provide methodology beyond 'reasonable and customary'.",
+    "Rep refuses to estimate allowed amount on specific CPTs.",
+    "Rep won't issue a reference number.",
+    "Rep won't put the verification in writing."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the seven artifacts (reference #, deductible YTD, coinsurance %, OOP max YTD, allowed-amount methodology, balance-billing applicability, pre-auth requirement). Confirm written-summary delivery. Email a recap to the user immediately.",
+    "on_failure": "Document refusals. Recommend the user (1) re-call and ask a different rep — answers vary, (2) request a supervisor, (3) submit the question in writing via the member portal so a written response is required.",
+    "follow_ups": [
+      "Email a recap with the seven artifacts within 1 hour.",
+      "Calendar any pre-auth deadlines.",
+      "Coordinate with the provider's billing office: share the methodology and reference number so they can set patient-responsibility expectations correctly.",
+      "Save the written summary when it arrives."
+    ]
+  },
+  "required_user_info": [
+    "Member ID and group number",
+    "Provider name, NPI, tax ID, address",
+    "CPT/HCPCS codes for planned service",
+    "Date of planned service",
+    "Whether user has any in-network alternative (drives SCA eligibility)"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

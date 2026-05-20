@@ -1,0 +1,130 @@
+{
+  "id": "bypass-i-am-the-supervisor",
+  "name": "Recover from \"I Am the Supervisor\" Refusal",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "refusal",
+    "phone-call",
+    "supervisor",
+    "edge-case",
+    "customer-support"
+  ],
+  "description": "Handle the situation where a rep refuses to escalate by claiming they ARE the supervisor (sometimes true, sometimes a defensive script), or claims 'there's no one above me'. Determine which is real, route around it if needed, and preserve options for next steps.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Mid-call, after you've asked for a supervisor, the rep responded with 'I am the supervisor' OR 'there's no one else who can help' OR 'I'm the highest authority on this issue'. This skill helps you (a) test whether that's true, (b) get to the actual decision-maker if it isn't, (c) gracefully exit and re-route if it is.",
+    "preconditions": [
+      "You have already made a polite supervisor request (see `request-supervisor-gracefully`) and gotten this specific refusal.",
+      "User is still calm and willing to invest another ~15 minutes.",
+      "You have the rep's name + employee ID (if not, get them BEFORE proceeding — the refusal is a key data point you'll want to document)."
+    ],
+    "estimated_call_duration_minutes": 18
+  },
+  "principles": [
+    "There are three scenarios behind 'I am the supervisor': (1) it's actually true — small ops, dedicated escalation specialist, or you're already at the ceiling; (2) it's a script the rep has been trained to deploy to deflect escalation; (3) it's a manager who DOES have authority but refuses to use it. Each requires a different counter.",
+    "Test the claim, don't accept it. If they're truly a supervisor, they'll be comfortable answering structural questions ('how long have you been in this role', 'how many reps report to you', 'what's your authority limit for credits'). Scripted reps deflect those questions.",
+    "Even if there's truly 'no one above' this person at this call center, there is ALWAYS someone above them at the COMPANY. Outsourced call centers report up to a client-services contact at the actual company. That contact exists; the rep just doesn't know it.",
+    "Don't fight the claim. Pivot around it. If this person genuinely can't escalate, you escalate via a different channel — not by arguing with them.",
+    "Documenting a refusal-to-escalate is more valuable than winning the call. CFPB / state AG complaints land harder when you can show 'I asked the supervisor and was refused with no callback path'.",
+    "Decision point — am I trying to convince THIS person, or am I trying to find a DIFFERENT person? Be honest about which it is."
+  ],
+  "phrases": {
+    "the_test_question": "Could you share — roughly how long have you been in your current role, and what's the title? I'm just trying to understand the org chart so I can ask for the right person if needed.",
+    "structural_probe": "If you weren't available today, who would be handling escalations? Who is your direct manager?",
+    "the_corporate_path": "Got it — you're the supervisor for this team. Could you connect me with someone at the corporate level then — customer relations, or the executive escalation line?",
+    "the_written_request": "If you're the final point of authority, could you confirm that in writing? An email to me stating 'this is our final position' is what I need to take the next step.",
+    "no_blame_redirect": "Okay — and I trust that you're doing what you can with your authority. That's exactly why I need to find someone with different authority. What's the right channel for that?",
+    "the_callback_close": "I respect that you've given me your final answer. Could you note in my account that I requested further escalation and was told no escalation path exists? I want that documented before I pursue other options.",
+    "graceful_disengage": "Thank you for your time. I'm going to end the call here, document what we discussed, and reach out through a different channel. Could I confirm your name and ID one more time for my records?",
+    "test_the_phantom": "Just to be clear — if I were to file a regulatory complaint about this issue, who at your company would receive it? That person is who I'm trying to reach now."
+  },
+  "tactics": [
+    {
+      "name": "Lock in the rep's name + ID",
+      "when": "Immediately after the refusal — before anything else.",
+      "script": "If you don't already have it: 'I want to make sure I have your name spelled right and your employee ID. Could you give me both?' Reps who refuse to give an ID after escalation refusal are almost certainly bluffing — note it.",
+      "priority": 1,
+      "decision_point": "If the rep refuses to provide a name or ID after being asked twice — that's a strong signal of a defensive script. Switch immediately to documenting mode and `graceful_disengage`. Re-engage through a different channel."
+    },
+    {
+      "name": "Run the structural probe",
+      "when": "Right after locking in identifiers.",
+      "script": "Use `the_test_question` and `structural_probe`. Real supervisors answer these casually. Scripted reps either dodge ('I'm not able to discuss that') or get visibly flustered. Their response tells you which scenario you're in.",
+      "priority": 2,
+      "decision_point": "If the rep answers the probe substantively (gives a title, names their manager, describes their role) — believe the claim. Pivot to `the_corporate_path` and `the_written_request`. If the rep deflects — escalation refusal is a script; pivot to `no_blame_redirect`."
+    },
+    {
+      "name": "Ask for the corporate path",
+      "when": "Confirmed real supervisor who genuinely can't help, OR scripted rep you want to bypass.",
+      "script": "Use `the_corporate_path`. Every company has a corporate office, an executive complaints address, or a customer relations function. The rep may not have a direct number, but they can usually name the team.",
+      "priority": 3
+    },
+    {
+      "name": "Demand the written finality",
+      "when": "Rep insists they're the final word.",
+      "script": "Use `the_written_request`. Asking for the refusal in writing does two things: (1) often suddenly produces a real supervisor; (2) if they actually send the email, that document is gold for any future escalation.",
+      "priority": 4,
+      "decision_point": "If the rep refuses to put the refusal in writing — that's a tell that the verbal refusal isn't truly final. Press once more, then disengage."
+    },
+    {
+      "name": "Use the regulator-route question",
+      "when": "Rep is digging in.",
+      "script": "Use `test_the_phantom`. The question 'if I filed a complaint, who would receive it?' is unanswerable for a true ceiling rep but easy for a real supervisor — the company has a designated compliance contact and the supervisor knows it (or knows who knows it). The answer (or non-answer) tells you which scenario you're in.",
+      "priority": 5
+    },
+    {
+      "name": "Document the refusal",
+      "when": "Decision made to disengage.",
+      "script": "Use `the_callback_close`. Even hostile reps will usually comply with 'put it in the notes' — and once it's in the notes, you have leverage for the next contact.",
+      "priority": 6
+    },
+    {
+      "name": "Disengage cleanly",
+      "when": "Time to end the call.",
+      "script": "Use `graceful_disengage`. End on a calm, professional note. The recording exists; future agents will hear it. A calm exit is leverage for the next interaction.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT call the rep a liar — even if they obviously are. Direct accusations turn the recording into evidence against YOU.",
+    "Do NOT keep arguing past 2-3 attempts. If the structural probe + corporate-path + written-request trio doesn't work, the rep isn't going to crack. Pivot channels.",
+    "Do NOT raise voice or threaten legal action in this specific scenario — it confirms the defensive script and gets you escalated to legal (which is NOT the same as customer escalation).",
+    "Do NOT reveal which OTHER channel you're going to use next ('I'm going to call the CEO's office'). It tips them off to flag your account, which can poison the next contact.",
+    "Do NOT accept 'we don't have email' or 'we can't send written confirmations' as a complete final answer — every modern company has some form of written customer communication. The rep just doesn't want to give it to you.",
+    "Do NOT abandon the call without confirming the rep's name + ID + a case number. The disengagement is part of the strategy, not a surrender."
+  ],
+  "success_signals": [
+    "Rep, when probed, names their manager or department head spontaneously.",
+    "Rep agrees to a callback from someone at corporate level.",
+    "Rep agrees to send the refusal in writing — and follows through.",
+    "Rep voluntarily transfers you after the structural probe (the probe forced them to admit there IS someone above).",
+    "Rep opens a 'final-position' case number that you can reference in regulator filings."
+  ],
+  "failure_signals": [
+    "Rep refuses to give name or ID.",
+    "Rep refuses to put refusal in writing.",
+    "Rep dodges all structural questions with 'I'm not able to share that'.",
+    "Rep starts using closing language ('is there anything else I can help you with today?') as a hangup signal.",
+    "Rep claims 'we are an independent service center' but won't name the parent company — that's the strongest signal you've hit a bypass-required wall."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: rep's name + ID, the corporate contact they named, any case numbers, and the timeframe for callback. Send a written follow-up to the corporate contact within 24h referencing the call.",
+    "on_failure": "Document: time of call, rep name + ID (or note refusal), exact wording of escalation refusal, what was asked, what was refused. Pivot immediately — do NOT call back to the same queue. Choose from: `multi-channel-escalation`, `reach-executive-office`, `invoke-regulator-firmly`, depending on the underlying issue.",
+    "follow_ups": [
+      "Within 24h: write an email to the company's published support / customer-relations address summarizing the call and the refusal. This creates a paper trail at corporate level.",
+      "If the rep's behavior was clearly improper (rude, hung up, refused to identify) — that's a separate complaint worth escalating to corporate AND noting in any regulator filing.",
+      "Set a 48h checkpoint: if no callback materialized from the 'corporate path' the rep named, switch to executive escalation."
+    ]
+  },
+  "required_user_info": [
+    "Account number / login email",
+    "Rep's name + ID from current call (or note that they refused to provide)",
+    "Exact wording of the escalation refusal (write it down during the call)",
+    "Original outcome being sought",
+    "Willingness to pursue multi-channel or regulator escalation as next step"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

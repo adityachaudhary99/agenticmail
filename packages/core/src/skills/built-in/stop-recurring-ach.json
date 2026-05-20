@@ -1,0 +1,127 @@
+{
+  "id": "stop-recurring-ach",
+  "name": "Stop a Recurring ACH the Merchant Won't Cancel",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "ach",
+    "stop-payment",
+    "recurring-debit",
+    "regulation-e",
+    "revoke-authorization",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call the bank to revoke ACH authorization and place a stop-payment on a recurring debit from a merchant who is refusing to cancel — a right explicitly preserved for consumers under Regulation E (12 CFR 1005.10(c)) regardless of what the merchant's terms say.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User signed up for a recurring debit (gym, subscription, SaaS, debt collector, 'free trial' that auto-converted) and the merchant either refuses to cancel, makes cancellation impossibly hard, or 'cancelled' but keeps charging. Under Reg E, the user has the right to instruct the BANK to stop honoring the authorization — independently of any merchant action.",
+    "preconditions": [
+      "User has tried (or has a documented reason not to try) to cancel directly with the merchant first.",
+      "User has the merchant name, transaction amount, transaction frequency, and the next expected debit date.",
+      "User has a record of the original authorization (sign-up confirmation, terms-of-service, screenshots) if available.",
+      "User understands a stop-payment fee may apply (often $25-$35 — sometimes waivable on Reg E grounds).",
+      "User has written a revocation notice to the merchant or is prepared to (Reg E requires the consumer to also notify the merchant — bank does the technical block)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Reg E (12 CFR 1005.10(c)) preserves the consumer's right to revoke authorization for ANY recurring EFT, regardless of merchant terms. The bank must honor it if instructed at least 3 business days before the next debit.",
+    "Use the right verbiage: 'I am revoking authorization for this recurring ACH debit and instructing the bank to place a stop-payment.' Wrong words ('cancel my subscription'? 'block this merchant'?) trigger the wrong workflows.",
+    "Two-pronged stop: (1) the BANK blocks the debit, (2) the USER notifies the merchant in writing that authorization is revoked. Skip step 2 and the merchant might re-attempt under a different SEC code or merchant name.",
+    "Bank stop-payments typically last 6 months. Merchants who change ACH IDs, SEC codes, or merchant names can sometimes route around — ask for a 'block all debits from this originator' or 'block by exact dollar amount + merchant' depending on bank capabilities.",
+    "If a debit posts AFTER you've placed the stop-payment, the bank MUST reverse it under Reg E. This is not a courtesy — it's a regulatory duty.",
+    "Stop-payment fee waiver: ask politely. Many banks waive when the stop is on Reg E grounds (consumer right) rather than a one-time check stop."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm revoking authorization for a recurring ACH debit from [merchant] and I'd like the bank to place a stop-payment under Regulation E. The amount is $[amount], the next expected debit is [date], and the merchant has [refused to cancel / kept charging after cancellation].",
+    "specify_the_block": "I'd like to block (a) the next scheduled debit and (b) all future debits from this originator. If the merchant changes ACH IDs or SEC codes, can the block be set to 'merchant name + any amount' rather than just 'exact amount'?",
+    "ask_about_fee": "Will there be a stop-payment fee for this? Given this is a Reg E authorization revocation rather than a one-off stop, can the fee be waived?",
+    "ask_for_form": "Reg E suggests the bank may require written confirmation within 14 days. Can you send me that form now so I can complete it on this call?",
+    "what_if_it_posts": "If the merchant submits a debit anyway and it posts — what is the bank's process for reversing it under Reg E? I want to know that path before we close this call.",
+    "merchant_revocation_template": "Separately, I'm sending the merchant a written revocation of authorization. Just to confirm the bank's stop is independent of what the merchant does — correct?",
+    "graceful_close": "Thanks. Can you confirm: authorization revoked, stop-payment effective [date], block scope is [scope], duration [6 months], fee status, written confirmation will be sent, and give me a reference number plus your name?"
+  },
+  "tactics": [
+    {
+      "name": "Use the Reg E framing",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Saying 'revoking authorization under Regulation E' triggers the right workflow. 'Stop a payment' alone might be coded as a one-time check stop with narrow scope.",
+      "priority": 1
+    },
+    {
+      "name": "Maximize block scope",
+      "when": "Rep starts to enter the stop-payment.",
+      "script": "Use `specify_the_block`. Default stop-payment may only catch the exact amount; a merchant playing games changes amount by a penny to evade. Ask for the broadest block the bank's system supports.",
+      "priority": 2
+    },
+    {
+      "name": "Negotiate the fee",
+      "when": "Rep mentions a fee.",
+      "script": "Use `ask_about_fee`. Many reps have authority to waive on Reg E grounds, especially if the user has tried merchant cancellation."
+    },
+    {
+      "name": "Complete the written form on the call",
+      "when": "Bank requires written confirmation under Reg E.",
+      "script": "Use `ask_for_form`. If you complete it within the 14-day window, the stop remains in force; otherwise it can lapse."
+    },
+    {
+      "name": "Confirm reversal path",
+      "when": "Stop-payment set.",
+      "script": "Use `what_if_it_posts`. Reg E requires the bank to reverse a debit that should have been blocked — knowing the process in advance saves a call later."
+    },
+    {
+      "name": "Two-pronged: also notify the merchant",
+      "when": "Bank side complete.",
+      "script": "Send the merchant a written revocation of ACH authorization (email + certified letter if necessary). Bank stop blocks the debit; written notice blocks the merchant's ability to re-attempt under a different ACH ID without legal exposure."
+    },
+    {
+      "name": "Audit trail",
+      "when": "Closing.",
+      "script": "Use `graceful_close`. Reference number + scope + duration + fee status + written confirmation."
+    }
+  ],
+  "boundaries": [
+    "Do NOT 'block the merchant' broadly if the user has OTHER legitimate transactions with them — narrow the block to the recurring ACH only.",
+    "Do NOT close a deposit account just to escape a recurring ACH — that's a sledgehammer that triggers other consequences (autopay breaks, fees, credit impact via ChexSystems).",
+    "Do NOT skip notifying the merchant — bank stop alone may not legally end the user's obligation under the contract.",
+    "Do NOT verify identity by reading back a one-time code that was just texted (scam tell).",
+    "Do NOT accept a stop-payment that only blocks exact dollar amounts if the bank's system supports broader scope — ask.",
+    "Do NOT pay the stop-payment fee without asking for a Reg-E-grounds waiver first.",
+    "Do NOT close the call without a reference number."
+  ],
+  "success_signals": [
+    "Authorization revocation processed under Reg E.",
+    "Stop-payment scope set to merchant + any amount (or as broad as the bank's system allows).",
+    "Stop-payment fee waived or disclosed.",
+    "Written confirmation form completed on the call (or scheduled within the 14-day window).",
+    "Reference number issued.",
+    "Reversal path for any debit that still posts confirmed."
+  ],
+  "failure_signals": [
+    "Rep only offers a single-debit stop-payment by exact amount — push for broader scope or escalate.",
+    "Stop-payment fee won't be waived AND the user has documented merchant refusal — escalate to supervisor.",
+    "Bank insists the user 'must work it out with the merchant' — that's wrong under Reg E; escalate.",
+    "Merchant re-debits successfully despite stop — call back immediately and demand Reg E reversal."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference number, scope, duration, fee status, reversal path. Send merchant the written revocation notice that same day. Monitor the account daily for 1 week, then weekly for 6 months.",
+    "on_failure": "If rep won't process under Reg E: escalate to supervisor; file CFPB complaint. If merchant continues to debit and bank doesn't reverse: file CFPB complaint AND file state-AG complaint AND review for small-claims action. Inform operator at each step.",
+    "follow_ups": [
+      "Day 0: send merchant the written revocation (certified mail if high-value).",
+      "Day 1-7: daily account check.",
+      "Day 30, 60, 90: confirm no debit has posted; if posted, demand Reg E reversal within 60 days of statement.",
+      "Day 180: stop-payment expires — renew if merchant might still attempt."
+    ]
+  },
+  "required_user_info": [
+    "Merchant name, ACH descriptor as it appears on statement",
+    "Recurring amount and frequency, next expected debit date",
+    "Copy of original authorization (sign-up confirmation, terms)",
+    "Record of cancellation attempts with the merchant",
+    "Operator approval to pay any stop-payment fee if not waivable",
+    "Mailing address for sending revocation to merchant"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

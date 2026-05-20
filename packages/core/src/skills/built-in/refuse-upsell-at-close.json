@@ -1,0 +1,114 @@
+{
+  "id": "refuse-upsell-at-close",
+  "name": "Politely but Firmly Refuse the End-of-Call Upsell",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "closing",
+    "upsell",
+    "refusal",
+    "boundary",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Most service calls end with a scripted upsell — a protection plan, a premium tier, an add-on, a credit card. The upsell is timed AFTER the agreement is locked, when the customer's defences are down and ending the call feels closer than fighting. This skill teaches the agent to recognise the upsell window, decline cleanly, and close the call WITHOUT giving up the ground already won.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Whenever a rep, after the agreement is closed, pivots to 'before I let you go, I'd like to tell you about…' or 'as a thank you for being a customer, can I offer…' This is virtually always an upsell. Use any time the user has NOT pre-authorised the agent to accept upsells.",
+    "preconditions": [
+      "The primary agreement of the call is locked and verified.",
+      "The agent has NOT been authorised by the user to accept additional offers / add-ons / products on this call.",
+      "You can extend the call by 1-2 minutes for the polite decline ritual."
+    ],
+    "estimated_call_duration_minutes": 2
+  },
+  "principles": [
+    "Refuse warmly. The rep is following a script — being rude to them makes the rep slower to advocate for you on the next call. Same person; long memory.",
+    "Refuse FAST. Don't engage with the pitch. The longer you listen, the more committed both sides feel to the conversation.",
+    "Don't lie about why. 'I'm not in a position to decide today' is true and clean. 'I already have one' might be a lie that costs you trust.",
+    "Don't accept 'just listen' or 'just hear me out'. Listening to the full pitch IS engagement; the script is calibrated to convert engaged listeners.",
+    "Hold the close. If the rep tries to renegotiate or revisit the agreement after the refusal, do not re-open it. The primary outcome was already locked."
+  ],
+  "phrases": {
+    "soft_redirect": "Thanks, but I'm only set up to handle [the original issue] today — I'd want to look at any add-ons separately when I have time to compare.",
+    "policy_decline": "I have a rule of not adding services on inbound calls — happy to look at it on my own time. Could you point me to where I can read about it later?",
+    "operator_authority": "I'm not authorised to add anything new on this call — that decision lives with [user / household / other party]. So I'll have to pass for today.",
+    "no_pitch_engage": "I'd rather not get into the details right now — I know if I start hearing the pitch I'll spend more time than I have. Could we leave that for another time?",
+    "second_attempt_decline": "I do want to be clear — I'm not interested in any add-ons today. I want to lock in what we just agreed to and not muddy it.",
+    "third_attempt_firm": "Thanks, but no — not today. Let's wrap up the original change so we're both clear it's locked in.",
+    "guard_the_close": "Just to be sure: declining the [upsell] doesn't change anything about the [primary agreement] we just locked in, correct?",
+    "graceful_close_success": "Thanks again for your help today on [primary issue]. Appreciated the offer on the [upsell] — I'll think about it on my own time.",
+    "graceful_close_failure": "I've declined twice — could we end the call here? I want to leave on a good note but I'm not going to change my mind on the add-on."
+  },
+  "tactics": [
+    {
+      "name": "Recognise the upsell window",
+      "when": "Rep says 'before I let you go' / 'as a thank you' / 'one more thing' / 'we have a special offer'.",
+      "script": "Mentally tag: the upsell phase has started. Switch from agreement mode to refusal mode. Do NOT continue with relaxed closing posture.",
+      "priority": 1
+    },
+    {
+      "name": "Refuse on the first ask, warmly",
+      "when": "Rep starts the pitch.",
+      "script": "Use the `soft_redirect` or `operator_authority` phrase. Decline before the rep gets into pricing / benefits — engaging with the substance makes refusal harder.",
+      "priority": 2
+    },
+    {
+      "name": "Pre-empt the second attempt",
+      "when": "Rep persists after first decline.",
+      "script": "Use the `second_attempt_decline` phrase. Many call centre scripts require reps to make 2-3 attempts; expect this and decline cleanly without escalation.",
+      "priority": 3
+    },
+    {
+      "name": "Refuse the third attempt firmly",
+      "when": "Rep tries a third pitch angle.",
+      "script": "Use the `third_attempt_firm` phrase. After three declines, additional pressure is a script violation — be polite but unmistakeable.",
+      "priority": 4
+    },
+    {
+      "name": "Guard the close",
+      "when": "Upsell declined, before goodbye.",
+      "script": "Use the `guard_the_close` phrase. Some scripts subtly tie the agreement to the upsell — confirm explicitly that the primary outcome stands regardless of the upsell refusal.",
+      "priority": 5
+    },
+    {
+      "name": "Avoid lies and exaggerations",
+      "when": "Throughout.",
+      "script": "Do NOT invent reasons ('I already have that with another provider'). Use truthful declines: time, authority, policy. Truthful declines hold up if the rep verifies.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept the upsell to end the call faster. The rep will likely call back if you accept; the time cost compounds.",
+    "Do NOT renegotiate the primary agreement to compensate for the refusal. The upsell decline is independent.",
+    "Do NOT be rude or sarcastic. The decline should be repeatable on the next call without burnt bridges.",
+    "Do NOT decline an upsell that IS genuinely in the user's interest just because it appeared at the close — if the agent has been pre-authorised to consider relevant offers, evaluate on merits."
+  ],
+  "success_signals": [
+    "Rep accepts the first or second decline and moves to the close.",
+    "Rep confirms the primary agreement is unaffected by the upsell refusal.",
+    "Rep offers an alternative ('I'll add a note that you're not interested in marketing calls') and closes cleanly.",
+    "Call ends within 2 minutes of the first decline."
+  ],
+  "failure_signals": [
+    "Rep escalates the pitch after multiple declines.",
+    "Rep ties the upsell to the agreement (e.g. 'this discount requires you to also enrol in…').",
+    "Rep guilt-trips or shames the customer ('most people in your situation say yes').",
+    "Rep refuses to end the call until the upsell is heard fully."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm primary agreement intact (via `guard_the_close`). Close politely. Log: rep attempted upsell, declined, agreement holds.",
+    "on_failure": "If the rep ties the upsell to the primary agreement, treat as a re-opening of negotiations. Pause, re-run readback + lock-in to verify the primary terms haven't been silently changed, and escalate if the tie is real.",
+    "follow_ups": [
+      "Add a 'do not solicit' note on the account if available — reduces upsell volume on future calls.",
+      "If the rep was unusually persistent, consider providing feedback through the company's post-call survey."
+    ]
+  },
+  "required_user_info": [
+    "Explicit user policy on whether agent may accept upsells (default: no)",
+    "If yes: dollar threshold, categories of interest, decision deadline",
+    "Whether the user wants a 'do not solicit' flag set on the account"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

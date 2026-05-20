@@ -1,0 +1,161 @@
+{
+  "id": "anchor-and-counter-anchor",
+  "name": "Anchoring and Counter-Anchoring on Price",
+  "version": "1.0.1",
+  "category": "negotiation",
+  "tags": ["anchoring", "price", "first-offer", "range-vs-point", "phone-call", "real-time"],
+  "description": "Decide whether to make the first offer, how aggressively to anchor when you do, and how to neutralize or re-anchor when the counterparty anchors first. Whoever shapes the range usually shapes the outcome.",
+  "disclaimer": "Anchors that are wildly unsupported damage your credibility and get you dismissed. Aggressive anchoring requires defensible reasoning — even thin reasoning. 'Because I want to pay less' is not an anchor; 'because three competitors quoted in this range' is.",
+  "context": {
+    "when_to_use": "Any negotiation where price (or any numeric term: term length, payment days, headcount, scope) is the central axis. Especially decisive in the first 5 minutes — the first credible number named will pull the final outcome toward it.",
+    "preconditions": [
+      "You have researched the realistic range of outcomes (market price, competitor offers, prior deals).",
+      "You have a target number AND a walk-away number, distinct from each other.",
+      "You can deliver a number without verbal hedging ('uhh, maybe…')."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Whoever speaks the first plausible number sets the gravitational center of the negotiation. Studies show ~50% of variance in final price tracks the opening number.",
+    "Implausibly extreme anchors get dismissed — they don't pull the range, they get you laughed out. The sweet spot is 'just past the limit of defensible' with reasoning attached.",
+    "Range anchors ($X to $Y) feel more reasonable but the LOW number is what sticks in the counterparty's head. So when you offer a range, make the LOW end your real anchor.",
+    "Don't anchor first when you have an information disadvantage. Let them anchor — their number reveals their reference set.",
+    "Anchor first when you have a strong information edge (you know the market, they don't know your alternatives, or norms in this domain wildly favor making the first move).",
+    "Always attach reasoning to your anchor. Numbers alone are negotiable; numbers + a story are harder to dismiss. 'My budget is $X' beats nothing. 'Three quotes came in at $X' beats that. 'Three quotes came in at $X for these specific reasons…' is the ceiling."
+  ],
+  "phrases": {
+    "decline_to_anchor_first": "I want to make sure I'm framing this fairly — what does a typical engagement look like on your end, pricing-wise?",
+    "decline_v2": "Before I give a number, walk me through what someone in my situation usually ends up paying.",
+    "deliver_a_hard_anchor": "Based on [research / quotes / market data], I was thinking about [number]. Here's how I got there: [one-sentence reasoning].",
+    "deliver_a_range_anchor": "I've been targeting [low] to [low+15%]. The low end is where I'd ideally land — does that work?",
+    "react_to_their_anchor_flinch": "[Audible pause]. That's well outside what I was expecting. Help me understand how you got there.",
+    "react_to_their_anchor_reframe": "Okay, noted. We've been thinking more in the range of [your counter-anchor], based on [reasoning].",
+    "react_to_their_anchor_calibrated": "How did you arrive at that number?",
+    "ignore_their_anchor": "Let me set that aside for a moment — can you walk me through what's actually included for that price?",
+    "split_signal": "We're closer than I thought. What would need to be true to close the rest of the gap?"
+  },
+  "tactics": [
+    {
+      "name": "Decline to anchor first when uninformed",
+      "when": "Rep asks for your budget / target / desired price and you don't have strong market intel.",
+      "script": "Use `decline_to_anchor_first`. The rep often reveals the typical range, which becomes your reference.",
+      "priority": 1
+    },
+    {
+      "name": "Anchor hard with reasoning when informed",
+      "when": "You have credible research and the rep has not yet named a number.",
+      "script": "Use `deliver_a_hard_anchor`. The reasoning is doing the work — without it, the anchor is just a wish.",
+      "priority": 2
+    },
+    {
+      "name": "Use the flinch to puncture their anchor",
+      "when": "Rep names a number that is unacceptable.",
+      "script": "Use `react_to_their_anchor_flinch`. Audible reaction (a slow 'oof' or 'hmm, that's high') is a real negotiation move, not theater. Then ask `react_to_their_anchor_calibrated`. The rep often softens before you've even countered.",
+      "priority": 3
+    },
+    {
+      "name": "Counter-anchor immediately, do not negotiate from their number",
+      "when": "Rep names a number you can't accept but it isn't egregious.",
+      "script": "Use `react_to_their_anchor_reframe`. The mistake amateurs make is responding 'can you do X% less?' from THEIR number. That accepts their number as the reference. Instead, place YOUR number on the table with reasoning, and let them counter from there.",
+      "priority": 4
+    },
+    {
+      "name": "Range with the real anchor as the low",
+      "when": "You're slightly uncertain about market price and want to test.",
+      "script": "Use `deliver_a_range_anchor` — but make the LOW number your true target. People hear the bottom of ranges as the real ask.",
+      "priority": 5
+    },
+    {
+      "name": "Anchor-then-silence",
+      "when": "Immediately after delivering your anchor.",
+      "script": "Stop talking. Do not add 'but I'm flexible' or 'we could maybe go higher'. Those phrases self-discount before the rep has even responded. Let the anchor sit.",
+      "priority": 6
+    }
+  ],
+  "decision_tree": {
+    "description": "Anchoring decisions happen in the first 90 seconds and again at every numeric exchange. Match the situation, then execute. Track which side has anchored — that is the most important state variable in a price call.",
+    "branches": [
+      {
+        "if_you_hear": "Rep asks 'what's your budget?' / 'what were you hoping for?' before naming anything.",
+        "interpretation": "They want you to anchor first. Decide based on YOUR info edge.",
+        "say": "If informed → `deliver_a_hard_anchor`. If uninformed → `decline_to_anchor_first`.",
+        "do_not": "Do not blurt a number to be 'helpful'. That number will be the ceiling of your outcome."
+      },
+      {
+        "if_you_hear": "Rep names a number significantly worse than your target (e.g., 30%+ off).",
+        "interpretation": "Extreme anchor. Their goal is to drag the midpoint toward them.",
+        "say": "`react_to_their_anchor_flinch` (audible reaction + calibrated question). Then `react_to_their_anchor_reframe` with YOUR number.",
+        "do_not": "Do not negotiate small percentage moves off their anchor. Get YOUR anchor on the table."
+      },
+      {
+        "if_you_hear": "Rep names a number 5-15% worse than your target.",
+        "interpretation": "Plausible opening anchor. Within negotiation range.",
+        "say": "`react_to_their_anchor_calibrated` ('How did you arrive at that?'), then counter-anchor with reasoning slightly past YOUR target.",
+        "do_not": "Do not accept on round 1. Even if their number is fine, a counter establishes that you negotiate."
+      },
+      {
+        "if_you_hear": "Rep names a number AT or BETTER than your target.",
+        "interpretation": "Either they undershot or you over-estimated your target. Check for hidden costs.",
+        "say": "`ignore_their_anchor` — pivot to scope/terms/exclusions before celebrating. 'Walk me through what's actually included.'",
+        "do_not": "Do not immediately accept. The number is suspicious if it beats your research — there's usually a string attached."
+      },
+      {
+        "if_you_hear": "Rep refuses to name a number ('what are you thinking?').",
+        "interpretation": "Information game. They want you to commit first.",
+        "say": "If you have research → anchor with `deliver_a_hard_anchor`. If you don't → `decline_v2`, push back: 'I'd rather hear your typical range first.'",
+        "do_not": "Do not name a number to break the standoff if you're uninformed. Stalemate is fine."
+      },
+      {
+        "if_you_hear": "Rep names a range (e.g., '$X to $Y').",
+        "interpretation": "Their LOW end is their real anchor. Treat the low as the starting point.",
+        "say": "Reference the LOW: 'Great, working from [low], what would push us further?'",
+        "do_not": "Do not respond by averaging the range. You just gave them half the gap free."
+      },
+      {
+        "if_you_hear": "'That's not how we price' / 'We don't negotiate'.",
+        "interpretation": "Wall. Either real (consumer SaaS) or rhetorical (most B2B).",
+        "say": "Counter with `react_to_their_anchor_calibrated`: 'How do exceptions usually get made?' Most 'we don't negotiate' shops have an exception SKU.",
+        "do_not": "Do not accept the price-is-fixed framing without testing it once."
+      },
+      {
+        "if_you_hear": "Rep moves their number after you anchor (within 60 seconds).",
+        "interpretation": "Your anchor was credible enough to move them. They're now bidding against themselves a little. Hold.",
+        "say": "Nothing yet. Let them speak more. Or `split_signal` if movement is substantial.",
+        "do_not": "Do not reciprocate by moving YOUR number until you've made them earn the next move."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT anchor with numbers you can't defend. If asked 'how did you get there?', you must have an answer.",
+    "Do NOT fabricate competitor quotes to make your anchor stick — verify before mentioning, just like `negotiate-bill-reduction` insists.",
+    "Do NOT counter-anchor with insults ('that's insane'). Use the flinch + calibrated question instead.",
+    "Do NOT self-discount in the same turn you anchor ('but I'm flexible' — never say that after delivering a number)."
+  ],
+  "success_signals": [
+    "Rep asks 'how did you get to that number?' — they're treating your anchor as real.",
+    "Rep responds to your anchor with a counter that is much closer than expected.",
+    "Rep silently noted your reasoning and incorporated it into their next offer.",
+    "After flinch, rep softens their number unprompted.",
+    "Rep stops citing their original number and references yours as the working baseline."
+  ],
+  "failure_signals": [
+    "Rep laughs / dismisses your anchor as 'not in the universe'.",
+    "Rep ends the call after your anchor — you went too aggressive without reasoning.",
+    "Rep counters with the SAME number you anchored against — anchor was non-credible.",
+    "You find yourself negotiating in percentages off THEIR number, not toward yours — you lost the anchor war; reset by re-anchoring with new reasoning."
+  ],
+  "exit_strategy": {
+    "on_success": "Lock in the agreed number with `commitment_check` from `02-calibrated-questions`. Confirm in writing.",
+    "on_failure": "If anchors are 40%+ apart and 3 exchanges produced no movement, suspect mismatched reference sets. Pivot to multi-issue trading (`08-multi-issue-tradeoffs`) — the gap may close across dimensions.",
+    "follow_ups": [
+      "Record the rep's anchor + reasoning for next time.",
+      "Compare achieved price to your anchor and theirs — refines future calibration."
+    ]
+  },
+  "required_user_info": [
+    "Researched market range (3+ data points).",
+    "User's target number AND walk-away number.",
+    "Whether competitor offers the user mentions are real or estimated."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

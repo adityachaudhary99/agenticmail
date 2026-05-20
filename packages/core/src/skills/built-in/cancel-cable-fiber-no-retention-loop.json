@@ -1,0 +1,156 @@
+{
+  "id": "cancel-cable-fiber-no-retention-loop",
+  "name": "Cancel Cable / Fiber Cleanly Without the Retention Loop Runaround",
+  "version": "1.0.2",
+  "category": "subscription",
+  "tags": [
+    "telecom",
+    "cable",
+    "fiber",
+    "isp",
+    "cancellation",
+    "retention",
+    "phone-call",
+    "utility-telecom"
+  ],
+  "description": "Call a cable / fiber / ISP to fully cancel service — escaping retention's 'transfer to my supervisor' loops, locking in a final date, getting an equipment-return method, and walking away with a written confirmation number.",
+  "disclaimer": "If the user is on a contract with an early-termination fee (ETF), that fee is typically chargeable on cancellation. If the user is moving to an area where the provider doesn't offer service, ETF may be waivable — bring documentation. Bring the same documentation if cancelling for a death-in-family or deployment.",
+  "context": {
+    "when_to_use": "User has firmly decided to cancel (not negotiate). For users still open to a discount, use `negotiate-bill-reduction` first. NOT for moves — use `service-move-shutoff-start-no-overlap` for those.",
+    "preconditions": [
+      "User has firmly decided — wavering becomes a save in retention's hands.",
+      "Account number, account holder's name, billing zip.",
+      "Whether under contract; if so, ETF amount.",
+      "List of equipment to return (modem, router, cable boxes, remotes, power adapters).",
+      "Desired effective cancel date (often end of current billing cycle to avoid prorating issues)."
+    ],
+    "estimated_call_duration_minutes": 35
+  },
+  "principles": [
+    "State 'cancel' in the first sentence. Reps escalate to retention only when they hear the word — vague phrasing routes you to general care and adds 10 minutes.",
+    "Pick a specific cancel date. Most providers do NOT prorate refunds on cancellation; cancelling on day 2 of a billing cycle costs the same as day 30. Time the cancel for the LAST day of the current cycle.",
+    "Retention loops have a pattern: 'let me check with my supervisor', then 5 minutes of hold, then a new offer, then another supervisor. Recognise the pattern by the second loop and break it: 'I appreciate the effort. Please proceed with cancellation. I will not change my mind today.'",
+    "Equipment must be returned to stop billing on it. Get the return method (UPS pre-paid label, store drop-off at named store, mail-in kit) IN WRITING with a tracking expectation.",
+    "Recognise wrong-queue early: 'customer care' often won't process cancellations — only the 'account services' or 'cancellation' team can. Ask to transfer rather than re-stating the goal a third time.",
+    "'Cancelled' is a status, not a sentence. A rep saying 'okay, you're all set' is not cancellation — a confirmation number you can quote back to a billing dispute is. Until you have the number, the account is open.",
+    "Reframed-save patterns to refuse on sight: 'courtesy pause', 'temporary disconnect', 'free month then cancel', 'we'll cancel after one more cycle to use up your credits', 'I'll downgrade you to the cheapest plan and then we'll cancel later'. All of these are saves dressed as cancellations and they ALL leave the account billable."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling to cancel my service. Account [number], account holder [name]. I've made my decision — please connect me to whoever processes cancellations.",
+    "queue_check": "Are you the cancellation / account-services team, or general care? I'd like to be with whoever can actually close the account.",
+    "transfer_request": "Could you do a warm transfer to cancellations and stay on the line until they pick up? I don't want to lose my hold position.",
+    "decline_retention_polite": "Thank you, but I've already made the decision. Please proceed with cancellation — I really don't want to take your time on an offer I can't accept.",
+    "decline_retention_firm": "I'm sure there are more offers, but I'm not considering them today. If you can't cancel from where you are, please transfer me to someone who can — I'd like to wrap this up.",
+    "set_cancel_date": "I'd like the effective cancel date to be [last day of current billing cycle]. I understand the bill is not prorated, so I want to use the full cycle I've already paid for.",
+    "etf_question": "Am I under contract? If yes, what's the ETF, and is there any condition under which it's waived — moving outside the service footprint, deployment, death-in-family?",
+    "ask_equipment_return": "How do I return the equipment — UPS pre-paid label, in-store, or mail-in kit? I'd like the method and a tracking expectation in writing.",
+    "confirm_no_recurring": "After cancellation, confirm that NO recurring charges will continue. Specifically: no equipment lease, no protection plan, no monitored security, no add-ons I might have forgotten.",
+    "ask_final_bill": "What will the final bill look like — amount, date issued, due date? Are there any prorated credits I should expect, or just a closing statement?",
+    "lock_in_writing": "Please email me confirmation now with: cancellation confirmation number, effective cancel date, equipment return method and deadline, final bill amount, any ETF. I want all of it in writing before we hang up.",
+    "graceful_close": "Thanks — cancellation confirmation [number], effective [date], equipment to be returned via [method] by [deadline], final bill $[amount] due [date]. I'll watch for the email."
+  },
+  "tactics": [
+    {
+      "name": "State 'cancel' immediately",
+      "when": "First sentence after greeting.",
+      "script": "Use the `opener`. The word 'cancel' is the routing keyword for retention queue placement. Vague phrasing wastes the first 5 minutes.",
+      "priority": 1
+    },
+    {
+      "name": "Recognise wrong-queue within 60 seconds",
+      "when": "Rep starts running offers without first acknowledging cancellation intent.",
+      "script": "Use `queue_check` and `transfer_request`. Cancellations / account services has authority to close; general care often does not.",
+      "priority": 2
+    },
+    {
+      "name": "Decline without engaging",
+      "when": "Retention offers begin.",
+      "script": "Use `decline_retention_polite` once. If a second offer follows, use `decline_retention_firm`. Don't counter-offer, don't explain why — every justification is a hook for the next branch.",
+      "priority": 3
+    },
+    {
+      "name": "Break the supervisor loop",
+      "when": "Rep starts a second 'let me check with my supervisor' cycle.",
+      "script": "'Thanks, I know you're trying — I'm not changing my mind today. Please go ahead and cancel; if you can't do that yourself, please transfer me to someone who can.' Stay polite, stay firm, stay on script.",
+      "priority": 4
+    },
+    {
+      "name": "Time the cancel date to the cycle",
+      "when": "Effective date is being entered.",
+      "script": "Use `set_cancel_date`. The user already paid for the current cycle — use every day of it. Mid-cycle cancellation usually means losing service AND no refund.",
+      "priority": 5
+    },
+    {
+      "name": "Confirm equipment return logistics",
+      "when": "Before ending the call.",
+      "script": "Use `ask_equipment_return`. Unreturned equipment turns into a $100-$500 charge on the final bill — every device, every remote, every power adapter."
+    },
+    {
+      "name": "Hunt for hidden recurring charges",
+      "when": "Before the close.",
+      "script": "Use `confirm_no_recurring`. Many cancellations leave protection plans, equipment leases, or security monitoring still billing. Ask explicitly for each."
+    },
+    {
+      "name": "Lock everything in writing",
+      "when": "Before hanging up.",
+      "script": "Use `lock_in_writing`. Cancellation disputes 30 days later are almost always lost by callers who don't have the written confirmation number."
+    },
+    {
+      "name": "Refuse fake-cancellation framings",
+      "when": "Rep proposes pause / hold / downgrade / 'we'll cancel later' / 'I've noted you want to cancel' / 'I've started the cancellation process and you can hang up' — ANY language that does not include a CONFIRMATION NUMBER and an EFFECTIVE-CANCEL DATE.",
+      "script": "'I'd like to be clear: I need a cancellation confirmation number and an effective date today. A pause, a hold, a noted intent, or a future-dated cancellation isn't what I'm asking for. If we don't have a confirmation number yet, the account is still open and I'm still on the line.' Stay until both exist.",
+      "priority": 6,
+      "decision_point": "If the rep says 'the system will generate the confirmation number after we hang up' — that is almost always a save. Refuse to hang up: 'I'd rather wait. Can you refresh the screen now, or transfer me to someone who has the number on their side?' Real cancellations produce a confirmation number immediately."
+    },
+    {
+      "name": "Verify any 'supervisor approval' or 'system override' invoked verbally",
+      "when": "Rep says any version of 'my supervisor approved a special exception', 'I got a one-time override', 'I escalated and they cleared it' — without that person being on the call.",
+      "script": "'Could I get the supervisor's name and ID, and confirm the override is keyed into the account with a reference number I can quote? If it's not in the system, it's not real on my end either.' If the rep won't produce both — treat the 'approval' as not having happened and re-baseline to the prior position.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT agree to a 'pause' or 'seasonal hold' if the user wanted to cancel. Pause keeps an account open and often resumes auto-billing later.",
+    "Do NOT accept a 'we'll cancel at the end of the term' if user wanted to cancel now. That defers the decision and re-opens the negotiation surface.",
+    "Do NOT throw away equipment to skip the return. Unreturned device fees can exceed $400.",
+    "Do NOT mention competitor pricing during a cancellation call — that re-opens the negotiation. Save it for `negotiate-bill-reduction`.",
+    "Do NOT cancel autopay before the final bill clears. Autopay-cancel + unpaid final bill = collections."
+  ],
+  "success_signals": [
+    "Cancellation confirmation number issued.",
+    "Effective cancel date is end-of-cycle, not mid-cycle.",
+    "Equipment return method + deadline confirmed in writing.",
+    "Final bill amount disclosed and ETF status confirmed.",
+    "Written confirmation arrives during or right after the call."
+  ],
+  "failure_signals": [
+    "Rep insists they cannot cancel — only escalate offers.",
+    "More than two retention loops without progress.",
+    "Cancel date offered is several billing cycles in the future.",
+    "Rep won't disclose ETF in dollars.",
+    "No written confirmation after the call.",
+    "Rep says 'you're all set' / 'I've started the process' / 'system will finalize after we hang up' but cannot produce a confirmation number on the call.",
+    "Rep claims a supervisor or system override granted special terms but cannot name the supervisor and reference number.",
+    "Rep frames the outcome as a 'pause', 'hold', 'downgrade', or 'future cancel' instead of an immediate close — that's a save coded as a cancel."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm all numbers, log the confirmation number, calendar the equipment-return deadline, and keep tracking on returned equipment until receipt is confirmed by the provider.",
+    "on_failure": "File a complaint with the FCC (broadband) or state PUC (cable/voice) — failure-to-cancel complaints are taken seriously. Simultaneously, send a written cancellation by certified mail to the provider's stated cancellation address (most TOS list one), which starts a legal record.",
+    "follow_ups": [
+      "Return equipment within the deadline. Photograph each item before drop-off and keep the receipt/tracking forever.",
+      "Watch first post-cancellation billing cycle for phantom charges.",
+      "If charges continue, dispute via the bank under 'service not received' AND escalate via the provider's executive customer-relations email.",
+      "After 60 days post-cancellation with no further charges: shred records (but keep the confirmation number)."
+    ]
+  },
+  "required_user_info": [
+    "Account number and account holder name",
+    "Billing zip code",
+    "Whether under contract; ETF amount if known",
+    "Complete list of installed equipment",
+    "Desired effective cancel date (end of current cycle)",
+    "Best email for written confirmation"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

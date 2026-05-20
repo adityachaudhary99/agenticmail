@@ -1,0 +1,121 @@
+{
+  "id": "recording-claim-conversation-legally",
+  "name": "Record a Claim Conversation Legally (Two-Party-Consent States)",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "recording",
+    "consent",
+    "two-party",
+    "compliance",
+    "documentation",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Record an insurance call legally and usefully. Establish consent properly for two-party-consent jurisdictions, get the carrier's own recording disclosed in writing, and create a recording trail that's admissible later — without creating wiretap exposure for the user.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator. Recording law is state- and country-specific and changes — this skill provides framing, not legal advice; route legal questions through `ask_operator`.",
+  "context": {
+    "when_to_use": "The user wants to record a call with their insurance carrier for documentation — common before a critical adjuster call, recorded statement, denial discussion, or settlement-offer call. Use to establish proper consent BEFORE substantive content begins.",
+    "preconditions": [
+      "User knows whether the call will cross any two-party-consent state line — recording law generally follows the strictest applicable jurisdiction (caller, recipient, or where the call is physically received).",
+      "Recording mechanism is ready (call recorder app, hardware recorder, or platform native recording).",
+      "User understands that the carrier is almost certainly recording too, and is entitled to ask for that recording.",
+      "User has thought through whether they want the recording to be discoverable later (it may be subpoenaed or required in litigation)."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Two-party-consent states (commonly cited: California, Connecticut, Delaware, Florida, Illinois, Maryland, Massachusetts, Michigan, Montana, Nevada, New Hampshire, Oregon, Pennsylvania, Washington — verify current statute) require all parties to consent before recording.",
+    "When in doubt, get explicit consent. The legal cost of asking is zero; the cost of not asking can be a wiretap-statute violation.",
+    "Consent should be ON THE RECORDING. 'May I record this call for my records?' followed by 'Yes' on tape is the simplest and strongest evidence.",
+    "Carrier-recorded statements are routinely used against policyholders later. The user is entitled to their own copy.",
+    "Don't make the recording a secret. Disclosed recordings are admissible; undisclosed recordings in two-party states are not — and may be criminal.",
+    "If the rep refuses to be recorded: respect that. Either (a) hang up and consider the carrier's posture, or (b) proceed without recording but take meticulous contemporaneous notes."
+  ],
+  "phrases": {
+    "consent_open": "Before we start — I'd like to record this call for my own records, and I assume you may be recording on your side as well. Do I have your consent to record?",
+    "ask_carrier_recording": "Are you recording this call on your side? And if so, can I request a copy of the recording afterwards through the claim file?",
+    "if_refused": "I understand. We'll proceed without recording on my side. Could you confirm for the record whether the carrier is recording, and that I can request a copy of any recorded statement I provide?",
+    "log_consent_clearly": "Just to make sure we both have it on the record: today is [date], the time is [time], we're discussing claim [number], you've identified yourself as [rep name + ID + carrier], and you've consented to recording. Thank you.",
+    "decline_recorded_statement_separately": "I'm happy to discuss the matter and have this call recorded by both sides for documentation. But I'm NOT consenting to a formal 'recorded statement' for use as a deposition substitute — those go through my [operator / attorney] first.",
+    "graceful_close": "Thanks. To confirm: this call was recorded with mutual consent, the carrier is also recording, I'll request a copy through the claim file, and the recording on my side will be saved as [filename / location]."
+  },
+  "tactics": [
+    {
+      "name": "Ask for consent BEFORE substantive content",
+      "when": "Right after the rep identifies themselves.",
+      "script": "Use the `consent_open` phrase. Get a clear 'yes' on the recording. If the rep says 'yes', you have consent on tape. If 'no', stop the recording immediately and decide whether to proceed.",
+      "priority": 1
+    },
+    {
+      "name": "Disclose mutual recording explicitly",
+      "when": "Right after consent is given.",
+      "script": "Use the `log_consent_clearly` phrase. State the date, time, claim number, rep identity, and consent on tape. This is the metadata that makes the recording usable later.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for the carrier's recording too",
+      "when": "Mid-call or close.",
+      "script": "Use the `ask_carrier_recording` phrase. Most carriers record by default. The user has a right to know AND in most cases to receive a copy via the claim file.",
+      "priority": 3
+    },
+    {
+      "name": "Separate 'recording the call' from 'giving a recorded statement'",
+      "when": "Rep treats recording-the-call as equivalent to a recorded statement.",
+      "script": "Use the `decline_recorded_statement_separately` phrase. Documenting a normal service call ≠ a recorded statement intended as a deposition-equivalent. Confusing the two is a common rep tactic.",
+      "priority": 4
+    },
+    {
+      "name": "Respect a 'no' on consent",
+      "when": "Rep refuses to be recorded.",
+      "script": "Use the `if_refused` phrase. Stop your recording. Proceed with detailed real-time notes (date/time-stamped). Consider following up in writing to convert verbal commitments into a paper trail.",
+      "priority": 5
+    },
+    {
+      "name": "Save the recording with metadata",
+      "when": "After the call.",
+      "script": "File the recording with: date, time, parties, claim number, rep name + ID, consent timestamp. Bare audio is hard to authenticate later; recordings paired with metadata + contemporaneous notes are robust.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT record without consent in any jurisdiction where any party is in a two-party-consent state. The legal exposure (criminal in some states; civil in most) outweighs the documentation benefit.",
+    "Do NOT use a covert recording as evidence in a claim dispute — admissibility is questionable and can damage the user's credibility.",
+    "Do NOT alter or edit a recording. Save the raw file. Edited audio is inadmissible everywhere.",
+    "Do NOT share a recording externally (social media, public posts) without `ask_operator` — privacy torts and defamation exposure apply even when the content is true.",
+    "Do NOT confuse 'I'm recording this for my own records' with 'I'm giving you a recorded statement'. The first is documentation; the second is legal evidence.",
+    "Do NOT treat any of the above as legal advice. State laws vary and evolve. Route any uncertainty through `ask_operator` for legal-counsel referral."
+  ],
+  "success_signals": [
+    "Clear 'yes' on tape from the rep regarding recording consent.",
+    "Date, time, parties, and claim number captured on the recording.",
+    "Carrier's own recording confirmed and copy-request path documented.",
+    "Recorded-statement vs documentation-recording distinction acknowledged.",
+    "Recording saved with metadata after the call."
+  ],
+  "failure_signals": [
+    "Rep refuses consent.",
+    "Rep treats the consent question as hostile and escalates.",
+    "Rep agrees verbally but the recording captured no audible 'yes' (ambient noise, garbled audio).",
+    "Rep claims the user can't request a copy of the carrier's recording (often incorrect — push back via supervisor)."
+  ],
+  "exit_strategy": {
+    "on_success": "Save the recording with metadata. File a written recap of what was discussed (a contemporaneous summary boosts admissibility). If the carrier confirmed they are also recording, send a written request to the adjuster asking for a copy via the claim file.",
+    "on_failure": "If consent is refused, stop recording and switch to detailed real-time notes — timestamped, contemporaneous, written immediately during the call. Follow up in writing the same day to capture commitments. Route any escalation through `ask_operator`.",
+    "follow_ups": [
+      "Save the recording in a backed-up location.",
+      "Write a one-page summary of the call within 1 hour while memory is fresh.",
+      "Request the carrier's recording in writing via the claim file.",
+      "If the call substance is significant, route through `ask_operator` for attorney review before relying on the recording."
+    ]
+  },
+  "required_user_info": [
+    "User's state and the carrier's call-center state (drives which consent regime applies)",
+    "Recording mechanism (app, hardware, platform)",
+    "Claim number and rep name/ID once on the call",
+    "Operator's preference on whether to proceed without recording if consent is refused",
+    "Whether the user has an attorney engaged on the underlying claim"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,130 @@
+{
+  "id": "get-past-tier-1-script",
+  "name": "Get Past the Tier-1 Script-Bound Rep",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "phone-call",
+    "tier-1",
+    "scripts",
+    "authority",
+    "front-line",
+    "customer-support"
+  ],
+  "description": "Move a call out of the front-line script-and-knowledge-base loop and into the hands of someone with real decision authority, without making the tier-1 rep feel demeaned or marked as difficult.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "The rep is clearly working from a flowchart: repeating canned phrases, putting you on hold to 'check' the same answer, offering only the options the IVR already offered. You need a human with authority to make exceptions. NOT for cases where tier-1 can actually solve it — pushing past tier-1 prematurely just adds 20 minutes of transfer.",
+    "preconditions": [
+      "User has stated the goal clearly at least once and the rep's response was clearly scripted.",
+      "User has the account number / verification info ready (you only get one shot at a warm handoff).",
+      "Call has been going at least 3-4 minutes — long enough to confirm tier-1 is stuck, short enough that you haven't burned goodwill yet."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Tier-1 reps are graded on call-handle-time and first-call-resolution. A polite escalation request that LOOKS like an FCR (warm handoff, agreed by both sides) is your best leverage.",
+    "Never tell a rep they are 'just reading a script'. Even if true, that's the fastest way to get marked 'difficult' in the CRM notes and watch every future rep treat you accordingly.",
+    "Listen for tells: 'per our policy', 'the system won't let me', 'I don't have access to that' — each one is a flag that you've hit the edge of tier-1 authority. Don't argue with the wall; ask who's on the other side of it.",
+    "The magic word is 'who'. 'WHO can help me with this?' is non-confrontational and forces the rep to name a team or a tool. 'Why can't YOU help me?' is the wrong question.",
+    "Give the rep a clean way out. 'I know this isn't in your usual workflow' is a face-saving sentence that converts adversaries into allies.",
+    "Specificity escalates faster than emotion. 'I need someone who can issue a credit over $50' beats 'I need a manager NOW'.",
+    "Mirror their pacing. Scripted reps speak in pre-loaded chunks; if you speak in calm, slow, complete sentences, you sound competent and they unconsciously raise your perceived seniority."
+  ],
+  "phrases": {
+    "soft_diagnostic": "I want to make sure I'm asking the right team — does this kind of request usually get handled at your level, or is it something a different group owns?",
+    "name_the_authority": "Who in your organization is allowed to [specific action: waive this fee / restore the service / issue a credit over $X]? I want to make sure we're working with the right person.",
+    "warm_handoff_request": "It sounds like this might be outside what your team can adjust. Could you do a warm transfer — stay on the line, brief them, and then drop off — so I don't have to start over?",
+    "face_saver": "I can tell you've already tried the obvious options — thanks for that. Let's loop in whoever owns the exception process so we don't keep going in circles.",
+    "no_blame_escalation": "Nothing you've done is wrong — I just don't think this is a tier-1 decision. Who's the next layer up?",
+    "preempt_the_loop": "Before you put me on hold to check again, can I ask — is the answer going to be different from what you've already told me? If not, I'd rather use that time to get to someone who can change the answer.",
+    "specific_authority_ask": "I need to speak with someone who has authority to [action]. That's a 'yes I can do that' / 'no I can't' question — could you confirm whether that's you, and if not, who?"
+  },
+  "tactics": [
+    {
+      "name": "Diagnose the ceiling before pushing through it",
+      "when": "First 2-3 minutes — you suspect tier-1 but aren't certain.",
+      "script": "Use `soft_diagnostic`. Listen for whether the rep claims authority ('yes I can do that') or deflects ('let me check / our policy says / the system'). Deflection = ceiling confirmed.",
+      "priority": 1,
+      "decision_point": "If the rep says 'yes I can do that' and then actually does it, STOP escalating. Tier-1 just solved your problem. Don't ask for a supervisor out of habit."
+    },
+    {
+      "name": "Name the authority, not the title",
+      "when": "Ceiling confirmed — you need to go up but don't want to say 'supervisor' yet (that triggers defensive scripts).",
+      "script": "Use `name_the_authority`. Asking for 'the team that handles X' is softer than 'a manager' and gets you to the right place faster, because some companies don't escalate vertically — they escalate sideways to a specialist queue.",
+      "priority": 2
+    },
+    {
+      "name": "Request a warm handoff",
+      "when": "Rep agrees to transfer.",
+      "script": "Use `warm_handoff_request`. Cold transfers dump you into a queue and you re-verify, re-explain, and lose context. Insist (politely) that the rep stays on the line to brief the next person.",
+      "priority": 3,
+      "decision_point": "If the rep says they can't do a warm transfer, ask WHY. 'Our system doesn't support it' = real; 'I'll just transfer you now' = they're trying to dump you. In the second case, get the rep's name, ID, and the direct number/extension of where you're being sent BEFORE accepting the transfer."
+    },
+    {
+      "name": "Pre-empt the hold loop",
+      "when": "Rep says 'let me put you on hold and check' for the second time on the same question.",
+      "script": "Use `preempt_the_loop`. Putting you on hold to ask the same person the same question is the cheapest stall — interrupting it politely is fair game.",
+      "priority": 4
+    },
+    {
+      "name": "Convert the rep into your advocate",
+      "when": "After 1-2 escalation requests, before going harder.",
+      "script": "Use `face_saver` + `no_blame_escalation`. A rep who feels respected will sometimes proactively flag your account 'VIP' or 'priority callback' in the notes — that's worth more than any single escalation.",
+      "priority": 5
+    },
+    {
+      "name": "Force a binary on authority",
+      "when": "You've been polite twice and the rep is still circling.",
+      "script": "Use `specific_authority_ask`. Asking 'is that a yes/no you can give me' makes it socially awkward to keep stalling — the rep almost always either commits or transfers.",
+      "priority": 6,
+      "decision_point": "If the answer is 'I can't promise but let me try one more thing', give them ONE more shot (90 seconds). If they fail, transfer time. If they hesitate to even attempt — escalate immediately."
+    },
+    {
+      "name": "Capture the breadcrumb on the way up",
+      "when": "Moment of transfer.",
+      "script": "Before the rep transfers, capture: their name, their employee ID or initials, the department you're being sent to, and the case/ticket number they've opened. If the transfer fails, you have a thread to pick back up.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT mock, raise voice, or call the rep incompetent. The rep can disconnect, mark your account, and you start over from worse than zero.",
+    "Do NOT lie about being a lawyer, journalist, or executive contact unless the user actually is one. It works once and burns the relationship for life.",
+    "Do NOT demand a supervisor in the first 90 seconds — it triggers a defensive script and ALL tier-1s are trained to deflect early supervisor asks.",
+    "Do NOT accept a cold transfer to 'a queue' without first capturing the rep's name, the target department, and the case number.",
+    "Do NOT volunteer information the rep didn't ask for. Every extra detail is a new place the script can route you to.",
+    "Do NOT use threats (lawsuit, social media, regulator) at the tier-1 layer — wrong altitude. Save those for after a real supervisor has also said no."
+  ],
+  "success_signals": [
+    "Rep names a specific team or specialist queue ('that would be our retention team' / 'billing exceptions handles that').",
+    "Rep offers a warm transfer without being asked.",
+    "Rep says 'let me see what I can do' with a noticeable change in tone — they've switched from script to discretion.",
+    "Rep opens a case/ticket number proactively.",
+    "Rep volunteers a callback time or direct extension."
+  ],
+  "failure_signals": [
+    "Rep repeats the same scripted line verbatim more than twice.",
+    "Rep refuses to give their name or employee ID.",
+    "Hold times escalate (30s → 2min → 5min) without new information.",
+    "Rep claims 'there is no supervisor available' more than once — that's almost always false.",
+    "Rep starts citing 'our terms of service' as a closer — that's a polite hang-up warning."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture the new rep's name + ID + department, restate the problem in one sentence, and let them speak. Do NOT re-litigate everything the tier-1 already heard — the warm handoff did that for you.",
+    "on_failure": "Ask for the rep's name and ID, the case number opened, and a callback number for the team you should have been transferred to. End politely. Use `request-supervisor-gracefully` on the callback, or pivot to `multi-channel-escalation`.",
+    "follow_ups": [
+      "Log: time of call, rep name + ID, case number, what was promised and what was refused.",
+      "If you got a case number, reference it on every subsequent call — it short-circuits re-verification.",
+      "If transfer failed mid-call, call back within 24h while the case is fresh — older cases get harder to find in some CRMs."
+    ]
+  },
+  "required_user_info": [
+    "Account identifier (number, login email, phone on file)",
+    "The specific outcome you want stated in one sentence",
+    "What tier-1 has already said no to (or you'll repeat the loop)",
+    "Any prior case/ticket numbers from earlier calls"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

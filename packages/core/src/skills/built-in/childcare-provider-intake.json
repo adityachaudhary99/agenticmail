@@ -1,0 +1,157 @@
+{
+  "id": "childcare-provider-intake",
+  "name": "Childcare Provider Intake: License, References, Schedule",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "childcare",
+    "daycare",
+    "preschool",
+    "nanny",
+    "babysitter",
+    "license",
+    "background-check",
+    "references",
+    "intake",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Place an intake / vetting call with a childcare provider — licensed centre, in-home daycare, nanny agency, or independent nanny — to verify license / background checks, surface schedule and ratios, and request references BEFORE the operator tours or signs an enrolment / employment agreement.",
+  "disclaimer": "Childcare regulation varies by jurisdiction and is the single highest-stakes vetting category in this library. This skill does not replace a thorough in-person tour, criminal-background verification, or independent reference checks by the operator. Do not commit on this call.",
+  "context": {
+    "when_to_use": "Operator is choosing childcare for an infant, toddler, or preschool-aged child. Use BEFORE the first tour for a centre / home daycare, or BEFORE the first in-person interview for a nanny / agency placement. Pair with `childcare-tour-checklist` and `nanny-employment-agreement-review` (separate skills).",
+    "preconditions": [
+      "Operator has the provider's full legal business name, license number (for licensed providers), and state.",
+      "Operator has the child's age, schedule needs, and any specific needs (allergies, medical, developmental).",
+      "Operator has surfaced budget range and start-date window.",
+      "Operator has decided centre vs in-home daycare vs nanny vs agency — different vetting paths."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "License and inspection records are public in most states. Look them up BEFORE calling — the state child-care licensing department posts violations, citations, and renewal status.",
+    "Ratios drive safety and attention. State minimums (e.g. 1:4 for infants, 1:6 for toddlers) are floors, not goals. Lower is better; ask the actual current ratio, not the maximum.",
+    "Background checks vary widely. State centres require fingerprint + criminal + child-abuse-registry checks for all staff; nanny agencies vary; independent nannies require operator-funded checks. Pin down what's been done and what's on file.",
+    "References are non-negotiable. Two CURRENT or recent families (within 12 months) — and the operator calls them, not the agent.",
+    "Schedule flexibility, sick-day policies, and closure calendars determine real-world fit. Many centres close 3+ weeks per year; many nannies require guaranteed hours regardless of family illness.",
+    "Mandatory reporter status is a feature, not a bug. Every reputable provider should know they're a mandated reporter and how their child-protection protocols work."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm calling for a family looking at [centre / in-home daycare / nanny] care for a [age] child, starting [date], [days/hours]. Before we set up a tour, can I ask a few quick questions about licensing, ratios, and availability?",
+    "license_probe": "Could you confirm your state license number, classification, and whether your last inspection was clean — or, if there were citations, what they were and how they were resolved?",
+    "ratios_probe": "What's your current ratio in the [infant / toddler / preschool] room, what's the maximum your license allows, and who's the lead teacher in that room — name, credentials, and tenure?",
+    "background_check_probe": "Walk me through the background-check protocol for every adult who interacts with children: fingerprint, state criminal, federal criminal, child-abuse registry, sex-offender registry, and how often these are re-run.",
+    "ratios_probe_home": "For in-home daycare: how many children total are on-site at any time, what ages, and who's the second adult if you step away or are ill?",
+    "nanny_specific_probe": "For a nanny: are you a W-2 employee or 1099? Are you authorised to work in the US, do you have CPR / pediatric-first-aid certification, when do they expire, and do you carry your own liability or driving insurance?",
+    "agency_probe": "For an agency: what's your placement-fee structure, what's the trial / replacement guarantee period, and what's been verified on every nanny BEFORE you place them?",
+    "schedule_probe": "What's the current opening — start date, days/hours, and is there a waitlist? What's your annual closure calendar (holidays, training days, summer)? What's the sick-day policy on both sides?",
+    "illness_probe": "What's the sick-child exclusion policy — fever threshold, vomiting / diarrhoea, contagious illnesses — and how do you communicate exposure?",
+    "developmental_probe": "What's the daily structure for a [age], curriculum or approach (play-based, Reggio, Montessori, Waldorf, ABA-influenced), and how do you communicate with parents daily?",
+    "special_needs_probe": "The child has [allergy / condition / IEP / sensory need]. How do you accommodate, who's trained, and what's the medication protocol?",
+    "references_probe": "Could you share two CURRENT or recent (within 12 months) family references, ideally with a child of similar age, who the operator can call directly?",
+    "trial_probe": "Is there a trial day / week / probationary period, and what's the early-termination protocol from either side?",
+    "stall_to_check": "Let me run the schedule, fees, and policies past the parents before we set a tour or sign anything — big decision, deserves a calm review.",
+    "graceful_close": "Thanks — could you email the enrolment / employment packet, the inspection record (or link), the closure calendar, sick policy, and the references over? The family will follow up within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Licence and inspection record first",
+      "when": "Opening minute.",
+      "script": "Use `license_probe`. If the provider can't or won't share the license number on the call, end politely. Anyone licensed knows their number and is happy to share it.",
+      "priority": 1
+    },
+    {
+      "name": "Ratios with actuals, not maximums",
+      "when": "After license.",
+      "script": "Use `ratios_probe` (centre) or `ratios_probe_home` (in-home). The actual current ratio in the room the child would join is the real signal. Lead-teacher tenure is a quality proxy.",
+      "priority": 2
+    },
+    {
+      "name": "Background-check chain of custody",
+      "when": "After ratios.",
+      "script": "Use `background_check_probe`. This applies to every adult — teachers, owner, family-member-cohabitants for in-home, substitute teachers. Anyone unscreened is a no.",
+      "priority": 3
+    },
+    {
+      "name": "Provider-type-specific vetting",
+      "when": "Once basics are clear.",
+      "script": "Use `nanny_specific_probe` for nannies, `agency_probe` for agencies. Different categories, different risks: W-2 / 1099 classification, work authorisation, CPR currency, agency replacement guarantee.",
+      "priority": 4
+    },
+    {
+      "name": "Schedule + closures + sick policy",
+      "when": "Mid-call.",
+      "script": "Use `schedule_probe` and `illness_probe`. The annual closure calendar surprises many parents. Sick-child exclusion thresholds affect work-life logistics.",
+      "priority": 5
+    },
+    {
+      "name": "Curriculum / daily structure",
+      "when": "After logistics.",
+      "script": "Use `developmental_probe`. Even at infant ages, the daily rhythm matters. Parent-communication cadence (daily app, paper logs, weekly summary) is a fit signal."
+    },
+    {
+      "name": "Special needs explicitly",
+      "when": "If the child has any.",
+      "script": "Use `special_needs_probe`. The right answer involves a written care plan, named staff trained, and clear medication protocol. Vague answers are disqualifying."
+    },
+    {
+      "name": "References operator can actually call",
+      "when": "Near end.",
+      "script": "Use `references_probe`. Two CURRENT families. Operator calls — agent does not screen on the operator's behalf."
+    },
+    {
+      "name": "Defer any commitment",
+      "when": "Coordinator pushes to lock the spot.",
+      "script": "Use `stall_to_check`. Childcare commitments are too consequential for a phone call. Tour, references, contract review — then decide."
+    }
+  ],
+  "boundaries": [
+    "Do NOT sign an enrolment contract or employment agreement mid-call. Use ask_operator.",
+    "Do NOT pay an enrolment deposit, holding fee, or agency placement fee on this call. Funds flow only after operator-reviewed written agreement.",
+    "Do NOT share the child's full name, date of birth, or social security number on this call. First name and age category are enough for screening.",
+    "Do NOT share the home address with an independent nanny prospect before background-check completion.",
+    "Do NOT bypass background-check verification because the provider 'feels right' or comes 'highly recommended'. Verification is non-negotiable.",
+    "Do NOT accept a provider with unresolved citations, lapsed license, or refusal to share inspection records.",
+    "Do NOT agree to off-the-books cash pay arrangements for nannies — they expose the operator to tax, insurance, and workers' comp liability."
+  ],
+  "success_signals": [
+    "Licence number, classification, and inspection record shared transparently.",
+    "Actual current ratios cited, with lead-teacher name and tenure.",
+    "Background-check protocol covers every adult and is re-run on a clear cadence.",
+    "Annual closure calendar and sick policy provided in writing.",
+    "Curriculum / daily structure described with specifics, not slogans.",
+    "Two current-family references offered without hesitation.",
+    "Trial period / probationary structure exists and is documented."
+  ],
+  "failure_signals": [
+    "Refusal to share licence number, inspection record, or background-check details.",
+    "Maximum-ratio quoted as though it were the actual ratio.",
+    "Unscreened adults in the home or facility (cohabitants, drop-in family).",
+    "Pressure for an enrolment deposit on the call.",
+    "Refusal to provide current-family references.",
+    "Cash-only / off-the-books employment pitch for nannies.",
+    "Citations on the public record that the provider downplays or doesn't acknowledge.",
+    "Vague answers on medication, allergy, or special-needs protocol."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm provider will email: enrolment / employment packet, license and inspection record link, annual closure calendar, sick policy, daily-schedule overview, background-check summary, and references. Operator schedules an in-person tour and reference calls before any commitment.",
+    "on_failure": "Politely close. Note the specific reason for the operator's records (licensing concern, ratio mismatch, reference unwillingness, fee structure). If the gap was schedule-only, ask about waitlist options.",
+    "follow_ups": [
+      "Email the operator: provider name, type, license status (with state-board verification status), ratios, background-check summary, schedule fit, references with phone, red/green flags, recommended next step.",
+      "Operator independently verifies license and inspection record via state child-care licensing department.",
+      "Operator independently calls references — agent does not screen references on the operator's behalf.",
+      "Schedule in-person tour AFTER reference checks pass; reserve commitment for after the tour and contract review."
+    ]
+  },
+  "required_user_info": [
+    "Provider type (licensed centre / in-home daycare / nanny / agency) and provider's legal business name + license number",
+    "Child's age and schedule need (days, hours, start date)",
+    "Any special needs (allergies, medical conditions, IEP, developmental concerns) — disclose at the level needed for fit",
+    "Budget range and willingness to pay over for lower ratios / higher quality",
+    "Operator's state (and county if relevant) for licensing-board lookup",
+    "Existing care arrangement and reason for change (informs reference questions)",
+    "Operator's preferred communication channel and decision timeline"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:11:50Z"
+}

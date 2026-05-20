@@ -1,0 +1,120 @@
+{
+  "id": "vital-records-certificate-copy",
+  "name": "County Recorder / Vital Records: Birth, Death, or Marriage Certificate Copy",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "vital-records",
+    "county-recorder",
+    "birth-certificate",
+    "death-certificate",
+    "marriage-certificate",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call a county recorder, state Department of Health Vital Records office, or equivalent to order certified or informational copies of birth, death, or marriage certificates. Routes the user to the correct office (county vs state) and clarifies tier-of-relationship eligibility, which varies wildly by jurisdiction.",
+  "disclaimer": "Not legal advice. Eligibility to receive certified copies (especially of recent birth/death records) is restricted by statute in most states to specific relationship tiers. The agent will not advise on probate, identity-document use, or court submissions — those route to an attorney or the relevant agency.",
+  "context": {
+    "when_to_use": "User needs a certified copy for: passport application, school enrollment, REAL ID, estate / probate filing, court submission, Social Security, or genealogy research. Online ordering services charge a premium (VitalChek, etc.); calling the county or state directly is usually cheaper and only slightly slower.",
+    "preconditions": [
+      "User knows the full name on the record, date of event, and county/state of event.",
+      "For births: mother's maiden name is usually required.",
+      "User can prove their relationship-tier eligibility (self, parent, spouse, adult child, sibling, court-order, funeral director, attorney-of-record).",
+      "Government-issued photo ID is available to submit (some states require notarized copies sent by mail).",
+      "Payment method accepted by the agency (often money order, certified check, or credit card via online portal only — many counties do NOT take cards by phone)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "County recorder vs state Department of Health: rules differ. Births / deaths within the last ~75 years are usually restricted; older records may be public. Marriage records are often at the county level (issuing county).",
+    "Genealogy ('informational') copies are different from certified copies. Informational copies are easier to get but cannot be used for legal identification.",
+    "VitalChek and other commercial portals add convenience fees of $10–$30. Direct-to-agency is cheaper if the user can wait 3–8 weeks.",
+    "Death certificates often require MULTIPLE certified copies (banks, insurers, real-estate transfers, tax filings each want an original). 10–15 is a typical estate-administration order.",
+    "Confirm the EXACT spelling of name and date with the rep — a single character off and the search returns nothing."
+  ],
+  "phrases": {
+    "opener_birth": "Hi, I'd like to order a certified copy of a birth certificate. The person's name is [NAME], born on [DATE] in [CITY/COUNTY]. The mother's maiden name is [NAME]. I'm the [relationship — self / parent / etc.]. What's your process, fee, and processing time?",
+    "opener_death": "Hi, I need to order certified copies of a death certificate. The person was [NAME], who passed on [DATE] in [COUNTY]. I'm the [relationship / executor / attorney]. I'll need [N] certified copies for estate purposes. What's the process?",
+    "opener_marriage": "Hi, I'd like a certified copy of a marriage certificate. Spouses are [NAME1] and [NAME2], married on [DATE] in [COUNTY]. I'm [self / spouse / etc.]. How do I order it?",
+    "ask_about_eligibility": "Could you confirm which relationship tiers are eligible to receive certified copies of this record? I want to make sure I qualify before submitting.",
+    "ask_about_routing": "Just to confirm — is this record held at the county level or state Vital Records? I want to make sure I'm calling the right office.",
+    "stall_documents": "One moment — I want to read the names and dates off the notes I have.",
+    "graceful_close": "Thank you. Can I confirm: the form to use, the fee, payment method, where to mail it, processing time, and how to verify status if I don't receive it?"
+  },
+  "tactics": [
+    {
+      "name": "Verify county vs state ownership first",
+      "when": "First minute.",
+      "script": "Some states centralise vital records; others delegate to counties. Ordering at the wrong level returns the request unprocessed weeks later. Confirm with the rep where the record actually lives.",
+      "priority": 1
+    },
+    {
+      "name": "Confirm relationship-tier eligibility before paying",
+      "when": "Before submitting.",
+      "script": "If the user is a sibling, cousin, or other relationship that may not qualify for a certified copy, ask explicitly whether they can receive a certified vs informational copy. Save the user from paying for a rejected order.",
+      "priority": 2
+    },
+    {
+      "name": "Order the right NUMBER of death certificates",
+      "when": "Estate / probate context.",
+      "script": "Most estates need 10–15 certified copies (banks, brokerage, IRA, life insurance, real estate, vehicle, IRS final return). Per-copy fees are far lower than per-order fees. Don't order 3 today and 7 next month.",
+      "priority": 3
+    },
+    {
+      "name": "Use the agency direct vs VitalChek tradeoff",
+      "when": "Choosing a channel.",
+      "script": "Direct mail-in: cheaper, 3–8 weeks. VitalChek: pricier, faster (1–3 weeks) and accepts credit cards. Choose based on urgency and the user's cash flow.",
+      "priority": 4
+    },
+    {
+      "name": "Confirm exact spelling and date in real time",
+      "when": "While the rep is searching.",
+      "script": "Read name letter-by-letter (NATO alphabet if helpful). Confirm the date format (MM/DD/YYYY vs DD/MM/YYYY) and any maiden / hyphenated names. One-character typo = order returns 'not found'."
+    }
+  ],
+  "boundaries": [
+    "Do NOT advise on probate procedure, who can be appointed executor, or how to use the certificate in court — refer to an attorney.",
+    "Do NOT order copies for someone whose eligibility-tier the user has not confirmed they qualify for.",
+    "Do NOT share extra personal data (SSN, prior addresses) unless required by the agency for that specific record.",
+    "Do NOT pay the order fee without the user's explicit pre-authorization for the exact amount and copy count.",
+    "Do NOT use commercial fast-order services without disclosing the markup to the user."
+  ],
+  "success_signals": [
+    "Rep confirms the user's eligibility for certified copies.",
+    "Rep provides the exact form number, fee per copy, accepted payment, and mailing address.",
+    "Order can be placed in real time (some online portals accept phone-walkthrough orders).",
+    "Processing-time window is quoted with a confirmation number."
+  ],
+  "failure_signals": [
+    "Rep cannot find the record on first search — verify spelling, date, county; consider that the record may be held by a different jurisdiction.",
+    "User does not qualify for certified copy under state law — pivot to informational copy or to the next-eligible relative.",
+    "Agency is mail-only and timing won't meet the user's deadline — switch to VitalChek or expedite.",
+    "Agency only accepts in-person orders (rare but exists) — schedule visit."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: form, fee, # of copies, mailing address, processing time, agent name/initials, any confirmation number. Make a checklist of what the user needs to include in the mail (signed application, notarized ID copy if required, money order made out to [PAYEE]).",
+    "on_failure": "Capture next step: switch to commercial portal (VitalChek), switch jurisdiction, gather additional documentation (court order, attorney letter, executor letter), or schedule in-person visit.",
+    "follow_ups": [
+      "Calendar expected arrival; if not received, call back with confirmation number.",
+      "If multiple copies were ordered, verify count on arrival.",
+      "If used for probate, note where each certified copy was sent (banks, IRS, etc.) so duplicates aren't wasted."
+    ]
+  },
+  "required_user_info": [
+    "Full legal name(s) on the record (and prior / maiden names if any)",
+    "Date of event (birth / death / marriage) and location (city, county, state)",
+    "Mother's maiden name (for birth records)",
+    "Requester's relationship to the person on the record",
+    "Government-issued photo ID (may be required to be notarized & mailed)",
+    "Number of certified copies needed",
+    "Authorised payment method (money order, certified check, online card)"
+  ],
+  "hang_up_and_call_back_signals": [
+    "You realize you are at the county when the record is at the state (or vice versa) — politely end and dial the correct office.",
+    "Rep cannot find the record despite multiple spelling attempts — re-verify with the user before continuing; possible jurisdiction error.",
+    "Agency is overwhelmed and not taking phone orders this week — switch to mail-in or VitalChek; don't keep redialing.",
+    "Any commercial offer to 'fast-track' that doesn't match the official VitalChek or agency portal — that's a scam aggregator."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

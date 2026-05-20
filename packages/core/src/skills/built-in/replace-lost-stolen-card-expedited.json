@@ -1,0 +1,139 @@
+{
+  "id": "replace-lost-stolen-card-expedited",
+  "name": "Replace a Lost or Stolen Card and Expedite Delivery",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "lost-card",
+    "stolen-card",
+    "card-replacement",
+    "expedited-shipping",
+    "card-lock",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call the card issuer to (a) immediately lock or cancel a lost or stolen card, (b) order a replacement with the correct shipping speed, and (c) deal with the gap-period plumbing — recurring charges, push-provisioning to mobile wallets, virtual card numbers.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "Card is missing (left in a cab, stolen wallet, lost in luggage). Speed matters: each hour increases fraud-loss exposure even though Reg E / Reg Z cap user liability. Mid-trip card-loss has the extra wrinkle that the user may need expedited international delivery or a temporary virtual card to keep functioning.",
+    "preconditions": [
+      "User can confirm: physically missing vs definitely stolen (matters for fraud reporting).",
+      "User has the card account info (last 4 from statement / app).",
+      "User is calling from the number on the back of the card or the bank's mobile app.",
+      "User knows their current address and any temporary shipping address (e.g., hotel).",
+      "User has a list of recurring charges that were on the lost card (Netflix, gym, utilities — all need to be updated to the new number)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Lock first, talk later. Many bank apps have a 'lock card' toggle that pauses authorizations instantly — use it BEFORE the phone call if there's any delay reaching a human.",
+    "Distinguish LOST from STOLEN. Stolen often triggers a fraud-report workflow even if there are no unauthorized charges yet; lost is a simple replace.",
+    "Ask for push-provisioning. Most modern issuers can push a digital card number to Apple Pay / Google Pay / Samsung Pay within minutes of the call, so the user can keep transacting before the physical card arrives.",
+    "Or ask for a VIRTUAL CARD NUMBER (VCN) — some issuers (Cap One Eno, Citi Virtual Card, etc.) generate a number you can use immediately online while waiting for plastic.",
+    "Expedited shipping is usually FREE if the card was lost/stolen — never pay $25 for FedEx Overnight if you ask politely.",
+    "Recurring charges break when the card number changes — unless the issuer participates in 'card account updater' programs. Some merchants get the new number automatically; some don't. Plan to manually update the rest."
+  ],
+  "phrases": {
+    "opener": "Hi, I need to report my card as [lost / stolen] and order a replacement. Before we do anything else, can you immediately lock or cancel the current card number?",
+    "lost_vs_stolen": "To clarify: the card is [definitely stolen — my wallet was taken / missing — I don't believe it was stolen, I likely misplaced it]. Should this be filed as a fraud case or a simple replacement?",
+    "request_push_provisioning": "While the physical card ships, can you push the new card number to my Apple Pay / Google Pay so I can use it immediately?",
+    "request_virtual_card": "Does the card support a virtual card number I can use for online purchases right now while the plastic arrives?",
+    "expedited_shipping_ask": "Given this is a [lost / stolen] situation, can you expedite shipping at no charge? When would I have the new card?",
+    "alternate_address": "I'm currently at [hotel / temporary address] until [date]. Can the card ship there, and if so, what verification do you need at that address?",
+    "check_recurring_updater": "Will my recurring merchants automatically receive the new card number via the network's account-updater service, or do I need to update each one manually? Can you give me a list of which merchants are covered?",
+    "graceful_close": "Thanks. Can you confirm: old card cancelled, new card ordered with expedited delivery to [address], expected arrival [date], digital card pushed to wallet, virtual card number provided if applicable, and give me a reference number plus your name?"
+  },
+  "tactics": [
+    {
+      "name": "Lock first via the app",
+      "when": "If the bank's app supports it.",
+      "script": "Open the app, toggle 'lock card' or 'report missing' BEFORE the call. This stops new authorizations even if you wait on hold for 20 minutes.",
+      "priority": 1
+    },
+    {
+      "name": "Lock-on-call immediately",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Cancellation is irreversible — but the loss exposure from waiting longer is larger than the inconvenience of cancelling.",
+      "priority": 2
+    },
+    {
+      "name": "Classify lost vs stolen",
+      "when": "After lock.",
+      "script": "Use `lost_vs_stolen`. Stolen + any unauthorized charges → also use `report-fraudulent-transaction` workflow.",
+      "priority": 3
+    },
+    {
+      "name": "Bridge the gap — push to wallet",
+      "when": "Replacement is ordered.",
+      "script": "Use `request_push_provisioning`. Apple Pay / Google Pay / Samsung Pay typically activate within minutes — the user can buy coffee before they walk out of the building.",
+      "priority": 4
+    },
+    {
+      "name": "Bridge the gap — virtual card",
+      "when": "User has online purchases pending.",
+      "script": "Use `request_virtual_card`. VCNs let the user pay online (or a hotel hold) right away."
+    },
+    {
+      "name": "Expedite for free",
+      "when": "Discussing shipping.",
+      "script": "Use `expedited_shipping_ask`. 1-2 day shipping is usually free on lost/stolen replacements — they only charge it if you don't ask."
+    },
+    {
+      "name": "Handle shipping address logistics",
+      "when": "User is traveling or has moved.",
+      "script": "Use `alternate_address`. Bank may require verification (ID at delivery, secondary phone, security question) — ask what's required."
+    },
+    {
+      "name": "Map recurring updates",
+      "when": "Card is being replaced.",
+      "script": "Use `check_recurring_updater`. Ask which networks (Visa Account Updater, Mastercard ABU) are subscribed AND which merchants are NOT — they need manual updating."
+    },
+    {
+      "name": "Audit trail",
+      "when": "Wrapping the call.",
+      "script": "Use `graceful_close`. Confirmation of cancellation + replacement + delivery + digital tools + reference number."
+    }
+  ],
+  "boundaries": [
+    "Do NOT cancel without a replacement ordered if the card is needed for recurring critical bills — coordinate timing.",
+    "Do NOT have the card shipped to an unverified third-party address — fraud risk; if user is traveling, use a hotel with the user's name on the reservation, or hold-at-FedEx.",
+    "Do NOT share full SSN; last 4 plus card info is sufficient.",
+    "Do NOT verify identity by reading back a one-time code the bank just texted (legitimate reps will never ask).",
+    "Do NOT close the call without reference number and an expected delivery date.",
+    "Do NOT pay for expedited shipping without asking for it free first."
+  ],
+  "success_signals": [
+    "Old card number cancelled before the call ends.",
+    "New card ordered, expedited delivery free.",
+    "Digital card pushed to wallet within minutes.",
+    "Virtual card number issued (if needed).",
+    "Account-updater coverage understood for recurring merchants.",
+    "Reference number issued."
+  ],
+  "failure_signals": [
+    "Rep refuses expedited shipping at no charge — escalate to supervisor or use the mobile-wallet push as the bridge.",
+    "Bank doesn't support push-provisioning AND user is traveling without backup card.",
+    "Alternate address can't be verified (escalate or use known-good address).",
+    "Account is flagged for suspended status — escalate to fraud/account services."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference number, new card delivery date, digital-wallet card active. Surface to operator the list of recurring merchants that need manual updating. Calendar to do that within 48 hours.",
+    "on_failure": "If delivery fails or address verification blocks: try in-branch pickup (some banks support this). If push-provisioning fails: use a backup card and accept the gap. If the account is suspended: escalate to a fraud supervisor and request a written summary of the suspension reason.",
+    "follow_ups": [
+      "Day +1: confirm digital card works for a small test purchase.",
+      "Day +2 / +3: confirm physical card arrived.",
+      "Day +5: manually update each recurring merchant NOT covered by account-updater.",
+      "Day +30: pull statement to verify no zombie charges from the old card."
+    ]
+  },
+  "required_user_info": [
+    "Card last 4",
+    "Lost or stolen classification",
+    "Current shipping address (home or temporary)",
+    "List of recurring merchants on this card",
+    "Mobile wallet preference (Apple/Google/Samsung Pay)",
+    "Backup payment method available during the gap"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

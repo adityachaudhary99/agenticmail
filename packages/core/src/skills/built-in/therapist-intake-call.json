@@ -1,0 +1,133 @@
+{
+  "id": "therapist-intake-call",
+  "name": "Therapist Intake Call: Insurance, Sliding-Scale, and Fit",
+  "version": "1.0.1",
+  "category": "medical-admin",
+  "tags": [
+    "mental-health",
+    "therapy",
+    "therapist",
+    "psychologist",
+    "insurance",
+    "sliding-scale",
+    "intake",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Call a therapist or counselling practice to verify in-network status, ask about sliding-scale availability, confirm modality and licensure, and pre-screen fit BEFORE the operator books a first session.",
+  "disclaimer": "This call is logistical and screening only — never clinical. Do not describe the operator's symptoms in detail to an intake coordinator; save that for the actual clinician. Mental-health PHI is sensitive — share only what is necessary to book.",
+  "context": {
+    "when_to_use": "Operator is looking for an individual, couples, or family therapist and needs to check insurance, cost, availability, and basic fit before scheduling. Especially valuable when the operator has insurance and needs in-network verification, or when budget requires sliding-scale.",
+    "preconditions": [
+      "Operator has identified the therapist by name and verified their license is active in the relevant state (state board lookup).",
+      "Operator has insurance card photo or core fields ready: insurer, member ID, group number, plan type (HMO/PPO/EPO).",
+      "Operator has decided what they're seeking help with at a HIGH level (e.g. 'anxiety', 'grief', 'couples') — no diagnosis details needed for intake.",
+      "Operator has time-of-day and weekday/weekend preferences for sessions."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Therapy fit predicts outcomes more than any other factor. Cost and logistics are necessary; fit is sufficient. Always plan a brief consult with the clinician themselves, not just the intake coordinator.",
+    "Insurance answers given verbally are estimates. The only binding source is the operator's insurer — get the CPT codes the therapist bills (usually 90791 intake, 90834 / 90837 sessions) and have the operator verify coverage independently.",
+    "Sliding-scale is widely advertised but inconsistently honoured. Ask for the actual current available rate, not the theoretical range.",
+    "Waitlists are common for good clinicians. A 4-8 week wait for the right fit beats a same-day appointment with the wrong one.",
+    "Telehealth-only and in-person availability differ — confirm what's available NOW, not what the website says.",
+    "Cancellation policies are where money is lost. 24-hour cancel windows are standard; full-fee no-shows are common — surface this BEFORE booking."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm calling for someone who's thinking about starting therapy with [therapist name]. Before we get to scheduling, could I ask a couple of things about insurance and availability?",
+    "insurance_probe": "Is [therapist name] in-network with [insurer / plan type]? If not, do they provide a superbill the operator can submit for out-of-network reimbursement? What CPT codes are typically billed for intake and ongoing sessions?",
+    "sliding_scale_probe": "I saw the practice offers sliding-scale. What's the actual rate available right now for new clients, and is there an intake form to determine eligibility?",
+    "modality_probe": "What's the therapist's primary modality — CBT, psychodynamic, EMDR, ACT, IFS, somatic? And do they have specific experience with [presenting issue at the HIGH level: 'anxiety', 'work stress', 'grief', 'couples work']?",
+    "logistics_probe": "What's the current wait for a first appointment, and are sessions telehealth, in-person, or both? What's the cancellation / no-show policy?",
+    "consult_request": "Could the operator have a brief 10-15 minute phone consult with the therapist directly before committing? Fit matters and they'd rather both be sure.",
+    "credentials_probe": "Could you confirm the therapist's license number and credential type — LMFT, LCSW, LPC, PhD, PsyD? The operator wants to verify with the state board.",
+    "stall_to_check": "Let me check with the operator before we book — they want to confirm the insurance side and the time slot directly.",
+    "graceful_close": "Thank you, this is really helpful. Could you email a new-client intake packet and the cancellation policy in writing? The operator will review and follow up to book."
+  },
+  "tactics": [
+    {
+      "name": "Lead with insurance and cost",
+      "when": "First substantive turn after pleasantries.",
+      "script": "Use the `insurance_probe`. Get a clear yes/no on in-network status, the per-session rate if out-of-network, and whether a superbill is provided. If sliding-scale is needed, follow with `sliding_scale_probe`.",
+      "priority": 1
+    },
+    {
+      "name": "Confirm credentials, not just the name",
+      "when": "Once cost is roughly clear.",
+      "script": "Use `credentials_probe`. Pre-licensed associates (LMFT-A, LCSW-A) are often discounted but bill differently for insurance. Get the license number for the operator to look up on the state board.",
+      "priority": 2
+    },
+    {
+      "name": "Ask about modality at a high level",
+      "when": "After credentials.",
+      "script": "Use `modality_probe`. Don't describe the operator's clinical situation in detail — keep it at the high level the operator authorised. The point is to check the therapist's specialisation fits, not to start treatment.",
+      "priority": 3
+    },
+    {
+      "name": "Request a brief therapist consult",
+      "when": "Logistics check out and the practice seems viable.",
+      "script": "Use `consult_request`. Most practices honour a 10-15 minute consult call with the clinician. This is the single highest-leverage step — fit comes through in tone, not biography.",
+      "priority": 4
+    },
+    {
+      "name": "Pin down the cancellation policy",
+      "when": "Before discussing actual time slots.",
+      "script": "Get the exact policy in writing — most are 24-hour, some 48-hour, some full-fee. Late-cancel and no-show fees can hit $150-$250. Confirm whether insurance covers anything if a session is cancelled late.",
+      "priority": 5
+    },
+    {
+      "name": "Defer booking and payment-on-file",
+      "when": "Coordinator tries to book and put a card on file.",
+      "script": "Use the `stall_to_check` phrase. Card-on-file is industry standard, but the operator authorises that — not you. Send the slot options back to the operator; let them confirm and provide payment directly."
+    },
+    {
+      "name": "Note waitlist openings honestly",
+      "when": "Practice is full but might open soon.",
+      "script": "Ask: 'If the operator joins the waitlist, what's the realistic timeline?' Note it as a fallback rather than a commitment."
+    }
+  ],
+  "boundaries": [
+    "Do NOT disclose detailed clinical history, suicidality, substance use, diagnoses, or trauma details to an intake coordinator. Those belong to the clinician, and the operator should share them directly.",
+    "Do NOT book a first appointment without the operator's explicit time-slot approval via ask_operator.",
+    "Do NOT provide credit card or full SSN/insurance details on this call. Confirm the cost and policy; the operator handles payment-on-file directly with the practice's secure portal.",
+    "Do NOT promise the operator will start by a specific date — waitlists shift.",
+    "Do NOT pressure for a sliding-scale rate by overstating financial hardship. Use only what the operator has authorised.",
+    "Do NOT skip the licence verification step — pre-licensed associates and unlicensed life coaches are not equivalent, and insurance treats them very differently."
+  ],
+  "success_signals": [
+    "Coordinator gives a clear in-network yes/no AND the per-session rate.",
+    "Sliding-scale rate is named as a specific number for new clients now.",
+    "Therapist offers a brief intro consult before booking.",
+    "Cancellation policy is provided in writing.",
+    "Coordinator confirms the therapist has experience with the presenting issue at the level discussed.",
+    "Telehealth and/or in-person availability is confirmed for the operator's preferred times."
+  ],
+  "failure_signals": [
+    "Practice will not confirm insurance until after the first appointment.",
+    "Sliding-scale is 'theoretically available' but no slots exist.",
+    "Coordinator pressures for a card on file before the operator has reviewed cancellation policy.",
+    "Refusal to allow a brief intro consult.",
+    "Therapist's licence is inactive, expired, or in a different state from the operator's residence at session time.",
+    "Modality is mismatched (e.g. operator needs EMDR for trauma, therapist only does talk therapy)."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the practice will email: intake packet, cancellation policy, new-patient consent forms, and the consult-call appointment if available. Note the per-session fee, sliding-scale rate if applicable, expected start window, and CPT codes for the operator to verify with their insurer.",
+    "on_failure": "Politely close. Ask the coordinator for one or two referrals to in-network therapists who might fit — practices often share informally. Report the gap to the operator (cost / availability / fit) with specifics.",
+    "follow_ups": [
+      "Email the operator: therapist name, license, fee, in/out-network status, sliding-scale offer, cancellation policy, consult-call slot, modality, and a short fit assessment.",
+      "Operator independently verifies coverage with their insurer using the provided CPT codes BEFORE the first paid session.",
+      "If proceeding to consult: prep the operator with 3-4 questions to ask the clinician directly."
+    ]
+  },
+  "required_user_info": [
+    "Therapist name, state, and (if known) license number",
+    "Insurance: insurer name, member ID, group number, plan type (HMO/PPO/EPO)",
+    "Budget per session AND sliding-scale need (yes/no, target rate)",
+    "Presenting concern at HIGH level only (e.g. 'anxiety', 'couples', 'grief') — no clinical detail",
+    "Telehealth vs in-person preference",
+    "Time-of-day / weekday / weekend availability window"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

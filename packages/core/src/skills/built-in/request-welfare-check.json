@@ -1,0 +1,127 @@
+{
+  "id": "request-welfare-check",
+  "name": "Request a Police Welfare Check",
+  "version": "1.0.1",
+  "category": "emergency-services",
+  "tags": [
+    "police",
+    "welfare-check",
+    "wellness-check",
+    "concern",
+    "non-emergency",
+    "emergency_services"
+  ],
+  "description": "Call the local non-emergency police line to request a welfare / wellness check on someone the operator is worried about but can't reach.",
+  "disclaimer": "Welfare checks are a double-edged tool. Police arriving at someone's home can escalate situations — especially for people who are armed, in psychiatric distress, undocumented, or members of communities that have had bad outcomes with police welfare checks. The agent must make sure the operator has CONSIDERED these risks and explicitly authorised the call anyway. When alternatives exist (a neighbour, a building manager, a relative who has a key), prefer them; suggest them via ask_operator before placing the call.",
+  "context": {
+    "when_to_use": "Operator is concerned about a person — elderly relative not answering the phone for days, friend who sent a worrying text and went silent, neighbour they haven't seen in a long time. They've tried other channels, have no one local who can check, and want police to do a wellness check.",
+    "preconditions": [
+      "Operator's explicit authorisation, AFTER being asked whether a non-police alternative is available.",
+      "Subject's name and address (apartment number if relevant).",
+      "Operator's relationship to the subject (relative / friend / neighbour) — dispatchers ask.",
+      "What the operator knows — last contact, why they're worried, any health / mental-health context that's safe to share.",
+      "Whether the subject is known to be armed, has firearms in the home, has a history of mental-health crisis, or is in a vulnerable group (the dispatcher needs this so they can route the right responders)."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Ask the operator whether a non-police alternative is available BEFORE placing the call. A neighbour with a key, a building manager, family closer to the subject. If yes, suggest using them first.",
+    "Identify as an AI on the first sentence.",
+    "Give the dispatcher full context: relationship, last contact, what's worrying, ANY mental-health / weapons context. The dispatcher can route to a co-responder model (crisis-trained team) in many jurisdictions if they know.",
+    "Don't push the dispatcher toward a forced entry or a particular response. Describe; let them decide.",
+    "Follow up — get a case number, and get a callback commitment if possible."
+  ],
+  "phrases": {
+    "ask_operator_about_alternatives": "Before I place this call, has the operator tried a neighbour, building manager, or a relative who's closer? Police welfare checks can escalate situations — if there's a non-police option, it's often better. Please confirm whether to proceed with the police call.",
+    "opener": "Hi — I'm an AI assistant calling on behalf of <operator>. We'd like to request a welfare check for <subject name> at <address>. My operator is <relationship>. They last heard from <subject> on <date> and are worried because <reason>. May I walk you through the context?",
+    "share_context_clearly": "Some context the responders should know: <mental-health history if any> / <firearms in the home if known> / <medical conditions> / <pets in the home>. My operator wanted you to have this so the right team responds.",
+    "ask_for_response_window": "Roughly when do you think an officer will be able to make the check? My operator is anxious and would like to know what to expect.",
+    "ask_for_case_number": "Could I get a case or incident number, and someone to call back if my operator doesn't hear anything?",
+    "callback_offer": "Operator's callback number is <number>. They'd appreciate hearing from the officer after the check.",
+    "welfare_check_weaponisation_screen": "Before I place this, I need to ask a few questions. (1) What SPECIFIC recent observation made you worried — not 'they're being weird' but 'on Tuesday they texted X and haven't replied since'? (2) Is there any active dispute, breakup, custody fight, lawsuit, or grievance between you and them right now? (3) Are you asking the police to do this because you have NO other way to check on them, or because you specifically want them to have a police interaction? (4) Is this person known to be armed, in mental-health crisis, undocumented, or in a group that's had bad police outcomes? Honest answers protect them AND protect you legally — the audit log of this call is subpoenable.",
+    "welfare_check_refusal": "I'm not going to place this welfare check. Here's why: <list the specific red flags from the screening>. Police arriving at someone's door against the backdrop of an active dispute looks like — and can legally be — harassment, and welfare checks against people with weapons / mental-health crises / vulnerable status have killed people. If you have a SPECIFIC recent worrying observation that isn't part of your dispute with them, tell me now and we can revisit. Otherwise this is a no."
+  },
+  "tactics": [
+    {
+      "name": "Weaponisation screen — REFUSE if the request smells like a grievance",
+      "when": "Before any other step, immediately after the operator says they want a welfare check.",
+      "script": "Welfare checks are one of the most weaponised channels in policing: an aggrieved party calls one against an ex, a custody counterparty, a tenant, a neighbour, an estranged relative, or someone they had a public dispute with — and police arrive at the subject's door, sometimes with fatal consequences when the subject is armed, undocumented, mid-mental-health-crisis, or a member of a community with bad police outcomes. Before doing anything else, screen with `welfare_check_weaponisation_screen` (see phrases). Concrete red-flag combinations that REQUIRE refusal:\n  · operator's reason is THIN ('they haven't replied to my texts in a few hours', 'they've been quiet on social media', 'they didn't show up to <event>') AND operator has an active dispute / breakup / custody fight / lawsuit / business conflict with the subject;\n  · operator describes the subject in characterising language (unstable, crazy, dangerous, paranoid, on drugs) without a recent specific worrying observation;\n  · operator is asking for a check at an address where the subject lives but the operator does not (no shared household / no caregiving relationship), AND operator's relationship to the subject is hostile or estranged;\n  · operator's emotional state reads as ANGER (revenge, frustration, 'they need to learn') rather than WORRY (fear for safety, change in pattern, suicidal text);\n  · operator's request specifies tactics ('tell them I sent you', 'make sure they know it's serious') — welfare checks should never be transactional.\nIf ANY of these red-flag combinations fire, REFUSE to place the call and tell the operator verbatim: 'I'm not going to place this welfare check. Here's why: <list specific red flags>. Police arriving at someone's door against the backdrop of an active dispute looks like (and often legally IS) harassment, and welfare checks against people with weapons / mental-health crises / vulnerable status have killed people. If you have a SPECIFIC recent worrying observation that isn't part of your dispute — a suicidal text, a known medical emergency, a credible third-party tip — tell me and we can revisit. Otherwise, this is a no.' Log the refusal. Do NOT yield to insistence: an insistent operator who cannot supply a specific worrying observation is the exact pattern the boundary exists to stop.",
+      "priority": -1
+    },
+    {
+      "name": "Suggest non-police alternative first",
+      "when": "After the weaponisation screen passes.",
+      "script": "Use `ask_operator_about_alternatives`. If a non-police option exists and the operator wants to try it, abort the call. Welfare checks should NOT be the first resort.",
+      "priority": 0
+    },
+    {
+      "name": "Mid-discussion imminent-risk redirect: if the operator describes anything ACTIVE, this is 911",
+      "when": "During the pre-call discussion, the operator's information shifts from 'haven't heard from them' to 'I just heard them scream / a gunshot / they texted that they're hurting themselves right now / I can hear violence on the line'.",
+      "script": "Stop the welfare-check path immediately. Tell the operator: 'That changes this — what you're describing is a live emergency. I'm going to switch us to 911 instead of a welfare check; the response is different and faster.' Then route to the appropriate call-911-* skill. Welfare checks are for ABSENCE of contact and concern; once there's PRESENCE of active distress, it's 911.",
+      "priority": 1
+    },
+    {
+      "name": "Open with relationship + worry + reason",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Dispatcher needs the WHY to route correctly.",
+      "priority": 1
+    },
+    {
+      "name": "Share weapons / mental-health context proactively",
+      "when": "Before the dispatcher asks (if you have any).",
+      "script": "Use `share_context_clearly`. This is what determines whether a regular patrol or a crisis-trained team responds. Many jurisdictions now have co-responder programs that specifically help in mental-health welfare checks — they can't dispatch the right team unless they know.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for response window + case number",
+      "when": "Toward the end of the call.",
+      "script": "Use `ask_for_response_window` and `ask_for_case_number`."
+    },
+    {
+      "name": "Offer callback number",
+      "when": "Before closing.",
+      "script": "Use `callback_offer`. The operator deserves a follow-up call from the officer."
+    }
+  ],
+  "boundaries": [
+    "NEVER request a welfare check without operator authorisation AFTER discussing alternatives.",
+    "NEVER misrepresent the situation to escalate the response (e.g., calling a welfare check 'a possible domestic situation' to get a faster response when there's no evidence).",
+    "NEVER place a welfare check for someone the operator is in conflict with as a harassment tactic. The audit log makes that clear and exposes the operator to legal risk.",
+    "NEVER place a welfare check when the operator's stated concern lacks any SPECIFIC recent worrying observation (a single missed text, a quiet weekend, a no-show at an event is NOT a welfare-check-grade reason). 'I just have a bad feeling' is not enough.",
+    "NEVER place a welfare check when the operator has an active dispute / breakup / custody fight / lawsuit / business conflict with the subject UNLESS the operator can articulate a specific recent worrying observation that exists INDEPENDENT of the dispute (e.g., a suicidal text, a known medical event, a credible third-party tip). The dispute context plus thin observation is the SWATting / harassment pattern and the agent refuses regardless of operator insistence.",
+    "NEVER place a welfare check at the operator's prescribed tactic ('tell them I sent you', 'make sure officers know it's serious'). Welfare checks are not a message-delivery service.",
+    "NEVER continue down the welfare-check path once the operator describes anything ACTIVELY happening (audible distress, recent worrying message about right-now harm). Switch to 911.",
+    "NEVER omit mental-health / weapons context if known — that omission directly worsens outcomes.",
+    "NEVER fabricate context to get a more sympathetic response."
+  ],
+  "success_signals": [
+    "Dispatcher confirms a unit will be dispatched within a stated window.",
+    "Dispatcher offers a co-responder / crisis-trained team where appropriate.",
+    "Dispatcher commits to a callback to the operator after the check.",
+    "Case number captured."
+  ],
+  "failure_signals": [
+    "Dispatcher says they can't / won't dispatch (some jurisdictions require more concrete signs of distress) — relay the alternative the dispatcher suggests.",
+    "Operator declines to proceed once they hear the alternative options — that's a success on the alternatives front, not a failure.",
+    "Operator pushes back on the weaponisation screen, insists on the call without producing a specific recent worrying observation, becomes hostile when asked about a dispute with the subject — REFUSE the call, log the refusal verbatim. This pattern is exactly what the boundary exists to stop.",
+    "Dispatcher is escalating the situation in a way the operator didn't intend — pause: 'My operator wants a wellness check, not an arrest. Can we keep it at that level?'"
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm response window and case number. Email operator with the summary, expected window, and a 'call back if you don't hear from them by <time>' nudge.",
+    "on_failure": "Email operator the dispatcher's recommended alternative. Help arrange it (call the building manager, etc) if appropriate.",
+    "follow_ups": [
+      "Email operator after the call with case number, window, and dispatcher's commitments.",
+      "Calendar a check-in for the end of the response window — if no callback received, follow up to the non-emergency line referencing the case number."
+    ]
+  },
+  "required_user_info": [
+    "Operator's explicit authorisation AFTER discussion of alternatives",
+    "Subject's name and full address (apartment number if relevant)",
+    "Operator's relationship to the subject",
+    "Last contact date + why the operator is worried",
+    "Any mental-health, weapons, medical, or pet context to share with responders",
+    "Operator's callback number",
+    "Whether the subject's neighbours / building manager / relatives have been tried"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

@@ -1,0 +1,159 @@
+{
+  "id": "handle-time-pressure",
+  "name": "Time Pressure: Using It, Neutralizing It",
+  "version": "1.0.1",
+  "category": "negotiation",
+  "tags": ["deadlines", "urgency", "exploding-offers", "BATNA", "phone-call", "real-time"],
+  "description": "Time pressure is the most-used and least-real leverage in commercial negotiation. 'This offer expires today', 'I have another buyer', 'my manager only approved this for an hour' — these are almost always partly fictional. Recognize them, neutralize them, and deploy real time pressure of your own when warranted.",
+  "disclaimer": "Some deadlines ARE real. Calling a real deadline as fake is the most expensive mistake in this skill. Always test before dismissing.",
+  "context": {
+    "when_to_use": "Any negotiation where the counterparty introduces a deadline, expiration, or urgency claim. Or when you have legitimate time pressure of your own to leverage.",
+    "preconditions": [
+      "You have a BATNA (best alternative to a negotiated agreement) so you can credibly slow down.",
+      "You are NOT yourself under emergency time pressure — if you are, neutralizing theirs is harder.",
+      "You have authorization from the user to let an offer expire if it turns out to have been real."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Manufactured urgency is the negotiator's most-deployed weapon because it's cheap to fake and effective on amateurs.",
+    "The asymmetric-urgency rule: the side that NEEDS the deal sooner loses leverage. Never reveal your urgency.",
+    "Slow down deliberately when the counterparty speeds up. Pace asymmetry is its own leverage — they reveal their position to fill the silence.",
+    "Real deadlines have specific, verifiable, system-level consequences. 'My manager went home at 5' is verifiable; 'this is our best offer for today' is not.",
+    "When using time pressure yourself, anchor on EXTERNAL constraints (board meeting, fiscal year, regulatory date) not internal preference. External constraints feel non-negotiable; internal preference is negotiable.",
+    "If a counterparty's 'expiring' offer was real, it will be re-offered within 48 hours — usually at the same number or better. Calling the bluff is rarely catastrophic."
+  ],
+  "phrases": {
+    "test_the_deadline": "What happens if I decide tomorrow instead of today?",
+    "test_the_other_buyer": "It sounds like you have momentum elsewhere — should we pause and let you close that? I don't want to be a distraction.",
+    "test_the_manager_window": "Can you confirm that in writing before we lose the window?",
+    "slow_the_pace": "Let me take a minute to think this through — I want to make sure I'm making the right call.",
+    "neutralize_calmly": "I hear there's a deadline on your end — and I respect that. But I can't make a decision this size in [N] minutes. What's the longest you can hold this?",
+    "deploy_real_pressure": "I need to close this by [specific date] because of [external constraint]. After that, my best alternative is [BATNA].",
+    "deploy_fy_pressure": "We're committing remaining budget by end of fiscal — anything we don't close by [date] rolls to next year.",
+    "graceful_walk_from_fake_deadline": "Okay. If the offer's gone tomorrow, that tells me what I need to know about the flexibility on your end — I'll move forward elsewhere. No hard feelings."
+  },
+  "tactics": [
+    {
+      "name": "Test every deadline before believing it",
+      "when": "Counterparty mentions an expiration, deadline, or limited window.",
+      "script": "`test_the_deadline`: 'What happens if I decide tomorrow?' If the answer is vague, the deadline is soft. If the answer is specific and system-level, it's likely real.",
+      "priority": 1
+    },
+    {
+      "name": "Slow down when they speed up",
+      "when": "Rep accelerates pace, repeats the deadline, or pushes for immediate close.",
+      "script": "Use `slow_the_pace`. Take a deliberate pause. Your composure is a counter-leverage.",
+      "priority": 2
+    },
+    {
+      "name": "Call the other-buyer bluff softly",
+      "when": "Rep claims 'I have another buyer interested'.",
+      "script": "`test_the_other_buyer` — graciously yield the field. 'Great, then it sounds like you don't need me — good luck.' 90% of the time the other buyer materializes only when you do.",
+      "priority": 3
+    },
+    {
+      "name": "Get the time pressure in writing",
+      "when": "Rep claims the manager approval has a window.",
+      "script": "`test_the_manager_window`: 'Can you confirm that in writing?' Most fake windows evaporate at the request for documentation.",
+      "priority": 4
+    },
+    {
+      "name": "Deploy YOUR external deadline carefully",
+      "when": "You have a real, defensible external deadline (fiscal year, project start, regulatory deadline).",
+      "script": "Use `deploy_real_pressure` or `deploy_fy_pressure`. Name the external anchor. Make it falsifiable so it reads as real.",
+      "priority": 5
+    },
+    {
+      "name": "Walk gracefully if the fake deadline is real",
+      "when": "You called the bluff and they walked.",
+      "script": "Use `graceful_walk_from_fake_deadline`. No anger, no recrimination. Door stays open. They often come back within 48 hours."
+    }
+  ],
+  "decision_tree": {
+    "description": "Time-pressure moves happen quickly. The first 5 seconds after a deadline is stated determine whether you fold or test. Run this every time.",
+    "branches": [
+      {
+        "if_you_hear": "'This offer expires today / this hour / by EOD.'",
+        "interpretation": "80% fake. Test before accepting.",
+        "say": "`test_the_deadline`: 'What happens if I decide tomorrow?'",
+        "do_not": "Do not fold. Do not accept the deadline as-stated."
+      },
+      {
+        "if_you_hear": "'I have another buyer / another customer interested in this slot.'",
+        "interpretation": "Often bluff. Even if true, you have nothing to lose by yielding.",
+        "say": "`test_the_other_buyer` — yield gracefully: 'Sounds like you don't need me.'",
+        "do_not": "Do not get into a bidding war on their terms. Do not match urgency."
+      },
+      {
+        "if_you_hear": "'My manager only approved this discount for the next [hour].'",
+        "interpretation": "Possibly real, possibly script. Ask for documentation.",
+        "say": "`test_the_manager_window`: 'Can you confirm that in writing?'",
+        "do_not": "Do not accept verbal-only deadlines. Documentation requests reveal fakes."
+      },
+      {
+        "if_you_hear": "Specific, verifiable, system-level deadline (e.g., 'price increase takes effect Jan 1 — already in the system').",
+        "interpretation": "Likely real. System constraints are harder to fake.",
+        "say": "Acknowledge the real deadline but slow your own decision: `neutralize_calmly`. 'I hear it — what's the longest you can hold it?'",
+        "do_not": "Do not panic-buy. Even real deadlines have grace periods if you ask."
+      },
+      {
+        "if_you_hear": "Rep keeps mentioning the clock multiple times in 5 minutes.",
+        "interpretation": "Pressure tactic, not real deadline. Real deadlines get stated once.",
+        "say": "Name it gently: 'I notice the clock keeps coming up — can you help me understand what changes after [time]?'",
+        "do_not": "Do not let the repetition pressure you. Repetition signals weakness, not strength."
+      },
+      {
+        "if_you_hear": "Counterparty tries to extend the call past your scheduled end.",
+        "interpretation": "They want to push you past decision fatigue.",
+        "say": "'I need to wrap up at [time]. Let's pick this up tomorrow with the rest unresolved.' Set the boundary.",
+        "do_not": "Do not let them control the clock. Decision fatigue is real."
+      },
+      {
+        "if_you_hear": "You feel YOURSELF rushing — internal urgency leaking.",
+        "interpretation": "Most dangerous moment. You're about to give away leverage.",
+        "say": "Take a manufactured break: 'Hold on one moment, I want to check something.' 30-second pause resets your tempo.",
+        "do_not": "Do not let your tone reveal urgency. Pause aggressively."
+      },
+      {
+        "if_you_hear": "You have a REAL external deadline they don't know about.",
+        "interpretation": "Hidden leverage on their side if revealed. Hidden constraint on yours.",
+        "say": "Decide whether to use it. If you can credibly hide it longer than they can wait, hide it. If your hand is forced, name it AS external ('fiscal year', not 'I need to close').",
+        "do_not": "Do not name internal urgency. External deadlines are leverage; internal ones are tells."
+      },
+      {
+        "if_you_hear": "They walk after you tested the deadline.",
+        "interpretation": "Either you over-tested OR the deadline was real after all.",
+        "say": "`graceful_walk_from_fake_deadline`. Door stays open. Most return within 48 hours.",
+        "do_not": "Do not chase. Do not panic-accept. Do not bad-mouth them."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT manufacture fake deadlines yourself. The user's reputation is at stake; fake deadlines from you damage long-term trust.",
+    "Do NOT call a clearly system-level deadline a bluff (e.g., 'all flights to that destination are full' is real, not a tactic).",
+    "Do NOT use 'I have other offers' unless you actually do.",
+    "Do NOT push past a counterparty's stated end-of-day. They can be rushed; you cannot break their reasonable boundaries."
+  ],
+  "success_signals": [
+    "After your test, the rep softens or extends the deadline ('let me see if I can hold it through tomorrow').",
+    "Rep stops mentioning the deadline after you test it once.",
+    "Rep volunteers that the deadline was nominal ('honestly, we usually have a grace period').",
+    "Walked-away counterparty calls back within 48 hours."
+  ],
+  "failure_signals": [
+    "Rep documents the deadline immediately when asked — it was real. Decide fast.",
+    "Rep ends the call after your test — over-tested; review.",
+    "You agreed under pressure and now regret the terms — diagnose what you missed."
+  ],
+  "exit_strategy": {
+    "on_success": "If you neutralized the deadline, proceed at your pace and close on real terms.",
+    "on_failure": "If the deadline was real and you missed the window, log the lesson and verify next time before testing. If you walked and they don't return, validate that your BATNA was sound."
+  },
+  "required_user_info": [
+    "User's BATNA — what happens if they walk?",
+    "User's real deadlines (so we don't conflate negotiating tactics with real constraints).",
+    "Whether the user has authority to let an offer expire."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

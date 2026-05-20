@@ -1,0 +1,127 @@
+{
+  "id": "outage-credit-applied",
+  "name": "Report a Telecom / Utility Outage and Get a Credit Applied",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "telecom",
+    "utility",
+    "outage",
+    "credit",
+    "service-interruption",
+    "phone-call",
+    "utility-telecom"
+  ],
+  "description": "Call a telecom (cable, fiber, mobile) or utility provider AFTER an outage has been resolved to claim a service-interruption credit — proportional to outage duration, applied to the current or next bill, with a confirmation number.",
+  "disclaimer": "Most providers do NOT auto-credit outages — you must request it. Credit policies vary: many telecoms credit pro-rata for any outage > 4 hours; some require ≥ 24 hours; some only credit if you call. Utilities may have a tariff-defined credit (e.g. $25 per 12 hours over a threshold) and a more generous regulatory option after a major event.",
+  "context": {
+    "when_to_use": "Service has been restored AND the outage either lasted long enough to qualify per the provider's policy/tariff OR caused tangible harm (spoiled food in fridge, lost work time, missed appointments). Best within 30 days of the outage; some providers cap at 60 days.",
+    "preconditions": [
+      "Approximate outage start and end times (within 1 hour is fine).",
+      "Original ticket / case number from when the outage was reported.",
+      "Account number, account holder name.",
+      "If claiming consequential damage (spoiled food, generator fuel): receipts/photos.",
+      "Knowledge of whether the outage was on the provider's published outage map / Twitter feed (third-party proof helps if account-level records are missing)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Lead with the FACT of the outage and the ASK for credit in the same sentence. Reps process credit requests as a one-step transaction when framed cleanly.",
+    "Cite the original ticket number. With a ticket, the rep can pull the duration directly; without one, they may insist they 'have no record' and refuse.",
+    "Know the policy or tariff. 'Your service agreement provides a prorated credit for outages exceeding 24 hours' lands very differently from 'I think I'm owed something'.",
+    "Recognise wrong-queue early. Outage credits are typically billing or 'customer care', NOT tech support. If you're talking to a tech, you'll get a 'we'll note it' instead of an actual credit.",
+    "Consequential damage (food spoilage during a multi-day power outage, hotel during prolonged outage) is sometimes claimable, but usually goes through a separate claims/insurance process — not the standard credit line. Don't conflate them on the same call."
+  ],
+  "phrases": {
+    "opener": "Hi, account [number]. I had a service outage from approximately [start] to [end] — that's [duration]. Ticket number [number]. I'd like to request a service-interruption credit applied to my next bill.",
+    "no_ticket_opener": "Hi, account [number]. I had a service outage from [start] to [end]. I don't have a ticket number — your outage map / status page confirmed it at the time. I'd like to request a service-interruption credit.",
+    "queue_check": "Are you the team that processes outage credits? I want to make sure I'm not in tech support — I'm not troubleshooting, the service is back.",
+    "transfer_request": "Could you do a warm transfer to billing / outage credits and stay on the line until they pick up? I'd rather not lose my hold position.",
+    "cite_policy": "My understanding of your service agreement is that outages over [threshold] qualify for a prorated credit. Can you confirm the policy and calculate what applies to my [duration] outage?",
+    "ask_pro_rata": "What's the per-day or per-hour credit rate? I want to confirm the math before we hang up — daily rate is roughly $[monthly / 30], and outage was [duration].",
+    "ask_application": "Will this credit appear on my next bill, or as an immediate adjustment to the current balance? And how is it labelled on the bill so I can verify?",
+    "consequential_damage": "Separately — the outage caused [spoiled food / hotel cost / lost work]. Is there a claims process for consequential damages, separate from the service credit?",
+    "supervisor_request": "Thanks for digging through all that. Could you loop in a supervisor? The credit you're offering doesn't match my read of the policy, and I want to be sure before I close this out.",
+    "lock_in_writing": "Please email me: credit amount, application date, line item label, and confirmation number. I want it in writing.",
+    "graceful_close": "Thanks — $[amount] credit, applied on [bill date], confirmation [number]. I'll watch for the email."
+  },
+  "tactics": [
+    {
+      "name": "Open with the ask",
+      "when": "First substantive turn.",
+      "script": "Use `opener` (with ticket) or `no_ticket_opener` (without). Mention duration in hours so the rep can map it to policy thresholds immediately.",
+      "priority": 1
+    },
+    {
+      "name": "Recognise wrong-queue / tech support trap",
+      "when": "Rep starts running diagnostics or asks 'is the service back now?'.",
+      "script": "Use `queue_check` and `transfer_request`. Tech support's job is to fix; billing's job is to credit. Different metrics, different scripts.",
+      "priority": 2
+    },
+    {
+      "name": "Cite the policy / tariff",
+      "when": "Rep hedges on whether a credit applies.",
+      "script": "Use `cite_policy`. Even a vague 'my understanding is over 24 hours qualifies' often triggers the rep to look up the actual policy.",
+      "priority": 3
+    },
+    {
+      "name": "Verify the math",
+      "when": "Rep offers a number.",
+      "script": "Use `ask_pro_rata`. Reps sometimes offer a token $5 'goodwill' credit when a prorated tariff would mandate $25-$40. Doing the math live keeps them honest.",
+      "priority": 4
+    },
+    {
+      "name": "Confirm application",
+      "when": "After credit amount is agreed.",
+      "script": "Use `ask_application`. Some credits go to the current bill (visible quickly), some to the next bill. Knowing which prevents a 'where's my credit' follow-up.",
+      "priority": 5
+    },
+    {
+      "name": "Separate consequential damage as its own track",
+      "when": "User had spoiled food, hotel costs, etc.",
+      "script": "Use `consequential_damage`. Do NOT try to roll it into the service credit — they're different processes. Most providers have a small-claims / damage form."
+    },
+    {
+      "name": "Escalate if the math is wrong",
+      "when": "Rep offers a credit smaller than policy implies.",
+      "script": "Use `supervisor_request`. Frame the supervisor ask as policy-clarification, not complaint — that gets the warm handoff."
+    }
+  ],
+  "boundaries": [
+    "Do NOT fabricate or exaggerate outage duration. Providers can pull network logs; an exaggerated claim disqualifies the request entirely.",
+    "Do NOT request a credit for a brief outage (under the policy threshold) — it burns goodwill for the next real outage.",
+    "Do NOT accept a 'goodwill credit' that's smaller than the tariff-defined amount without asking for the formula.",
+    "Do NOT skip the consequential-damage claim form if real damage occurred — service credit alone won't cover it."
+  ],
+  "success_signals": [
+    "Credit amount calculated against the actual policy / tariff.",
+    "Application date and line item confirmed.",
+    "Confirmation number issued.",
+    "If applicable: consequential-damage claim form sent separately."
+  ],
+  "failure_signals": [
+    "Rep insists 'no record' of the outage and refuses to look up the ticket.",
+    "Offered credit is materially smaller than tariff implies and supervisor declines to escalate.",
+    "Credit is offered as 'a one-time goodwill' rather than as a service credit (loses precedent for future outages).",
+    "No written confirmation arrives."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm amount, application date, confirmation number. Watch the next 1-2 bills to verify the credit appeared.",
+    "on_failure": "Escalate via the provider's executive customer-relations email (publicly listed). For utilities, file with the state Public Utility Commission citing the tariff. For telecom, file with the FCC for service-quality issues exceeding 24 hours.",
+    "follow_ups": [
+      "Next bill: verify credit applied and labelled correctly.",
+      "If consequential damage was claimed: submit the claim form within the provider's window (usually 30-60 days).",
+      "If a major regional event (storm, wildfire): watch for an automatic class-wide credit announced by the provider — request it separately if your account didn't auto-receive it."
+    ]
+  },
+  "required_user_info": [
+    "Account number and account holder name",
+    "Outage start and end times (approximate is fine)",
+    "Original ticket / case number if available",
+    "Monthly service amount (for pro-rata math)",
+    "Any documented consequential damage (receipts, photos)",
+    "Best email for written confirmation"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

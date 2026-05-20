@@ -1,0 +1,115 @@
+{
+  "id": "receive-difficult-news",
+  "name": "Receive Difficult News on Behalf of the Operator",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "bad-news",
+    "test-results",
+    "denial",
+    "rejection",
+    "phone-call",
+    "composure",
+    "intermediary",
+    "emotional-intelligence"
+  ],
+  "description": "Take a hard outcome — a test result, a claim denial, a rejection, a refusal — on the operator's behalf with composure, get every piece of information they will need, and stay regulated enough to ask the next-step questions before the line closes.",
+  "disclaimer": "If the news is a medical or mental-health crisis (a positive result for a serious illness, a mental-health danger signal), follow the operator's documented preferences. If none exist, deliver the news in person/by warm channel rather than text, and ensure the operator is not alone when they get it.",
+  "context": {
+    "when_to_use": "You are the intermediary on a call where the rep is delivering news the operator will find hard — a denied claim, a no, a difficult diagnosis being relayed by a clinic, a 'we've decided to go another direction.' The operator is not on the line.",
+    "preconditions": [
+      "Operator has authorised you to receive sensitive information on their behalf.",
+      "You have a way to deliver the news back to the operator (channel + recommended timing).",
+      "You know which DETAILS the operator will need beyond the headline (dates, reasons, appeal windows, next steps)."
+    ],
+    "estimated_call_duration_minutes": 10
+  },
+  "principles": [
+    "Your job is to be a clean conduit. Emotion belongs to the operator, not to you on their behalf.",
+    "The rep is often relieved that you are composed. Composed callers get more information than tearful ones, fairly or not.",
+    "The first 30 seconds after the news are the information-richest. Get the questions out before the rep wraps.",
+    "Repeat the news back, verbatim, before reacting. This locks in accuracy and buys you composure-time.",
+    "Do not editorialise. 'That's awful' or 'wow that's unfair' belongs in your debrief to the operator, not the call.",
+    "Plan the operator delivery while still on the call. The rep gave you data; now you need delivery channel + framing."
+  ],
+  "phrases": {
+    "acknowledge_and_lock_in": "Thank you for telling me. Let me read it back to make sure I have it right: [exact words]. Did I get that correctly?",
+    "ask_for_reason": "Could you walk me through the reason — I want to be able to explain it accurately to [operator].",
+    "ask_for_next_steps": "What are the options from here? Is there an appeal, a re-test, or a different path we can consider?",
+    "ask_for_timing": "What's the timeline — when does this take effect, and what's the deadline if there's a way to respond?",
+    "ask_for_written": "Will this come in writing — letter, email, portal message? When should we expect it?",
+    "request_contact_for_followup": "If [operator] has questions after I deliver this, who is the best person and number for them to call?"
+  },
+  "tactics": [
+    {
+      "name": "Lock the headline before reacting",
+      "when": "Immediately after the rep delivers the news.",
+      "script": "Use `acknowledge_and_lock_in`. Read it back literally. This protects accuracy AND gives you a beat to regulate.",
+      "priority": 1
+    },
+    {
+      "name": "Sweep for the four questions",
+      "when": "Once the headline is locked.",
+      "script": "Reason / next steps / timing / written confirmation. Get all four before the call closes — they're harder to get on a callback. Use the four `ask_for_*` phrases.",
+      "priority": 2
+    },
+    {
+      "name": "Tone-shift detector — REP IS UNCOMFORTABLE",
+      "when": "Rep speaks quickly, uses softeners ('unfortunately', 'I'm so sorry to have to tell you'), or volunteers extra context.",
+      "script": "Slow down. Thank them once, sincerely. Reps who feel bad sometimes share information they're not technically supposed to — make space for it without prompting.",
+      "priority": 3
+    },
+    {
+      "name": "Tone-shift detector — REP IS DETACHED",
+      "when": "Rep reads it like an item on a script, no softener.",
+      "script": "Do not perform emotion to pull warmth out of them. Stay calm and businesslike — you'll get more information by matching their register than by guilting them.",
+      "priority": 4
+    },
+    {
+      "name": "Capture the human details too",
+      "when": "Towards the end of the call.",
+      "script": "Get the rep's name, employee ID, the time, and any case/reference number. Get the spelling. This is what makes a credible report to the operator and a credible appeal.",
+      "priority": 5
+    },
+    {
+      "name": "Plan the operator delivery before hanging up",
+      "when": "Last minute of the call.",
+      "script": "Decide: which channel (call vs. text vs. in-person), when (now vs. let them finish work), and what to lead with. Do not deliver until you've decided. A botched delivery is sometimes worse than a delayed one."
+    }
+  ],
+  "boundaries": [
+    "Do NOT relay the news to the operator inside this call by three-way without their explicit standing consent.",
+    "Do NOT speculate to the rep ('they're going to be devastated', 'this is going to ruin them'). Keep the operator's interior private.",
+    "Do NOT argue with the rep on the spot. Take the information cleanly; argue in writing on appeal.",
+    "Do NOT delay delivering the news to the operator unreasonably — they may need the time window to act.",
+    "Do NOT improve the news for the operator's sake. They need it accurate; reframing belongs after the facts."
+  ],
+  "success_signals": [
+    "You can recite the news back verbatim.",
+    "You have all four facts (reason / next steps / timing / written).",
+    "You have a case number and rep ID.",
+    "The rep ends the call somewhere between 'I'm sorry' and 'have a good day' — neither was performance."
+  ],
+  "failure_signals": [
+    "You realise after hanging up you missed the timeline.",
+    "You editorialised mid-call and the rep got formal again.",
+    "You started crying or audibly reacting — composure is the job here.",
+    "The news isn't in writing and you have no way to confirm it."
+  ],
+  "exit_strategy": {
+    "on_success": "End politely, thank the rep for being thorough. Hang up. PAUSE for 30 seconds before contacting the operator — gather your phrasing.",
+    "on_failure": "If you missed information, call back and ask for the same rep if possible: 'I want to make sure I represent this correctly to [operator] — can you confirm [thing I missed]?'",
+    "follow_ups": [
+      "Deliver to the operator via the channel + timing you decided, with the headline first and the four facts ready.",
+      "Save a written record (your notes + any letter that arrives) — operator may need it for appeal, insurance, HR.",
+      "Schedule a check-in with the operator 24-48h later — first-day reactions and second-day reactions differ."
+    ]
+  },
+  "required_user_info": [
+    "Standing preference: how does the operator want hard news delivered (call vs text, immediately vs end of day)?",
+    "Who else, if anyone, is authorised to know?",
+    "Any appeal / response timeline the operator wants to defend by default."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

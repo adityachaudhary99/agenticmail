@@ -1,0 +1,133 @@
+{
+  "id": "add-driver-vehicle-household",
+  "name": "Add a New Driver, Vehicle, or Household Member Mid-Policy",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "auto",
+    "home",
+    "policy-change",
+    "endorsement",
+    "household",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Add a driver, vehicle, or household member to an existing policy mid-term. Confirm effective date, get the pro-rated premium impact in writing BEFORE binding, and avoid common traps: undisclosed-driver exclusions, garage-location mismatches, and surprise re-rating of the rest of the policy.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "User has a new driver (teen, spouse, household member), new vehicle (purchase, lease, gift), or new household composition (move-in roommate, college student returning) and wants to add them to an existing policy.",
+    "preconditions": [
+      "Existing policy number and named-insured info.",
+      "Full legal name, DOB, and driver's license number + state for new drivers.",
+      "VIN, year/make/model, lien holder info for new vehicles.",
+      "Garaging address (where the vehicle is parked overnight ≥ 50% of the time).",
+      "Date the change should be effective."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Undisclosed drivers in the household are the #1 cause of post-loss coverage denials. Disclose, even when the rate goes up.",
+    "Effective date matters. Coverage gaps before the effective date can void claims; coverage backdates are often refused.",
+    "Adding a driver re-rates the WHOLE policy. Ask for the new total premium, not just the 'driver portion'.",
+    "Garaging address must match where the vehicle actually sits at night — misrepresenting it is rate fraud.",
+    "Lienholders and lessors require specific coverages (full coverage + lienholder-as-loss-payee). Confirm the lienholder info is added correctly or the lender will force-place coverage.",
+    "Get the binding confirmation and premium impact in writing BEFORE the call ends. 'I'll send the endorsement later' too often becomes a surprise bill."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to add a [driver / vehicle / household member] to policy [number], effective [date]. Could you walk me through what you need and quote the premium change before binding anything?",
+    "ask_premium_impact": "Before we bind this — what does the total new policy premium look like, and what's the pro-rated amount due for the remainder of the term? Could you break out which portion is the new driver/vehicle and which is any re-rate of the existing coverage?",
+    "confirm_effective_date": "I want the change effective [date] — not the call date. Can you confirm that's how it'll bind, and what happens between now and the effective date?",
+    "ask_undisclosed_driver_consequences": "Out of curiosity, if a household member or vehicle had been driving the car for some time without being on the policy, how would the carrier treat that? Just want to understand the rules so we're clear going forward.",
+    "ask_lienholder": "The new vehicle is financed through [lender]. Could you add [lender] as loss payee/lienholder, and what's the form they need for proof of insurance?",
+    "ask_garaging": "The vehicle's primary garaging address is [address] — that's where it sits overnight most nights. Please make sure that's reflected on the endorsement, not just the named-insured's address.",
+    "ask_discount_eligibility": "Does adding this driver/vehicle unlock or change any discounts — multi-vehicle, multi-policy, good student, defensive driver, telematics?",
+    "request_written_quote": "Could you email or text me the endorsement quote and the new declarations page before we bind it? I'd like to review the numbers before committing.",
+    "graceful_close": "Thanks. To confirm: endorsement effective [date], new total premium [amount], pro-rated additional charge [amount], lienholder [added/N-A], declarations page emailed by [date]. We haven't bound yet — I'll confirm after I see the quote."
+  },
+  "tactics": [
+    {
+      "name": "Ask for the premium impact BEFORE binding",
+      "when": "Mid-call.",
+      "script": "Use the `ask_premium_impact` phrase. Reps often bind first and quote later. That denies the user the option to shop. Quote-then-bind is the right order.",
+      "priority": 1
+    },
+    {
+      "name": "Disclose accurately, even when the rate stings",
+      "when": "Adding a household driver.",
+      "script": "Be honest about driving frequency, license status, and any tickets/accidents. The alternative — undisclosed driver — voids coverage when it matters most.",
+      "priority": 2
+    },
+    {
+      "name": "Lock the effective date",
+      "when": "Confirming the change.",
+      "script": "Use the `confirm_effective_date` phrase. If the new driver needs coverage today, effective date is today. If they don't start driving until next month, effective date is next month — don't pay sooner than needed.",
+      "priority": 3
+    },
+    {
+      "name": "Add the lienholder correctly",
+      "when": "Adding a financed vehicle.",
+      "script": "Use the `ask_lienholder` phrase. Lender's name, address, loan number. Force-placed insurance (when the lender adds its own coverage because yours is missing) costs 3-5× the standard rate.",
+      "priority": 4
+    },
+    {
+      "name": "Set garaging accurately",
+      "when": "Adding a vehicle.",
+      "script": "Use the `ask_garaging` phrase. ZIP code drives rate. Misrepresenting garaging is fraud; under-representing it (claiming a low-cost ZIP for a vehicle that lives in a high-cost ZIP) is the most common version.",
+      "priority": 5
+    },
+    {
+      "name": "Surface discounts",
+      "when": "Late in the call.",
+      "script": "Use the `ask_discount_eligibility` phrase. Multi-vehicle, multi-policy, good student, telematics, defensive driver course, paid-in-full — these stack and can offset much of the increase.",
+      "priority": 6
+    },
+    {
+      "name": "Get the quote in writing",
+      "when": "Before binding.",
+      "script": "Use the `request_written_quote` phrase. Don't authorize binding until the declarations page (or at minimum a written quote with the new total premium) is in hand.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT misrepresent driving frequency, license status, garaging address, or household composition.",
+    "Do NOT omit a household member who drives the vehicle — leads to claim denial under undisclosed-driver exclusions.",
+    "Do NOT bind without seeing the quote in writing unless coverage is needed RIGHT NOW (then bind and adjust within the carrier's free-look window).",
+    "Do NOT speculate about a new driver's history if records aren't clear — pull the MVR (motor vehicle record) before the call if possible.",
+    "Do NOT accept a 'we'll figure out the discounts later' — surface them upfront."
+  ],
+  "success_signals": [
+    "Quote provided BEFORE binding.",
+    "Effective date matches the user's preference.",
+    "Lienholder properly added (if applicable).",
+    "Garaging address correctly recorded.",
+    "Eligible discounts surfaced and applied.",
+    "Updated declarations page committed for delivery."
+  ],
+  "failure_signals": [
+    "Rep insists on binding before quoting.",
+    "Rep refuses to break out the premium components.",
+    "Rep refuses to backdate or future-date the effective date.",
+    "Rep cannot add the lienholder.",
+    "Rep proposes a 'driver exclusion' as an alternative — read carefully, this denies coverage for that driver entirely."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: effective date, new total premium, pro-rated charge, lienholder status, garaging address, declarations-page ETA. Confirm not-yet-bound if reviewing. Email the user a recap immediately.",
+    "on_failure": "Don't bind. Route to `ask_operator` with options: (1) get a competing quote from another carrier before binding, (2) call back at a different time / different rep, (3) escalate to a supervisor or use an independent agent.",
+    "follow_ups": [
+      "Save the updated declarations page when it arrives.",
+      "Send a recap email with the new premium and effective date.",
+      "If a new vehicle, send proof-of-insurance to the lienholder.",
+      "Calendar the next renewal date — rate changes mid-term often re-price at full renewal."
+    ]
+  },
+  "required_user_info": [
+    "Policy number and named-insured info",
+    "Driver: full legal name, DOB, DL number + state, license history",
+    "Vehicle: VIN, year/make/model, financed/leased/owned, lienholder info",
+    "Garaging address",
+    "Desired effective date",
+    "Whether operator authorises binding on this call vs review-then-bind"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

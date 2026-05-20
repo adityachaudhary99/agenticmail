@@ -1,0 +1,113 @@
+{
+  "id": "capture-rep-identity",
+  "name": "Capture Rep Identity and Reference Number",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "closing",
+    "identity",
+    "reference-number",
+    "accountability",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Before ending any call, capture the rep's name (spelled out), employee or operator ID, department/location, AND a case/reference/confirmation number tied to THIS call. Without these four artifacts, the call effectively never happened from the company's side.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Every call. EVERY call. Even informational ones. The cost is 60 seconds; the value is that you can re-enter the conversation downstream instead of starting over with a fresh rep who has no context.",
+    "preconditions": [
+      "The call has reached a point where the rep has done something — looked up the account, made a note, processed a change, given information.",
+      "You have a way to record/type the identifiers (call notes, memory, transcript).",
+      "Recording is ideally still in progress when you collect them."
+    ],
+    "estimated_call_duration_minutes": 2
+  },
+  "principles": [
+    "Frame it as 'for my records', not 'to hold you accountable'. Same outcome, much warmer reception.",
+    "Spell out the name. 'Sarah with an H' vs 'Sara' matters when escalating later. Confirm spelling on uncommon names.",
+    "Capture ID + ref number even when the rep didn't change anything. Informational calls are often the foundation of later disputes.",
+    "Geographic location helps. Call centres in different regions follow different scripts; knowing you spoke with 'Manila tier-1' vs 'Austin retention' shapes the escalation path.",
+    "If a rep refuses to give an ID, that's data — proceed politely but escalate before closing."
+  ],
+  "phrases": {
+    "opener": "Before we wrap up, can I grab a few details for my records — could I get your first name and spelling, and an operator or employee ID?",
+    "id_clarify": "And what's the ID format — is that a number, letters, a badge code? Just want to make sure I write it down correctly.",
+    "department_probe": "Which team are you on — front-line customer service, retention, billing, technical? And what region or location, if you can share?",
+    "reference_request": "Is there a case number, reference number, or ticket number for this call I can quote if I call back?",
+    "no_case_number_fallback": "If there's no formal case number, can you note in my account that we spoke today about [topic] — and tell me what timestamp or note ID is now on the account?",
+    "refusal_handler": "Totally understand if there are privacy rules around the ID. In that case — what's the standard reference I'd use to find this exact call later? Is there a call ID on your side?",
+    "graceful_close_success": "Perfect, I've got [name spelled X-Y-Z], ID [N], [department], reference [R]. Thanks — that's exactly what I needed.",
+    "graceful_close_failure": "I'd like to confirm those identifiers with a supervisor before we hang up — not because of anything you've done, but I've been burned by callbacks where there was no way to retrieve the conversation."
+  },
+  "tactics": [
+    {
+      "name": "Ask early, not at the very end",
+      "when": "Right after the substantive part of the call ends, before the readback starts.",
+      "script": "Use the `opener` phrase. Asking at the absolute end feels like an accusation; asking 'now that we've sorted that out, let me grab some details' feels routine.",
+      "priority": 1
+    },
+    {
+      "name": "Spell-check the name",
+      "when": "Rep gives a name.",
+      "script": "Read it back letter by letter: 'S-A-R-A-H, Sarah — got it.' Catches mishearing and signals that you're recording carefully without saying so.",
+      "priority": 2
+    },
+    {
+      "name": "Capture the ID format too",
+      "when": "Rep gives an employee or operator ID.",
+      "script": "Use the `id_clarify` phrase. Knowing it's '7-digit numeric' vs 'two letters then four digits' helps a future agent validate it.",
+      "priority": 3
+    },
+    {
+      "name": "Probe department + location",
+      "when": "After name + ID captured.",
+      "script": "Use the `department_probe` phrase. Most companies have multiple call centres with different authority levels — knowing which one you reached is leverage on the next call.",
+      "priority": 4
+    },
+    {
+      "name": "Force a reference number into existence",
+      "when": "No case/ticket number has been mentioned during the call.",
+      "script": "Use the `reference_request` phrase. If the rep says there isn't one, fall back to `no_case_number_fallback` — get SOMETHING that can be looked up later (timestamp + note ID is a minimum).",
+      "priority": 5
+    },
+    {
+      "name": "Handle refusal gracefully but firmly",
+      "when": "Rep declines to share an ID or reference number.",
+      "script": "Use the `refusal_handler` phrase. If they still refuse, use `graceful_close_failure` and escalate to a supervisor. A rep with nothing to hide will give you SOME identifier.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT demand a last name — many companies prohibit reps from sharing it. First name + ID is enough.",
+    "Do NOT threaten ('I need this in case I sue you'). Frame as record-keeping, not preparation for combat.",
+    "Do NOT accept 'we don't use case numbers' as a final answer — every modern CRM has a record ID. Push to `no_case_number_fallback`.",
+    "Do NOT close without at least three of: name, ID, department, reference number. Two or fewer is not enough to recover the call later."
+  ],
+  "success_signals": [
+    "Rep volunteers ID and reference number without being asked twice.",
+    "Rep spells their own name to you proactively.",
+    "Rep adds 'and a note has been added to your account, you'll see it under [date]'.",
+    "Reference number follows a recognisable format (e.g. INC-, CASE-, prefix + digits)."
+  ],
+  "failure_signals": [
+    "Rep flatly refuses to share any identifier.",
+    "Rep gives a name but says 'we don't have IDs' — almost never true at a real company.",
+    "Reference number is suspiciously short or generic ('just call back and reference the date').",
+    "Rep's name changes between the start of the call and the close — possible handoff that wasn't disclosed."
+  ],
+  "exit_strategy": {
+    "on_success": "Log the four artifacts (name, ID, department, ref#) in call notes immediately, in a structured format. Pair with `request-written-confirmation` so a paper trail exists alongside the audio.",
+    "on_failure": "Escalate to a supervisor before ending the call and capture the supervisor's identifiers. If still refused, end the call but flag the company as 'identifier-opaque' — future calls will need different tactics (e.g. recording explicitly, requesting a complaint case).",
+    "follow_ups": [
+      "Save the four identifiers in a permanent record keyed by date + topic.",
+      "If a callback is expected, hand the identifiers to the next agent so they can reference the prior call."
+    ]
+  },
+  "required_user_info": [
+    "A reliable note-taking surface (transcript, memory, or operator-side log)",
+    "Knowledge of which company / department was called (for cross-referencing later)",
+    "User authorisation to extend the call by 1-2 minutes for record-keeping"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

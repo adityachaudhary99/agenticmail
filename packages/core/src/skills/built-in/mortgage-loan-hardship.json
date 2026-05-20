@@ -1,0 +1,130 @@
+{
+  "id": "mortgage-loan-hardship",
+  "name": "Mortgage or Loan Rate-Modification / Hardship Inquiry",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "mortgage",
+    "loan-modification",
+    "hardship",
+    "loss-mitigation",
+    "forbearance",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call a mortgage servicer or loan provider's loss-mitigation department to inquire about a rate modification, hardship plan, forbearance, or repayment plan — without committing to anything that would damage credit or trigger acceleration without explicit operator approval.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User is facing or anticipating financial hardship affecting a mortgage, auto, personal, or student loan: income loss, medical event, divorce, business setback. Call EARLY — before missing payments, when possible. Most servicers have more options before delinquency than after.",
+    "preconditions": [
+      "Operator has authorized an INQUIRY only. Agreeing to any plan that re-amortizes, defers, or settles requires a fresh operator approval.",
+      "User has loan account number, monthly payment, and approximate balance.",
+      "User can describe the hardship: cause, duration estimate (temporary vs ongoing), supporting documentation available.",
+      "User knows the loan type: conventional, FHA, VA, USDA, private — different rules and programs apply.",
+      "User has 2-3 months of income + expense snapshots ready (servicers ask for budget figures)."
+    ],
+    "estimated_call_duration_minutes": 45
+  },
+  "principles": [
+    "Talk to LOSS MITIGATION, not customer service. Loss-mit is the team with actual authority to modify, defer, or restructure. Customer service can only take payments.",
+    "Use the right vocabulary: 'forbearance' (temporary pause), 'loan modification' (permanent rate / term change), 'repayment plan' (catch-up over months), 'deferral' (move missed payments to end of loan). Asking for the wrong one wastes 20 minutes.",
+    "Frame as 'I want to keep paying — what's the structured path that works?' — NOT 'I can't pay'. Servicers route motivated borrowers to better programs than panicked ones.",
+    "Federal programs may apply: HAMP successor flex-mod, FHA partial claim, VA loan-mod, federal student-loan IDR / PSLF. Mention the loan type to anchor the rep on relevant programs.",
+    "DO NOT agree to anything on the first call. 'I'd like to understand the options. I will not be agreeing to anything today — I need to review and confirm with my [operator / co-signer].' This protects against accidental credit damage.",
+    "Some 'modifications' report negatively to credit bureaus (e.g., 'partial payment' codes). Always ask: 'How will this be reported to the bureaus?' before agreeing."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to speak with the loss-mitigation team about my [mortgage / auto loan / personal loan / student loan]. I'm exploring options for a [forbearance / repayment plan / modification] due to [hardship category]. I'm in inquiry mode today — I won't be agreeing to anything on this call.",
+    "ask_for_loss_mit": "If I'm with general customer service, can you transfer me to the loss-mitigation or hardship-assistance team directly?",
+    "name_the_loan_type": "Just to anchor the conversation — this is a [conventional / FHA / VA / USDA / private] loan, originated [year], current balance approximately [$amount].",
+    "ask_for_all_programs": "Can you walk me through ALL the programs I might be eligible for — forbearance, repayment plan, modification, deferral — and for each, the impact on (a) monthly payment, (b) total interest, (c) credit-bureau reporting, and (d) whether it extends the loan term?",
+    "credit_impact_question": "How will [each option] be reported to Equifax / Experian / TransUnion? Will it show as 'paying as agreed', 'modified', 'partial payment', 'in forbearance', or something else?",
+    "documentation_question": "What documentation do you need from me to formally apply — hardship letter, tax returns, paystubs, bank statements, hardship affidavit?",
+    "hold_for_approval": "These options are helpful. I'm going to take this information back to [operator / co-signer / spouse], review the impact on credit and total interest, and call back to formally apply. Can you note today's conversation on the account and give me a reference number?",
+    "decline_pressure": "I hear you on the streamlined option, but I'm not in a position to commit today. Send me the terms in writing and I'll review and come back to you.",
+    "graceful_close": "Thanks. Can you confirm what's been noted on the account, list the program names and timing windows I can apply for, and give me your name and a direct extension if available?"
+  },
+  "tactics": [
+    {
+      "name": "Get to loss-mit fast",
+      "when": "Connected to general CS.",
+      "script": "Use `ask_for_loss_mit`. Loss-mit teams have written authority levels CS doesn't. If you can't get transferred, ask for the loss-mit DIRECT number.",
+      "priority": 1
+    },
+    {
+      "name": "Set scope: inquiry only",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Stating up front that you're not committing today removes pressure tactics and gets clearer information.",
+      "priority": 2
+    },
+    {
+      "name": "Get the full menu",
+      "when": "Rep starts pitching ONE program.",
+      "script": "Use `ask_for_all_programs`. Otherwise reps default to the most-pitched option, which isn't always the user's best fit.",
+      "priority": 3
+    },
+    {
+      "name": "Pin credit reporting per option",
+      "when": "Each program is described.",
+      "script": "Use `credit_impact_question` for EACH option. 'In forbearance' reports differently than 'partial payment', and the differences cost real points on the user's credit score for years.",
+      "priority": 4
+    },
+    {
+      "name": "Capture documentation requirements",
+      "when": "Programs identified.",
+      "script": "Use `documentation_question`. Many federal programs require a hardship affidavit, 2 years of returns, recent paystubs, and bank statements. Knowing this saves a callback."
+    },
+    {
+      "name": "Resist same-call commitment",
+      "when": "Rep pushes 'we can lock this in right now.'",
+      "script": "Use `decline_pressure`. Some 'streamlined' programs reduce future eligibility for better federal options — never agree without time to compare."
+    },
+    {
+      "name": "Lock in writeback",
+      "when": "Inquiry complete.",
+      "script": "Use `graceful_close`. Notes on file + program names + windows + rep name. Without these, the next rep starts from zero."
+    }
+  ],
+  "boundaries": [
+    "Do NOT agree to ANY plan, modification, forbearance, settlement, or rate change without explicit operator approval. Inquiry only.",
+    "Do NOT make a partial payment 'as a good-faith gesture' — partial payments can be applied as suspense items and trigger negative credit reporting.",
+    "Do NOT verbally accept a 'trial modification' — these convert to permanent and have credit-reporting consequences.",
+    "Do NOT provide full SSN, full DOB, full income unless the loss-mit team confirms it's required to enter the program AND operator has approved disclosure.",
+    "Do NOT discuss settlement / charge-off — those are last-resort and severely impact credit and may have tax consequences (cancellation of debt income).",
+    "Do NOT close the call without notes-on-file and rep name."
+  ],
+  "success_signals": [
+    "Connected to loss-mit / hardship-assistance team (not general CS).",
+    "Multiple programs described with payment, interest, term, and credit-reporting impact for each.",
+    "Documentation checklist obtained.",
+    "Account noted with today's inquiry; reference number issued.",
+    "No pressure to commit on the call."
+  ],
+  "failure_signals": [
+    "Rep insists on a same-day commitment with 'limited-time' framing — that's a pressure tactic.",
+    "Cannot reach loss-mit and CS won't transfer.",
+    "Rep refuses to disclose credit-bureau reporting impact.",
+    "Account already in delinquency status that changes available options (note and escalate).",
+    "Rep proposes settlement / charge-off as the first option — escalate."
+  ],
+  "exit_strategy": {
+    "on_success": "Bring program comparison back to operator with: monthly payment, interest impact, term impact, credit reporting, documentation needed, application window. Get operator's pick. Schedule the application call.",
+    "on_failure": "If loss-mit was unreachable: try at off-peak hours (Tue-Thu, 10am-2pm local). If credit-impact disclosure was refused: escalate to a supervisor or file CFPB complaint. If hardship is severe: consult HUD-approved housing counselor (mortgage) or a nonprofit credit counselor.",
+    "follow_ups": [
+      "Send hardship-letter draft to operator for approval.",
+      "Calendar: application deadline.",
+      "If federal program (FHA partial claim, VA loan-mod, etc.): research program-specific timelines.",
+      "If student loan: explore IDR (income-driven repayment) and PSLF separately."
+    ]
+  },
+  "required_user_info": [
+    "Loan account number, type, originator, current balance, monthly payment",
+    "Hardship category: income loss, medical, divorce, business, other",
+    "Hardship duration estimate: temporary (<6 mo), extended (6-18 mo), permanent",
+    "Income + expense snapshot (gross, net, fixed obligations)",
+    "Operator approval scope (inquiry only vs ready to apply)",
+    "Any prior loss-mit history on this loan"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

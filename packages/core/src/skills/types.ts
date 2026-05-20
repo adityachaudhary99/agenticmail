@@ -165,6 +165,17 @@ export type SkillCategory =
   | 'civic'              // DMV, voter registration, city services
   | 'employment'         // scheduling interviews, declining offers
   | 'debt-collection'    // FDCPA-aware (US) responses, validation requests
+  // v0.9.87 — community drop + emergency-services bundle added these:
+  | 'emergency-services'      // 911 / 988 / poison-control / FBI tip / APS / CPS
+  | 'critical-reasoning'      // meta-skills that layer under any other skill
+  | 'emotional-intelligence'  // tone, rapport, de-escalation
+  | 'closing'                 // wrap-up, confirmation, reference-number capture
+  | 'outreach'                // outbound / cold calls
+  | 'professional-services'   // intake calls for doctors / lawyers / coaches
+  | 'education'               // registrar, admissions, financial aid
+  | 'tenancy'                 // landlord / lease / HOA matters
+  | 'utility-telecom'         // power, water, mobile, cable, fiber
+  | 'insurance'               // claims, disputes, prior-auth
   | 'other';
 
 /** When-to-use + preconditions block. */

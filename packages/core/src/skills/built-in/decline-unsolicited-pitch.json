@@ -1,0 +1,110 @@
+{
+  "id": "decline-unsolicited-pitch",
+  "name": "Politely Decline an Unsolicited Sales Pitch",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "inbound",
+    "self-defense",
+    "boundary",
+    "phone-call",
+    "respect",
+    "outreach-sales"
+  ],
+  "description": "When the agent — on its own dedicated line — receives an unsolicited inbound sales / cold call, decline cleanly, professionally, and in a way that protects future relationships without wasting either party's time.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "The agent's own outbound line, voice number, or contact details have been used by an external party to pitch to the agent or operator. The pitch is unsolicited and not connected to a known operator-initiated thread.",
+    "preconditions": [
+      "Caller has identified themselves and stated a sales / partnership / introduction intent.",
+      "Agent has confirmed there is no prior authorised relationship with this caller in operator records.",
+      "Operator has not pre-flagged this caller / company as a wanted inbound."
+    ],
+    "estimated_call_duration_minutes": 2
+  },
+  "principles": [
+    "The salesperson is doing their job. Be respectful — you may end up working with them or someone they know.",
+    "A clean 'no thank you' beats a soft 'maybe later'. Maybes generate follow-up calls; clean nos do not.",
+    "Brevity is kindness. Letting them keep pitching when you know it's a no wastes their time and yours.",
+    "Never lie about why you're declining ('we already have one', 'we're in a contract') unless it is true. Lies invite 'when does the contract end?' follow-ups.",
+    "If you're not the decision-maker, say so plainly — and do NOT volunteer the decision-maker's direct contact.",
+    "Treat the call the way you'd want your own outreach calls treated."
+  ],
+  "phrases": {
+    "early_intercept": "Thanks for the call — before you go further, I'm going to stop you because we don't take unsolicited sales pitches on this line. Could I ask you to send any information by email instead?",
+    "polite_no": "Thanks for the call, but it's a no from me on this — and that's a real no, not a 'try again next quarter'. Please take us off your call list.",
+    "not_the_dm": "I'm not the decision-maker for that, and I don't pass along contact details for unsolicited outreach. You're welcome to email [generic inbox] and the right person will pick it up if it's relevant.",
+    "remove_request": "Could you please remove this number from your dialer? I'd appreciate it.",
+    "respectful_close": "Thanks again for your time — best of luck with your outreach. Goodbye."
+  },
+  "tactics": [
+    {
+      "name": "Intercept early — within 15 seconds",
+      "when": "Caller has identified themselves and their employer and is about to launch into the pitch.",
+      "script": "Use `early_intercept`. Letting the pitch run for two minutes before declining is a courtesy that costs both sides time and makes the no feel harsher.",
+      "priority": 1
+    },
+    {
+      "name": "Give one reason, not five",
+      "when": "Caller asks 'can I ask why?'.",
+      "script": "Pick the one truest reason — 'no budget for this category', 'we have a vendor we're happy with', 'not a priority this year' — and stop. Multiple reasons invite multiple counters.",
+      "priority": 2
+    },
+    {
+      "name": "Convert to written channel only if genuinely useful",
+      "when": "Caller asks for an email address or to send materials.",
+      "script": "Offer a generic inbox if the operator has one and you suspect occasional inbound is wanted. Do NOT give a personal email or direct dial just to end the call — that creates worse follow-up.",
+      "priority": 3
+    },
+    {
+      "name": "Protect the decision-maker",
+      "when": "Caller asks 'who is the right person?'.",
+      "script": "Use `not_the_dm`. Do not give names, direct lines, or routing tips that bypass the operator's own gatekeeping.",
+      "priority": 4
+    },
+    {
+      "name": "Ask to be removed from the list",
+      "when": "This is the second or third call from the same company.",
+      "script": "Use `remove_request`. In many jurisdictions this triggers a legal do-not-call obligation. Document the date and the caller's name for the operator's records.",
+      "priority": 5
+    },
+    {
+      "name": "Exit warmly",
+      "when": "After saying no.",
+      "script": "Use `respectful_close`. A warm exit is cheap and pays off if this person ends up at a company you actually want to talk to later."
+    }
+  ],
+  "boundaries": [
+    "Do NOT give out the operator's direct phone, personal email, or calendar link to unsolicited callers.",
+    "Do NOT name a specific competitor as the reason ('we use X'). That gives the caller their next call script.",
+    "Do NOT promise follow-up you don't intend to deliver ('email me, I'll bring it up internally') unless you really will.",
+    "Do NOT escalate or get sarcastic, even if the caller is pushy. A clean cold no is more powerful than annoyance.",
+    "Do NOT hang up mid-sentence on the caller unless they have crossed into hostility — give the polite close."
+  ],
+  "success_signals": [
+    "Caller acknowledges the no, removes the number on request, and ends the call.",
+    "Caller redirects to email — agent provides only the public inbox.",
+    "Caller thanks you for the directness."
+  ],
+  "failure_signals": [
+    "Caller continues to pitch after a clear no.",
+    "Caller becomes argumentative or attempts manipulation ('just five minutes', 'your boss would want to hear this').",
+    "Same company calls again within 30 days despite a removal request."
+  ],
+  "exit_strategy": {
+    "on_success": "Log the call in the operator's inbound-pitch log: company, caller name, what they pitched, removal requested y/n. This becomes useful market intel.",
+    "on_failure": "If the caller refuses to disengage, repeat the no once, then end the call. Add the company to a blocked-caller list if the operator maintains one.",
+    "follow_ups": [
+      "Add a one-line entry to the operator's inbound log so repeat callers are recognised.",
+      "If a removal was requested, mark the date — a return call inside the do-not-call window is the operator's choice whether to escalate."
+    ]
+  },
+  "required_user_info": [
+    "Whether the operator has a generic inbox for unsolicited inbound",
+    "Whether the operator maintains a blocked-caller list",
+    "Operator's standing policy on inbound (e.g. 'always decline politely', or 'flag X categories for review')",
+    "Whether to log inbound pitches for later review"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

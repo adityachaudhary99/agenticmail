@@ -1,0 +1,144 @@
+{
+  "id": "realestate-agent-vetting",
+  "name": "Real-Estate Agent Vetting Call: Experience, Conflicts, Commission",
+  "version": "1.0.1",
+  "category": "real-estate",
+  "tags": [
+    "real-estate",
+    "agent",
+    "realtor",
+    "buyer-representation",
+    "listing-agent",
+    "commission",
+    "conflict-of-interest",
+    "intake",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Place an interview / vetting call with a real-estate agent (buyer's or listing) to assess experience in the specific market, surface conflicts of interest (dual agency, transaction brokerage), confirm commission structure post-NAR-settlement, and pin down the representation agreement BEFORE the operator signs.",
+  "disclaimer": "Real-estate agency law and commission practice changed materially under the 2024 NAR settlement (USA): buyer-side compensation is now negotiated separately and buyer-representation agreements are typically required before showings. State law still varies. Confirm the operator's state's current rules with the agent and an attorney where stakes warrant.",
+  "context": {
+    "when_to_use": "Operator is choosing between 2-4 agents to represent them as a buyer or seller. Use BEFORE signing a buyer-representation or listing agreement. Pair with `realestate-agreement-review` (separate skill) when written agreements arrive.",
+    "preconditions": [
+      "Operator has surfaced any prior relationship with the agent, their brokerage, or anyone in the transaction (other side, lender, inspector) — possible conflict.",
+      "Operator has a clear target market: city / zip / neighbourhoods / price band / time horizon.",
+      "Operator knows whether they're buying, selling, or both (potential conflict).",
+      "Operator has interviewed (or plans to interview) at least 1-2 other agents for comparison."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Hyper-local matters more than firm brand. An agent who closed 15 deals last year in the operator's target zip beats a top-of-market agent who works the next city over.",
+    "Dual agency and transaction brokerage are legal in many states but structurally compromise representation. Surface them as a default question; defer signing on any dual-agency arrangement.",
+    "Commission is negotiable. Post-NAR-settlement, buyer-side commission is no longer assumed; buyers may pay their own agent, or negotiate seller concessions to cover it. Listing-side splits are likewise negotiable.",
+    "Length and exclusivity of the representation agreement is where the operator gives up leverage. Shorter is better; non-exclusive is better; specific market scope is better.",
+    "Marketing plans on the listing side and shortlist discipline on the buyer side are concrete deliverables. Push past slogans for specifics.",
+    "Disclosure obligations vary by state, but transparency about prior deals, partnerships with mortgage brokers / inspectors, and referral fees is a fitness test, not a nicety."
+  ],
+  "phrases": {
+    "opener": "Hi — calling for a client looking for [buyer / seller] representation in [target market], [price band]. Before we get into the property side, do you have a few minutes to walk me through your experience in that market and how you usually structure things?",
+    "experience_probe": "How many closed transactions did you personally handle in the last 12 months in [target zip / neighbourhood], on which side, and at what price point? Could you share two recent comps you closed?",
+    "conflicts_probe": "Could you walk me through any potential conflicts — dual agency, transaction brokerage, referral fees from inspectors / lenders / contractors, or relationships with anyone in the operator's transaction? The operator wants disclosure, not avoidance.",
+    "commission_probe": "Post-NAR-settlement, how do you structure compensation on the [buyer / listing] side? What's negotiable, and what's the current local market norm for this price band?",
+    "agreement_probe": "What's the length, exclusivity, and territorial scope of your standard representation agreement? Could you send a copy in advance — including the cancellation provisions?",
+    "buyer_specific_probe": "On the buyer side: how do you source listings, including off-market and pocket listings? What's your offer strategy in a [hot / balanced / cool] market like this one?",
+    "listing_specific_probe": "On the listing side: walk me through your marketing plan — photography, staging recommendations, MLS strategy, open houses, timeline, and pricing approach. What's your average list-to-sale ratio and days-on-market in this submarket?",
+    "team_probe": "Do you work with a team, and if so, who actually handles showings, offers, and negotiations vs your name on the door? Will the operator deal with you personally on offers?",
+    "references_probe": "Could you share three recent client references for transactions on the same side and similar price band, completed in the last 12-18 months?",
+    "stall_to_check": "Let me share the agreement and commission details with the operator. I won't sign anything mid-call.",
+    "graceful_close": "Thank you — could you email the representation agreement, two closed comps, the marketing plan or buyer strategy, and references? The operator will compare across agents and reply within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Anchor to the specific market",
+      "when": "Opening minute.",
+      "script": "Use `experience_probe`. 'How many deals did you close last year' is not the right question — 'how many in MY zip, on MY side, in MY price band' is.",
+      "priority": 1
+    },
+    {
+      "name": "Surface dual agency and referral fees",
+      "when": "Early in the call.",
+      "script": "Use `conflicts_probe`. The right answer is full disclosure of any relationships AND a policy: 'I don't take referral fees from inspectors I refer' or 'I disclose every fee in writing'. Refusal to discuss is the failure signal.",
+      "priority": 2
+    },
+    {
+      "name": "Get commission terms in the open",
+      "when": "After conflicts.",
+      "script": "Use `commission_probe`. Specifically post-NAR-settlement: how is buyer-side comp expected to be paid in this market? Is the agent open to flat-fee / discounted / performance-tier structures?",
+      "priority": 3
+    },
+    {
+      "name": "Side-specific deliverables",
+      "when": "Mid-call.",
+      "script": "Use `buyer_specific_probe` OR `listing_specific_probe` depending on side. Push for specifics: 'three concrete actions in the first week if we hire you'.",
+      "priority": 4
+    },
+    {
+      "name": "Who actually does the work",
+      "when": "After fit basics.",
+      "script": "Use `team_probe`. Big-name agents often pass showings and offers to junior team members. That's fine if the operator knows; misleading if the agent's bio doesn't say so.",
+      "priority": 5
+    },
+    {
+      "name": "Probe the representation agreement",
+      "when": "Before any commitment.",
+      "script": "Use `agreement_probe`. Length (90 days vs 12 months), exclusivity, termination, and scope are the most leveraged terms. Request the document in writing."
+    },
+    {
+      "name": "Request real references",
+      "when": "Late in call.",
+      "script": "Use `references_probe`. Same side, same price band, last 12-18 months. Operator can call one for a sanity check."
+    },
+    {
+      "name": "Defer signing",
+      "when": "Agent presents agreement mid-call.",
+      "script": "Use `stall_to_check`. Any agreement requires offline review. No exceptions."
+    }
+  ],
+  "boundaries": [
+    "Do NOT sign a buyer-representation or listing agreement mid-call. Use ask_operator.",
+    "Do NOT consent to dual agency or designated agency without an explicit, in-writing, operator-approved acknowledgment.",
+    "Do NOT share the operator's maximum buy price (buyer side) or minimum acceptable price (seller side) with the agent before the representation agreement is in place. This is leverage you don't give away pre-engagement.",
+    "Do NOT accept referrals to lenders / inspectors / title from the agent without independent verification — referral fees are common and bias the recommendation.",
+    "Do NOT commit to viewing properties or hosting an open house in a manner the operator hasn't approved.",
+    "Do NOT pay any 'consultation fee', 'admin fee', or 'transaction coordinator fee' on this call without operator authorisation."
+  ],
+  "success_signals": [
+    "Specific recent deal counts in the operator's market with side and price-band detail.",
+    "Open disclosure of any conflicts, dual-agency policy, and referral-fee posture.",
+    "Commission structure described as negotiable, with current market norms cited.",
+    "Representation agreement will be sent in writing with termination terms.",
+    "Side-specific concrete deliverables — buyer shortlist process or seller marketing plan.",
+    "Clear identification of who handles each step (agent vs team).",
+    "Three references offered without hesitation."
+  ],
+  "failure_signals": [
+    "Vague or inflated transaction numbers ('top 1% of agents nationally') with nothing specific to the operator's market.",
+    "Refusal or evasion on conflicts and referral fees.",
+    "Pressure to sign a long exclusive representation agreement on the call.",
+    "Insistence on dual agency without alternative.",
+    "Commission framed as 'standard' and non-negotiable.",
+    "No-marketing-plan on listing side; no off-market access on buyer side.",
+    "Bait-and-switch with junior team members never disclosed up front."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm agent will email: representation agreement (with termination, scope, length, exclusivity), two recent closed comps, side-specific plan, references, and conflicts disclosure. Operator will compare across 2-3 agents and respond within [timeframe]. Note named agent of record, brokerage, license number.",
+    "on_failure": "Politely close. Ask the agent if they can refer to a colleague who's more active in the specific zip / price band. Report back to the operator with specific reasons.",
+    "follow_ups": [
+      "Email the operator: agent name, brokerage, license, market activity, conflicts disclosure, commission framing, agreement length, red/green flags, comparative recommendation.",
+      "After all interviews: side-by-side comparison; pick the agent before signing anything.",
+      "Independent verification of license status via state real-estate commission."
+    ]
+  },
+  "required_user_info": [
+    "Buyer / seller side and target market (city / zip / neighbourhood / price band)",
+    "Timeline and motivation (urgency, life event, investment vs primary)",
+    "Any existing relationship with agents, brokerages, or transaction parties (conflict surfacing)",
+    "Operator's state and any known state-specific agency rules (dual agency permitted, designated agency, etc.)",
+    "Budget range (buyer) or net target (seller) — held privately, not shared with agent yet",
+    "Operator's willingness to pay buyer-agent comp out of pocket vs require seller concessions (post-NAR-settlement question)",
+    "Operator's communication preferences and decision timeline"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:10:08Z"
+}

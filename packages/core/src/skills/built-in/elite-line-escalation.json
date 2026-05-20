@@ -1,0 +1,107 @@
+{
+  "id": "elite-line-escalation",
+  "name": "Airline Elite-Line / Status-Credit Escalation",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["airline", "elite", "status", "phone-line", "concierge", "escalation"],
+  "description": "Route the call to the right tier of phone agent — 1K Voice, ConciergeKey, Diamond, 360, A-List Preferred — and use their wider discretion to unstick a problem the general line can't or won't solve.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User has airline elite status, OR is one tier away from status (status-match candidate), AND needs leverage on a request the general line just denied: change-fee waiver, mile redeposit, OAL rebook, upgrade clearance, fare-class hold, complaint resolution.",
+    "preconditions": [
+      "User has frequent flyer number and current tier confirmed.",
+      "User has PNR if the issue relates to an existing reservation.",
+      "User can articulate the exact ask in one sentence."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Status agents have MORE discretion, not just shorter holds. Front-line CSRs cannot waive fees beyond a small ceiling; elite-line agents have meaningfully higher ceilings.",
+    "Each tier has a published phone tree. Calling the right number is half the battle — wrong number gets you front-line, which has the same script you already failed at.",
+    "Loyalty-loyalty matters. Mention years of status, lifetime miles, recent paid-cabin flying. 'I've been Executive Platinum for 9 years' is leverage; 'I'm Executive Platinum' is just a fact.",
+    "Even non-status callers can be PROMOTED in queue by calling the right ancillary line (Vacations, Reservations Spanish, Reservations Japanese, Group Desk). Hold times are often a fraction of the main line.",
+    "Tone with elite agents: peer-to-peer, not customer-to-rep. They handle thousands of seasoned travelers; sounding like one accelerates the call.",
+    "Status-match agents (the team that processes competitor-status matches) are a parallel escalation path. If your status is about to expire on Carrier A, a match offer from Carrier B is leverage."
+  ],
+  "phrases": {
+    "opener": "Hi — [name], [frequent flyer number], [tier]. I have a quick one: [specific ask in one sentence]. Front-line told me [outcome], but I think this falls in your discretion.",
+    "establish_loyalty": "I've been [tier] for [years] years and flew [N] paid segments with you last year — I'm not trying to game anything, I just want this to work.",
+    "specific_ask": "Specifically I'd like you to [redeposit the miles / waive the change fee / put me on partner X / clear an upgrade / open inventory in Y class / re-issue under a waiver code].",
+    "concede_gracefully": "If the system genuinely won't let you do that, no worries. Could you note the request on my PNR and see if a supervisor or the [HVC desk / liaison desk] can pick it up?",
+    "status_match_pivot": "If we can't get there, I'm thinking about [competitor tier match]. I'd rather stay with you — what can we do?",
+    "graceful_close_success": "Thank you — that's a huge help. Can you confirm the PNR shows [new state], read me the confirmation number, and email me the updated itinerary?",
+    "graceful_close_failure": "Okay, I'll let this one go. Could you note on my account that we tried this and that I'm a long-term flyer? It helps me when I call back."
+  },
+  "tactics": [
+    {
+      "name": "Use the right phone number for your tier",
+      "when": "Before dialling.",
+      "script": "United: 1K Voice (1K only), Premier Platinum line, Global Services has dedicated reps reach out to you. American: ConciergeKey (invite-only top tier, no public number — they call you), Executive Platinum line, Platinum Pro line. Delta: Diamond Medallion line, 360 line (top-tier invite-only). Alaska: MVP Gold 75K line. Southwest: A-List Preferred line. JetBlue: Mosaic line. Numbers are on each program's homepage when logged in.",
+      "priority": 1
+    },
+    {
+      "name": "State the specific ask in ≤15 seconds",
+      "when": "First substantive turn.",
+      "script": "Elite agents reward concision. 'I missed UA 12 LHR-EWR yesterday because of a mechanical, I'd like the miles redeposited and the change fee waived' — that's the whole opener. Save your story for if they need it.",
+      "priority": 2
+    },
+    {
+      "name": "Cite specific tools the agent has",
+      "when": "Agent says 'system won't let me'.",
+      "script": "Examples: 'override desk', 'waiver code', 'unlock fare class with WAIVE remarks', 'fee waiver under loyalty discretion', 'INVOL refund-to-original-FOP'. Knowing the tools by name signals you respect their job and you know what's possible.",
+      "priority": 3
+    },
+    {
+      "name": "Status match as leverage",
+      "when": "Status renewal is in question.",
+      "script": "If you're 5,000 mi shy of re-qualifying for Executive Platinum and you have an open status-match offer from DL Diamond — politely mention it. Agents have soft-discretion miles credits ('soft landing', 'loyalty miles', 'gesture of goodwill') and use them to retain status flyers.",
+      "priority": 4
+    },
+    {
+      "name": "Try ancillary desks for promotion",
+      "when": "Non-status caller, main line wait is >20 minutes.",
+      "script": "AA Vacations desk, UA Vacations, DL Vacations, Reservations Español, AA Australia desk all answer general reservation questions and have shorter queues. Outside-US offices (UA Manila, AA Sydney, DL India) too."
+    },
+    {
+      "name": "Ask for the supervisor only after the agent has tried",
+      "when": "Agent has clearly used their tools and still cannot help.",
+      "script": "'Could you loop in your supervisor? Not because you've done anything wrong, but because the gap is enough that I want to make sure we've checked everything.' This is the negotiate-bill-reduction playbook — works identically here."
+    }
+  ],
+  "boundaries": [
+    "Do NOT call the elite line if you're not at that tier — the agent verifies and the call goes nowhere.",
+    "Do NOT abuse the line for routine seat changes the app handles fine. Burning goodwill costs you on the next real ask.",
+    "Do NOT misrepresent the urgency or facts of the situation.",
+    "Do NOT threaten to switch programs without follow-through; agents have seen this 10,000 times."
+  ],
+  "success_signals": [
+    "Agent picks up in <5 minutes.",
+    "Agent immediately understands the ask without restating.",
+    "Agent applies a waiver code, redeposits miles, or rebooks without arguing.",
+    "Agent thanks you for being a loyal customer (industry tell for 'this is going to work out').",
+    "Agent escalates to a desk above them without prompting."
+  ],
+  "failure_signals": [
+    "Elite line routes you back to general reservations.",
+    "Agent recites the same script the front line used.",
+    "Hold music for 30+ minutes on a top-tier line (rare; usually means IRROPS-driven volume).",
+    "Agent declines and refuses to escalate to supervisor."
+  ],
+  "exit_strategy": {
+    "on_success": "Get the confirmation, email confirmation, agent's first name. Note any soft-landing miles in your tracker.",
+    "on_failure": "Polite goodbye, redial later (different agent often = different result), or write to customer relations / loyalty program team in writing — those teams have additional discretion.",
+    "follow_ups": [
+      "If a waiver was applied, double-check the PNR shows zero-balance and no residual fare difference.",
+      "If miles redeposited, confirm they show in the account within 7 days; if not, call back.",
+      "If status match was floated, follow up in writing with the competitor program now."
+    ]
+  },
+  "required_user_info": [
+    "Frequent flyer number, tier, years at tier",
+    "PNR if applicable",
+    "Specific ask in one sentence",
+    "Outcome from the front-line agent (so the elite agent doesn't repeat)",
+    "Any open status-match or competitor offers"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

@@ -1,0 +1,135 @@
+{
+  "id": "veterinary-new-patient-intake",
+  "name": "Veterinary New-Patient Intake: Records Transfer and Urgent vs Routine Triage",
+  "version": "1.0.1",
+  "category": "medical-admin",
+  "tags": [
+    "veterinary",
+    "vet",
+    "pet",
+    "intake",
+    "records-transfer",
+    "urgent-care",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Call a veterinary clinic to establish a new-patient file for the operator's pet, request records transfer from prior vet, triage urgent vs routine timing, and confirm cost structure and emergency-after-hours coverage — without authorising procedures or deposits.",
+  "disclaimer": "If the pet shows signs of true emergency (laboured breathing, collapse, bloated abdomen, prolonged seizures, suspected toxin ingestion, unproductive retching, trauma), STOP this call and direct the operator to the nearest 24-hour emergency vet IMMEDIATELY. This skill is for non-emergent intake.",
+  "context": {
+    "when_to_use": "Operator has a new pet, just moved, switched clinics, or needs to see a specialist (cardiology, oncology, derm, surgery, behaviour). Use for non-emergent intake. Pair with `vet-emergency-triage` (separate skill) if symptoms cross urgent thresholds mid-call.",
+    "preconditions": [
+      "Pet basics: species, breed, age, sex, neuter status, weight, microchip number.",
+      "Vaccination and parasite-prevention status with dates if available.",
+      "Prior clinic name and a release-of-records form already authorised, or the operator's permission to authorise one.",
+      "Current concern in lay terms (well-visit, recurring symptom, post-op follow-up) plus duration and severity at the high level.",
+      "Pet insurance: carrier, policy number, deductible status."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Triage drives timing. Routine wellness can wait days; lethargy + not eating > 24h, repeated vomiting, or limping non-weight-bearing should be seen within 24-48h. True emergencies skip this skill entirely.",
+    "Records transfer is the single biggest source of duplicated cost. Always request prior records BEFORE the first visit so vaccines, labs, and imaging aren't redone unnecessarily.",
+    "First-visit cost is more than the exam fee. Expect exam + diagnostics + possibly vaccines + possibly meds. Get an estimated range, not just the consult fee.",
+    "After-hours coverage varies wildly. Some clinics partner with a 24-hour ER; others say 'call this number then drive'. Operator should know BEFORE midnight on a Sunday.",
+    "Pet insurance reimburses; it rarely pays directly. Operator pays at checkout and files. Confirm the clinic provides itemised invoices with CPT-equivalent codes.",
+    "Behavioural concerns deserve a behaviour-savvy vet, not a generalist who will hand back trazodone. Probe for this if the issue is behavioural."
+  ],
+  "phrases": {
+    "opener": "Hi — looking to set up a new patient file for [pet name], a [age]-[species]-[breed]. Before we book anything, can I run the current concern by you to make sure we're picking the right kind of slot?",
+    "triage_probe": "The current concern is [HIGH-level description]. Based on that, would you recommend a routine wellness slot, an urgent same/next-day slot, or an ER referral?",
+    "records_probe": "[Prior clinic] has [pet]'s records. Can your office initiate a records request, or does the operator need to sign a release on your portal first? What's the typical turnaround?",
+    "cost_probe": "What's the new-patient exam fee, and what's a realistic all-in range for the first visit given likely vaccines, parasite prevention, and basic blood work for a [species/age]?",
+    "vaccine_protocol_probe": "What's your protocol for [species/age]? The operator wants to avoid over-vaccinating — do you titre when appropriate, or follow a default schedule?",
+    "after_hours_probe": "What's your after-hours coverage? Do you have an in-house ER, partner with a 24-hour hospital, or refer out — and who do we call at 2am?",
+    "insurance_probe": "Do you provide itemised invoices with diagnosis codes for pet-insurance claims? Will the operator pay at checkout and file, or do you bill insurance directly?",
+    "behavior_probe": "If behaviour is in scope (anxiety, reactivity, aggression), does anyone in the practice have specific behaviour training, or would you refer to a veterinary behaviourist?",
+    "stall_to_check": "Let me confirm the slot timing with the operator. They want to make sure they can transport the pet calmly and bring the records.",
+    "graceful_close": "Thank you — please email the new-patient forms and the records-release form. The operator will sign and we'll confirm the slot within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Triage urgency BEFORE booking",
+      "when": "First 90 seconds.",
+      "script": "Use `triage_probe`. If the clinic says 'sounds like ER', stop the intake and divert. Otherwise, route to routine or urgent slot based on their guidance.",
+      "priority": 1
+    },
+    {
+      "name": "Records transfer initiated immediately",
+      "when": "Right after triage.",
+      "script": "Use `records_probe`. Get the release-of-records form started in the same call. Vaccines / titre results / recent labs / imaging are the high-value documents.",
+      "priority": 2
+    },
+    {
+      "name": "Cost range, not point estimate",
+      "when": "Once a slot type is known.",
+      "script": "Use `cost_probe`. The exam fee is the smallest line. Get the low/high for the realistic all-in.",
+      "priority": 3
+    },
+    {
+      "name": "After-hours plan in writing",
+      "when": "Before booking.",
+      "script": "Use `after_hours_probe`. Confirm whether the clinic has its own 24h staffing or refers to an ER. Get phone number and address of the ER referral partner.",
+      "priority": 4
+    },
+    {
+      "name": "Insurance and itemisation",
+      "when": "Mid-call.",
+      "script": "Use `insurance_probe`. Confirm itemised invoice with diagnosis codes — without them, insurance claims often get denied.",
+      "priority": 5
+    },
+    {
+      "name": "Behaviour referral if relevant",
+      "when": "Concern is behavioural.",
+      "script": "Use `behavior_probe`. If the practice has no behaviour expertise, ask for a referral to a board-certified veterinary behaviourist (DACVB) or qualified veterinary behaviour consultant."
+    },
+    {
+      "name": "Defer payment-on-file",
+      "when": "Coordinator wants card to hold slot.",
+      "script": "Use `stall_to_check`. Slot holds with a card-on-file should be explicitly approved by the operator. Confirm cancellation window before agreeing."
+    }
+  ],
+  "boundaries": [
+    "Do NOT authorise any procedure, sedation, vaccine, or diagnostic over the phone. Operator authorises in person via the consent form.",
+    "Do NOT confirm euthanasia, surgery, or expensive workup paths during intake. Those decisions happen with the vet, in person, after exam.",
+    "Do NOT skip the triage step. If the symptom description includes red flags (collapse, bloat, prolonged seizure, suspected toxin), divert to ER immediately and end the call.",
+    "Do NOT provide a credit card to hold the new-patient slot unless explicitly authorised by the operator.",
+    "Do NOT consent to over-vaccination on schedule alone. Ask about titres or risk-based scheduling when age and history warrant it.",
+    "Do NOT share full pet medical history with non-clinical staff beyond what's needed to book and triage."
+  ],
+  "success_signals": [
+    "Clinic triages the symptom into routine / urgent / ER on the call.",
+    "Records-release form is sent and the prior clinic is contacted.",
+    "Realistic all-in cost range for the first visit is given.",
+    "After-hours / ER referral plan is clear and in writing.",
+    "Vaccine protocol is risk-based or includes titre options when appropriate.",
+    "Itemised-invoice support for pet insurance is confirmed."
+  ],
+  "failure_signals": [
+    "Refusal or inability to triage urgency on the call.",
+    "Records transfer is 'something the operator should figure out'.",
+    "Exam fee given without any range for likely add-ons.",
+    "No after-hours plan or unclear ER partner.",
+    "Aggressive vaccine schedule with no flexibility for adult / senior pets.",
+    "Card-on-file pressure before the operator has reviewed cancellation policy."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm clinic will email: new-patient forms, records-release form, cost estimate range, after-hours protocol, and cancellation policy. Operator confirms the slot once forms are reviewed. Note the records request and expected turnaround so the visit isn't booked before records arrive.",
+    "on_failure": "Politely close. If the failure was triage-related and the pet may need urgent care, immediately escalate the operator to a 24-hour ER (Google + state vet board are reasonable next steps).",
+    "follow_ups": [
+      "Email the operator: clinic name, vet name, slot timing, cost range, records request status, after-hours plan, insurance handling, red/green flags.",
+      "Coordinate records arrival with the prior clinic (call back if not received within 5 business days).",
+      "If species or condition warrants a specialist, note referral options for the operator's next step."
+    ]
+  },
+  "required_user_info": [
+    "Pet: species, breed, age, sex, neuter status, weight, microchip number",
+    "Vaccination and parasite-prevention history with dates",
+    "Prior clinic name, address, phone, and an authorised release of records",
+    "Current concern in lay terms (well-visit, recurring symptom, post-op) plus onset/duration/severity at the high level",
+    "Pet insurance: carrier, policy, deductible state",
+    "Operator's availability windows and transport constraints",
+    "Any prior medications, supplements, diet specifics, and known allergies / sensitivities"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,154 @@
+{
+  "id": "no-as-opening",
+  "name": "No Is the Start: Reframing Rejection as Engagement",
+  "version": "1.0.0",
+  "category": "negotiation",
+  "tags": ["voss", "no-oriented", "counterfeit-yes", "thats-right", "phone-call", "real-time"],
+  "description": "Most amateurs treat 'no' as the end of a negotiation. In Chris Voss's framework, 'no' is where the actual negotiation BEGINS — it's the first honest signal from the counterparty. This skill teaches how to actively seek 'no', interpret it correctly, and use it as fuel.",
+  "disclaimer": "Reframing 'no' takes practice. Mishandled, it sounds like you're not listening. Done well, it converts dead-ends into genuine dialogue.",
+  "context": {
+    "when_to_use": "Any negotiation. Particularly important early (a no in the first 5 minutes is good news — they're engaging) and after asks that the rep needs to authority-check.",
+    "preconditions": [
+      "You can hear or read tone — 'no' carries dramatically different meanings depending on delivery.",
+      "You have a calibrated question pre-loaded for the most likely no.",
+      "You're not personally hurt by rejection — emotional resilience is a precondition for this skill."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "'No' rarely means 'no'. It usually means: 'I'm not ready', 'I don't understand', 'I need more information', 'I want something different', 'I don't feel safe agreeing', or 'I don't have authority'. Each of these has a different next move.",
+    "A 'no' makes the counterparty feel SAFE — they have asserted control. From a position of safety, they are paradoxically more willing to keep talking. 'Yes' makes them feel committed; 'no' makes them feel protected.",
+    "Get them to 'no' deliberately by asking 'no-oriented' questions: 'Is it ridiculous to ask if…', 'Would it be a bad idea to…', 'Have you given up on getting this resolved today?' — saying no to these advances YOUR position.",
+    "Beware the counterfeit yes — a quick 'yes' or 'sure, sure' to get you off the line. Counterfeit yes is the most dangerous response in negotiation; it gives false confidence.",
+    "The phrase 'that's right' is the breakthrough — it indicates the counterparty feels TRULY understood and is now ready to act. 'You're right' is dismissal disguised as agreement.",
+    "Three nos before yes is a common pattern. Track which no you're on — the 3rd or 4th is the one to push past."
+  ],
+  "phrases": {
+    "no_oriented_q1": "Is it ridiculous to ask if there's any flexibility on this?",
+    "no_oriented_q2": "Have you given up on finding a workaround for me?",
+    "no_oriented_q3": "Would it be a bad idea to explore one more option before we wrap up?",
+    "no_oriented_q4": "Is now a terrible time to ask about [X]?",
+    "after_no_what": "What about it doesn't work?",
+    "after_no_calibrated": "How would you handle this if you were in my situation?",
+    "summary_for_thats_right": "Let me play this back to make sure I've got it right: [summary]. Did I miss anything?",
+    "test_counterfeit_yes": "Just to make sure we're aligned — what's your honest read of what I'm asking?"
+  },
+  "tactics": [
+    {
+      "name": "Use no-oriented questions to invite engagement",
+      "when": "Early in a call when you suspect the rep will be defensive.",
+      "script": "Lead with one of the no-oriented phrases. The rep saying 'no, it's not ridiculous' has now agreed it's reasonable — and feels safe doing so because they got to say 'no'.",
+      "priority": 1
+    },
+    {
+      "name": "Convert their no into a what",
+      "when": "Rep says no without reason.",
+      "script": "`after_no_what` — 'What about it doesn't work?' This pivots from yes/no theater into informational dialogue.",
+      "priority": 2
+    },
+    {
+      "name": "Pursue 'that's right' through summary",
+      "when": "After 2-3 substantive exchanges where you've gathered the rep's frame.",
+      "script": "Use `summary_for_thats_right`. Summarize their position back in YOUR words. Land on 'that's right'. That moment is the negotiation's hinge.",
+      "priority": 3
+    },
+    {
+      "name": "Detect and dismantle counterfeit yes",
+      "when": "Rep agrees quickly with no specific commitments ('yeah sounds good, totally').",
+      "script": "Use `test_counterfeit_yes`. Force them to articulate what they think they agreed to. If they can't, the yes was counterfeit and you need to rebuild.",
+      "priority": 4
+    },
+    {
+      "name": "Treat 'no' as 'tell me more'",
+      "when": "Any 'no' that comes with hesitation or qualifier.",
+      "script": "Pivot to calibrated question: `after_no_calibrated`. Forces the rep into your shoes — they often solve the problem out loud."
+    }
+  ],
+  "decision_tree": {
+    "description": "Every 'no' you hear is a fork. Misidentifying the type of no is the most expensive mistake in real-time negotiation. Listen for the qualifying word/tone and route accordingly.",
+    "branches": [
+      {
+        "if_you_hear": "Flat, low-pitch, no qualifier: 'No.'",
+        "interpretation": "Possibly real. Possibly testing.",
+        "say": "`after_no_what`: 'What about it doesn't work?'",
+        "do_not": "Do not accept. Do not argue. Convert to information-gathering."
+      },
+      {
+        "if_you_hear": "'No, but…' or 'No, however…'",
+        "interpretation": "Soft no with a tell. The 'but' is the door.",
+        "say": "Mirror what came AFTER the 'but'. That's the actual frame.",
+        "do_not": "Do not focus on the no. The 'but' is where the negotiation lives."
+      },
+      {
+        "if_you_hear": "'No, I can't — I'm not allowed to do that.'",
+        "interpretation": "Authority no, not capability no.",
+        "say": "Pivot to authority: 'Who CAN do it?' or 'How does an exception usually happen?'",
+        "do_not": "Do not press the rep — they're being honest about a real limit."
+      },
+      {
+        "if_you_hear": "Quick 'sure, sure, no problem' with no specifics.",
+        "interpretation": "Counterfeit yes. Most dangerous response.",
+        "say": "`test_counterfeit_yes`: 'Just to make sure — what's your honest read of what I'm asking?'",
+        "do_not": "Do not proceed. Do not move to confirmation. The yes will evaporate after the call."
+      },
+      {
+        "if_you_hear": "'You're right.' (verbatim, after your argument or summary).",
+        "interpretation": "Dismissal. They want you to stop talking.",
+        "say": "Reset. Use a label: 'It seems like I'm not quite hearing what matters to you.'",
+        "do_not": "Do not treat 'you're right' as agreement. It is the OPPOSITE of 'that's right'."
+      },
+      {
+        "if_you_hear": "'That's right.' (verbatim, after your summary).",
+        "interpretation": "BREAKTHROUGH. Genuine alignment.",
+        "say": "Make your ask NOW. This is the highest-leverage moment of the call.",
+        "do_not": "Do not waste this moment chatting. Convert immediately."
+      },
+      {
+        "if_you_hear": "'I'll have to think about it.'",
+        "interpretation": "Soft no AND avoidance of commitment. Often dies in the silence after the call.",
+        "say": "Calibrated: 'What would you need from me to make the decision easier today?'",
+        "do_not": "Do not accept 'let me think' as a path forward without a specific next step."
+      },
+      {
+        "if_you_hear": "'No, no, no, no.' (rapid, escalating).",
+        "interpretation": "Emotional, not informational. The rep is overwhelmed or scolded.",
+        "say": "Switch to labels (see `01-tactical-empathy-labeling`). Calm first; then continue.",
+        "do_not": "Do not push for content. The rep is not in a state to receive a calibrated question."
+      },
+      {
+        "if_you_hear": "After 3 no's, a quiet pause, then 'well…'",
+        "interpretation": "The wall just cracked. They're considering.",
+        "say": "Nothing. Wait. Let them complete the sentence.",
+        "do_not": "Do not interrupt the 'well…'. The 4-second silence after it is where the yes is built."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT manipulate the rep into a 'no' for sport. The technique is for opening dialogue, not for winning rhetorical points.",
+    "Do NOT mistake 'no' for an emotional rejection of YOU — it's rejection of the ASK in the moment. Don't take it personally; that taint shows in your tone.",
+    "Do NOT take a counterfeit yes off the line. Always confirm specifically before hanging up.",
+    "Do NOT keep asking past a clear, low-pitched, repeated 'no' from someone with real authority. That crosses from negotiation into pressure."
+  ],
+  "success_signals": [
+    "Rep says 'that's right' after your summary.",
+    "Rep says 'no, it's not ridiculous' in response to your no-oriented question — engagement unlocked.",
+    "Rep moves from 'no' to explaining WHY, unprompted.",
+    "Rep volunteers a workaround after their 3rd no.",
+    "Rep's tone softens when they say 'no' — qualifier is incoming."
+  ],
+  "failure_signals": [
+    "Rep escalates from 'no' to 'I need to end this call' — you pushed past the real wall.",
+    "Counterfeit yes confirmed but you can't get them to articulate the agreement — deal is air.",
+    "Rep keeps saying 'you're right' — you're being managed, not engaged.",
+    "After 5 calibrated questions you still haven't gotten a 'no' WITH a reason — the rep may have neither authority nor information; escalate."
+  ],
+  "exit_strategy": {
+    "on_success": "After 'that's right', lock the ask. Confirm with `commitment_check` from `02-calibrated-questions`.",
+    "on_failure": "If you can't move past a hard, repeated no with authority behind it, exit gracefully. Note the rep's name, the reason cited, and try a different channel/time/representative."
+  },
+  "required_user_info": [
+    "User's emotional tolerance for hearing 'no' multiple times — coach if needed.",
+    "What 'yes' actually looks like operationally (so we can detect counterfeit yes vs real)."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

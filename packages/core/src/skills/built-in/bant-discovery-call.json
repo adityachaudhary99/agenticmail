@@ -1,0 +1,125 @@
+{
+  "id": "bant-discovery-call",
+  "name": "Run a BANT Discovery Call (Budget, Authority, Need, Timing)",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "discovery",
+    "qualification",
+    "BANT",
+    "phone-call",
+    "sales-process",
+    "outreach-sales"
+  ],
+  "description": "Run a short qualifying conversation with a live prospect to determine whether their Budget, Authority, Need, and Timing align well enough to justify a follow-up. The goal is honest mutual qualification — not extracting commitment.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "A prospect has agreed to a discovery / intro call (~15-20 minutes). The operator wants to know whether to invest further sales motion or politely disqualify.",
+    "preconditions": [
+      "Prospect has consented to a discovery call (not ambushed on a cold dial).",
+      "Operator has supplied the one-line value prop and the ideal-customer profile.",
+      "Agent has researched the prospect's company at the level a peer would expect.",
+      "Agent has a graceful out for both 'great fit' and 'not a fit'."
+    ],
+    "estimated_call_duration_minutes": 18
+  },
+  "principles": [
+    "Discovery is mutual. You are qualifying them; they are qualifying you. Both sides should leave with a clearer no or a clearer yes.",
+    "Earn each BANT question before asking it. Premature 'what's your budget?' kills the call.",
+    "Listen more than you talk. Target 30% agent / 70% prospect by minute count.",
+    "Open questions over closed ones. 'What does success look like in 90 days?' opens; 'do you need feature X?' closes.",
+    "Disqualifying gracefully is a win. A clean 'we're not the right fit' protects both sides' time and builds long-term trust.",
+    "Take notes verbatim where possible — exact quotes from the prospect become the operator's best follow-up material."
+  ],
+  "phrases": {
+    "opener": "Thanks for the time today. Just to set expectations — I want to use the next 15 or so minutes to understand what you're working on, see if what [operator] does is actually relevant, and if not, save us both the next meeting. Sound good?",
+    "need_open": "What's the thing that made you take this call? What's going on right now that made [topic] worth 15 minutes?",
+    "need_deepen": "Got it. And what have you tried so far? What's worked, what hasn't?",
+    "authority_soft": "If you decided this was worth doing, who else would be involved in the call to bring it forward — anyone we should loop in next?",
+    "timing_open": "Where does this sit on your list right now — is it a 'this quarter' thing, a 'thinking about next year' thing, or somewhere in between?",
+    "budget_indirect": "Without getting into numbers, is there an existing budget line this would fit into, or would it need to be a new line of spend?",
+    "graceful_disqualify": "Based on what you've described, I'm not sure we're the right fit — and I'd rather tell you that now than waste a follow-up. Here's what I think you actually need: [reframe]. Want me to point you in that direction?",
+    "graceful_next_step": "This sounds like it's worth a second conversation. Could I propose [specific concrete next step] — would [day/time] work?"
+  },
+  "tactics": [
+    {
+      "name": "Open with a frame, not a pitch",
+      "when": "First 60 seconds of the call.",
+      "script": "Use the `opener` phrase. Naming 'we might not be a fit and that's fine' lowers the prospect's defences and the conversation gets real fast.",
+      "priority": 1
+    },
+    {
+      "name": "Start with N (Need) — never with B (Budget)",
+      "when": "After the opener.",
+      "script": "Use `need_open` and follow with `need_deepen`. Spend the first 5-7 minutes here. The other three letters become easy if Need is real and undervague.",
+      "priority": 2
+    },
+    {
+      "name": "Probe Authority gently, never as gatekeeping",
+      "when": "Around minute 8-10, after Need is clear.",
+      "script": "Use `authority_soft`. Phrase it as 'who else benefits' not 'are you the decision-maker?' — the latter is patronising and produces nothing useful.",
+      "priority": 3
+    },
+    {
+      "name": "Ask Timing before Budget",
+      "when": "After Need + Authority are clearer.",
+      "script": "Use `timing_open`. Timing tells you whether the next step is a follow-up call or a calendared check-in in 2 quarters.",
+      "priority": 4
+    },
+    {
+      "name": "Ask Budget indirectly",
+      "when": "Last of the four, only if Need + Timing both pass.",
+      "script": "Use `budget_indirect`. You rarely need an exact dollar figure on a discovery call — you need to know if money exists or has to be invented.",
+      "priority": 5
+    },
+    {
+      "name": "Disqualify out loud when it's clear",
+      "when": "It's clear they're not a fit AND there's still 5+ minutes left.",
+      "script": "Use `graceful_disqualify`. Don't burn the last 5 minutes politely pretending. Disqualify, offer something useful (a referral, a resource), and end early — they will remember it positively.",
+      "priority": 6
+    },
+    {
+      "name": "Close on one concrete next step",
+      "when": "Last 2 minutes of the call.",
+      "script": "Use `graceful_next_step`. One step, with a proposed time. Vague 'I'll send you something' closes drift into ghosting."
+    }
+  ],
+  "boundaries": [
+    "Do NOT push past 'no budget' by suggesting they reorganise their priorities — that's pressure, not discovery.",
+    "Do NOT promise capabilities the operator hasn't authorised you to promise.",
+    "Do NOT record or transcribe the call without explicit consent.",
+    "Do NOT use BANT as an interrogation — if the prospect resists, switch to open conversation. The framework is internal scaffolding, not a script the prospect has to recognise.",
+    "Do NOT continue qualifying after Need has clearly failed. If there's no real problem to solve, you're not their vendor."
+  ],
+  "success_signals": [
+    "Prospect describes Need in their own words with specifics (numbers, recent events, named pain).",
+    "Prospect names other people on their side ('I'd loop in our CTO and head of ops').",
+    "Prospect commits to a concrete next-step time on the call.",
+    "Prospect asks pricing-shaped questions of their own initiative.",
+    "Prospect references a specific timeline (quarter, fiscal year event)."
+  ],
+  "failure_signals": [
+    "Need answers stay abstract ('we just want to be more efficient').",
+    "Prospect cannot or will not name anyone else who would be involved.",
+    "Timing is 'no idea' or 'someday'.",
+    "Budget answer is 'we don't really do that kind of spend' AND nothing about Need indicates it's worth changing that.",
+    "Prospect is on the call clearly to be polite, not to evaluate."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the next step verbally, send a calendar invite within 2 hours, and a short recap email within 24 hours with the prospect's own words quoted back.",
+    "on_failure": "Politely disqualify on the call. Offer a useful referral if you have one. Send a 2-line follow-up email thanking them and confirming you're not pushing.",
+    "follow_ups": [
+      "Write a one-paragraph CRM note: BANT score per dimension, exact prospect quotes, next step or disqualification reason.",
+      "If timing was 'next year', set a calendar reminder to re-contact 30 days before the named window."
+    ]
+  },
+  "required_user_info": [
+    "Operator's one-line value prop and ideal customer profile",
+    "Operator's pricing band (so the agent can interpret budget answers)",
+    "What 'qualified' looks like for the operator — minimum thresholds per BANT dimension",
+    "Operator's authorised next-step options (demo / proposal / pilot / referral-out)",
+    "Whether the agent may quote pricing live or must defer to the operator"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

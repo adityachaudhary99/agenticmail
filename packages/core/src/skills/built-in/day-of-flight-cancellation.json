@@ -1,0 +1,127 @@
+{
+  "id": "day-of-flight-cancellation",
+  "name": "Day-of Flight Cancellation — Get Onto the Next Workable Itinerary",
+  "version": "1.0.2",
+  "category": "travel",
+  "tags": ["airline", "irrops", "rebooking", "interline", "phone-call", "elite-line"],
+  "description": "Your flight just cancelled. Call the airline (or work the app + counter in parallel) to secure the next workable itinerary — including partner-airline and interline rebooks the front-line agent won't volunteer.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "The user's flight has been cancelled or is delayed beyond a usable window (typically >3-4 hours), they are at the airport or near it, and they need to be at their destination on a specific date. Works for any commercial airline. If the cancellation is due to a published travel waiver, also load `irrops-waiver-awareness`.",
+    "preconditions": [
+      "User has the cancelled flight's record locator (PNR / confirmation code) and ticket number (13-digit, starts with airline's 3-digit code e.g. 016 for UA, 001 for AA, 006 for DL).",
+      "User has the airline's elite/status phone number if they have status, or the general line.",
+      "User knows their hard constraints: must arrive by [date/time], acceptable connection points, willingness to fly into a nearby alt airport (e.g. EWR vs JFK vs LGA).",
+      "Phone in hand AND a spot in the gate-agent line — work both queues in parallel."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Two queues at once: stand in the gate-agent line while you call. Whoever gets you first wins. Hang up the call if the counter solves it; release the spot in line if the call solves it.",
+    "Involuntary rebooking ('INVOL') unlocks options that voluntary changes do not — including other-airline (OAL) rebooks. Use the word 'involuntary' on the call.",
+    "Specific itineraries beat open questions. 'Can you put me on UA 718 SFO–EWR tonight, or AA 84 if that's full?' lands faster than 'what are my options?'.",
+    "Pre-shop the inventory yourself before calling. Use Google Flights, ExpertFlyer, or the airline's own search — know which flights have seats. Agents move faster when you hand them the answer.",
+    "HUACA — Hang Up And Call Again. If the first agent is unhelpful or insists nothing is available, politely end the call and redial. Different agent, different tools used, different result.",
+    "Foreign sales offices are open when US lines are jammed. UA Manila, DL India, AA Sydney, BA Newcastle all take US-itinerary calls and the queue is often 5 minutes vs. 90."
+  ],
+  "phrases": {
+    "opener": "Hi — my flight [flight number] on [date] was just cancelled. Record locator [PNR]. I need to be in [destination] by [time]. I've already looked at the schedule and I see [specific flight] has open seats — can you involuntarily rebook me onto that one?",
+    "invoke_invol": "This is an involuntary rebook because the airline cancelled the flight. I'd like to use all involuntary options, including partner and interline carriers.",
+    "ask_oal": "Since this is an INVOL, can you check OAL availability? On this route [carrier A] and [carrier B] both operate it and we have an interline agreement.",
+    "stall_research": "Give me ten seconds to read out the flight numbers I'm comparing — I want to make sure we're looking at the same options.",
+    "elite_pivot": "I'm a [status tier]. Can you transfer me to the [1K Voice / ConciergeKey / Diamond / 360] desk? They sometimes see inventory the main line doesn't.",
+    "huaca_close": "Thanks for checking. Let me look at my schedule and call back. Have a good one.",
+    "graceful_close_success": "Perfect. Can you read back the new flight numbers, seat assignments if any, the new record locator, and email the updated itinerary? Confirmation number for the rebook?",
+    "graceful_close_failure": "Okay. Can you note on my PNR that I called and requested INVOL rebooking to [target flight], and that we couldn't reach it? I may pursue this further."
+  },
+  "tactics": [
+    {
+      "name": "Pre-shop inventory before opening the call",
+      "when": "Before dialling.",
+      "script": "Search Google Flights or the airline app for the same route over the next 24-48 hours. Note flight numbers, times, and which alliance/partner operates them. Have 3 acceptable options ranked.",
+      "priority": 1
+    },
+    {
+      "name": "Use the word 'involuntary'",
+      "when": "First turn after pleasantries.",
+      "script": "Drop 'involuntary rebook' or 'INVOL' explicitly — it signals to the agent that change-fee waivers and OAL rebooking are on the table.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for OAL / partner / interline by name",
+      "when": "Same-airline options don't work.",
+      "script": "Name the alliance partner: 'United–Lufthansa' (Star), 'AA–BA' or 'AA–AS' (oneworld since 2024), 'DL–AF/KL/VS' (SkyTeam), 'AS–AA' (interline). Front-line agents often forget OAL rebooks exist until prompted.",
+      "priority": 3
+    },
+    {
+      "name": "Work two queues",
+      "when": "At the airport when cancellation hits.",
+      "script": "Get in the gate-agent line AND call simultaneously. The first one who solves it wins. Apologise and step out of whichever queue lost.",
+      "priority": 4
+    },
+    {
+      "name": "Escalate to elite / status desk",
+      "when": "User has status and the main line stalls.",
+      "script": "Ask for the dedicated tier line (1K Voice, ConciergeKey, Diamond Medallion, 360, AS 100K). They have wider discretion and shorter holds.",
+      "priority": 5
+    },
+    {
+      "name": "HUACA",
+      "when": "Current agent says nothing's available and you have a known seat.",
+      "script": "End the call politely. Wait 60 seconds. Redial. Different agent, often a different answer. Two HUACAs is fine; three is the limit before you switch tactics.",
+      "priority": 6
+    },
+    {
+      "name": "Foreign sales office",
+      "when": "US hold times are >30 minutes.",
+      "script": "Call the airline's office in Manila / Sydney / Mumbai / Newcastle — they handle the same PNRs. Hold time is often single-digit minutes. Numbers are public on each carrier's site.",
+      "priority": 7
+    },
+    {
+      "name": "Accept a creative routing",
+      "when": "Direct option exhausted.",
+      "script": "Ask about: nearby airports (EWR ↔ JFK ↔ LGA, SFO ↔ OAK ↔ SJC, IAD ↔ DCA ↔ BWI), positioning flights (different connection hub), or split tickets the airline issues together."
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept a 'voluntary' change ticket where you pay fare difference — this is an INVOL rebook.",
+    "Do NOT cancel your existing ticket for a refund before securing a confirmed seat on the alternative. The original ticket is leverage.",
+    "Do NOT lie about status. Status is checked in real-time.",
+    "Do NOT book a separate ticket on a different carrier yourself without getting the airline to do an interline ticket — separate tickets break baggage protection and standby.",
+    "Do NOT accept an agent's 'this is the only option, you have to decide now' framing when your own inventory search shows seats elsewhere — say 'I'm looking at [specific flight] right now, can you check that one?' Agent inventory views differ from public search; the seat you see often is bookable.",
+    "Do NOT accept 'you'll forfeit your protections if you don't take this' as pressure. EU261 / UK261 / DOT 3-hour rule / contract-of-carriage rights attach to the cancellation event, not to your acceptance of a re-route. The protections survive a 'no thanks' to a bad re-route."
+  ],
+  "success_signals": [
+    "Agent issues a new e-ticket and record locator on the spot.",
+    "Agent volunteers to check OAL inventory without being asked.",
+    "Agent offers seat assignment proactively.",
+    "Agent mentions 'distressed passenger' or 'distressed pax fares' — that's the INVOL toolset opening up.",
+    "You're transferred to the elite desk."
+  ],
+  "failure_signals": [
+    "Agent insists the only option is 'tomorrow's flight, same time' when other carriers clearly have seats.",
+    "Agent quotes a change fee or fare difference for an airline-caused cancellation.",
+    "Hold times exceed 60 minutes with no callback option.",
+    "Agent refuses to consider OAL despite a published interline agreement.",
+    "Agent pressures with 'this is the only option, decide now' while you can independently see other seats — manufactured-scarcity tell, HUACA or counter with the specific flight you found.",
+    "Agent claims accepting the bad re-route is required to preserve EU261/UK261/DOT compensation — false; compensation attaches to the cancellation, not to your re-route acceptance."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm new flight numbers, new PNR, seat assignments, baggage tag re-routing, and an emailed itinerary. If you've checked bags, confirm baggage rebooking out loud.",
+    "on_failure": "Note the PNR with the requested options. Pursue compensation separately (load `eu261-uk261-dot-compensation` skill). Consider buying a one-way on a third carrier and disputing later.",
+    "follow_ups": [
+      "If the cancellation was carrier-controllable, file for hotel/meal vouchers (see `missed-connection-distressed-passenger`).",
+      "If EU/UK/Three-Hour Rule applies, file the cash compensation claim within 7 days while details are fresh.",
+      "Save boarding passes — required for both insurance and EU261 claims."
+    ]
+  },
+  "required_user_info": [
+    "Cancelled flight number, date, and record locator (PNR)",
+    "Ticket number (13-digit)",
+    "Frequent flyer number and status tier (if any)",
+    "Hard arrival deadline at destination",
+    "Acceptable alternate airports and connection points",
+    "Whether checked baggage is involved"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

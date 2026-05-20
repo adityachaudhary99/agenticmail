@@ -1,0 +1,130 @@
+{
+  "id": "referral-prior-authorization",
+  "name": "Request a Referral or Prior Authorization from PCP for a Specialist",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "referral",
+    "prior-authorization",
+    "specialist",
+    "pcp",
+    "phone-call",
+    "insurance",
+    "healthcare"
+  ],
+  "description": "Call the operator's PCP office to initiate, expedite, or confirm a referral and/or prior authorization for specialist care, imaging, procedures, or medications. Includes tracking the request through insurance.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator needs to see a specialist, get imaging, or have a procedure that the insurance plan requires PCP referral and/or prior authorization (PA) for. Common: HMO plans, Medicaid managed care, most non-PPO commercial plans. Also use when a PA has been submitted but stalled.",
+    "preconditions": [
+      "Operator's name, DOB (read-only), insurance plan, member ID (read-only).",
+      "PCP name and clinic.",
+      "The specific specialist / procedure / imaging / medication being requested AND the clinical reason in plain language (from operator, NOT invented).",
+      "Whether a previous referral or PA has already been submitted (date, reference number if known).",
+      "Whether the operator has tried to schedule the specialist already and been told the referral is missing.",
+      "Operator's clinical urgency: routine, semi-urgent, urgent."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Referrals and prior authorizations are TWO DIFFERENT THINGS. Referrals are PCP→specialist documentation; PAs are submitted to INSURANCE for approval. Confirm which one the situation actually needs — often both.",
+    "PA requests sit in fax queues. The unblocking move is rarely 'wait', it's 'who has it right now and what is the reference number'.",
+    "Always get a tracking number, reference number, or fax-sent confirmation. 'It's been sent' with no number is the most common lie in healthcare admin (often unintentionally — staff genuinely don't know).",
+    "If the rep contradicts what the specialist's office said (e.g. PCP says 'we sent it'; specialist says 'never received'), do NOT pick a side — get both sides on a 3-way line or get a specific reference number you can give the specialist to look up.",
+    "Insurance PA denial appeals have short windows (often 30-60 days). If a denial just happened, the clock is already running."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling on behalf of [Operator], patient of Dr. [PCP]. We need a referral / prior authorization for [specialist or procedure] because [plain-language reason from operator]. Can you tell me whether one has been started, and if not, can we get it initiated today?",
+    "differentiate_referral_pa": "Just to make sure we're aligned: are we talking about a referral letter from Dr. [PCP] to the specialist, a prior authorization submitted to [Insurance Plan], or both? Some plans need both.",
+    "ask_for_reference_number": "Could I get the reference, authorization, or fax confirmation number — whichever applies — so the specialist's office can look it up on their end?",
+    "ask_about_urgency_marker": "Is there a way to mark this as semi-urgent / urgent in your system, given [reason]? I want to make sure it doesn't sit in a routine queue.",
+    "verify_recipient": "Which fax number / portal did it go to? The specialist's office told me to confirm it was sent to [number] — can you check that's where yours went?",
+    "denial_appeal_check": "If the insurance has already denied this, what's the appeal process and the deadline? Can Dr. [PCP] add a peer-to-peer review or letter of medical necessity?",
+    "stall_research": "One moment — let me make sure I have the right specialist's contact info for you.",
+    "verify_readback": "So: referral initiated to [Specialist], faxed to [number] on [date], reference [number]. PA status: [submitted / pending / approved / denied]. Next step on our side: [action]. Did I get that right?",
+    "graceful_close": "Thank you. Could you note in the chart that we called to follow up so it shows the request is active?"
+  },
+  "tactics": [
+    {
+      "name": "Distinguish referral vs. PA up front",
+      "when": "First substantive turn.",
+      "script": "Use `differentiate_referral_pa`. Many calls go in circles because patient, PCP office, and specialist are each talking about a different document. Pin down which one(s) the situation needs.",
+      "priority": 1
+    },
+    {
+      "name": "Get a tracking artifact, not a verbal 'we sent it'",
+      "when": "Rep says it has been sent.",
+      "script": "Use `ask_for_reference_number`. If the rep can't produce one, ask them to send (or re-send) NOW with confirmation while you're on the line. 'Sent' with no proof is functionally 'not sent' for the specialist's intake desk.",
+      "priority": 2
+    },
+    {
+      "name": "Verify the recipient matches what the specialist expects",
+      "when": "Tracking number is provided.",
+      "script": "Use `verify_recipient`. PCP and specialist often have multiple fax lines / portals. Misrouting is the #1 cause of 'we never got it' weeks later.",
+      "priority": 3
+    },
+    {
+      "name": "Mark for urgency if clinically appropriate",
+      "when": "Operator's clinical situation is time-sensitive.",
+      "script": "Use `ask_about_urgency_marker`. Do not exaggerate — but if the operator described worsening symptoms, that detail goes on the request. Surface to operator if uncertain how to characterise.",
+      "priority": 4
+    },
+    {
+      "name": "Pause and re-verify on contradiction with specialist's office",
+      "when": "PCP says 'sent', specialist says 'not received'.",
+      "script": "Do not accept either party's version blindly. Get a reference number and ask the PCP office to RESEND while you're on the line. If they refuse, get the fax timestamp + recipient number so the specialist's office can search.",
+      "priority": 5
+    },
+    {
+      "name": "Trigger appeal pathway on denials",
+      "when": "PA has been denied by insurance.",
+      "script": "Use `denial_appeal_check`. Ask whether the PCP can do a peer-to-peer review with the insurance medical director — this often reverses denials. Surface deadlines and required documents to the operator.",
+      "priority": 6
+    },
+    {
+      "name": "Escalate to the referral coordinator",
+      "when": "Front desk has hit the limit of what they can see.",
+      "script": "Ask: 'Could I be transferred to your referral coordinator or medical assistant for Dr. [PCP]?' They have visibility into the queue front desk often doesn't.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to financial responsibility on the operator's behalf.",
+    "NEVER characterise the operator's medical condition in clinical terms beyond what the operator said. The PCP's office writes the clinical justification, not you.",
+    "NEVER pressure the PCP staff to 'just write whatever' to get a PA approved — that is fraud and corrupts the chart.",
+    "NEVER agree to a self-pay alternative if insurance denies, unless the operator has explicitly authorised that path with a cost ceiling."
+  ],
+  "success_signals": [
+    "Referral confirmed sent to the correct specialist with a verifiable reference / fax confirmation.",
+    "PA status known (submitted, pending, approved, denied) with reference number.",
+    "Clear next step assigned to a specific party (PCP, operator, insurance, specialist).",
+    "If denied: appeal window known and PCP committed to peer-to-peer or appeal letter."
+  ],
+  "failure_signals": [
+    "Rep cannot find any record of the request and cannot or will not initiate one today.",
+    "Insurance has denied and PCP is unwilling to appeal — surface to operator for next steps.",
+    "Conflicting information from PCP and specialist offices, no reference number resolves it.",
+    "Urgency request denied and operator's clinical situation is worsening — escalate to operator immediately."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: referral / PA reference numbers, recipient, date sent, urgency marker, next step, who owns it, and the operator's role. Update operator with a clean status snapshot.",
+    "on_failure": "Politely close. Report the specific blocker (no record, denial, miscommunication) and present concrete options to operator: re-call the specialist with the new reference, escalate to PCP physician directly, or pursue insurance appeals.",
+    "follow_ups": [
+      "Call the specialist 3-5 business days later to confirm receipt.",
+      "If PA pending > 7 business days, follow up with insurance directly.",
+      "If denied, schedule the appeal call before the deadline."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name, DOB (read-only), insurance plan + member ID (read-only)",
+    "PCP name and clinic",
+    "Specialist / procedure / imaging / medication being requested",
+    "Plain-language clinical reason from operator",
+    "Prior request history (date, reference if known)",
+    "Clinical urgency from operator's perspective"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,127 @@
+{
+  "id": "port-mobile-number-survive-retention",
+  "name": "Port a Mobile Number Out — Surviving the Retention Reflex",
+  "version": "1.0.1",
+  "category": "subscription",
+  "tags": [
+    "telecom",
+    "mobile",
+    "port-out",
+    "number-portability",
+    "retention",
+    "phone-call",
+    "utility-telecom"
+  ],
+  "description": "Call the LOSING mobile carrier (or use their port-out PIN flow) to release a number to a new carrier, getting the account number + port-out PIN + zip code needed for the port — without getting stuck in a 45-minute retention save-the-line script.",
+  "disclaimer": "The actual port is initiated by the GAINING carrier, not the losing one. The losing carrier's only legal role is to provide the account number, port-out PIN, billing zip, and not block the port. If a rep claims they can 'process the port for you', that is incorrect — they cannot, and the framing is a stall.",
+  "context": {
+    "when_to_use": "User has chosen a new carrier and wants to bring their existing mobile number. Call the losing carrier ONLY to obtain port-out credentials; the actual port happens at the new carrier. Many carriers now provide the PIN in-app — try that first before calling.",
+    "preconditions": [
+      "User has chosen a new carrier and has an account / SIM (or eSIM QR) ready.",
+      "User knows the account number on the losing carrier and the account-holder's name exactly as it appears on the bill.",
+      "Billing zip code on file with the losing carrier.",
+      "User has paid off any device installment plan OR accepts that porting may accelerate the remaining balance.",
+      "User understands the number must be ACTIVE on the losing carrier at the moment of port (do not cancel before porting)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Try the app / web port-out PIN flow FIRST. AT&T, Verizon, T-Mobile, and most MVNOs let you generate a port-out PIN in the account portal without a phone call at all.",
+    "If you must call: state the goal ONCE, clearly, then hold the line on it. 'I need my account number, port-out PIN, and billing zip. I am not switching back today.'",
+    "Retention scripts are designed to extend the call. Every 'let me check one thing' adds 4-7 minutes. Politely refuse offers without engaging them on merit.",
+    "Do NOT cancel before porting. Cancelling first releases the number to a recycling pool and the port becomes impossible. The port itself cancels the line cleanly at completion.",
+    "Recognise wrong-queue early: 'customer care' often routes to retention by default. The team you actually need is sometimes called 'port-out' or 'account services'."
+  ],
+  "phrases": {
+    "opener": "Hi, I need a port-out PIN, my account number, and my billing zip on file. I'm porting my number to a new carrier. I'm not looking to switch back today — please don't run a retention offer. Just the three pieces of information.",
+    "queue_check": "Quick check — are you the port-out / account-services team, or retention? I'd like to be with whoever can issue the PIN.",
+    "transfer_request": "Could you do a warm transfer to port-out / account services and stay on the line until they pick up? I'd rather not lose my hold position.",
+    "decline_retention_polite": "Thanks, I've already made the call on this — really just need the port-out PIN, account number, and zip so we can wrap up.",
+    "decline_retention_firm": "I'm sure the offers are real, but I'm not considering them today. If you can't issue the PIN, please transfer me to someone who can — no point burning your shift on it.",
+    "device_balance_check": "Quick check on my device — what's the remaining installment balance, and when does porting trigger it to bill? I want to make sure I'm not surprised.",
+    "esim_check": "I have an eSIM. Will porting deactivate the eSIM profile automatically, or do I need to remove it from my device after the port completes?",
+    "ask_pin_expiration": "How long is the port-out PIN valid? I want to start the port at the new carrier within that window.",
+    "graceful_close": "Thanks. I have account number [number], port-out PIN [PIN], billing zip [zip], PIN valid until [time]. Device balance is $[X]. I'm initiating the port with the new carrier now."
+  },
+  "tactics": [
+    {
+      "name": "Try self-serve first",
+      "when": "Before any call.",
+      "script": "Check the losing carrier's app or website for 'Number transfer PIN' / 'Port-out PIN'. Major US carriers (AT&T, Verizon, T-Mobile, Cricket, Mint, Google Fi) all expose this without a call. Calling is the fallback.",
+      "priority": 1
+    },
+    {
+      "name": "State the ask once, clearly",
+      "when": "First substantive turn on the call.",
+      "script": "Use the `opener`. Naming the three pieces (account number, PIN, zip) AND naming the goal (port) AND preemptively declining retention compresses a 45-minute call into a 12-minute one.",
+      "priority": 2
+    },
+    {
+      "name": "Recognise wrong-queue within 60 seconds",
+      "when": "Rep starts asking 'what would it take to keep you' or 'can I run a quick offer'.",
+      "script": "Use `queue_check` and `transfer_request`. If the rep can't transfer, use the `decline_retention_polite` phrase. If it persists, use `decline_retention_firm`.",
+      "priority": 3
+    },
+    {
+      "name": "Decline offers without engaging",
+      "when": "Rep makes any save offer.",
+      "script": "Use `decline_retention_polite`. Do NOT counter-offer or explain WHY you're leaving — every word fuels the next script branch. A single polite no is faster than a debate.",
+      "priority": 4
+    },
+    {
+      "name": "Verify device installment status",
+      "when": "Before ending the call.",
+      "script": "Use `device_balance_check`. If a device is on installments, porting typically accelerates the remaining balance to a single charge on the final bill. Knowing the number prevents a billing surprise.",
+      "priority": 5
+    },
+    {
+      "name": "Confirm PIN expiration window",
+      "when": "After receiving the PIN.",
+      "script": "Use `ask_pin_expiration`. Port-out PINs are short-lived (typically 7 days, sometimes 24 hours). Start the port at the new carrier within the window."
+    },
+    {
+      "name": "Do NOT cancel the line",
+      "when": "Rep asks 'do you want me to schedule cancellation for today as well?'.",
+      "script": "Politely refuse. The port itself cancels the line. Cancelling first releases the number and breaks the port."
+    }
+  ],
+  "boundaries": [
+    "Do NOT cancel the line before the port completes — the number will be recycled and the port fails.",
+    "Do NOT share the port-out PIN with anyone except the gaining carrier. PIN + account number is enough for a port-out attack — guard them like a password.",
+    "Do NOT agree to a 'new plan to keep you' that adds another term commitment. The rep is recording acceptance and you've just bought another 24 months.",
+    "Do NOT get drawn into debating why you're leaving. 'I've made my decision' is a complete sentence.",
+    "Do NOT port a number that is not in the user's name without the account holder's authorisation — port-out fraud is a federal issue."
+  ],
+  "success_signals": [
+    "Account number, port-out PIN, and billing zip provided.",
+    "Device installment balance disclosed.",
+    "PIN expiration time confirmed.",
+    "Rep does not insist on retention before releasing the PIN."
+  ],
+  "failure_signals": [
+    "Rep refuses to issue a PIN without 'discussing options'.",
+    "Rep claims the PIN is sent only via mail (a stall — federal rules require near-real-time PIN delivery).",
+    "Hold time exceeds 30 minutes solely on PIN issuance.",
+    "Rep tries to cancel the line 'to make the port easier' — refuse and escalate."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the three credentials, log the PIN expiration time, and immediately initiate the port at the gaining carrier. Do nothing else with the losing-carrier account until the port completes.",
+    "on_failure": "If a carrier refuses to issue a port-out PIN, file a complaint with the FCC (consumercomplaints.fcc.gov) citing 47 CFR 52.36 — carriers are legally required to facilitate port-out. Most refusals reverse within 24 hours of an FCC notice.",
+    "follow_ups": [
+      "Initiate the port at the new carrier within the PIN expiration window.",
+      "Keep the old SIM in the device or accessible until the port completes — if it fails, you'll need to retry.",
+      "After port confirmation: verify the final bill from the losing carrier (including device payoff if any).",
+      "Watch for any unexpected reactivation charges in the next 30 days."
+    ]
+  },
+  "required_user_info": [
+    "Account number on losing carrier",
+    "Account holder's name as it appears on the bill",
+    "Billing zip on file",
+    "Phone number to be ported",
+    "Whether any devices are on installment plans",
+    "Gaining carrier name and readiness to port"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

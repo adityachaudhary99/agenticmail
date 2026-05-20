@@ -1,0 +1,118 @@
+{
+  "id": "follow-up-stalled-claim",
+  "name": "Follow Up on a Stalled Claim Past the Statutory Acknowledgment Window",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "claim",
+    "follow-up",
+    "stalled",
+    "statutory",
+    "bad-faith",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Re-engage an adjuster who has gone silent past their state's statutory acknowledgment / response window. Document the silence, invoke the regulation by name, and create a paper trail that supports a department-of-insurance complaint or bad-faith escalation if the stall continues.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "A claim has been filed, but the adjuster has not acknowledged, requested information, or made a coverage decision within the state-mandated window (commonly 10-15 days for acknowledgment, 30-40 days for a decision once proof-of-loss is submitted). Use AFTER `file-fnol-auto-claim` and BEFORE `dispute-denied-claim`.",
+    "preconditions": [
+      "Claim number and assigned adjuster name are known.",
+      "Original FNOL date is documented.",
+      "User knows their state's statutory window (or you've looked it up — most states publish 'Unfair Claims Settlement Practices' regulations).",
+      "User has copies of every prior communication (email, voicemail, certified mail receipts)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "The regulation is your leverage. Naming the specific statute (e.g. 'California Insurance Code §790.03' or 'New York Reg 64') signals you're not a casual caller.",
+    "Document everything. Every voicemail, every dead-end transfer, every promise of a callback — log the date, time, and rep name.",
+    "Be firm, not angry. The goal is action, not catharsis. Angry calls get logged as 'difficult customer' and slow-walked.",
+    "Escalate by structure: adjuster → supervisor → claims manager → consumer affairs → department of insurance. Each step is a separate ask.",
+    "Silence is a tactic carriers use; certified mail and DOI complaints are the counter-tactics."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling about claim [number], opened [date]. I have not received [acknowledgment / a coverage decision / a response to my [date] inquiry], and the [statutory window] has now passed. I'd like to understand the current status and the next concrete action with a date.",
+    "invoke_statute": "Under [state] regulations on unfair claims settlement practices, the carrier owes [acknowledgment within X days / a decision within Y days of proof of loss]. We are past that window. I want to confirm the carrier's position on that timeline.",
+    "request_supervisor": "Okay — could I also be transferred to the claims supervisor for [adjuster name]? Not because you've done anything wrong; I just want this visible at the next level given the timeline.",
+    "request_written_status": "Please send a written status update by end of business today, including: current claim status, what specifically is outstanding, who is responsible, and the date the carrier expects to resolve it.",
+    "doi_warning": "If we can't get a concrete next step with a date today, my next step will be filing a complaint with the [state] Department of Insurance. I'd rather resolve this with you — what's possible?",
+    "log_callback": "Could I get your full name, your direct extension, and a reference number for this call?",
+    "graceful_close": "Thank you. To confirm: next action is [action], owner is [name], target date is [date], and a written status update will arrive by [time]."
+  },
+  "tactics": [
+    {
+      "name": "Open with the timeline, not the complaint",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase. State the FNOL date, the regulation's deadline, and that the window has passed. Don't editorialise — let the dates speak.",
+      "priority": 1
+    },
+    {
+      "name": "Name the statute",
+      "when": "Rep says 'we're processing' without a date.",
+      "script": "Use the `invoke_statute` phrase. If you have looked up the specific code section, name it. Even 'your state's unfair claims settlement practices act' is meaningfully better than nothing.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for the supervisor",
+      "when": "Adjuster offers no concrete next step or claims they're 'waiting on the file'.",
+      "script": "Use the `request_supervisor` phrase. Frame it as not blaming the adjuster. Carriers route 'supervisor requested + statute named' calls differently from standard inquiries.",
+      "priority": 3
+    },
+    {
+      "name": "Demand a written status update with a deadline",
+      "when": "Any rep on the call agrees there will be 'follow-up'.",
+      "script": "Use the `request_written_status` phrase. Verbal promises don't survive adjuster turnover. Written promises survive and become evidence.",
+      "priority": 4
+    },
+    {
+      "name": "Warn about a DOI complaint",
+      "when": "Supervisor still offers no concrete date.",
+      "script": "Use the `doi_warning` phrase. State it factually, not as a threat — 'next step is filing with the DOI' is information, not anger. Carriers genuinely move faster when DOI is on the table because DOI complaints damage their market-conduct exam scores.",
+      "priority": 5
+    },
+    {
+      "name": "Log everything",
+      "when": "Throughout the call.",
+      "script": "Use the `log_callback` phrase before ending. Capture the rep's full name, extension, the call's reference number, and the exact promises made. After the call, email a recap to the adjuster restating what was agreed — that converts verbal into written.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept 'I'll check and call you back' without a specific date AND a written confirmation commitment.",
+    "Do NOT use the DOI warning as a bluff — only mention it if the operator has actually authorised filing the complaint on the agreed timeline.",
+    "Do NOT settle for being transferred into a voicemail. If transferred, get the supervisor's direct line first.",
+    "Do NOT agree to provide additional documentation that has already been provided — push back that it's on file.",
+    "Do NOT lose your temper. Document and escalate; the paper trail wins."
+  ],
+  "success_signals": [
+    "Adjuster or supervisor commits to a specific next action with a specific date.",
+    "Written status update is promised by end of business.",
+    "Claims manager joins the call.",
+    "Carrier acknowledges the statutory window has been missed and offers a remedy (rental extension, expedited inspection, etc.).",
+    "Rep provides a direct extension and reference number for the call."
+  ],
+  "failure_signals": [
+    "Three escalation levels (adjuster, supervisor, claims manager) all decline to commit to a date.",
+    "Rep insists they cannot escalate.",
+    "Carrier asks for documents already provided — stall tactic.",
+    "Call disconnects 'accidentally' and no callback arrives within 30 minutes."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the agreed action, owner, and date. Confirm the written status update timeline. Thank the rep and end. Immediately email a written recap to the adjuster + supervisor restating what was agreed.",
+    "on_failure": "Document the failure to commit. Route to `ask_operator` with the recommendation to file a DOI complaint and/or send a certified-mail demand letter citing the statute.",
+    "follow_ups": [
+      "Email a recap of the call to the adjuster and supervisor within 1 hour.",
+      "Calendar the promised written status update deadline; trigger another follow-up call if it slips.",
+      "If no written update arrives, escalate to DOI complaint via `ask_operator`."
+    ]
+  },
+  "required_user_info": [
+    "Claim number, adjuster name, original FNOL date",
+    "State of the claim (drives which statute applies)",
+    "Log of all prior communications with dates",
+    "Whether operator authorises DOI complaint as next step if call fails"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

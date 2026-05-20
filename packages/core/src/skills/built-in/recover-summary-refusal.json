@@ -1,0 +1,121 @@
+{
+  "id": "recover-summary-refusal",
+  "name": "Recover When the Rep Refuses to Summarise",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "closing",
+    "red-flag",
+    "escalation",
+    "recording",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "When you ask a rep to summarise the agreement and they decline, deflect, or visibly evade — that is the loudest red flag in the closing phase. They're avoiding the recorded statement. This skill teaches the agent how to recognise the dodge, name it without escalating to combat, and either recover the close or stop the call cleanly.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "After a verbal readback or summary request returns deflection: 'you already have everything', 'I can't go through it all again', 'just check your email', 'the system has it', or simply 'no'. Use BEFORE accepting the close — never after.",
+    "preconditions": [
+      "You've made at least one good-faith request for the rep to confirm or summarise the agreement.",
+      "The rep has audibly declined or deflected.",
+      "You are still on the line and have authority to escalate."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Refusal to summarise on a recorded line is almost always intentional. Reps are trained to avoid making explicit commitments their employer might not honour. Treat it as policy, not personality.",
+    "Stay calm and warm. Naming the dodge accusatorially destroys cooperation; naming it with curiosity preserves it.",
+    "Do NOT keep escalating the same person who's already declined. Hand off — supervisor, complaint team, written channel.",
+    "The refusal itself is a documentable artifact. Get the rep to state ON THE LINE why they cannot summarise. That clip is more valuable than a fuzzy summary.",
+    "If escalation also refuses, do not close. The cost of holding open is small; the cost of closing on a refused summary is potentially the entire agreement."
+  ],
+  "phrases": {
+    "first_recovery": "Got it — and I trust it's in the system — but I'd just like to hear the specifics once more out loud, the same way I'd want to confirm an address or phone number. Could we run through them?",
+    "name_the_dodge_softly": "I want to be transparent — I usually ask for a verbal summary because it protects both sides if the system note doesn't quite match what we agreed. Is there a reason that's not possible today?",
+    "isolate_the_objection": "When you say you can't summarise — is that a policy, a system limitation, or just that we've been on a while? Each has a different path I can take.",
+    "policy_documentation": "If it's policy, could you tell me the policy name or where it's published? I'd like to document that this call ended with a policy-based refusal to summarise — that's worth noting on my side regardless of how the agreement processes.",
+    "supervisor_pivot": "Totally understand. In that case — would you mind looping in a supervisor or team lead? Not because of anything you've done, but I'd feel more comfortable closing the call with someone who can do the summary.",
+    "written_pivot": "If you can't summarise verbally, can the same content go in an email or a portal note before we hang up? I'm fine waiting on the line for that.",
+    "stop_the_close": "I don't want to close out on this call without a summary in some form. I'd rather pause and pick this up with someone who can — could you transfer me, or should I call back referencing case [N]?",
+    "graceful_close_success": "Thank you for working through the summary with me. I know it adds a few minutes — it just helps me make sure nothing falls through.",
+    "graceful_close_failure": "I'm going to stop here without closing — I don't have what I need to feel confident the agreement is captured correctly. I'll follow up via [written channel / escalation path]. Thank you for your time today."
+  },
+  "tactics": [
+    {
+      "name": "First recovery — assume good faith",
+      "when": "Initial polite ask returned a deflection.",
+      "script": "Use the `first_recovery` phrase. Many reps deflect reflexively; a second, gentler ask often gets a normal summary. Reserve harder tactics for when this fails.",
+      "priority": 1
+    },
+    {
+      "name": "Name the dodge — softly",
+      "when": "Second deflection.",
+      "script": "Use the `name_the_dodge_softly` phrase. Surfacing the pattern without accusation gives the rep room to comply OR to reveal what's behind the refusal.",
+      "priority": 2
+    },
+    {
+      "name": "Isolate the type of refusal",
+      "when": "Rep continues to refuse.",
+      "script": "Use the `isolate_the_objection` phrase. Policy vs system vs fatigue have different recovery paths — don't run the wrong play.",
+      "priority": 3
+    },
+    {
+      "name": "Document a policy refusal on the line",
+      "when": "Rep cites policy as the reason.",
+      "script": "Use the `policy_documentation` phrase. The refusal-to-summarise statement becomes the artifact. A policy that bars summary on a recorded line is itself notable.",
+      "priority": 4
+    },
+    {
+      "name": "Pivot to written channel",
+      "when": "Rep can't or won't verbally summarise but might write.",
+      "script": "Use the `written_pivot` phrase. A written summary delivered during the call is acceptable. Wait on the line for it.",
+      "priority": 5
+    },
+    {
+      "name": "Escalate to supervisor",
+      "when": "Verbal AND written summary both refused.",
+      "script": "Use the `supervisor_pivot` phrase. Frame as 'help me close this', not 'I want to complain about you'. Hand off with goodwill if possible.",
+      "priority": 6
+    },
+    {
+      "name": "Stop the close",
+      "when": "Supervisor also unavailable or also refusing.",
+      "script": "Use the `stop_the_close` phrase, then `graceful_close_failure`. Closing a call without a summary is operationally equivalent to closing without an agreement. Better to pause than to lock in fog.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT become combative. The rep is following a script; making them defensive shuts down all paths forward.",
+    "Do NOT lie about recording status to pressure the rep. If the rep believes the call isn't recorded and you claim it is, you've destroyed your credibility.",
+    "Do NOT accept 'the email will have it' UNLESS the email arrives before you hang up and you've checked it.",
+    "Do NOT close the call out of social pressure to end politely. Politeness is preserved by graceful_close_failure — the cost of fake politeness is the entire agreement."
+  ],
+  "success_signals": [
+    "Rep relents on second or third ask and provides a summary.",
+    "Rep pivots cleanly to a written confirmation sent during the call.",
+    "Supervisor takes over and runs the summary willingly.",
+    "Rep documents the reason for refusal on the line — even if they still won't summarise."
+  ],
+  "failure_signals": [
+    "Rep escalates emotionally rather than providing the summary.",
+    "Supervisor also refuses, citing the same policy.",
+    "Rep tries to end the call quickly without addressing the request.",
+    "Rep says 'this call may not be recorded' as an excuse — note this, as it contradicts most company practices."
+  ],
+  "exit_strategy": {
+    "on_success": "Log that the recovery worked and which tactic unlocked it. Continue with `lock-in-terms-verbally` and `request-written-confirmation` as if the close had proceeded normally.",
+    "on_failure": "Do NOT close. Log the refusal verbatim (rep name, ID, time, exact words). Open a formal complaint or escalation case. Treat the prior agreement as unconfirmed — you may still receive the benefit, but plan as if you might not.",
+    "follow_ups": [
+      "File a complaint or feedback form with the company citing the refusal-to-summarise.",
+      "If the agreement was meant to be applied (e.g. a credit), monitor closely at the expected effective date — if it doesn't appear, you have a documented gap to call back on.",
+      "Consider switching providers if the company structurally refuses to confirm agreements verbally — it's a tell about how disputes will be handled."
+    ]
+  },
+  "required_user_info": [
+    "User authority to stop the close and reschedule via a different channel",
+    "User patience for an escalation to supervisor (5-15 extra minutes likely)",
+    "Whether the user has a formal complaint channel they prefer (e.g. CFPB, state AG, BBB) for downstream follow-up"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

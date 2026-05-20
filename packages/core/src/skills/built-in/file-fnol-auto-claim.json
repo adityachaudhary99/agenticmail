@@ -1,0 +1,130 @@
+{
+  "id": "file-fnol-auto-claim",
+  "name": "File a First-Notice-of-Loss Auto Claim (Without Admitting Fault)",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "auto",
+    "claim",
+    "fnol",
+    "first-notice-of-loss",
+    "phone-call",
+    "fault",
+    "insurance"
+  ],
+  "description": "Open a brand-new auto claim with the user's carrier (or the at-fault driver's carrier) — report the facts the carrier needs to assign a claim number and adjuster WITHOUT making any statement that admits fault, accepts liability, or characterises the user's prior driving record or vehicle condition.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "An accident, theft, vandalism, or comprehensive event has occurred and the user wants to open a claim. Use this for the FIRST call only — once a claim number and adjuster are assigned, switch to `follow-up-stalled-claim` or `dispute-denied-claim` as appropriate.",
+    "preconditions": [
+      "User has their policy number (or full name + DOB + address for lookup).",
+      "User has the date, time, and rough location of the loss.",
+      "User has the other party's name, plate, and insurance info if a collision (if available — do not delay reporting if not).",
+      "User has the police report number if one was filed.",
+      "User has confirmed they actually want to file (filing creates a claim record even if later withdrawn)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Report facts, not conclusions. 'The vehicles made contact at the intersection' — not 'I hit them' or 'they hit me'.",
+    "The recorded statement is the document the adjuster will use for the rest of the claim. Treat every sentence like it will be read back to you in court.",
+    "If you don't know, say 'I don't know' or 'I'd need to check'. Guessing creates inconsistencies the carrier weaponises later.",
+    "The carrier's first job on FNOL is to gather facts; their second is to look for coverage exclusions. Both are happening simultaneously.",
+    "Speed matters for the claim NUMBER and the adjuster ASSIGNMENT. Detail can come later in writing. Don't let the rep pressure a full narrative on the first call.",
+    "Every state has a statutory acknowledgment window (commonly 10-15 days). Filing starts that clock — get it started."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling to report a new loss under policy [number]. The incident was on [date] at approximately [time] in [city/state]. I'd like to open a claim and get a claim number and adjuster assigned today.",
+    "fault_deflection": "I'd rather not characterise fault on this call — I'd like the adjusters to review the police report and any available footage and reach their own determination.",
+    "unknown_fact": "I don't have that detail confirmed right now. I'll get back to you in writing once I've verified it.",
+    "request_recording_disclosure": "Before we go further — is this call being recorded? And will I be given a copy of any recorded statement I provide?",
+    "decline_recorded_statement": "I'm comfortable giving you the facts to open the claim, but I'd like to defer any recorded statement until I've reviewed the police report. Can we schedule that for later this week?",
+    "request_claim_number": "Could you give me the claim number and the name and direct line of the assigned adjuster before we end the call?",
+    "request_written_summary": "Could you email me a written summary of what was reported today, including the claim number and adjuster contact info?",
+    "graceful_close": "Thank you. To confirm: claim number is [number], adjuster is [name] at [phone/email], and the next step is [step] by [date]. I'll follow up in writing."
+  },
+  "tactics": [
+    {
+      "name": "Lead with the policy number and the ask",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase. State you want a claim number and adjuster TODAY. That's the only deliverable from this call.",
+      "priority": 1
+    },
+    {
+      "name": "Report observable facts only",
+      "when": "Rep asks 'what happened?'",
+      "script": "Describe what was observed — vehicle positions, weather, traffic signal state if known, point of contact on the vehicles. Avoid verbs like 'I hit', 'I caused', 'I didn't see'. Prefer 'the vehicles made contact', 'visibility was [condition]', 'the signal was [state] when I last observed it'.",
+      "priority": 2
+    },
+    {
+      "name": "Deflect fault questions",
+      "when": "Rep asks 'were you at fault?' or 'do you think the other driver was at fault?'",
+      "script": "Use the `fault_deflection` phrase. The adjusters determine fault from physical evidence + police report + statements. The user's opinion on the phone is not required to open the claim.",
+      "priority": 3
+    },
+    {
+      "name": "Decline or defer the recorded statement on first call",
+      "when": "Rep says 'I'll need to take a recorded statement.'",
+      "script": "Use the `decline_recorded_statement` phrase. The carrier can open the claim without it. Defer until the user has a police report, photos, and time to think. If they push, route to `ask_operator` — never give a recorded statement live on FNOL.",
+      "priority": 4
+    },
+    {
+      "name": "Refuse to speculate on prior conditions or pre-existing damage",
+      "when": "Rep asks 'was there any prior damage to the vehicle?' or 'any pre-existing injuries?'",
+      "script": "Say 'I'd need to check my records / consult my doctor before answering that.' Never volunteer a guess. Prior-damage and pre-existing-condition questions are coverage-exclusion fishing.",
+      "priority": 5
+    },
+    {
+      "name": "Get the claim number, adjuster name, and adjuster direct line",
+      "when": "Before ending the call.",
+      "script": "Use the `request_claim_number` phrase. Without these three artifacts, the call did not accomplish its purpose — keep the rep on the line until you have them.",
+      "priority": 6
+    },
+    {
+      "name": "Ask for a written summary",
+      "when": "After the claim number is captured.",
+      "script": "Use the `request_written_summary` phrase. The summary is the user's evidence that what was reported is what the carrier has on file. Carriers sometimes mis-transcribe.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT admit fault, even partially, even conversationally ('I should've slowed down', 'I didn't see them' — these are admissions).",
+    "Do NOT agree to a settlement number, a release, or a 'we'll just write you a check for $X' on this call. Route via `ask_operator`.",
+    "Do NOT speculate about prior vehicle damage, pre-existing injuries, or the other driver's intent.",
+    "Do NOT give a recorded statement on the first call unless the operator has explicitly authorised it after seeing the police report.",
+    "Do NOT estimate repair costs or injury severity. Adjusters and medical providers do that.",
+    "Do NOT share more PII than needed to open the claim — driver's license number, full SSN, and bank info are almost never required on FNOL."
+  ],
+  "success_signals": [
+    "Rep issues a claim number on the call.",
+    "Rep names a specific adjuster and provides direct contact info.",
+    "Rep agrees to email a written summary.",
+    "Rep accepts a deferred recorded statement.",
+    "Rep schedules an inspection or rental authorisation in the same call."
+  ],
+  "failure_signals": [
+    "Rep refuses to issue a claim number without a recorded statement.",
+    "Rep insists on a fault admission before opening the claim.",
+    "Rep won't name an adjuster ('one will call you in 7-10 business days').",
+    "Rep starts quoting a settlement number before the inspection has happened."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back the claim number, adjuster name, adjuster phone + email, and next-step deadline. Confirm a written summary will be emailed. Thank the rep and end politely.",
+    "on_failure": "If the rep refuses to issue a claim number without a recorded statement, end the call and route to `ask_operator` — that posture itself is reportable to the state insurance commissioner. Do NOT capitulate to opening a recorded statement under pressure.",
+    "follow_ups": [
+      "Email the operator the claim number, adjuster contact info, and next step.",
+      "Calendar the statutory acknowledgment deadline (10-15 days from FNOL depending on state).",
+      "If the user has not received written confirmation within 72 hours, trigger `follow-up-stalled-claim`."
+    ]
+  },
+  "required_user_info": [
+    "Policy number (or full name + DOB for lookup)",
+    "Date, time, and location of the loss",
+    "Brief factual description of what was observed (NOT a fault narrative)",
+    "Police report number if filed",
+    "Other party's name, plate, insurance info if collision (if available)",
+    "Whether operator authorises a recorded statement on this call (default: NO)"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

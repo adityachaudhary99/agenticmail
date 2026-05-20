@@ -1,0 +1,117 @@
+{
+  "id": "report-fraud-ic3-or-ftc",
+  "name": "Report Fraud — IC3 (FBI) / FTC / state AG",
+  "version": "1.0.0",
+  "category": "emergency-services",
+  "tags": [
+    "fraud",
+    "scam",
+    "ic3",
+    "ftc",
+    "phishing",
+    "wire-fraud",
+    "identity-theft",
+    "emergency_services"
+  ],
+  "description": "Report fraud / scam / identity-theft on behalf of the operator. Most submissions are via web (ic3.gov / reportfraud.ftc.gov / identitytheft.gov / state AG portals) but the agent can also place phone calls to the FTC (1-877-FTC-HELP) or state-AG hotlines when the operator needs assisted intake.",
+  "disclaimer": "(1) If money is currently being moved or the fraud is in progress (active wire being requested), call the bank's fraud line and 911 in parallel. (2) Identify as an AI on the first sentence. (3) Don't speculate about the perpetrator's identity unless the operator has direct evidence. (4) Reports to the FTC and IC3 are NOT investigations of the operator's case — they feed pattern-detection databases. Setting expectations matters.",
+  "context": {
+    "when_to_use": "Operator was defrauded (or someone they care for was), money is no longer recoverable through the bank, and they want to file with the appropriate federal / state authority. Examples: phishing-driven wire fraud, romance scam, fake-IRS scam, fake-tech-support scam, identity theft (someone opened a card in their name), business email compromise, investment scam, rental scam.",
+    "preconditions": [
+      "Operator's authorisation for this call / submission.",
+      "A clear timeline of what happened — first contact, what was promised, what the operator did, when they realised.",
+      "Financial loss amount (estimate is OK).",
+      "Any contact info the perpetrator used (phone, email, websites, crypto addresses, bank account numbers seen).",
+      "Whether the operator has already filed with their bank, the credit bureaus, IdentityTheft.gov, etc — to avoid duplicate reports.",
+      "Whether the operator has documents (screenshots, emails, statements) — IC3 and FTC accept these via web; phone reports take them later."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Identify as an AI on the first sentence.",
+    "Set expectations about the channel: IC3 and FTC are pattern-detection databases, not your operator's investigative team. They aggregate; they don't always individually respond.",
+    "Be timeline-clean: 'On <date>, the operator received <verbatim message>. On <date>, they wired <amount> to <account>.' Investigators value tight timelines.",
+    "Don't accuse a specific individual unless the operator has direct evidence — speculation contaminates the report.",
+    "Capture EVERY identifier: emails, phone numbers, URLs, account numbers, IPs if known. Patterns are how IC3/FTC find perpetrators.",
+    "Get a confirmation / reference number — both agencies issue them and the operator needs them for bank/insurance/legal follow-up."
+  ],
+  "phrases": {
+    "opener_ic3_phone": "(IC3 has no phone line — direct the operator to ic3.gov. Use this skill primarily for FTC / state AG phone reports. If the operator insists on phone, route to FTC or state AG.)",
+    "opener_ftc": "Hi — I'm an AI assistant calling the FTC consumer line on behalf of <operator>. They're a victim of <one-line: 'a wire-fraud scam', 'an IRS-impersonation scam', 'identity theft'>. Total loss is approximately <amount>. The first contact was on <date>. May I walk you through it?",
+    "opener_state_ag": "Hi — I'm an AI assistant calling the <state> Attorney General's consumer protection line on behalf of <operator>. They were defrauded of approximately <amount> via <method> on <date>. We've already <filed with bank / IC3 / etc>. Wanted to also report to your office.",
+    "timeline_walkthrough_prompt": "I'm going to walk through the timeline. I'll be specific about dates and amounts. Tell me where you want detail and where the summary's enough.",
+    "list_identifiers": "Identifiers the operator captured: phone <…>, email <…>, URL <…>, account <…>, crypto address <…>. Want me to read them slowly?",
+    "ask_what_else_to_file": "What other channels do you recommend? FBI IC3? Local police? Bank's fraud team? Credit bureaus? My operator wants to make sure nothing's missed.",
+    "ask_for_reference": "Could I get a confirmation number and your name? My operator needs it for their bank claim and possible insurance / chargeback follow-up."
+  },
+  "tactics": [
+    {
+      "name": "Check active-loss tier first",
+      "when": "Before dialing.",
+      "script": "If money is currently moving (wire pending, account drain in progress), the FIRST call is the bank's fraud line + 911 in parallel — not the FTC.",
+      "priority": 0
+    },
+    {
+      "name": "Lead with one-liner + dollar amount",
+      "when": "First substantive turn.",
+      "script": "Use the right opener for the agency. Investigators triage by dollar amount and scam category — lead with both.",
+      "priority": 1
+    },
+    {
+      "name": "Tight timeline walkthrough",
+      "when": "After opener.",
+      "script": "Use `timeline_walkthrough_prompt`. Dates + amounts + verbatim quotes from messages are gold.",
+      "priority": 2
+    },
+    {
+      "name": "Read all identifiers slowly",
+      "when": "Intake worker takes notes.",
+      "script": "Use `list_identifiers`. Read each verbatim, ask if they want repetition. Patterns are how perpetrators get caught."
+    },
+    {
+      "name": "Ask what else to file",
+      "when": "Toward end of call.",
+      "script": "Use `ask_what_else_to_file`. Each fraud type has a different optimal filing pattern; the intake worker knows the local picture."
+    },
+    {
+      "name": "Capture reference",
+      "when": "Before closing.",
+      "script": "Use `ask_for_reference`."
+    }
+  ],
+  "boundaries": [
+    "NEVER fabricate or embellish facts. Federal-agency false-statement laws apply.",
+    "NEVER name a perpetrator unless the operator has direct evidence — speculation contaminates aggregated data.",
+    "NEVER promise the operator any specific outcome (refund, prosecution). Both FTC and IC3 are aggregation channels.",
+    "NEVER share the operator's social, full account numbers, or full card numbers on a phone line they didn't initiate — verify the intake number with the agency's main published number first.",
+    "NEVER end the call without confirmation reference."
+  ],
+  "success_signals": [
+    "Intake worker captures the report and gives a confirmation number.",
+    "Intake worker suggests additional / parallel filings (IC3 / IdentityTheft.gov / bank / state AG).",
+    "Intake worker confirms the operator's case fits a known pattern (sometimes they'll say 'we've seen this scam before')."
+  ],
+  "failure_signals": [
+    "Intake worker says 'go file at <URL>' and there's no urgent reason for phone — accept and file the web form.",
+    "Intake worker says 'this isn't our jurisdiction' — capture the referral.",
+    "Intake worker pushes back on the validity of the report — relay back to operator; don't argue with the agency."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference. Email operator a complete summary with timeline, identifiers, reference, and the intake worker's recommendations for parallel filings.",
+    "on_failure": "Email operator the recommended alternative channels and offer to file the web forms.",
+    "follow_ups": [
+      "Email operator: reference, timeline, identifiers, recommended parallel filings.",
+      "Calendar follow-up for IdentityTheft.gov + bank + credit-bureaus + state AG if not already done."
+    ]
+  },
+  "required_user_info": [
+    "Operator's explicit authorisation",
+    "Timeline of the fraud (dates, contacts, amounts)",
+    "Total loss amount",
+    "All identifiers operator captured (phone / email / URL / account / crypto)",
+    "Already-filed list (bank / IC3 / etc)",
+    "Operator's callback number",
+    "Whether documents are available (for follow-up upload to web forms)"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

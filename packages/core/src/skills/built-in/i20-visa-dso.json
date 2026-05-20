@@ -1,0 +1,134 @@
+{
+  "id": "i20-visa-dso",
+  "name": "International-Student I-20 / Visa Issue with the DSO",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "international",
+    "F-1",
+    "J-1",
+    "I-20",
+    "SEVIS",
+    "DSO",
+    "visa",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call the international-students office's Designated School Official (DSO) to handle an I-20 / SEVIS / F-1 (or J-1) status issue: late arrival, reduced course load, change of major or program level, employment authorization (CPT / OPT), travel signature, transfer-in / transfer-out, dependent I-20s, and status reinstatement after a violation.",
+  "disclaimer": "Immigration status is governed by federal regulations (8 CFR 214.2(f) / (j) for F-1 / J-1, and SEVP / DOS policy). The DSO is the ONLY person authorized to update SEVIS for an F-1; the Responsible Officer (RO/ARO) does so for J-1. Nothing in this skill is legal advice; complex cases (visa fraud accusations, reinstatement denials, immigrant intent disputes) warrant an immigration attorney.",
+  "context": {
+    "when_to_use": "User is on F-1 or J-1 status and needs to (a) get a travel signature on the I-20 / DS-2019, (b) authorize Curricular Practical Training or apply for Optional Practical Training, (c) drop below full course load (RCL — Reduced Course Load) for medical, academic, or final-term reasons, (d) change major / program level / education level, (e) transfer SEVIS record to another school, (f) add dependents (F-2 / J-2), (g) request reinstatement after a status violation, or (h) handle visa-stamp / port-of-entry issues for re-entry.",
+    "preconditions": [
+      "User has SEVIS ID (starts with N00…), passport, I-20 or DS-2019, visa stamp, and most recent I-94 (download from CBP).",
+      "User knows the specific issue, including dates (start of program, last entry, current term dates).",
+      "User has checked the international-students office's website for the request form (most issues have a specific form: travel signature request, RCL request, CPT request, OPT request, etc.)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Only the DSO can touch SEVIS. Not the registrar, not the dean, not the professor. If front-desk staff is making promises about SEVIS, slow down and confirm with a DSO.",
+    "Timelines are FEDERAL, not institutional. Late arrival, dropping below full-time, working without authorization — these are status violations that the school cannot waive.",
+    "RCL (Reduced Course Load) is the safe way to drop below 12 credits (undergrad) or 9 credits (graduate). Without an authorized RCL, dropping below is a status violation.",
+    "CPT must be authorized BEFORE the user starts work, on the specific employer and specific dates. Working a day early is a violation.",
+    "OPT applications take USCIS 3–5 months. STEM OPT extension applications are time-sensitive. Plan months ahead.",
+    "Travel signatures (page 2 of the I-20 / DS-2019) are valid for one year (six months while on OPT). Get a fresh one BEFORE every international trip.",
+    "Reinstatement is possible for some violations but requires fast action and immigration-attorney involvement for anything beyond minor lapses."
+  ],
+  "phrases": {
+    "opener_general": "Hi, I'm an F-1 / J-1 student, SEVIS ID [N00…]. I have a question about [travel signature / RCL / CPT / OPT / transfer / dependent / reinstatement]. Could I speak with a DSO?",
+    "ask_for_DSO_directly": "I'd like to speak with a Designated School Official, not just front-desk staff — this is an immigration question and I want to make sure the answer is authoritative.",
+    "travel_signature_request": "I'm planning international travel on [dates]. Could I get a travel signature added to page 2 of my I-20 / DS-2019? What's the process — drop-off, email, in-person?",
+    "RCL_request": "I need to drop below full-time enrollment this term because [medical / academic difficulty in first term / final term needs fewer credits]. Could you process an RCL authorization in SEVIS before I drop the course?",
+    "CPT_request": "I have a CPT internship offer from [employer]. The dates are [start-end], the hours are [N]/week, and the work is integral to my [program]. What does your office need to issue a CPT authorization on my I-20?",
+    "OPT_inquiry": "I'm planning to apply for post-completion OPT. My program ends [date]. When's the earliest I can file the I-765, and what does your office need to issue the OPT-recommended I-20?",
+    "STEM_OPT_inquiry": "I'm currently on OPT and want to apply for the 24-month STEM extension. My current OPT ends [date]. Could we map the timeline and form requirements?",
+    "transfer_in_or_out": "I'm transferring [in from / out to] [school] for [term]. Could we schedule the SEVIS transfer release / transfer-in pickup?",
+    "reinstatement": "I may have fallen out of status because [reason]. I need urgent guidance — possibly reinstatement, possibly a travel-and-reentry option. Can we get on the calendar today?",
+    "ask_for_director_of_OISS": "Could I escalate to the Director of International Student Services? My situation is complex and I want to make sure I'm being routed correctly.",
+    "graceful_close_success": "Thank you. To confirm: [form] submitted by [date], expected I-20 issuance [date], pickup method [in-person / mail / e-sign]. May I have your direct email as my DSO contact?"
+  },
+  "tactics": [
+    {
+      "name": "Get to a DSO on the first call",
+      "when": "Opening.",
+      "script": "Use `ask_for_DSO_directly`. Front-desk staff can answer logistics; only DSOs can answer the actual immigration question. Avoid building a plan on advice that has to be re-confirmed later.",
+      "priority": 1
+    },
+    {
+      "name": "Authorize BEFORE doing",
+      "when": "CPT, RCL, employment, travel.",
+      "script": "Every immigration action requires authorization in SEVIS or on the I-20 before the action. Working before CPT issuance, dropping before RCL authorization, traveling without a current signature — all are violations even when 'fixed' afterward. Use `CPT_request`, `RCL_request`, `travel_signature_request` proactively.",
+      "priority": 2
+    },
+    {
+      "name": "Plan OPT timing backward from program-end date",
+      "when": "Pre-final-term.",
+      "script": "Use `OPT_inquiry`. I-765 can be filed up to 90 days before program end and up to 60 days after. The OPT-recommended I-20 must be issued first. Total process: schedule a DSO meeting 4 months out.",
+      "priority": 3
+    },
+    {
+      "name": "Handle transfer SEVIS releases carefully",
+      "when": "Switching schools.",
+      "script": "Use `transfer_in_or_out`. The release date determines which school controls SEVIS. Don't release too early (you can lose access to the old campus systems) or too late (new school can't issue the I-20).",
+      "priority": 4
+    },
+    {
+      "name": "Treat potential status violations as same-day",
+      "when": "User suspects a violation (overstayed term, unauthorized work, dropped below full-time without RCL, expired I-20).",
+      "script": "Use `reinstatement`. Time is critical: reinstatement applications generally must be filed within 5 months of the violation, and the 'travel and reentry' option may not work after that. Get the DSO involved today, then loop in an immigration attorney.",
+      "priority": 5
+    },
+    {
+      "name": "Escalate to the OISS Director for non-standard cases",
+      "when": "Complex transfers, dependent issues, denied OPT, change-of-status involvement.",
+      "script": "Use `ask_for_director_of_OISS`. Directors handle exceptions and have direct lines to SEVP / SEVIS-help. They also know which immigration attorneys the school's students have used."
+    },
+    {
+      "name": "Document with photos, not staples",
+      "when": "Receiving the new I-20 / DS-2019.",
+      "script": "Photograph both pages. Keep every prior I-20 forever — OPT, H-1B, green-card adjudicators may ask for any of them years later. Don't staple or write on the I-20."
+    }
+  ],
+  "boundaries": [
+    "Do NOT work without authorization, even one hour, even unpaid 'volunteer' work in a paid role.",
+    "Do NOT drop below full-time without an authorized RCL in SEVIS.",
+    "Do NOT travel internationally without a current travel signature.",
+    "Do NOT misrepresent the funding or employment on the I-20 — it can affect future visa adjudications.",
+    "Do NOT take immigration advice from non-DSO staff, faculty, or friends as authoritative. Confirm with the DSO."
+  ],
+  "success_signals": [
+    "DSO confirms the action in SEVIS (RCL authorized, CPT printed on I-20, OPT-recommended I-20 issued).",
+    "Travel signature dated within the last 6 months.",
+    "Form receipt or pickup date scheduled.",
+    "DSO offers direct email and named follow-up.",
+    "Transfer release / pickup dates are aligned with the new school's start."
+  ],
+  "failure_signals": [
+    "Violation already occurred and reinstatement window is closing.",
+    "OPT timing slipped (filing window missed).",
+    "CPT request denied because the work isn't integral to the program.",
+    "Dependent I-20 can't be issued without additional financial documentation.",
+    "Transfer-out school disputes the release date."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm SEVIS action, I-20 / DS-2019 issuance date, pickup method, DSO email. Photograph the new document immediately.",
+    "on_failure": "Stop. Do not act on a violation track without the DSO + ideally an immigration attorney. Identify whether reinstatement, travel-and-reentry, or change-of-status is the path. Loop the operator immediately.",
+    "follow_ups": [
+      "Email operator the new I-20 / DS-2019 dates and DSO contact.",
+      "Calendar travel-signature expiration minus 30 days.",
+      "If OPT: calendar I-765 receipt notice, EAD card arrival, employer reporting deadlines, and unemployment day-count.",
+      "If reinstatement: calendar all filing windows and attorney consult."
+    ]
+  },
+  "required_user_info": [
+    "SEVIS ID, passport number, visa-stamp expiration, I-94 admit-until date",
+    "Current I-20 / DS-2019 with travel signature date",
+    "Program major, level (BS/MS/PhD), current term, expected end date",
+    "Specific issue (travel, RCL, CPT, OPT, STEM OPT, transfer, dependent, reinstatement)",
+    "Employer details if CPT / OPT",
+    "Funding source and amount on the I-20",
+    "History of prior status changes (CPT used, prior OPT, prior schools)"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

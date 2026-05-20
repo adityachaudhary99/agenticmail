@@ -1,0 +1,116 @@
+{
+  "id": "close-on-concrete-next-step",
+  "name": "Close Every Call on a Concrete Next Step",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "closing",
+    "next-step",
+    "phone-call",
+    "discipline",
+    "pipeline-hygiene",
+    "outreach-sales"
+  ],
+  "description": "Before ending any outbound call, secure exactly one specific, calendared, mutually-agreed next step — OR a clean disqualification. 'I'll follow up next week' is not a next step; it's a ghosting waiting to happen.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "Last 2-3 minutes of any outbound call where substantive conversation occurred. Applies to discovery calls, follow-ups, referred intros, and re-engagements alike.",
+    "preconditions": [
+      "Agent has confirmed enough about the prospect's situation to know what a real next step would be.",
+      "Operator has authorised the menu of possible next steps the agent can offer.",
+      "Agent has real calendar availability — not vague openness — to propose.",
+      "Agent is willing to disqualify on the call instead of forcing a fake next step."
+    ],
+    "estimated_call_duration_minutes": 3
+  },
+  "principles": [
+    "A call without a concrete next step is a leak in the pipeline. 'I'll follow up' has a measurable conversion rate near zero.",
+    "The next step must be small enough to feel easy and specific enough to be calendared.",
+    "If you genuinely can't find a real next step, the answer is disqualification — not a stalling next step.",
+    "Mutual agreement matters: 'I'll send you a proposal' is not a next step; 'I'll send you a proposal by Thursday and we'll talk Friday at 2' is.",
+    "Confirm in writing within 60 minutes. The verbal next step is half the commitment; the calendar invite is the other half."
+  ],
+  "phrases": {
+    "ask_for_next_step": "Before we hang up — what feels like the right next thing? I'd like to leave with something specific on the calendar so neither of us has to chase the other.",
+    "propose_specific": "How about [specific deliverable] from me by [day], and then we hop on for [duration] on [day/time] to walk through it together?",
+    "compress_to_smallest_step": "Want to start smaller — a 15-minute call next week to see if it even makes sense to go further?",
+    "disqualify_cleanly": "Honestly, hearing all of that, I'm not sure we're the right next step for you right now. Want me to close this out cleanly, and if [trigger condition] changes, you'll know where to find me?",
+    "lock_it_down": "Great — let me read it back: I'll send [thing] by [day], you'll review by [day], we're talking [day/time]. Right? Calendar invite landing within the hour."
+  },
+  "tactics": [
+    {
+      "name": "Earn the close — don't ambush it",
+      "when": "After substantive conversation has happened.",
+      "script": "Use `ask_for_next_step`. Framing it as 'I want to leave with something specific' is mutual; jumping to 'so when can we meet?' is asymmetric.",
+      "priority": 1
+    },
+    {
+      "name": "Offer the next step rather than asking what they want",
+      "when": "Prospect engaged but didn't volunteer a next step first.",
+      "script": "Use `propose_specific`. Prospects who 'want to think about it' often need a structured option to react to. Propose, then let them shape it.",
+      "priority": 2
+    },
+    {
+      "name": "Shrink the step if there's hesitation",
+      "when": "Prospect hedges on the proposed next step.",
+      "script": "Use `compress_to_smallest_step`. A 15-minute call beats a 30-minute one when they're hesitant. Movement matters more than meeting length.",
+      "priority": 3
+    },
+    {
+      "name": "Disqualify out loud rather than fake a next step",
+      "when": "There's no honest next step available.",
+      "script": "Use `disqualify_cleanly`. A real disqualification is a stronger close than a fictional 'I'll follow up in a month' — both for the operator's pipeline hygiene AND the prospect's trust.",
+      "priority": 4
+    },
+    {
+      "name": "Read it back verbatim",
+      "when": "After agreement.",
+      "script": "Use `lock_it_down`. Prospects who hear the commitment read back are 2-3× more likely to honour it.",
+      "priority": 5
+    },
+    {
+      "name": "Send the calendar invite within 60 minutes",
+      "when": "Immediately after the call.",
+      "script": "Use the agent's calendar tool to send a real invite with a one-line agenda. Same-day confirmation is what converts a verbal yes into a held meeting."
+    }
+  ],
+  "boundaries": [
+    "Do NOT propose a time the operator does not actually have on the calendar.",
+    "Do NOT escalate the size of the next step ('let's meet for 90 minutes with our CEO') beyond what the conversation warrants.",
+    "Do NOT accept 'I'll get back to you' as a next step. Press once for specificity; if it doesn't land, disqualify cleanly.",
+    "Do NOT promise deliverables the operator hasn't approved (custom proposals, free pilots, exclusive demos).",
+    "Do NOT count an unconfirmed verbal next step as a closed step in the CRM — it's only real once the invite is accepted."
+  ],
+  "success_signals": [
+    "Prospect accepts the proposed time on the call.",
+    "Prospect counters with their own specific time.",
+    "Prospect names a colleague to include in the next step.",
+    "Calendar invite is accepted within the same business day.",
+    "Prospect responds to the recap email with confirmation."
+  ],
+  "failure_signals": [
+    "Prospect says 'let me get back to you on timing'.",
+    "Prospect agrees to a step but won't pick a specific day.",
+    "Calendar invite remains in 'tentative' or 'no response' state for 48+ hours.",
+    "Recap email goes unanswered for 5+ business days."
+  ],
+  "exit_strategy": {
+    "on_success": "Send the calendar invite within 60 minutes. Send a written recap with the prospect's own words quoted, the deliverable list, and the agreed time. Reconfirm 24 hours before the next step.",
+    "on_failure": "If a concrete next step couldn't be agreed AND there's a real underlying interest, send a written follow-up with two specific time options for a smaller step. If still no movement, follow the ghosted-lead re-engagement protocol — do not keep proposing next steps blind.",
+    "follow_ups": [
+      "Calendar invite + recap email within 60 minutes.",
+      "Reminder ping 24 hours before the next step (one line, not a re-pitch).",
+      "CRM update with verbatim agreement and the named next step.",
+      "If the next step is missed, ONE rescheduling attempt — beyond that, treat as ghosting."
+    ]
+  },
+  "required_user_info": [
+    "Operator's authorised menu of next-step options",
+    "Operator's real calendar windows for the next 2 weeks",
+    "Operator's standing policy on disqualifying vs. nurturing weak fits",
+    "What deliverables the agent may promise (and by when)",
+    "Whether the operator wants to review recap emails before they go out, or trusts the agent to send directly"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

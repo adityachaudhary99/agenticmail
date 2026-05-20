@@ -1,0 +1,125 @@
+{
+  "id": "revisit-totaling-decision",
+  "name": "Get an Adjuster to Revisit a Totaling Decision",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "auto",
+    "total-loss",
+    "actual-cash-value",
+    "acv",
+    "salvage",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Challenge an auto-insurer's total-loss valuation. Force a line-item breakdown of the actual-cash-value (ACV) calculation, surface comparable vehicles the carrier excluded, and either raise the offer or convert it to a repair authorization. Total-loss valuations are formulaic — and the formula has knobs.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "The carrier has declared the vehicle a total loss and either (a) made a low ACV offer, or (b) totaled a vehicle the user believes is economically repairable. Use BEFORE accepting the offer or signing title-transfer paperwork.",
+    "preconditions": [
+      "Claim number and adjuster name known.",
+      "Carrier's ACV offer in writing (including the valuation report — CCC, Mitchell, Audatex are common vendors).",
+      "User has researched comparable vehicles (same year, make, model, trim, mileage, condition) on Kelley Blue Book, Edmunds, NADA, local Craigslist, AutoTrader, CarGurus.",
+      "User has documentation of recent repairs, upgrades, low mileage, exceptional condition (receipts, photos, service records)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Total-loss valuations come from a vendor report (CCC ONE / Mitchell / Audatex). It's a printable document with comparables — demand it.",
+    "The comparables in the report are often (a) further geographically than they should be, (b) lower-trim, (c) higher-mileage, (d) reflect 'asking' prices marked down. Each of those is a negotiable knob.",
+    "Repair-vs-total is an arithmetic threshold (usually 70-80% of ACV depending on state). Raise ACV and the math may flip back to repair.",
+    "Local market matters. A vehicle in a desirable color or trim, or in a tight regional market, has real comparables the report missed.",
+    "Don't argue emotion ('this car has sentimental value'). Argue arithmetic ('comp #3 is 80 miles away in a different market; here are three local comps within 20 miles').",
+    "Pre-loss upgrades (new tires, recent timing belt, premium audio) are 'adjustments' the vendor system has fields for. Demand they be added."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling about claim [number]. I've received the total-loss valuation of [amount] and I'd like to walk through it line-by-line. Could you pull up the vendor valuation report?",
+    "request_valuation_report": "Could you send me a copy of the full CCC / Mitchell / Audatex valuation report — the one with the comparable vehicles listed? I want to review each comparable.",
+    "challenge_comparables": "Comparable #[N] is [distance] miles away in a different market. Comparables within [20-30] miles of the loss location would be more accurate. Can we substitute with local market data?",
+    "challenge_condition_grade": "The report grades the vehicle's condition as [grade]. Based on [service records / recent inspection], the actual condition is closer to [higher grade]. Can we re-grade and re-run?",
+    "add_upgrades": "The valuation didn't include [recent tires / brakes / timing belt / battery / upgrade]. I have receipts dated [date] totaling [amount]. Can you add those as adjustments?",
+    "challenge_total_threshold": "If the ACV is recalculated to [new number], the repair-to-ACV ratio drops below the carrier's total threshold of [X%]. At that point can we authorize the repair instead?",
+    "request_independent_appraisal": "My policy includes an appraisal clause. I'd like to invoke it: I'll appoint an appraiser, the carrier appoints one, and they pick an umpire if needed. Could you walk me through that process?",
+    "graceful_close": "Thanks. To confirm: you'll re-run the valuation including [adjustments] and send the updated report by [date]. I haven't accepted the current offer."
+  },
+  "tactics": [
+    {
+      "name": "Demand the valuation report",
+      "when": "First substantive turn.",
+      "script": "Use the `request_valuation_report` phrase. Without the report, the negotiation is over the adjuster's summary — which is the carrier's framing. The report itself has the comparable VINs, distances, and condition grades.",
+      "priority": 1
+    },
+    {
+      "name": "Challenge distant comparables",
+      "when": "Report includes comparables more than 30 miles away.",
+      "script": "Use the `challenge_comparables` phrase. Local markets vary; the report's algorithm pulls broadly to find low comps. Substitute with the user's pre-prepared local comps.",
+      "priority": 2
+    },
+    {
+      "name": "Re-grade the condition",
+      "when": "Report grades vehicle 'average' or below.",
+      "script": "Use the `challenge_condition_grade` phrase. Each grade is worth real money. Service records, low mileage, garage-kept, single-owner, recent detail — these justify a grade bump.",
+      "priority": 3
+    },
+    {
+      "name": "Add recent upgrades and maintenance",
+      "when": "Mid-call, after grade.",
+      "script": "Use the `add_upgrades` phrase. Tires/brakes/timing-belt/battery/transmission flush all have line items in the valuation system. Receipts within 12 months are routinely accepted.",
+      "priority": 4
+    },
+    {
+      "name": "Push to flip back to repair",
+      "when": "Vehicle is near the total threshold.",
+      "script": "Use the `challenge_total_threshold` phrase. If the math drops repair below the threshold, the carrier is often willing to authorize repair rather than fight ACV.",
+      "priority": 5
+    },
+    {
+      "name": "Invoke the appraisal clause",
+      "when": "Adjuster refuses to re-run after legitimate adjustments are presented.",
+      "script": "Use the `request_independent_appraisal` phrase. Almost every auto policy has an appraisal clause as a binding-but-cheap arbitration. Carriers often improve their offer rather than go through it.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT sign the title-transfer or release on this call — that locks in the ACV. Route via `ask_operator`.",
+    "Do NOT accept the offer verbally, even casually. 'That sounds reasonable' can be cited later.",
+    "Do NOT misrepresent the vehicle's condition or mileage. The carrier verifies.",
+    "Do NOT fabricate comparable listings. Use real, dated screenshots/URLs.",
+    "Do NOT let the adjuster impose an artificial deadline ('you have to decide by Friday'). Storage fees and rental are separate negotiations.",
+    "Do NOT discuss prior damage that wasn't on the loss report unless it's directly relevant — could trigger fraud review."
+  ],
+  "success_signals": [
+    "Adjuster agrees to re-run the valuation with adjustments.",
+    "Adjuster substitutes distant comparables with local ones.",
+    "Adjuster re-grades condition upward.",
+    "Adjuster adds maintenance/upgrade adjustments.",
+    "Adjuster flips the decision back to repair.",
+    "Adjuster acknowledges the appraisal clause and walks through it."
+  ],
+  "failure_signals": [
+    "Adjuster refuses to share the valuation report.",
+    "Adjuster says 'the system is final' (it isn't — supervisors and re-runs exist).",
+    "Adjuster pressures a same-call decision.",
+    "Adjuster threatens storage fees as a deadline."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm what adjustments will be re-run, the new-report ETA, that the original offer has not been accepted, and that storage/rental are extended through the re-run. Email a recap.",
+    "on_failure": "Document the refusal. Route to `ask_operator` with options: (1) invoke appraisal clause formally in writing, (2) DOI complaint, (3) attorney referral if loss is significant.",
+    "follow_ups": [
+      "Email a recap immediately.",
+      "Calendar the new-report ETA.",
+      "Prepare appraisal-clause invocation letter as a backup.",
+      "Keep the rental car / storage status documented daily."
+    ]
+  },
+  "required_user_info": [
+    "Claim number and adjuster name",
+    "Carrier's current ACV offer and the valuation report (CCC/Mitchell/Audatex)",
+    "Vehicle details: year/make/model/trim/mileage/options",
+    "3-5 local comparable listings the user has pre-researched",
+    "Receipts for recent maintenance/upgrades (last 12-24 months)",
+    "Whether operator authorises invoking the appraisal clause"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

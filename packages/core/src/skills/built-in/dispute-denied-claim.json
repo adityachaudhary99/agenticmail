@@ -1,0 +1,143 @@
+{
+  "id": "dispute-denied-claim",
+  "name": "Dispute a Denied Claim (Demand Adjuster + Written Denial Reason)",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "claim",
+    "denial",
+    "dispute",
+    "appeal",
+    "written-reason",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Push back on a claim denial — get the SPECIFIC denial reason in writing, identify the policy language the carrier is citing, and open the formal appeal channel. Most denials cite vague reasons verbally; the written denial often reveals the carrier's actual basis (or its absence).",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "Carrier has denied a claim (in writing, verbally, or by silence past the statutory window). The user wants to dispute. Use BEFORE engaging an attorney or filing a DOI complaint — the written denial reason is often the document the next stage needs.",
+    "preconditions": [
+      "Claim number and adjuster name known.",
+      "User has the denial communication if one exists (letter, email, voicemail).",
+      "User has a copy of the policy (declarations page + full contract).",
+      "User has documentation of the loss (photos, repair estimates, police report, medical records as applicable)."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "A denial without a SPECIFIC policy-language citation is not a denial — it's an opinion. Force the citation.",
+    "Carriers often deny verbally hoping the policyholder gives up. A written denial is a legal document with appeal rights.",
+    "Every state requires a written denial with specific reasons. If the carrier won't put it in writing, that itself is a regulatory violation.",
+    "The appeal process is usually documented in the policy. Read it before the call and reference it back to the adjuster.",
+    "Tone matters: 'I want to understand the specific basis' lands very differently from 'this is bullshit'. Both are accurate; one gets you the document.",
+    "Verbal-only gaslights to refuse: 'an appeal was already submitted and denied' (require: appeal-decision letter ID + date), 'there's no appeal available on this kind of claim' (state law almost always provides one), 'the system shows you accepted the denial' (demand the document or recording that says so). Each of those, said without supporting paperwork, is a stall — not a fact."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling about claim [number]. I understand the carrier has [denied / partially denied / refused to cover] this claim. I'd like to get the specific policy language being cited, in writing, and start the formal appeal process.",
+    "demand_specific_citation": "Could you tell me the specific section and language of the policy that the carrier is relying on for this denial? Section, page, or exclusion number — whatever the carrier's denial committee referenced.",
+    "demand_written_denial": "I need the denial in writing, with the specific policy language cited, and with the appeal rights and deadlines included. When can I expect that letter?",
+    "ask_about_appeal_path": "What is the formal appeal process for this denial? Internal appeal, external review, who decides, what's the deadline, and what evidence am I allowed to submit?",
+    "request_claim_file": "I'd like to request a copy of the full claim file — adjuster notes, photos, estimates, any expert reports. I understand most states give policyholders that right.",
+    "decline_to_re_argue_facts": "I'd rather not re-litigate the facts on this call. The facts are documented. What I need from you is the policy-language basis for the denial and the appeal process.",
+    "log_callback": "Could I get your full name, direct extension, and a reference number for this call?",
+    "graceful_close": "Thank you. To confirm: the written denial with policy citation will arrive by [date], the appeal deadline is [date], and the appeal is submitted to [name/address]. I'll be in touch."
+  },
+  "tactics": [
+    {
+      "name": "Open with the specific deliverable",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase. Three deliverables: (1) specific policy language, (2) written denial, (3) appeal path. Don't accept the call ending without all three.",
+      "priority": 1
+    },
+    {
+      "name": "Force a citation",
+      "when": "Rep gives a vague reason ('the loss isn't covered', 'pre-existing condition', 'not a covered peril').",
+      "script": "Use the `demand_specific_citation` phrase. A real denial has a section number. If the rep can't produce one, that itself is significant — log it.",
+      "priority": 2
+    },
+    {
+      "name": "Demand a written denial",
+      "when": "Rep has given only a verbal denial.",
+      "script": "Use the `demand_written_denial` phrase. Most states REQUIRE a written denial with specifics. Carriers stalling on this are violating regulation — and they know it.",
+      "priority": 3
+    },
+    {
+      "name": "Ask about the appeal path",
+      "when": "Denial is confirmed.",
+      "script": "Use the `ask_about_appeal_path` phrase. Many policies have a 60-180 day internal appeal window. Missing it forfeits the easiest remedy.",
+      "priority": 4
+    },
+    {
+      "name": "Request the claim file",
+      "when": "Late in the call, after appeal path is identified.",
+      "script": "Use the `request_claim_file` phrase. The adjuster notes often reveal the actual reasoning vs the official denial. Most states grant policyholders access to the claim file on request.",
+      "priority": 5
+    },
+    {
+      "name": "Refuse to re-argue facts on this call",
+      "when": "Rep tries to relitigate what happened, who was at fault, or the user's behavior.",
+      "script": "Use the `decline_to_re_argue_facts` phrase. The denial-call's job is to extract the document and the appeal path, not to convince the line rep.",
+      "priority": 6
+    },
+    {
+      "name": "Get the supervisor if the rep won't produce a citation",
+      "when": "Front-line rep can't or won't produce specific policy language.",
+      "script": "Politely escalate. 'I appreciate that you may not have the file in front of you. Could you transfer me to the claims supervisor or denial reviewer who can?'",
+      "priority": 7
+    },
+    {
+      "name": "Refuse the 'no appeal available' gaslight",
+      "when": "Rep claims the policy has no appeal mechanism OR that the appeal window has 'already closed' OR that an appeal was 'already adjudicated' — but cannot produce the relevant document.",
+      "script": "'I'd like to see that in writing. Could you cite the policy section that excludes appeal rights, OR send me the prior appeal decision letter with its date? State insurance regulations generally require an appeal path on every denial — if mine is different, I need the document showing that.' If the rep cannot produce the document, the claim is NOT closed — proceed as if appeal rights are open and escalate to the supervisor + DOI complaint.",
+      "priority": 8,
+      "decision_point": "If the rep insists no appeal exists but won't put it in writing — treat that refusal as ITSELF the next escalation hook. The refusal letter (or refusal-to-refuse) is one of the strongest pieces of evidence for a DOI complaint and a bad-faith claim."
+    },
+    {
+      "name": "STOP and re-evaluate before signing or withdrawing anything",
+      "when": "Rep proposes any document for the operator to sign, OR asks the operator to 'just confirm verbally' that they accept the denial, OR offers a quick settlement contingent on withdrawing the claim.",
+      "script": "Hard pause. 'I won't sign or verbally accept anything on this call — every signature or release goes through the operator's review. Please email me a copy of whatever you'd like me to consider, and I'll respond after review.' If pushed, end the call politely and route to `ask_operator` BEFORE any acceptance.",
+      "priority": 9
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept a verbal denial as final. Always demand written.",
+    "Do NOT admit fault, restate the facts in ways that could be characterised as admission, or speculate about pre-existing conditions.",
+    "Do NOT agree to withdraw or close the claim on this call.",
+    "Do NOT sign anything in response to a denial letter without `ask_operator` — release language often hides in 'acknowledgment' forms.",
+    "Do NOT miss the appeal deadline. Calendar it the moment it's confirmed."
+  ],
+  "success_signals": [
+    "Rep names a specific policy section/exclusion.",
+    "Rep commits to a written denial with citation and appeal rights by a specific date.",
+    "Rep identifies the appeal contact, deadline, and evidence rules.",
+    "Supervisor joins and reconsiders.",
+    "Claim file is offered for release."
+  ],
+  "failure_signals": [
+    "Rep refuses to put the denial in writing.",
+    "Rep cannot cite specific policy language.",
+    "Rep insists no appeal exists.",
+    "Rep tries to extract a withdrawal or release on the call.",
+    "Rep gaslights with 'you already appealed' / 'you already accepted' but cannot produce the decision letter or recording.",
+    "Rep frames closure as routine ('let's just close this out today') without offering written denial or appeal path — that's a claims-side save attempt."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: written-denial date, appeal deadline, appeal submission target, evidence rules, claim-file delivery date. Email a recap immediately. Calendar the appeal deadline.",
+    "on_failure": "Document the refusal. Route to `ask_operator` with two recommendations: (1) certified-mail demand for written denial citing the state's UCSPA, (2) DOI complaint. Consider attorney referral if the loss is significant.",
+    "follow_ups": [
+      "Email a recap of the call within 1 hour.",
+      "Calendar the appeal deadline with 7-day and 1-day reminders.",
+      "Begin preparing the appeal packet (evidence + a written argument rebutting the cited section).",
+      "If written denial doesn't arrive, escalate via DOI."
+    ]
+  },
+  "required_user_info": [
+    "Claim number and adjuster name",
+    "Existing denial communication (if any)",
+    "Policy document",
+    "All evidence files (photos, estimates, reports)",
+    "Operator's preference on attorney engagement if appeal fails"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

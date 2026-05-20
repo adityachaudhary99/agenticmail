@@ -1,0 +1,116 @@
+{
+  "id": "report-power-outage-get-etr",
+  "name": "Report a Power Outage and Get an ETR",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "electric",
+    "outage",
+    "etr",
+    "phone-call",
+    "utility",
+    "utility-telecom"
+  ],
+  "description": "Call an electric utility to report an outage, confirm the trouble ticket is open against the user's specific address, and extract a real Estimated Time of Restoration (ETR) rather than the canned 'we're assessing' line.",
+  "disclaimer": "If anyone in the home depends on powered medical equipment (oxygen concentrator, dialysis, refrigerated meds), say so immediately — utilities maintain a Medical Baseline / Life-Support priority list and dispatch differently. If you see sparks, arcing, a downed wire, or smell burning, hang up and use the `report-downed-line-gas-smell-911-triage` skill instead.",
+  "context": {
+    "when_to_use": "The user has lost power (or seen flickers + brownouts) and either the utility IVR did not register their outage, or it did but no ETR has been posted, or the posted ETR has already expired without an update. NOT for momentary blinks where power is already back.",
+    "preconditions": [
+      "User's service address as it appears on the bill (street + unit + ZIP).",
+      "Account number OR phone number on file (either works for most utilities).",
+      "Whether neighbors are also out (single-premise vs. block-level changes the routing).",
+      "Time the outage started, even approximate."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "The IVR is the front door — do NOT skip it. Reporting through the automated system creates the ticket that humans look at. Press 0 only after the report is logged.",
+    "ETRs are a real field, not a vibe. If the rep says 'crews are working on it', that's a non-answer; politely insist on the value in the dispatch system.",
+    "Match the outage scope language reps use: 'single premise', 'transformer', 'feeder', 'substation'. The bigger the scope, the more honest the ETR.",
+    "If you're routed to the wrong queue (billing, new service), recognise it within 60 seconds — see the queue-check phrase — and request a warm transfer without losing your place.",
+    "Stay polite. Storm-night dispatchers are triaging hundreds of calls; the friendly caller gets remembered when a crew is freed up."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm reporting an outage at [address]. My power went out at about [time]. I already reported it through the IVR — I'd like to confirm the ticket is open and get an ETR.",
+    "queue_check": "Quick question before we go further — is this the outage / dispatch line? I want to make sure I'm not taking time from a billing rep when I need outage.",
+    "transfer_request": "I think I'm in the wrong queue — could you do a warm transfer to outage dispatch and stay on the line until they pick up? I don't want to lose my place in your hold queue if they can't take me.",
+    "ask_for_etr": "What's the current ETR showing in your dispatch system? Not 'crews are working' — the actual estimated restoration timestamp.",
+    "ask_scope": "Is this a single-premise issue, a transformer, or a larger feeder / substation outage? I want to know whether to plan for hours or for the day.",
+    "medical_flag": "Before we go further — there's someone in the household on [oxygen / dialysis / refrigerated meds]. Can you flag this account as life-support priority and tell me what that changes about dispatch?",
+    "ask_callback": "If the ETR slips, can you put a callback on the ticket so I'm notified rather than guessing? My best number is [number].",
+    "graceful_close": "Thanks — so I have ticket [number], ETR [time], scope [single/transformer/feeder]. I'll call back if it slips past [time + 30 min]."
+  },
+  "tactics": [
+    {
+      "name": "Confirm the ticket exists",
+      "when": "First substantive turn after the opener.",
+      "script": "Ask the rep to read back the ticket number and the address on file. Verify the address matches exactly — duplicate-address bugs are common in multi-unit buildings.",
+      "priority": 1
+    },
+    {
+      "name": "Recognise wrong-queue within 60 seconds",
+      "when": "Rep starts asking about billing details, autopay, or 'how can I help you today' in a way that suggests general CS.",
+      "script": "Use the `queue_check` phrase. If confirmed wrong queue, use `transfer_request` and ask them to stay on the line until the outage queue picks up — this preserves your hold-time precedence.",
+      "priority": 2
+    },
+    {
+      "name": "Extract a real ETR",
+      "when": "Rep gives a vague 'crews are working' answer.",
+      "script": "Use the `ask_for_etr` phrase. If they still won't commit, ask for the dispatch timestamp or the field-supervisor's last update time. Even 'last updated 14 minutes ago, still showing 9pm' is real information.",
+      "priority": 3
+    },
+    {
+      "name": "Pin down scope",
+      "when": "After getting the ETR.",
+      "script": "Use `ask_scope`. Scope drives plan-B decisions for the user (hotel? generator fuel? food on dry ice?).",
+      "priority": 4
+    },
+    {
+      "name": "Flag medical needs",
+      "when": "Anyone in the household is on powered medical equipment.",
+      "script": "Use the `medical_flag` phrase early. This is not leverage, it's literally how dispatch prioritises — but only if the account is flagged. Ask what documentation the utility needs to keep the flag on file for future outages.",
+      "priority": 5
+    },
+    {
+      "name": "Request proactive callback",
+      "when": "Before closing.",
+      "script": "Use `ask_callback`. Callback on slip is a real feature in most modern utility CIS systems; the rep just has to tick a box."
+    }
+  ],
+  "boundaries": [
+    "Do NOT exaggerate or fabricate medical-baseline needs — utilities verify and fraudulent flags get the account removed from the list when it matters.",
+    "Do NOT demand a crew be diverted to the user's address ahead of larger outages. Restoration order is feeder → branch → premise for a reason.",
+    "Do NOT report damage you cannot see (downed lines, fire) just to get faster dispatch. Use the dedicated emergency triage skill if there's a real safety issue.",
+    "Do NOT give the rep a Social Security Number. Account number, phone, or address is sufficient for outage reporting."
+  ],
+  "success_signals": [
+    "Rep confirms ticket number AND a specific ETR timestamp.",
+    "Rep identifies scope (transformer, feeder, substation) without hedging.",
+    "Rep adds a callback-on-slip note to the ticket.",
+    "Medical-baseline flag is confirmed on the account."
+  ],
+  "failure_signals": [
+    "Rep refuses to give any ETR after two asks and a supervisor request.",
+    "Ticket cannot be found and rep insists on re-reporting via IVR — accept this once, but if it loops, ask for the outage-management-system supervisor.",
+    "Hold time exceeds 30 minutes during a non-storm event with no progress.",
+    "Rep gives an ETR that is clearly a placeholder (e.g., 11:59 PM same-day) and won't elaborate."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm ticket number, ETR, scope, and callback flag. Note the rep's name and the dispatch-update timestamp.",
+    "on_failure": "End politely, log the failed attempt with timestamp, and either re-report through the IVR (creates a fresh ticket) or escalate via the utility's outage map / Twitter handle. Many utilities post real-time ETR updates publicly that beat what the phone rep is reading.",
+    "follow_ups": [
+      "If ETR slips past the stated time by more than 30 minutes with no callback, call back and reference the original ticket number.",
+      "After restoration, if outage exceeded 24 hours OR caused appliance damage, file for a credit using `outage-credit-applied`."
+    ]
+  },
+  "required_user_info": [
+    "Service address (exact, with unit number)",
+    "Account number or phone on file",
+    "Time the outage started",
+    "Whether neighbors are out",
+    "Any medical-equipment needs in the household",
+    "Best callback number"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

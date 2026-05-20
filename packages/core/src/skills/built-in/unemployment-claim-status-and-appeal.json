@@ -1,0 +1,123 @@
+{
+  "id": "unemployment-claim-status-and-appeal",
+  "name": "State Unemployment Office: Claim Status, Issue Resolution, or Appeal Filing",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "unemployment",
+    "ui",
+    "claim-status",
+    "appeal",
+    "state-government",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call a state unemployment insurance (UI) office to check claim status, resolve a pending issue / fact-finding, request a waiver of overpayment, or initiate / preserve an appeal deadline. State UI systems are notoriously hard to reach by phone — this skill emphasizes time-sensitive preservation of rights.",
+  "disclaimer": "Not legal advice. UI rules vary significantly by state. For substantive eligibility questions (was a separation 'misconduct'? does self-employment income disqualify me?), the agent will surface the relevant fact-finding deadline and refer the user to a legal-aid clinic or unemployment-appeals attorney — not advise on case strategy.",
+  "context": {
+    "when_to_use": "Claim has a pending issue ('adjudication', 'fact-finding', 'in review') that has held payment > 3 weeks. Overpayment notice received. Denial letter received and the appeal deadline (often 10–30 days) is approaching. Online portal is locked, the password reset is failing, or identity-verification (often via ID.me) won't pass.",
+    "preconditions": [
+      "User has the claim ID / case ID and the date of the initial claim.",
+      "User has the most recent letter or 'monetary determination' from the UI office.",
+      "User has separation details (employer name, last day worked, reason for separation as the employer reported it vs as the user describes).",
+      "User has any prior earnings statements (base period quarters).",
+      "Awareness of the appeal deadline on any denial — appeals MUST be filed in writing within the statutory window or the right is lost."
+    ],
+    "estimated_call_duration_minutes": 60
+  },
+  "principles": [
+    "Appeal deadlines are absolute. If a denial letter dated [DATE] gives a 10/20/30-day appeal window, missing it almost always extinguishes the right. Preserving the deadline takes priority over everything else on the call.",
+    "State UI phone systems are commonly understaffed. Many states publish 'call-day-by-last-digit-of-SSN' rules — respect them or your call won't connect.",
+    "Adjudication (fact-finding) is a quasi-judicial process — the user's answers BECOME the record. Coach the user to answer factually and concisely; the agent should not script answers about whether a separation was 'misconduct'.",
+    "Overpayment can be by claimant fault (fraud, misreporting), agency fault, or 'fault-of-neither'. Waivers are sometimes available — confirm which type of overpayment is being asserted.",
+    "Best call times: First-thing morning (15–30 min before opening to be in the queue), or last hour of the day. Avoid Monday and the first day of the week-after-a-holiday."
+  ],
+  "phrases": {
+    "opener_status": "Hi, I'm calling about claim ID [CLAIM ID] for [NAME]. The portal shows a [PENDING ISSUE / IN REVIEW] status since [DATE] and benefits haven't been paid for [N] weeks. Can you tell me what's holding it and what's needed to resolve?",
+    "opener_appeal": "Hi, I received a denial letter dated [DATE] with an appeal deadline of [DATE]. I want to make sure I preserve my appeal rights. Can we either file the appeal by phone today or get the exact instructions / form / address for written appeal?",
+    "opener_overpayment": "Hi, I received an overpayment notice dated [DATE] in the amount of [AMOUNT]. The notice says the overpayment is [classification]. I'd like to (a) confirm the calculation, (b) ask about a waiver, and (c) make sure I don't miss any response deadline.",
+    "opener_id_verification": "Hi, my claim is stuck on identity verification. ID.me / portal won't accept [reason]. Can you tell me the alternative ID-verification path your office offers?",
+    "deadline_preservation": "Just to confirm — what's the latest date and exact channel by which I must file my appeal? Is it postmarked-by, received-by, or filed-online by that date?",
+    "stall_documents": "One second — I want to read the determination ID off the letter so I have it exactly.",
+    "graceful_close": "Thank you. Can I confirm: the action taken today, the next step, the deadline (date AND channel), the case/confirmation number, and your name / agent ID?"
+  },
+  "tactics": [
+    {
+      "name": "Preserve the appeal deadline FIRST",
+      "when": "Any denial / adverse determination is in the picture.",
+      "script": "Before anything else, write down the exact deadline date and channel. If the call ends in disconnect, you still have the deadline. File the appeal in writing if there is any doubt about whether the call achieves it.",
+      "priority": 1
+    },
+    {
+      "name": "Identify the pending-issue type",
+      "when": "Status call.",
+      "script": "Common: separation issue, able-and-available, work-search compliance, ID verification, employer protest, wage discrepancy. Each routes to a different adjudicator and has a different unblock path.",
+      "priority": 2
+    },
+    {
+      "name": "Request a callback from an adjudicator",
+      "when": "Pending issue requires fact-finding.",
+      "script": "Most states have adjudicators that conduct the fact-finding by phone. Request the callback time-window and make sure the user can be available — missing it can be treated as a non-response.",
+      "priority": 3
+    },
+    {
+      "name": "Verify overpayment math before agreeing to anything",
+      "when": "Overpayment notice.",
+      "script": "Ask for the week-by-week breakdown. Errors in overpayment calculations are common. Do NOT agree to a repayment plan or admit fault until the math is verified and waiver options are surfaced.",
+      "priority": 4
+    },
+    {
+      "name": "Alternative ID verification",
+      "when": "ID.me is failing.",
+      "script": "Many states accept mail-in ID copies, in-person American Job Center verification, or notarised affidavit. Ask explicitly what alternative path exists in this state.",
+      "priority": 5
+    }
+  ],
+  "boundaries": [
+    "Do NOT characterise a separation as misconduct or quit-with-cause on the user's behalf — refer to legal aid.",
+    "Do NOT counsel the user to omit information from a fact-finding statement.",
+    "Do NOT agree to a repayment plan, waive an appeal, or accept a determination on the user's behalf without explicit authorization.",
+    "Do NOT share the user's SSN with any inbound caller claiming UI — call back via the official state UI number.",
+    "Do NOT promise benefits will resume — only the adjudicator's determination governs that."
+  ],
+  "success_signals": [
+    "Pending issue is identified and a fact-finding callback is scheduled.",
+    "Appeal is filed (verbally or with a written confirmation receipt) before deadline.",
+    "Overpayment math is broken down and a waiver application path is identified.",
+    "Alternative ID-verification path is captured and queued.",
+    "Claim is moved out of 'in review' to 'paid' or 'pending payment'."
+  ],
+  "failure_signals": [
+    "Rep cannot locate the claim with the ID provided — verify ID and SSN last 4; try again.",
+    "Rep refuses to provide deadline / appeal channel — escalate to supervisor; file the appeal in writing the same day as a precaution.",
+    "Adjudicator callback is scheduled OUTSIDE the appeal window — file the written appeal anyway to preserve rights.",
+    "Hold > 90 minutes — try first-thing the next day or the last hour of the day; mid-day calls rarely connect."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: action taken, case/confirmation number, next-step date AND channel, adjudicator callback window if any, agent name / ID. Read deadlines back. Make a calendar entry with multiple reminders.",
+    "on_failure": "If denial or overpayment is in play, FILE the written appeal regardless — postage proof or certified-mail receipt preserves the right. Provide the user the appeal-form path and a same-day instruction.",
+    "follow_ups": [
+      "Confirm written appeal was mailed / submitted within deadline (certified mail or portal receipt).",
+      "Calendar the fact-finding callback with 24h reminder.",
+      "If waiver request submitted, calendar a 21-day status check.",
+      "Refer to legal aid (state-specific UI legal-aid clinic) if substantive eligibility questions remain."
+    ]
+  },
+  "required_user_info": [
+    "Claim ID / case ID and initial-claim date",
+    "Most recent letter (date, type, deadline, determination ID)",
+    "Separation details: employer, last day worked, employer's stated reason vs user's account",
+    "Base-period earnings (most recent 4-quarter wage history)",
+    "Whether ID verification has been completed",
+    "Whether any appeal is currently pending",
+    "Bank info if benefits are paid by direct deposit"
+  ],
+  "hang_up_and_call_back_signals": [
+    "Inbound call claiming UI office demanding payment / personal info — scam; hang up and call the official state UI number.",
+    "Wait > 90 minutes — try first-thing morning the next day; respect 'call by SSN last digit' rules where they exist.",
+    "Rep claims appeal deadline is flexible — do NOT rely on verbal extensions; file in writing and confirm receipt.",
+    "Rep is reading from the wrong state's script (you reached an out-of-state contractor) — hang up, redial."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

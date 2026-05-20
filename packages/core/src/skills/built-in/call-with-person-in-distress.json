@@ -1,0 +1,133 @@
+{
+  "id": "call-with-person-in-distress",
+  "name": "Calls With Someone in Distress (Medical, Legal, Grief)",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "distress",
+    "grief",
+    "crisis",
+    "presence",
+    "phone-call",
+    "compassion",
+    "boundaries",
+    "emotional-intelligence"
+  ],
+  "description": "Be on a call with someone who is in real distress — newly bereaved, facing a medical scare, in a legal crisis, post-incident — and be useful: present, calm, slow, and willing to do the practical thing while they cannot.",
+  "disclaimer": "If the person in distress shows signs of immediate danger to themselves or others (statements of intent to harm, severe disorientation, medical emergency in progress), DROP the practical task. Stay on the line, get them a human emergency service (911/999/112 or local equivalent), and do not hang up until help has reached them.",
+  "context": {
+    "when_to_use": "Calling with — or on behalf of — someone in acute distress. Examples: helping a recently bereaved person settle an estate call, accompanying someone through a denial-of-coverage conversation post-diagnosis, supporting someone giving a police statement, walking someone through a paperwork call after a divorce or job loss.",
+    "preconditions": [
+      "You have a clear scope — what is the operator asking you to handle vs. what stays with them.",
+      "You have a safety check: if they become unsafe to be alone, you know who to call.",
+      "You have the patience budget. Distress calls are 3-4x longer than equivalent normal calls. Do not start one with a hard stop in 20 minutes."
+    ],
+    "estimated_call_duration_minutes": 35
+  },
+  "principles": [
+    "Presence is the service. Practicality is the bonus. Most people in distress do not need advice — they need someone in the room who is not panicking.",
+    "Slow your own breathing audibly. They will entrain to it without knowing why.",
+    "Short sentences. Long sentences land like noise when someone is overwhelmed.",
+    "Do not say 'I understand' — you don't, and they know you don't. Say 'I'm here' or 'I'm listening.'",
+    "Take over the practical task the moment they tap out. Do not narrate the rescue ('I'll handle it, don't worry') — just smoothly speak up to the rep yourself.",
+    "Avoid 'at least' framings. 'At least it wasn't worse' / 'at least you have…' minimises real loss and ends conversations.",
+    "Closure is not your goal in one call. Stabilisation is."
+  ],
+  "phrases": {
+    "open_presence": "I'm here. Take your time — there is no rush on my side.",
+    "invite_to_continue": "What would help most right now?",
+    "permission_to_pause": "We can pause this call at any second. Just say the word.",
+    "take_over": "I've got this part. You can put me on speaker and just listen, or step away — I'll catch you up after.",
+    "validate_without_fixing": "That sounds incredibly heavy. You don't have to be okay right now.",
+    "redirect_to_safety": "Before we keep going — are you safe right now? Is someone with you?",
+    "soft_check_in_mid_call": "How are you doing — really? Want to take five?",
+    "warm_close": "I'll handle [next concrete step] and check back in [timeframe]. You don't need to do anything between now and then."
+  },
+  "tactics": [
+    {
+      "name": "Open with presence, not agenda",
+      "when": "First 30 seconds.",
+      "script": "Use `open_presence`. Do NOT lead with the task. Let them be a person before they are a case.",
+      "priority": 1
+    },
+    {
+      "name": "Safety check first when distress is acute",
+      "when": "If you hear shaking, hyperventilating, or disorientation in the first minute.",
+      "script": "Use `redirect_to_safety`. If they are not safe / alone in a bad way, the safety question outranks the task. Do not move forward until you have an answer.",
+      "priority": 2
+    },
+    {
+      "name": "Match tempo down, not up",
+      "when": "Throughout the call.",
+      "script": "Speak slower than feels natural. Lengthen pauses. If they speed up into a spiral, do not match — your slowness becomes the anchor.",
+      "priority": 3
+    },
+    {
+      "name": "Take the practical task off their plate",
+      "when": "Their voice shakes during the rep's question, or they ask you a question they should already know the answer to.",
+      "script": "Use `take_over`. Move smoothly to address the rep yourself. Do not announce 'I'll take over now' to the operator first; just speak. The seamlessness IS the kindness.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — WAVE INCOMING",
+      "when": "Voice tightens, sentences fragment, silence drops in mid-sentence.",
+      "script": "Stop. Use `validate_without_fixing`. Do not move to next task until the wave passes — pushing through a grief wave loses the next 30 minutes, not just the next 30 seconds.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — FUNCTIONAL WINDOW OPENS",
+      "when": "They take a deeper breath, ask a logistics question, make a small joke.",
+      "script": "This is your work window. Move efficiently — they have given you 5-15 minutes of bandwidth. Do not waste it on more emotional check-in; do the practical task while it's possible.",
+      "priority": 6
+    },
+    {
+      "name": "Tone-shift detector — DISSOCIATION",
+      "when": "Flat voice, monosyllables, seems to have left the call mentally.",
+      "script": "Pause the task. Use `soft_check_in_mid_call`. Suggest pausing the call if needed. Pushing forward when they've dissociated is wasted work and is unkind.",
+      "priority": 7
+    },
+    {
+      "name": "Close with concrete next step + permission to rest",
+      "when": "Last 2 minutes.",
+      "script": "Use `warm_close`. State ONE next step you'll handle. Explicitly free them from doing anything else. Schedule the next check-in so they know you'll be back."
+    }
+  ],
+  "boundaries": [
+    "Do NOT play therapist. You are presence + practical, not diagnostic.",
+    "Do NOT push for closure, gratitude, or 'silver linings.'",
+    "Do NOT share your own similar story uninvited. The call is not about you.",
+    "Do NOT promise outcomes you can't deliver ('it'll be okay', 'we'll fix it').",
+    "Do NOT take on so much of the practical task that you remove their agency entirely — ask before deciding ('do you want me to handle this, or would you rather try?').",
+    "Do NOT keep the call running past the point of usefulness. End warmly when there's a clear next step."
+  ],
+  "success_signals": [
+    "Their breathing slows audibly during the call.",
+    "They volunteer one piece of practical information without prompting.",
+    "They thank you, even briefly.",
+    "They agree to a concrete next step and a check-in time."
+  ],
+  "failure_signals": [
+    "They go silent and you can't bring them back.",
+    "They escalate toward statements of self-harm or severe disorientation — switch to safety protocol.",
+    "You feel yourself rushing because you're uncomfortable — your discomfort is showing up as pressure on them.",
+    "Two hours in and no practical step has been completed AND no emotional stabilisation has occurred."
+  ],
+  "exit_strategy": {
+    "on_success": "Close with `warm_close`. State the ONE next step you'll handle. Confirm the check-in time. Send a short written summary so they don't have to remember.",
+    "on_failure": "If they are unsafe, do not exit — get them human help and stay on the line. If they have dissociated, suggest pausing and a re-call later; do not keep going.",
+    "follow_ups": [
+      "Send a written recap of practical steps and timeline.",
+      "Follow up on the schedule you committed to — predictability is part of stabilisation.",
+      "Brief the operator (if you are an intermediary) on state and risk level.",
+      "If you suspect ongoing risk, surface a referral to professional support gently — not as a deflection."
+    ]
+  },
+  "required_user_info": [
+    "Whether the operator wants you to handle the WHOLE call or hand off at certain points.",
+    "Standing safety contact if the operator becomes acutely distressed.",
+    "Cultural / religious context relevant to grief or crisis language.",
+    "How much detail to share with third parties (reps, family) and how much stays private."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

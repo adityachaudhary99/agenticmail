@@ -1,0 +1,111 @@
+{
+  "id": "missed-connection-distressed-passenger",
+  "name": "Missed Connection — Secure Hotel, Meal Vouchers, and Rebook",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["airline", "irrops", "hotel-voucher", "meal-voucher", "controllable", "dot-dashboard"],
+  "description": "Your inbound was late, you missed the connection, and you're stuck overnight. If the delay was carrier-controllable, US airlines committed via the DOT Customer Service Dashboard to provide hotel, meals, and rebooking. This skill extracts those entitlements without being fobbed off.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User has just missed (or is about to miss) a connection because the previous segment ran late or was cancelled. Most useful when the cause is carrier-controllable (mechanical, crew, IT outage, late inbound aircraft) — NOT weather or ATC, which are 'uncontrollable' and unlock fewer entitlements.",
+    "preconditions": [
+      "User can name the cause of the delay as posted by the airline (mechanical, crew, late-arriving aircraft, ATC, weather).",
+      "User has PNR and ticket number.",
+      "User is at the airport (gate, service desk, or club) — physical presence helps.",
+      "User has a credit card to charge the room in case the airline declines and reimburses later."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Cause-of-delay language is everything. 'Controllable' (mechanical, crew, IT) unlocks the DOT Dashboard commitments. 'Uncontrollable' (weather, ATC, security) does not. Force the agent to name the cause.",
+    "Go to the right counter in the right order: gate first (fastest if they have voucher stock), then service desk, then the lounge if you have access (lounge agents have more time and tools), then phone.",
+    "The DOT Customer Service Dashboard (dot.gov/airconsumer) lists each major US airline's commitments. AA, AS, B6, DL, F9, HA, NK, UA, WN all committed to hotel + meal + rebook for controllable overnight delays. Cite the dashboard if pushed back.",
+    "Distressed-passenger hotel rates are pre-negotiated. If the airline can't issue a direct voucher, they will give you a 'distressed pax code' for a partner hotel — ask for it explicitly.",
+    "Meal vouchers are typically $12-$15 per meal, sometimes loaded onto a digital wallet code. Don't refuse them because they're small — they're symbolic and they count.",
+    "Save every receipt. Even with vouchers, reimbursement claims later may require originals."
+  ],
+  "phrases": {
+    "opener": "Hi — I just missed my connection from [origin] to [destination] because [previous flight] arrived late. Can you confirm the delay cause posted on the flight is [cause]? I'd like to rebook and get the overnight kit per your DOT Dashboard commitment.",
+    "force_cause_naming": "What's the official cause code on the inbound delay? I want to make sure we're on the same page about whether this is controllable.",
+    "ask_for_hotel": "Since this is controllable, I'd like the hotel voucher you committed to on the DOT Customer Service Dashboard. Where is the partner hotel and how do I get there?",
+    "ask_for_meals": "Can I also get the meal vouchers for tonight's dinner and tomorrow's breakfast?",
+    "ask_for_distressed_code": "If you can't issue a direct hotel voucher, can you give me the distressed-passenger rate code so I can book at the partner hotel and submit for reimbursement?",
+    "ask_for_transport": "How am I getting to the hotel — shuttle, taxi voucher, or rideshare reimbursement?",
+    "escalate": "Okay, if the front desk doesn't have voucher stock — can you connect me to the duty manager or station ops? This is a controllable delay and I'm trying to use what the airline committed to.",
+    "graceful_close_success": "Thanks. Can I get this in writing — an email or a printout of the rebooked itinerary, the hotel voucher details, and the meal voucher codes?",
+    "graceful_close_failure": "Alright. Please note on my PNR that I requested distressed-passenger services tonight at [station] and that they couldn't be provided. I'll book my own and file for reimbursement."
+  },
+  "tactics": [
+    {
+      "name": "Pin down the cause-of-delay code first",
+      "when": "Opening the conversation.",
+      "script": "Ask the agent to read out the cause code. Mechanical, crew, late-inbound-aircraft, IT/system = controllable. Weather, ATC, security = uncontrollable. Everything downstream hangs on this single fact.",
+      "priority": 1
+    },
+    {
+      "name": "Cite the DOT Customer Service Dashboard by name",
+      "when": "Agent claims no hotel/meal voucher is available for a controllable delay.",
+      "script": "Say: 'Your airline's commitment on the DOT Customer Service Dashboard at dot.gov/airconsumer says you provide hotel and meals for controllable overnight delays. I'd like to use that.' This is a public, regulator-posted commitment — agents back down fast.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for the distressed-pax rate if direct vouchers are out",
+      "when": "Airport runs out of paper vouchers or hotel block is full.",
+      "script": "Most airlines have a backup: a coded rate at a partner hotel that you book yourself and they reimburse, OR a flat reimbursement cap (usually $100-$200/night). Ask for both the code and the cap.",
+      "priority": 3
+    },
+    {
+      "name": "Lounge as a workstation",
+      "when": "User has lounge access (status, day pass, Priority Pass).",
+      "script": "Lounge agents (Admirals, Sky, Polaris, Centurion) often have voucher-issuing authority and dramatically more time per passenger than a gate agent during IRROPS. This is one of the most underrated leverage points in air travel.",
+      "priority": 4
+    },
+    {
+      "name": "Book your own hotel as a backstop",
+      "when": "It's late, voucher hotel is 45 min away, and you have status with a better property nearby.",
+      "script": "Book the better hotel yourself, keep the receipt, and submit for reimbursement. The airline will pay up to their distressed-pax cap. You eat the difference for a better night's sleep — sometimes worth it for a 6am flight."
+    },
+    {
+      "name": "Get rebooking and amenities in one transaction",
+      "when": "After the cause/voucher conversation is settled.",
+      "script": "Don't let the agent close the file with just the voucher. Confirm the rebooked itinerary, new boarding passes, seat assignments, baggage rerouting, and where to collect bags overnight (sometimes they ride through to destination, sometimes you take them to the hotel)."
+    }
+  ],
+  "boundaries": [
+    "Do NOT misrepresent the cause of the delay. If it was weather, the airline owes you a rebook but not hotel/meals on most US carriers.",
+    "Do NOT walk away from the desk until you have either (a) a voucher in hand, or (b) a distressed-pax code, or (c) an explicit denial noted on the PNR so reimbursement is clean.",
+    "Do NOT accept 'we'll email it' as the only confirmation — get something printed or screenshot the agent's screen.",
+    "Do NOT pay for the hotel out-of-pocket without first asking for a direct voucher; many airlines will not retroactively reimburse if they weren't given a chance to issue the voucher in real time."
+  ],
+  "success_signals": [
+    "Agent reads out the controllable cause code without prodding.",
+    "Agent volunteers the DOT Dashboard commitment.",
+    "Voucher is printed and handed over.",
+    "Meal vouchers come in addition to the hotel voucher, not as a substitute.",
+    "Ground transport is included (shuttle or taxi voucher)."
+  ],
+  "failure_signals": [
+    "Agent insists the delay is 'weather' when the official posted reason is 'maintenance' or 'crew'.",
+    "Agent says 'we don't do hotels' for an airline on the DOT Dashboard list.",
+    "Voucher hotel is 90+ minutes away with no transport.",
+    "Cap offered is below the local hotel market rate by a wide margin (e.g. $75 cap in Manhattan)."
+  ],
+  "exit_strategy": {
+    "on_success": "Pocket the voucher, walk to the shuttle, confirm tomorrow's flight on the app. Set two alarms.",
+    "on_failure": "Book hotel + dinner yourself, save EVERY receipt + boarding passes + the cancellation/delay notification SMS. File a written claim within 7 days via the airline's customer relations portal, citing the DOT Dashboard. If they refuse, escalate to DOT (file.dot.gov).",
+    "follow_ups": [
+      "If the cause was extraordinary and >3 hours into the EU on an EU carrier — also pursue EU261 cash (load `eu261-uk261-dot-compensation`).",
+      "If you have travel insurance, file the trip-delay claim while you're still in the hotel (load `travel-insurance-claim-on-the-road`).",
+      "If status, double-check your account 30 days later — sometimes carriers proactively add bonus miles or e-credits for affected passengers."
+    ]
+  },
+  "required_user_info": [
+    "PNR / record locator",
+    "Inbound flight number and posted delay cause",
+    "Missed connecting flight number and the next available rebook option",
+    "Frequent flyer number and status",
+    "Whether checked baggage is involved",
+    "Credit card for backstop booking"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

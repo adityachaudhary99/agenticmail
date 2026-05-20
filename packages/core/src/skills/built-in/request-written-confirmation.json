@@ -1,0 +1,113 @@
+{
+  "id": "request-written-confirmation",
+  "name": "Request Written Confirmation Before Hanging Up",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "closing",
+    "written-confirmation",
+    "email",
+    "paper-trail",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Before saying goodbye, request a written confirmation of the agreement via email, in-account portal note, SMS, or mailed letter — and pin a specific arrival window. Verbal lock-in is necessary; written confirmation is the durable artifact most companies will honour without dispute.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call that produced a commitment, change, refund, credit, schedule, or set of conditions. ALWAYS request written confirmation, even when the rep says 'it's not necessary' — that's exactly when it's most necessary.",
+    "preconditions": [
+      "Terms have already been locked verbally (see `lock-in-terms-verbally`).",
+      "The user has a working email address, portal login, or mailing address on file.",
+      "The rep has acknowledged the agreement exists in their system."
+    ],
+    "estimated_call_duration_minutes": 3
+  },
+  "principles": [
+    "Email > portal > SMS > mailed letter, in that order. Email is searchable, timestamped, forwardable, and unambiguous.",
+    "Ask for the written confirmation BEFORE you accept the agreement, not after. 'I'll need that in writing — can you send it before we hang up?' is leverage; asking afterwards is begging.",
+    "Pin an arrival window. 'You'll get it' is a non-commitment. 'Within 24 hours' is a checkable claim.",
+    "Insist that the written version include the same specifics: amount, date, duration, conditions, rollback rules, reference number, and rep ID.",
+    "If the company 'cannot send' written confirmation, that itself is a written-able fact — get them to email saying so. Refusal-to-confirm-in-writing is a documentable warning sign."
+  ],
+  "phrases": {
+    "opener": "Before we finish, could you send me a written confirmation of what we just agreed to? Email is ideal — and ideally within the next 24 hours so I can reference it if anything looks different on the next bill.",
+    "format_preference": "What format do you usually send those in — email, an in-account notification, or mailed letter? Email is best for me if it's an option.",
+    "content_spec": "Could you make sure the email includes the new [amount / date / credit / conditions] and the reference number [R]? That way I can cross-check it against my notes.",
+    "arrival_window_pin": "When should I expect it to land — same day, 24 hours, 3 business days? I'll set a reminder so I follow up if I don't see it.",
+    "no_email_workaround": "If you can't send email directly, can you add a detailed note to my account that I can screenshot from the portal? Or is there a chat transcript that gets emailed?",
+    "refusal_documentation": "Just so I'm clear — your company doesn't provide written confirmation of [type of change]? I'd like to note that, and could you tell me where that policy is published?",
+    "graceful_close_success": "Perfect, I'll watch my inbox for the email from [domain] within [window] — referencing case [R]. Thanks for sending that.",
+    "graceful_close_failure": "I'd like to escalate this — I'm not comfortable closing on a change with no paper trail. Could you get me a supervisor before we hang up?"
+  },
+  "tactics": [
+    {
+      "name": "Ask for written confirmation as part of the close, not after it",
+      "when": "Immediately after locking verbal terms.",
+      "script": "Use the `opener` phrase. Bundling the written request with the close makes it a routine step rather than an exceptional ask.",
+      "priority": 1
+    },
+    {
+      "name": "Pin the format",
+      "when": "Rep agrees to send something written.",
+      "script": "Use the `format_preference` phrase. Steer toward email; accept portal note as a strong second; treat 'we'll mail you a letter' as a yellow flag (slow, often gets lost).",
+      "priority": 2
+    },
+    {
+      "name": "Specify the content",
+      "when": "Rep agrees to send a confirmation.",
+      "script": "Use the `content_spec` phrase. Generic confirmation emails ('thank you for being a customer') are useless. Force the rep to commit to including the specifics.",
+      "priority": 3
+    },
+    {
+      "name": "Pin the arrival window",
+      "when": "After format and content are agreed.",
+      "script": "Use the `arrival_window_pin` phrase. The window becomes the trigger for the follow-up — if nothing arrives, you have grounds to call back referencing this exact commitment.",
+      "priority": 4
+    },
+    {
+      "name": "Work around 'we can't email'",
+      "when": "Rep claims they cannot send email confirmation.",
+      "script": "Use the `no_email_workaround` phrase. Portal note, SMS, chat transcript, mailed letter — get SOMETHING in writing. If literally nothing is possible, escalate.",
+      "priority": 5
+    },
+    {
+      "name": "Document the refusal",
+      "when": "Company genuinely refuses any written confirmation.",
+      "script": "Use the `refusal_documentation` phrase. Capture the rep stating the policy verbally so the refusal itself is on the recording. Then escalate.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept 'we already sent it' without checking inbox during the call when feasible — confirmations sometimes go to spam, wrong address, or were never actually sent.",
+    "Do NOT settle for a marketing email that vaguely mentions 'recent account changes'. Confirmation = the SPECIFIC change, with the SPECIFIC numbers.",
+    "Do NOT close the call without an expected arrival window. 'Eventually' = never.",
+    "Do NOT email-bomb the rep with follow-up requests during the same call — one clean ask + content spec + window is enough."
+  ],
+  "success_signals": [
+    "Rep states the email will arrive within a specific window (e.g. 'within the next 2 hours').",
+    "Rep reads back the email address on file to verify delivery.",
+    "Rep proactively says 'I'm including the reference number and the new rate in the email'.",
+    "Confirmation arrives during the call itself — gold standard."
+  ],
+  "failure_signals": [
+    "Rep says 'you'll see it on your next bill' as a substitute for written confirmation.",
+    "Rep is vague on arrival window ('soon', 'when the system updates').",
+    "Rep refuses to confirm the email will include specific terms.",
+    "Company policy reportedly bans written confirmation for this type of change — major red flag, escalate."
+  ],
+  "exit_strategy": {
+    "on_success": "Log the expected arrival window, format, and sender domain. Calendar a check at the END of the window. If nothing arrives, call back referencing the prior call's identifiers and quote the rep's commitment to send.",
+    "on_failure": "Escalate before closing. If the company has no written-confirmation capability, document that refusal, then weigh whether the agreement is worth proceeding with — sometimes the answer is no.",
+    "follow_ups": [
+      "When the email arrives, cross-check every line item against the verbal lock-in transcript.",
+      "If terms differ, the more favourable version (to the user) is usually defensible — but flag the discrepancy in writing immediately."
+    ]
+  },
+  "required_user_info": [
+    "Email address and/or portal login the company has on file",
+    "Tolerance for follow-up if written confirmation fails to arrive",
+    "Decision threshold for proceeding without written confirmation (default: do not proceed)"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

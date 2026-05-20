@@ -1,0 +1,130 @@
+{
+  "id": "rapport-opening-30-seconds",
+  "name": "Build Rapport in the Opening 30 Seconds — The Techniques That Actually Work",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "rapport",
+    "opening",
+    "first-impression",
+    "phone-call",
+    "warmth",
+    "efficiency",
+    "emotional-intelligence"
+  ],
+  "description": "Use the first 30 seconds of a call deliberately to make the rep want to help you. Most callers waste this window with throat-clearing, AI-script energy, or transactional flatness. This skill is the small set of moves that consistently move a rep from neutral into helpful.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Every cold call to a human rep. The opening 30-second window applies whether the call is 2 minutes or 2 hours — the rep decides what kind of caller you are very early, and that decision is sticky.",
+    "preconditions": [
+      "You have the rep's name (or you'll get it in their greeting — listen for it).",
+      "You can state your purpose in one sentence.",
+      "You're not multitasking — they can hear when you are.",
+      "You have your account info / context ready, so you don't make the rep wait while you fumble."
+    ],
+    "estimated_call_duration_minutes": 0
+  },
+  "principles": [
+    "The rep's day is a queue of strangers — be a recognisably good one in the first sentence and you skip ahead.",
+    "Use their name once, naturally, within the first 20 seconds. Once. Hearing your own name from a stranger is small magic; hearing it three times is salesperson.",
+    "State your purpose in ONE clear sentence. Reps brace for ramblers — brevity is rapport.",
+    "Acknowledge their job, not their company. Companies are abstract; reps are real.",
+    "Smile while you speak. The rep can hear it. This is not metaphor — soft-palate shape changes vocal resonance, and humans detect it pre-consciously.",
+    "Be slightly slower than the call-center default. Most callers rush; you stand out by sounding like you have time for them, even if you don't.",
+    "Do not ask 'how are you?' as small talk after their greeting. They've answered it 80 times today. Acknowledge them differently."
+  ],
+  "phrases": {
+    "warm_open_with_name": "Hi [name], thanks for picking up — I'm trying to [purpose in one sentence].",
+    "acknowledge_their_role_not_company": "I know you take a lot of these calls — I'll keep mine simple.",
+    "permission_to_proceed": "Quick one — do you have a minute for me to walk you through it?",
+    "compliment_their_help_pre_emptively": "I appreciate you in advance — I know you don't have to solve this for me, just help me find the path.",
+    "shared_humanity_low_risk": "How's your shift treating you so far?",
+    "purpose_one_sentence": "I'm calling about [account / topic] — I'm trying to [specific outcome]."
+  },
+  "tactics": [
+    {
+      "name": "Catch and use their name",
+      "when": "First 5 seconds — their greeting.",
+      "script": "Listen actively for the name in their greeting ('Thanks for calling [Company], this is Maria, how can I help?'). Use it once: 'Hi Maria, thanks for picking up.' If you missed it, ask: 'I'm sorry, what was your name again?' Don't fake it.",
+      "priority": 1
+    },
+    {
+      "name": "State purpose in one sentence",
+      "when": "After 'hi [name]' — within 10 seconds.",
+      "script": "Use `purpose_one_sentence`. ONE sentence. Reps relax visibly when they hear a caller who knows what they want.",
+      "priority": 2
+    },
+    {
+      "name": "Acknowledge the JOB, not the company",
+      "when": "If you have a small beat of social space — usually after they say 'sure, let me pull that up.'",
+      "script": "Use `acknowledge_their_role_not_company`. The rep is more than an extension of the company they work for, and reps remember callers who notice that.",
+      "priority": 3
+    },
+    {
+      "name": "Smile while you speak",
+      "when": "Throughout the opening — and the whole call.",
+      "script": "Literally smile. Your voice changes shape. Reps cannot articulate it but they respond to it. Practice this on a recorded call once — you'll hear the difference.",
+      "priority": 4
+    },
+    {
+      "name": "Slightly slow tempo",
+      "when": "Opening sentence.",
+      "script": "Slow your first sentence by ~15% from normal. It reads as composed and unhurried. Reps hear hundreds of rushers — you sound different.",
+      "priority": 5
+    },
+    {
+      "name": "Tone-shift detector — REP WARMS",
+      "when": "Their voice opens up: more vowel, longer sentences, a small joke.",
+      "script": "You've landed it. Do NOT keep performing rapport — move to the task efficiently. They've already decided to help; don't make them regret it by being chatty.",
+      "priority": 6
+    },
+    {
+      "name": "Tone-shift detector — REP STAYS FLAT",
+      "when": "30 seconds in and they're still on script voice.",
+      "script": "Don't double down. Some reps are flat to everyone — meet their register, get the task done crisply, and try a warm goodbye at the end. Forced rapport reads as bad.",
+      "priority": 7
+    },
+    {
+      "name": "Permission to proceed",
+      "when": "If your task is longer than a single quick question.",
+      "script": "Use `permission_to_proceed`. Asking permission gives the rep agency for 5 seconds — tiny move, real effect.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "Do NOT use the rep's name more than 2-3 times in the whole call. Repetition is salesman energy.",
+    "Do NOT fake interest in their day. The reflexive 'how are you?' is exactly what every other caller does.",
+    "Do NOT compliment the rep on their voice, accent, or anything personal — even positive comments can feel intrusive.",
+    "Do NOT start with an apology ('sorry to bother you'). It frames the call as a burden before you've stated it.",
+    "Do NOT 'small talk' for longer than two exchanges before stating purpose — reps interpret stalling as a sign of an unclear or unreasonable ask.",
+    "Do NOT use cold scripted rapport phrases verbatim across calls. Reps recognise scripts instantly because they read them too."
+  ],
+  "success_signals": [
+    "Rep uses your name unprompted within the first minute.",
+    "Rep volunteers context, alternative options, or a workaround early.",
+    "Rep's voice in the first 30 seconds is audibly more open by the second minute.",
+    "Call resolves faster than expected — pre-decided helpfulness compresses calls."
+  ],
+  "failure_signals": [
+    "Rep stays in script voice through the whole call.",
+    "You hear yourself stalling because you didn't pre-write the purpose sentence.",
+    "Rep asks 'is there anything else?' before you've gotten what you came for — they're trying to wrap because rapport didn't land.",
+    "You realise you never caught the rep's name and the call is 5 minutes in."
+  ],
+  "exit_strategy": {
+    "on_success": "Close warmly using the rep's name once more: '[name], genuinely — thanks for the help today.' This anchors the rapport for a possible callback to the same rep or the same line.",
+    "on_failure": "Be respectfully crisp at goodbye — do not force warmth that didn't land. A clean 'thanks for your help' beats a forced 'have a great day!'",
+    "follow_ups": [
+      "Log what worked in the opening — patterns emerge over many calls.",
+      "If the rep was excellent, note their name/ID — ask for them by name next time. Repeat-rapport with a known rep is the highest leverage outcome of this skill.",
+      "Practice the smile-while-speaking move on a recorded call once. The first time you hear it back, the lesson sticks permanently."
+    ]
+  },
+  "required_user_info": [
+    "The purpose of the call in one sentence — pre-written, not improvised.",
+    "Account info ready in front of you so you don't fumble.",
+    "Any context that's helpful to share early ('I'm a long-time customer,' 'I'm calling for my mother') — context shared in the opening 30 seconds gets used; context shared later gets ignored."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

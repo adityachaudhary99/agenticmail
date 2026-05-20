@@ -1,0 +1,122 @@
+{
+  "id": "utility-deposit-waiver",
+  "name": "Local Utility: Deposit Waiver, Reconnection, or Hardship Program Enrollment",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "utility",
+    "deposit-waiver",
+    "hardship",
+    "reconnection",
+    "liheap",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call a regulated utility (water, gas, electric) to request a security-deposit waiver or reduction, get reconnected after disconnection, enroll in a hardship / payment-plan / LIHEAP-style assistance program, or set up budget billing. Most US utilities are state-PUC-regulated and have mandatory hardship programs that front-line reps do not always volunteer.",
+  "disclaimer": "Not legal advice. Utility tariff rules are filed with the state Public Utility Commission and vary by jurisdiction. For dispute escalation beyond the utility's internal process, refer to the state PUC. The agent will not advise on landlord-tenant disputes about utilities — that may require a tenant-rights attorney.",
+  "context": {
+    "when_to_use": "User is opening a new account and the deposit ask is unaffordable. User has been disconnected or has a pending-disconnection notice. User cannot pay the current bill and needs payment plan / hardship enrollment. User wants to apply for LIHEAP (federal energy assistance) or a state-equivalent program. User wants to enroll in budget billing to even out seasonal spikes.",
+    "preconditions": [
+      "Account number (for existing customers) or service-address and date service is needed (for new accounts).",
+      "Most recent bill or disconnection notice.",
+      "Household income basics (LIHEAP and most utility hardship programs are income-tested).",
+      "Knowledge of which medical-hardship protections may apply (life-support equipment, infant in home, elderly resident, etc.).",
+      "Names and DOBs of account holders + co-residents (for income verification)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Most state PUCs prohibit shutting off service during specific protected periods (cold-weather rules, heat-emergency rules, on weekends, etc.). Know whether the user is in a protected window before negotiating.",
+    "Deposit waivers are routinely available with: a letter of credit from a prior utility, a co-signer, a medical-hardship attestation, or proof of LIHEAP / hardship enrollment. Front-line reps may not volunteer this — ASK.",
+    "Hardship and payment-plan programs are mandatory under most state tariffs. The CSR cannot deny enrollment if the user meets income criteria — escalate to a supervisor if denied.",
+    "Reconnection same-day vs next-day depends on payment method. Cash / cashier's check at an authorized payment location reconnects faster than mail / ACH.",
+    "Budget billing smooths the bill but doesn't reduce total cost. Be clear with the user about what each program actually does."
+  ],
+  "phrases": {
+    "opener_deposit": "Hi, I'm setting up new service at [ADDRESS] starting [DATE]. The deposit quote is [AMOUNT] and I'd like to ask about waiver options — letter of credit from a prior utility, co-signer, or a medical / hardship attestation. What do you offer?",
+    "opener_reconnection": "Hi, my service at [ADDRESS] was disconnected on [DATE] (account [NUMBER]). I'd like to arrange reconnection. What's the minimum payment + reconnection fee, and what's the fastest payment channel to restore service today?",
+    "opener_hardship": "Hi, I need to enroll in your hardship / payment-plan program. The account is [NUMBER], service address [ADDRESS]. The current balance is [AMOUNT]. I can pay about [AMOUNT] a month. What programs am I eligible for?",
+    "opener_liheap": "Hi, I'd like to apply LIHEAP (or [STATE PROGRAM]) credits to my account. The state-issued approval letter / certificate is dated [DATE]. How do I get the credit applied?",
+    "ask_about_medical_protection": "Could you confirm whether anyone in the household with [life-support equipment / serious medical condition / infant / elderly resident] would qualify for medical-hardship protections in this state?",
+    "ask_about_PUC_rules": "Just to make sure I understand: under this state's PUC rules, is there a shutoff-protection period right now (cold-weather, heat-emergency, weekend)?",
+    "stall_documents": "One moment — let me pull up the bill so I read the numbers right.",
+    "graceful_close": "Thank you. Can I confirm: the program enrolled in, the new monthly amount, when service resumes (if reconnection), the confirmation number, and your name and ID?"
+  },
+  "tactics": [
+    {
+      "name": "Ask about hardship enrollment FIRST",
+      "when": "Any payment-difficulty call.",
+      "script": "If hardship enrollment unlocks deposit waiver + payment plan + LIHEAP routing, doing it first cleans up everything else. Ask: 'What hardship or assistance programs am I eligible for, and how do I enroll today?'",
+      "priority": 1
+    },
+    {
+      "name": "Surface medical-hardship protection",
+      "when": "Disconnection threatened and any qualifying medical condition exists.",
+      "script": "Most states require a doctor's certification that filing triggers an immediate hold on disconnection — typically 30 days, renewable. Ask the rep for the medical-certification form / fax / portal.",
+      "priority": 2
+    },
+    {
+      "name": "Quote PUC tariff rules back",
+      "when": "Rep claims hardship enrollment is not possible.",
+      "script": "Politely: 'I understand — could you escalate to a supervisor? My understanding is the [STATE] PUC tariff requires enrollment for income-eligible customers, and I'd like to confirm.' Supervisors usually have approval authority.",
+      "priority": 3
+    },
+    {
+      "name": "Optimize reconnection timing",
+      "when": "Reconnection call.",
+      "script": "Ask: 'What's the fastest payment channel for same-day reconnection?' Some utilities require cash/cashier's check at an authorized payment center for same-day; ACH may take 24–48 hours to clear.",
+      "priority": 4
+    },
+    {
+      "name": "Apply LIHEAP credit BEFORE setting payment plan",
+      "when": "User has a LIHEAP approval.",
+      "script": "If a LIHEAP credit is incoming, the post-credit balance is the negotiation baseline. Have the credit applied first, then build the payment plan around the lower balance."
+    }
+  ],
+  "boundaries": [
+    "Do NOT misrepresent household income or composition to qualify for hardship programs — that is fraud.",
+    "Do NOT advise on landlord-tenant utility disputes (who owes the bill, illegal shutoffs by landlord).",
+    "Do NOT pay the bill without explicit user authorization for the exact amount.",
+    "Do NOT promise reconnection time the rep didn't confirm.",
+    "Do NOT engage with anyone calling claiming to be the utility threatening shutoff unless you have called the utility's official number outbound."
+  ],
+  "success_signals": [
+    "Deposit is waived / reduced or alternative (letter of credit) accepted.",
+    "Hardship / payment-plan enrollment is confirmed with a new monthly amount.",
+    "Medical-hardship protection is on file with an expiration date.",
+    "LIHEAP / state credit is applied with a confirmation number.",
+    "Reconnection is scheduled with a same-day or next-day window."
+  ],
+  "failure_signals": [
+    "Rep insists no hardship program exists despite state-PUC tariff requirements — escalate to supervisor; if still denied, file PUC complaint.",
+    "Reconnection requires payment the user cannot make even after hardship enrollment — pivot to state emergency-assistance program (LIHEAP crisis, salvation army, township trustee).",
+    "Disconnection notice is for a property the user no longer occupies / never occupied (identity issue) — escalate to fraud team.",
+    "Account balance is for a co-resident not authorized — handle as authorization issue, not payment issue."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: program enrolled, monthly amount, effective dates, deposit waiver status, reconnection window, confirmation number, agent name/ID. Repeat reconnection time back. Calendar each scheduled payment.",
+    "on_failure": "Capture next step: PUC complaint path, emergency-assistance referral, supervisor callback. Provide the operator with PUC complaint URL and any emergency hotlines (211, LIHEAP crisis line).",
+    "follow_ups": [
+      "Confirm service is restored on the quoted timeline.",
+      "Calendar each payment date; ping operator before the first one.",
+      "If medical certification is on file, calendar the renewal before expiration.",
+      "If LIHEAP applied, calendar the next year's application window (most states open Oct–Nov)."
+    ]
+  },
+  "required_user_info": [
+    "Utility account number and service address",
+    "Most recent bill amount, due date, and any disconnection notice details",
+    "Household size and approximate income (for hardship qualification)",
+    "Medical conditions in household that may trigger protections (with doctor name if certifiable)",
+    "LIHEAP / state program approval letters or status",
+    "Authorised payment method and channel preference"
+  ],
+  "hang_up_and_call_back_signals": [
+    "Inbound caller demanding immediate gift-card / wire payment to avoid shutoff — scam; hang up and call utility's official number on the bill.",
+    "Rep refuses hardship enrollment without escalation — politely end and call back; ask for the hardship-program team directly.",
+    "User has been told the issue is with their landlord, not the utility — pivot to a tenant-rights / housing-help line; further utility-side calls won't resolve.",
+    "Wait > 60 minutes during business hours — try opening hour or the last hour of the day."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

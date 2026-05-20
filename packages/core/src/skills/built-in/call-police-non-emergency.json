@@ -1,0 +1,114 @@
+{
+  "id": "call-police-non-emergency",
+  "name": "Call Local Police — Non-Emergency Line",
+  "version": "1.0.1",
+  "category": "emergency-services",
+  "tags": [
+    "police",
+    "non-emergency",
+    "report",
+    "noise-complaint",
+    "after-the-fact",
+    "emergency_services"
+  ],
+  "description": "Place a non-emergency call to local police (typically 311, the department's published non-emergency number, or a state-level non-emergency tip line) for things that are not life-safety: theft after the fact, noise complaints, suspicious activity in the area, found property, follow-ups on existing case numbers.",
+  "disclaimer": "(1) Use this for non-life-safety only. If lives or property are in active danger, use call-911-* skills instead. (2) Identify as an AI on the first sentence. (3) Don't waste the dispatcher's time on things that should be a city portal request (potholes, graffiti tagged for cleanup).",
+  "context": {
+    "when_to_use": "Operator wants to file a report or ask a question that does NOT require immediate police response. Stolen property they noticed hours later, ongoing noise from a neighbour, an abandoned car on the block, a follow-up on a prior case, asking about the police-report copy for an insurance claim. Anything actively dangerous routes to 911 instead.",
+    "preconditions": [
+      "Operator has explicitly authorised this call.",
+      "Operator knows roughly what they want — file a report? ask about an existing case? request a welfare check?",
+      "Address or precise location of the incident (or operator's address for ongoing complaints).",
+      "If filing a stolen-property report: rough inventory + estimated values + when last seen."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Identify as an AI in the first sentence — same rule as 911, just lower stakes.",
+    "Have the operator's reason for calling crisp before dialing. 'I'd like to file a report for <X>' beats 'we wanted to ask about something'.",
+    "Get a case number / incident number for any report filed. Without it, the report effectively didn't happen.",
+    "Don't escalate to 911-tier urgency unless the dispatcher recommends it.",
+    "If the operator's situation is borderline (ongoing harassment? stalking? threats?), let the dispatcher decide whether to upgrade to a higher-priority response — describe the facts, don't editorialise."
+  ],
+  "phrases": {
+    "opener_report": "Hi — I'm an AI assistant calling on behalf of <operator>. My operator would like to file a non-emergency report for <one-line: stolen property / noise complaint / suspicious vehicle / found property>. The incident location is <address>. May I walk you through what happened?",
+    "opener_existing_case": "Hi — I'm an AI assistant calling on behalf of <operator>. We're following up on existing case number <number> from <date> regarding <one-line>. We're trying to <get a copy / get a status / report new info>.",
+    "opener_welfare_question": "Hi — I'm an AI assistant calling on behalf of <operator>. They're worried about someone they haven't been able to reach and would like to request a welfare check at <address>. Can I tell you what we know?",
+    "ask_for_case_number": "Could I get the case or report number for our records? My operator will need it for follow-up / insurance / their file.",
+    "relay_to_operator": "Let me check with my operator — one moment.",
+    "graceful_close": "Thank you. Could you confirm what happens next — does an officer follow up, or is this the report complete? And the case number is <…>?"
+  },
+  "tactics": [
+    {
+      "name": "Open with a clean one-liner",
+      "when": "First substantive turn.",
+      "script": "Pick the right opener phrase for the operator's purpose — `opener_report`, `opener_existing_case`, or `opener_welfare_question`. Lead with WHY you're calling so the dispatcher routes correctly.",
+      "priority": 1
+    },
+    {
+      "name": "Let the dispatcher's script run",
+      "when": "After the opener.",
+      "script": "Non-emergency dispatchers have intake scripts too. Answer their questions through the operator. Don't volunteer extra detail until asked."
+    },
+    {
+      "name": "Pull case / incident number before disconnecting",
+      "when": "Dispatcher signals the report is logged or transferred.",
+      "script": "Use `ask_for_case_number`. Without it, the operator has no proof the call happened.",
+      "priority": 3
+    },
+    {
+      "name": "Upgrade if the dispatcher recommends",
+      "when": "Dispatcher says 'this sounds more urgent — let me transfer you' or 'we'll send someone right now'.",
+      "script": "Accept the upgrade. If the dispatcher transfers to 911, the call-911-* skills apply from there."
+    },
+    {
+      "name": "Mid-call escalation trigger: hang up and dial 911",
+      "when": "During the call, the operator describes anything currently happening — active threat, ongoing harm, audible violence, a person currently breaking in, someone visibly bleeding, a vehicle pursuit in progress, a stalker who just arrived at the door.",
+      "script": "The non-emergency line is the wrong channel for anything time-critical. Tell the non-emergency dispatcher: 'Apologies — what my operator just told me sounds like a live emergency. I'm going to hang up and dial 911 now.' Then disconnect, switch to the appropriate call-911-* skill, and reference 'we were just on the non-emergency line' so the dispatcher can stitch the record together. Do NOT try to ask the non-emergency dispatcher to do the upgrade for you — disconnect and dial 911 directly to avoid transfer-failure delays.",
+      "priority": 4
+    },
+    {
+      "name": "Weaponisation screen for reports about a named third party",
+      "when": "Operator wants to file a report or request a check that names a specific person — a neighbour, an ex, a family member, a business counterparty — particularly if the report is 'suspicious activity' / 'threatening behaviour' / 'I'm worried they might X'.",
+      "script": "Before placing the call, ask the operator: (a) what specific, observed conduct are you reporting (not characterisations like 'creepy', 'unstable')?, (b) do you have any ongoing dispute, breakup, custody fight, or grievance with this person?, (c) have you tried other channels — talking to them, a building manager, a mediator, a lawyer? If the operator's reason is thin (no specific observed conduct), they have an active dispute with the subject, AND they have not exhausted non-police channels, push back: 'A police report against someone you have an active dispute with — especially with this little observed conduct — risks looking like a harassment tactic and can be subpoenaed against you. Are you sure?' Document the operator's response. If they insist, file the report straight (no embellishment); if they retract, abort cleanly.",
+      "priority": 0
+    }
+  ],
+  "boundaries": [
+    "NEVER call the non-emergency line for something that's actually life-threatening. Use 911.",
+    "NEVER pretend to be human.",
+    "NEVER make false reports. Knowingly false police reports are crimes in every state.",
+    "NEVER use this skill to file a report whose primary effect would be harassment of a specific named person the operator is in conflict with, particularly where no specific recent conduct can be described and where the operator has not tried any non-police channel. The audit log makes the pattern legible and exposes the operator to civil and criminal liability.",
+    "NEVER continue on the non-emergency line once the operator describes anything that is actually happening now — hang up and dial 911 instead. The non-emergency line will not dispatch fast enough.",
+    "NEVER ask the police to perform actions they wouldn't normally perform (don't ask them to confront a specific person at the operator's behest unless that's a normal welfare-check or warrant-service situation).",
+    "NEVER end the call without confirming what happens next and capturing the case number."
+  ],
+  "success_signals": [
+    "Dispatcher confirms the report is logged and gives a case number.",
+    "Dispatcher confirms an officer will follow up within a stated window.",
+    "Dispatcher confirms the report is complete and no follow-up is needed.",
+    "Welfare check is dispatched with the address and contact info."
+  ],
+  "failure_signals": [
+    "Dispatcher says the operator needs to file online / in person — relay that to the operator instead of trying to push past it.",
+    "Dispatcher refuses to take the report on the phone (some jurisdictions require in-person for property crime).",
+    "Dispatcher transfers you to a different department and the transfer fails — re-dial and reference the prior call."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm what happens next (officer follow-up window / online portal step / done). Get the case number. Email the operator a summary.",
+    "on_failure": "Email the operator the alternative method (online portal / in-person address) the dispatcher recommended.",
+    "follow_ups": [
+      "Email operator a summary: case number, dispatcher reference, follow-up window.",
+      "If officer is scheduled to follow up, calendar a check-in for the day after the window closes."
+    ]
+  },
+  "required_user_info": [
+    "Operator's explicit authorisation for this call",
+    "Reason for calling — report / existing case / welfare check / question",
+    "Location or address relevant to the report",
+    "Existing case number (if applicable)",
+    "Operator's callback number and address",
+    "Rough timeline of what happened (date / time / what was noticed)"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

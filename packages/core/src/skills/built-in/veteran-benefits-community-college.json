@@ -1,0 +1,134 @@
+{
+  "id": "veteran-benefits-community-college",
+  "name": "Adult-Ed / Community-College Veteran Benefits",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "veteran",
+    "GI-Bill",
+    "VA",
+    "community-college",
+    "adult-ed",
+    "tuition-assistance",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call a community college or adult-education program's veteran-services / VA School Certifying Official (SCO) to enroll and certify GI Bill benefits — Chapter 33 (Post-9/11), Chapter 30 (Montgomery), Chapter 31 (VR&E / Veteran Readiness & Employment), Chapter 35 (DEA), Yellow Ribbon, Tuition Assistance (active duty), and state-level veteran benefits.",
+  "disclaimer": "Veteran education benefits are governed by 38 USC and 38 CFR. The School Certifying Official (SCO) certifies enrollment to the VA; the VA pays the benefit. State benefits stack differently with federal benefits in different states. Some choices (which chapter to use, when to switch chapters) are irrevocable — get them right.",
+  "context": {
+    "when_to_use": "User is a veteran, current servicemember, reservist / National Guard, or qualifying dependent who wants to (a) enroll at a community college using GI Bill or related benefits, (b) get their Certificate of Eligibility (COE) on file, (c) fix a certification problem causing late payment, (d) maximize benefits across chapters and state programs, (e) get tutoring / Yellow Ribbon / Vet Rep services activated, or (f) appeal a tuition / housing-allowance discrepancy.",
+    "preconditions": [
+      "User has a Certificate of Eligibility (COE) from the VA — or knows how to apply via VA.gov (form 22-1990 for veterans, 22-1990E for transferred dependents, 22-5490 for DEA Chapter 35).",
+      "User knows which chapter they're using (Chapter 33 Post-9/11 is most common) and percentage entitlement (40%–100%).",
+      "User has DD-214 (separation document) for veterans or current Statement of Service for active duty.",
+      "User is enrolling in a VA-approved program — the SCO can confirm program approval (WEAMS)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "The SCO is your single most important contact at the college. They certify enrollment to the VA every term; without certification, no payment. Get the SCO's direct email.",
+    "Chapter 33 (Post-9/11) pays: tuition direct to school, Monthly Housing Allowance (MHA) to student, Books & Supplies stipend to student. MHA is calculated at the school's ZIP, prorated for rate of pursuit, halved for online-only.",
+    "Chapter 31 (VR&E) is the most generous — VA pays tuition, fees, books, equipment, AND subsistence allowance. Underused because eligibility requires a service-connected disability that's a barrier to employment. Always ask if the user has any service-connected rating.",
+    "State benefits stack. Examples: Texas Hazlewood, California CalVet Fee Waiver, New York Vietnam VTAP, Illinois IVG. These often pay tuition the GI Bill doesn't, or extend benefits past 36 months.",
+    "Tuition Assistance (TA) is for active duty / reservists and pays per credit hour up to a cap. It's separate from GI Bill and managed by the branch's education office, NOT the VA.",
+    "Mistakes that delay payment: late certification, mid-term drop without notifying the SCO (creates overpayment), mismatch between certified credits and enrolled credits, online vs. residential mismatch."
+  ],
+  "phrases": {
+    "opener_new": "Hi, I'm a [veteran / servicemember / dependent] enrolling for [term]. I'm using [Chapter 33 / 31 / 30 / 35 / TA]. Could I be connected with the School Certifying Official to get my benefits certified?",
+    "opener_problem": "Hi, my [tuition wasn't paid / MHA didn't come in / certification was wrong]. I'd like to talk to the SCO to figure out what happened and fix it before my account hits collections.",
+    "ask_about_VRE": "Do you have a Chapter 31 / VR&E counselor you work with regularly? I have a service-connected rating of [X%] and want to see if VR&E is a better fit for me than Chapter 33.",
+    "ask_about_yellow_ribbon": "Does this school participate in Yellow Ribbon, and if so, what's the cap and how do I get the matching funds?",
+    "ask_about_state_benefits": "What state-level veteran benefits stack with my GI Bill here? [Specifically: Hazlewood / CalVet / IVG / VTAP / state-specific name.]",
+    "ask_about_TA": "I'm active duty and want to use Tuition Assistance. Does your office handle TA, or do I work with my branch's education office directly?",
+    "ask_about_pending_payment": "My payment is pending. Could you check whether my enrollment was certified, how many credits and at what rate of pursuit, and the date the certification was submitted to the VA?",
+    "ask_for_VA_certifying_official": "Could I speak with the SCO directly, not the front desk? This is a certification question and the SCO is the only person who can fix it in the system.",
+    "ask_about_priority_registration": "Do veterans get priority registration here? I'd like to make sure I can build a schedule that matches my rate of pursuit requirements before classes fill.",
+    "graceful_close_success": "Thank you. To confirm: enrollment certified at [credits] for [term], rate of pursuit [%], expected VA processing time [days], SCO contact [name/email]. May I have a copy of the certification document for my records?"
+  },
+  "tactics": [
+    {
+      "name": "Get to the SCO on the first call",
+      "when": "Opening.",
+      "script": "Use `ask_for_VA_certifying_official`. Generic registrars and financial-aid staff cannot certify or fix certifications. The SCO is a single named person at each school.",
+      "priority": 1
+    },
+    {
+      "name": "Check for VR&E eligibility aggressively",
+      "when": "User has any service-connected disability rating, even 10%.",
+      "script": "Use `ask_about_VRE`. Chapter 31 is far more generous than Chapter 33 (covers everything plus subsistence) AND doesn't burn Chapter 33 entitlement months. Many vets don't realize they qualify.",
+      "priority": 2
+    },
+    {
+      "name": "Stack state benefits",
+      "when": "Identifying the user's state of residence (and sometimes state of service entry).",
+      "script": "Use `ask_about_state_benefits`. Hazlewood (TX) covers up to 150 credits of tuition + fees and is transferable to dependents. CalVet waives tuition for Cal State / UC for many vets and dependents. These don't reduce Chapter 33 — they stack.",
+      "priority": 3
+    },
+    {
+      "name": "Activate Yellow Ribbon for tuition gaps",
+      "when": "User is at a private or out-of-state public exceeding the Chapter 33 tuition cap.",
+      "script": "Use `ask_about_yellow_ribbon`. Yellow Ribbon is a school-VA matching agreement that covers tuition above the cap. Caps and slots vary by school and program.",
+      "priority": 4
+    },
+    {
+      "name": "Confirm rate of pursuit matches MHA expectation",
+      "when": "Enrollment certification.",
+      "script": "Rate of pursuit = (credits / full-time credits) × 100. ≥ 51% triggers MHA. Online-only halves MHA. Mixing online and in-person is fine. Confirm what was certified and how it was coded.",
+      "priority": 5
+    },
+    {
+      "name": "Don't drop without telling the SCO",
+      "when": "Considering a mid-term drop.",
+      "script": "Dropping a class after add/drop without 'mitigating circumstances' creates a VA overpayment — the student owes back MHA and tuition for the dropped credits. Talk to the SCO BEFORE dropping so the certification can be adjusted with documented mitigating circumstances if applicable.",
+      "priority": 6
+    },
+    {
+      "name": "Surface vet-specific support services",
+      "when": "Building a full support plan.",
+      "script": "Use `ask_about_priority_registration`. Most community colleges also have a Vet Center / Veterans Resource Center with free tutoring, peer mentoring, mental-health navigation, and emergency funds. Ask explicitly."
+    }
+  ],
+  "boundaries": [
+    "Do NOT enroll in a non-VA-approved program expecting GI Bill payment. Confirm program approval via WEAMS with the SCO before paying any deposit.",
+    "Do NOT drop or withdraw without SCO notification — VA overpayment debt is severe and can be reported to credit bureaus.",
+    "Do NOT switch GI Bill chapters lightly. Some elections (e.g. Chapter 30 → 33 conversion) are irrevocable.",
+    "Do NOT transfer Post-9/11 benefits to dependents without consulting milConnect timing rules — the service obligation must be active.",
+    "Do NOT skip claiming state benefits because they 'sound small' — Hazlewood alone can be worth $20k+."
+  ],
+  "success_signals": [
+    "SCO confirms certification submitted to VA same-week.",
+    "VR&E counselor referral made if a service-connected rating exists.",
+    "State-benefit application initiated.",
+    "Yellow Ribbon enrollment confirmed for high-tuition programs.",
+    "Direct SCO email and Vet Center contact saved."
+  ],
+  "failure_signals": [
+    "Program is not VA-approved (WEAMS confirms) — do not pay tuition expecting GI Bill payment.",
+    "Certification has been miscoded (online vs. residential, credit count, rate of pursuit) and SCO won't fix without back-and-forth.",
+    "VR&E counselor backlog at the regional office is 60+ days.",
+    "Yellow Ribbon slots are full for the year.",
+    "Tuition Assistance request denied by the branch for unrelated paperwork."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm certification, payment expectations, applicable state-benefit applications, and Vet Center connection. Save SCO email and direct phone.",
+    "on_failure": "Identify the specific blocker. Pathways: VA Education Call Center 888-442-4551 (for VA-side problems), state veterans-affairs office (for state benefits), branch education office (for TA), service-organization advocates (DAV, VFW, AmVets) for unstuck cases.",
+    "follow_ups": [
+      "Email operator the certification confirmation and expected payment dates.",
+      "Calendar each term's re-certification deadline.",
+      "If using Chapter 33: calendar MHA arrival within 30 days of term start; chase if missing.",
+      "If applying for VR&E: calendar VA call-back and follow up at 14 days.",
+      "Apply for state benefits in parallel — many have rolling deadlines and stack on top of federal."
+    ]
+  },
+  "required_user_info": [
+    "DD-214 (or current Statement of Service for active duty / reservists)",
+    "Certificate of Eligibility (COE) from VA — or status of 22-1990 / 22-1990E / 22-5490",
+    "Chapter the user plans to use (33, 31, 30, 35) and entitlement %",
+    "Service-connected disability rating if any",
+    "State of residence and (if different) state of service entry",
+    "Program of study and whether VA-approved (WEAMS)",
+    "Enrollment plan: full-time / part-time, residential / online mix"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:10:08Z"
+}

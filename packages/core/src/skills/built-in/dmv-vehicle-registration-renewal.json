@@ -1,0 +1,120 @@
+{
+  "id": "dmv-vehicle-registration-renewal",
+  "name": "DMV: Vehicle Registration Renewal, Address Change, or License Replacement",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "dmv",
+    "vehicle-registration",
+    "drivers-license",
+    "address-change",
+    "phone-call",
+    "state-government",
+    "government-services"
+  ],
+  "description": "Call a state DMV / MVA / BMV / DOL to renew a vehicle registration, change the address on file, or order a replacement driver's license. Most DMVs prefer online self-service — this skill is the fallback when the online flow rejects the user or a hold/flag must be cleared by a human.",
+  "disclaimer": "Not legal advice. DMV procedures vary by state. The agent will not advise on traffic-court strategy, license-suspension appeals, or DUI consequences — those require an attorney or the state's hearing officer.",
+  "context": {
+    "when_to_use": "User cannot complete the task online (system rejects them, a flag/hold appears, an out-of-state transfer is needed, or the renewal window is too tight for mail). Also use when the user has received conflicting information from the website vs. a notice in the mail.",
+    "preconditions": [
+      "User has their driver's-license number OR last 4 of SSN (state-dependent).",
+      "User has the license-plate number and current registration card / VIN if renewing a vehicle.",
+      "User has the new address (with ZIP+4 if known) for an address change.",
+      "User knows whether they need a REAL ID upgrade or a standard renewal.",
+      "User has a callback number — DMV phone lines drop frequently."
+    ],
+    "estimated_call_duration_minutes": 35
+  },
+  "principles": [
+    "DMV hold music is the longest in government. Settle in. Do NOT keep redialing — you lose your place.",
+    "Front-line agents read from a script. If your case is unusual, politely ask for a 'tier 2' or 'supervisor review' — they have lookup tools the front line does not.",
+    "Most DMVs route by ZIP / county. Calling the wrong field office wastes 40 minutes. Confirm you are at the right office before describing the issue.",
+    "Get a confirmation / reference number for ANY change. DMV systems are notoriously slow to propagate and the paper trail saves you later.",
+    "Recognize 'this can only be done in person' early — for many states, license replacement REQUIRES a field-office visit (REAL ID, photo capture). Don't burn 60 minutes on hold to be told to come in."
+  ],
+  "phrases": {
+    "opener_renewal": "Hi, I'm trying to renew the registration on my vehicle. My plate is [PLATE] and my renewal notice says it's due [DATE]. The online portal won't let me complete the renewal — it's giving me [ERROR]. Can you help me figure out what's blocking it?",
+    "opener_address": "Hi, I need to update the address on my driver's license and vehicle registration. The new address is [ADDRESS]. Can we do both in one call?",
+    "opener_replacement": "Hi, I need a replacement driver's license — the original was [lost / stolen / damaged]. Can this be ordered by phone or do I need to come in?",
+    "confirm_right_office": "Just to confirm — am I at the office that handles [county/region]? I want to make sure I'm in the right queue.",
+    "ask_for_hold_reason": "The system says there's a hold or flag on my record. Can you tell me what it is and what office can clear it?",
+    "stall_documents": "Give me one second — I want to pull up the notice in front of me so I read the numbers correctly.",
+    "graceful_close_success": "Thank you. Before we hang up: can I have a confirmation number, your name or agent ID, and the expected date I'll see the change reflected online or receive the document in the mail?",
+    "graceful_close_failure": "I understand. Just so I know my next step — what's the best office, web page, or form for me to use, and is there a way to schedule an in-person appointment from here?"
+  },
+  "tactics": [
+    {
+      "name": "Verify you reached the correct office FIRST",
+      "when": "Within the first 60 seconds of reaching a human.",
+      "script": "Confirm the office handles the user's county/region and the task type. If you're at a call center that only handles licensing and the user needs registration, ask for the right transfer number before describing the full case.",
+      "priority": 1
+    },
+    {
+      "name": "Surface holds and flags before the renewal attempt",
+      "when": "User's online attempt failed with a generic error.",
+      "script": "Ask 'Can you check if there are any holds, flags, or outstanding items on the record?' Common blockers: unpaid toll, emissions/smog requirement, insurance lapse, parking citation, court-ordered suspension. Each routes to a different office.",
+      "priority": 2
+    },
+    {
+      "name": "Bundle related changes",
+      "when": "User needs both license + registration address changes.",
+      "script": "Most states will update both in one call IF you ask explicitly. Front-line reps default to one at a time.",
+      "priority": 3
+    },
+    {
+      "name": "Capture the document path",
+      "when": "Any record change is accepted.",
+      "script": "Ask: 'Will I get an updated card / sticker in the mail, do I need to print something, or is the change electronic-only?' DMV cards in the mail take 2–6 weeks; some states require the user to print a temporary registration.",
+      "priority": 4
+    },
+    {
+      "name": "Escalate to tier 2 / supervisor for unusual cases",
+      "when": "Front-line rep says 'system won't let me' but cannot explain why.",
+      "script": "Politely ask for a supervisor or a 'records specialist'. Many DMV systems have override codes that front-line agents cannot use.",
+      "priority": 5
+    }
+  ],
+  "boundaries": [
+    "Do NOT give legal advice on tickets, suspensions, DUIs, or court-ordered restrictions — refer to an attorney or the issuing court.",
+    "Do NOT share SSN unless the rep has authenticated themselves and the field is necessary for lookup. Last 4 is usually enough.",
+    "Do NOT promise the user the renewal will arrive by a specific date if the rep gave a range — quote the range exactly.",
+    "Do NOT attempt to clear a court-ordered hold by phone — those require the originating court.",
+    "Do NOT claim REAL ID compliance unless the rep confirms it on this transaction."
+  ],
+  "success_signals": [
+    "Rep gives a confirmation / reference number for the change.",
+    "Rep confirms an exact mail-out date or document arrival window.",
+    "Rep clears or identifies a previously unknown hold.",
+    "Rep offers to schedule an in-person appointment if the task can't be done by phone."
+  ],
+  "failure_signals": [
+    "Rep insists the task can only be done in person at a field office (note this is NOT necessarily failure — capture the next step).",
+    "Rep cannot identify why the online portal rejected the user and refuses to escalate.",
+    "Hold time exceeds 60 minutes with no human pickup.",
+    "User has been transferred more than twice and is being routed in a loop."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the change, capture the confirmation number, agent name/ID, expected document arrival, and any temporary document (printable receipt, temp registration). Note the next renewal date in the user's calendar.",
+    "on_failure": "Capture the exact next step: which office, which form (DL-XX, REG-XX), in-person required Y/N, appointment URL. Report back to the operator so they can choose between rebooking, in-person visit, or mail-in.",
+    "follow_ups": [
+      "Calendar arrival of the new card/sticker; ping operator if it doesn't show within the quoted window.",
+      "If REAL ID was deferred, add a calendar reminder before the federal deadline.",
+      "If a hold was identified, dispatch a follow-up call to the office that owns the hold (court, tolling authority, insurance carrier)."
+    ]
+  },
+  "required_user_info": [
+    "Driver's license number OR last 4 of SSN",
+    "License plate + VIN (for vehicle tasks)",
+    "Current and new address (with ZIP+4 if available)",
+    "Reason for replacement (lost / stolen / damaged / name change)",
+    "Whether the user wants REAL ID or standard",
+    "Callback number"
+  ],
+  "hang_up_and_call_back_signals": [
+    "You realize you are at the WRONG office (e.g. licensing call center for a registration issue) — politely end and call the correct number.",
+    "You've been on hold > 75 minutes with no movement — try the next morning at opening (call volume drops 30–60% in the first hour).",
+    "Rep is reading from a script that does not match the user's situation and refuses to escalate — hang up, call back, and ask for tier 2 by name."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

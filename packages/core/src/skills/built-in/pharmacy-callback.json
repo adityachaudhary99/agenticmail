@@ -1,0 +1,134 @@
+{
+  "id": "pharmacy-callback",
+  "name": "Pharmacy Callback: Prior Auth, Generic Substitution, Drug Interactions",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "pharmacy",
+    "prior-authorization",
+    "substitution",
+    "interactions",
+    "phone-call",
+    "healthcare"
+  ],
+  "description": "Handle a callback FROM (or TO) the operator's pharmacy when they flag a prior-auth requirement, propose a generic / brand / therapeutic substitution, or raise a drug-interaction concern. Get the pharmacy unblocked without making clinical decisions on the operator's behalf.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator. Substitution decisions and interaction resolutions are ALWAYS clinical and require the prescribing provider.",
+  "context": {
+    "when_to_use": "Pharmacy has left a voicemail, texted, or sent a portal message about a prescription that needs additional action: PA required, suggested substitution (generic / therapeutic equivalent / different formulation), or flagged interaction with another medication on file. Operator forwards to agent for triage and admin work.",
+    "preconditions": [
+      "Operator's name, DOB (read-only), pharmacy + branch.",
+      "The specific medication in question — name, strength, dose form, exactly as the operator described or as it appears on the prescription.",
+      "Prescriber name + clinic.",
+      "Operator's full current medication list (for interaction context — DO NOT use to make clinical calls; pass to pharmacist if asked).",
+      "Insurance plan + member ID (read-only) — needed for PA routing.",
+      "Operator's preference: brand-only, generic-fine, or unknown.",
+      "Voicemail or text content if the pharmacy reached out first."
+    ],
+    "estimated_call_duration_minutes": 10
+  },
+  "principles": [
+    "There are three categories of pharmacy callback, and the right response differs sharply: (1) PA paperwork — admin task, agent can drive; (2) substitution proposal — CLINICAL, agent surfaces to operator + prescriber; (3) interaction flag — CLINICAL, agent gets details + routes to prescriber/pharmacist.",
+    "Pharmacy is allowed to dispense the GENERIC of what the prescriber wrote unless the prescription says 'Dispense As Written' or the operator/prescriber has expressed brand preference. That's process. But ANY OTHER substitution (different drug, different strength, different formulation) requires prescriber authorization.",
+    "When the pharmacy says 'the doctor changed your prescription', they may mean (a) the prescriber actually sent an updated e-script, or (b) the pharmacy suggested a change and is treating tentative as final. ALWAYS verify with the prescriber's office.",
+    "Pharmacists are clinical professionals — they're not making things up when they flag an interaction. Take it seriously, get the details, route to the prescriber. But the AGENT does not adjudicate.",
+    "Pharmacy callbacks that get ignored result in: PAs that time out, prescriptions auto-reversed off the queue, and operators discovering empty bottles on a Friday night. Close the loop within 24 hours."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling back on behalf of [Operator] in response to the message about [medication]. Can you walk me through what's needed?",
+    "diagnose_callback_type": "Just to align — is this about (a) a prior authorization, (b) a substitution suggestion, or (c) a drug-interaction concern? I want to make sure I route this correctly on our end.",
+    "pa_admin_track": "For the prior auth — what's the form / portal the prescriber needs to use, and is there anything we can do from the patient side to help? I'll loop in the prescriber's office as soon as we hang up.",
+    "substitution_clarify": "What exactly is being proposed — substitution from [original drug] to [proposed]? Is this a generic-for-brand swap, or a different molecule / therapeutic class? And who is proposing it — the prescriber, or the pharmacy?",
+    "substitution_decline_holding": "Until we can verify with the prescriber, please hold the original prescription as written. Don't dispense a substitution today. The operator will follow up after speaking with their doctor.",
+    "interaction_detail_request": "Can I speak with the pharmacist? I want to make sure I capture exactly which medications interact, the severity, and what the pharmacist recommends — so I can pass that to the prescriber accurately.",
+    "request_prescriber_loop_in": "Could you send the prescriber a note about this through your system as well? That way both of us are pinging them, and they have the question in their EMR.",
+    "ask_about_bridge_supply": "While we sort this out, can the operator get a few days of supply to bridge? They have [X doses] left.",
+    "stall_research": "One moment — let me check the medication list the operator gave me.",
+    "verify_readback": "So: callback was about [PA / substitution / interaction] for [medication]. Action on our side: contact prescriber to [authorize PA / approve or decline substitution / address interaction]. Pharmacy will [hold script / dispense as-written / await prescriber response]. Reference [number]. Right?",
+    "graceful_close": "Thanks for the call. I'll get back to you within [timeline] after I've reached the prescriber. Please don't dispense any change without their authorization."
+  },
+  "tactics": [
+    {
+      "name": "Identify which of the three callback types this is",
+      "when": "First substantive turn.",
+      "script": "Use `diagnose_callback_type`. Each type has a different downstream workflow. Mixing them up wastes time and risks acting on a clinical question administratively.",
+      "priority": 1
+    },
+    {
+      "name": "PA: take the admin baton",
+      "when": "Callback is a prior-auth requirement.",
+      "script": "Use `pa_admin_track`. Get: which form, which portal, fax number for prescriber to send to. Then call the prescriber's office (chain to `referral-prior-authorization` skill). Agent can drive this — it's paperwork.",
+      "priority": 2
+    },
+    {
+      "name": "Substitution: HOLD the script, route to prescriber",
+      "when": "Callback proposes any substitution beyond simple generic-for-brand of the same molecule.",
+      "script": "Use `substitution_clarify` to capture exactly what's being proposed and by whom. Then use `substitution_decline_holding` — explicitly instruct the pharmacy NOT to dispense the substitution. Surface to operator AND to prescriber's office. The prescriber decides.",
+      "priority": 3
+    },
+    {
+      "name": "Interaction: escalate to pharmacist, then prescriber",
+      "when": "Callback flags a drug interaction.",
+      "script": "Use `interaction_detail_request`. Capture: interacting medication(s), severity (mild / moderate / major / contraindicated), pharmacist's recommendation. Surface to operator immediately AND route to prescriber. Do NOT make any 'just skip a dose' or 'switch to X' decision on this call.",
+      "priority": 4
+    },
+    {
+      "name": "Pause and re-verify on 'doctor changed it'",
+      "when": "Pharmacy claims the prescriber has already authorized a change.",
+      "script": "Hard boundary. Do NOT accept this on the pharmacy's word, no matter how confident the rep sounds. Hang up, call the prescriber, verify the change exists in their EMR with date and prescriber name. Substitution-by-claim is a known error category.",
+      "priority": 5
+    },
+    {
+      "name": "Ask for a bridge supply if the resolution will take days",
+      "when": "Operator is running out of medication while waiting.",
+      "script": "Use `ask_about_bridge_supply`. Many pharmacies can provide 3-7 day emergency supplies of non-controlled chronic medications. Worth asking; costs nothing.",
+      "priority": 6
+    },
+    {
+      "name": "Document the pharmacist's name and findings",
+      "when": "Interaction or substitution discussion.",
+      "script": "Get the pharmacist's name on record. When the prescriber gets the question, knowing 'Pharmacist Jane Doe at [pharmacy] flagged [interaction]' is more actionable than 'the pharmacy called'.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from the pharmacy — always verify with the prescriber's office directly. This is the single most consequential boundary on this skill.",
+    "NEVER authorise a substitution (brand→generic except where legally automatic; therapeutic substitution; strength change; formulation change) on the operator's behalf. ALL substitutions beyond direct generic equivalents require prescriber.",
+    "NEVER make a clinical judgment about drug interactions — even if you 'know' the operator takes the interacting medication and 'know' the standard advice. Route every interaction question to the prescriber/pharmacist.",
+    "NEVER agree to dispense a different medication, different strength, or different schedule, even on the operator's verbal agreement, without prescriber authorization.",
+    "NEVER tell the pharmacy what the operator's diagnosis is unless the operator has explicitly authorized that disclosure and it's directly relevant (e.g. for PA paperwork the prescriber will sign)."
+  ],
+  "success_signals": [
+    "Callback type correctly identified.",
+    "PA: prescriber looped in with the right form/portal info, reference logged.",
+    "Substitution: pharmacy on HOLD, prescriber asked to decide, operator informed.",
+    "Interaction: pharmacist's name + interaction details captured, prescriber notified.",
+    "Bridge supply secured if operator was running low."
+  ],
+  "failure_signals": [
+    "Pharmacy refuses to hold script and is about to dispense a substitution the prescriber hasn't authorized — escalate to pharmacy manager and to prescriber on-call simultaneously.",
+    "Interaction is potentially severe and prescriber unreachable — surface to operator immediately as clinical urgency.",
+    "PA paperwork in indefinite loop — escalate via `referral-prior-authorization` skill.",
+    "Pharmacy and prescriber give contradictory accounts and operator can't get medication."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: callback type, action taken, owner of next step, ETA, and what the pharmacy will do in the interim (hold / fill as-written / bridge fill). Operator knows what's pending and what to expect.",
+    "on_failure": "Politely close. Report to operator: who said what, what's blocking, recommended escalation (prescriber on-call / pharmacy manager / clinical urgency). Do not pretend resolution if there is none.",
+    "follow_ups": [
+      "Call prescriber's office within 1 business day for substitution/interaction questions.",
+      "Track PA through to approval (use `referral-prior-authorization` skill).",
+      "Follow up with pharmacy once prescriber has responded — confirm script is unstuck."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name, DOB (read-only), pharmacy + branch",
+    "Medication name, strength, dose form (operator's words)",
+    "Prescriber name + clinic",
+    "Operator's full current medication list (for context only)",
+    "Insurance plan + member ID (read-only)",
+    "Brand vs generic preference if known",
+    "Original pharmacy message content (voicemail/text/portal)"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

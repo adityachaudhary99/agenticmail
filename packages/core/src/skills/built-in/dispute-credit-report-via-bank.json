@@ -1,0 +1,128 @@
+{
+  "id": "dispute-credit-report-via-bank",
+  "name": "Dispute a Credit-Report Item Directly With the Furnisher Bank",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "credit-report",
+    "fcra",
+    "furnisher-dispute",
+    "credit-bureau",
+    "metro-2",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call the bank that REPORTED a wrong item to a credit bureau and request a correction at the source. Disputing with the bureau is the well-known path; disputing with the FURNISHER (the bank that reported it) is the higher-leverage path under the FCRA — they own the original data and have a 30-day duty to investigate.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User finds a wrong item on their Equifax / Experian / TransUnion report: an inaccurate late payment, an account that isn't theirs, a balance that's wrong, a status that's wrong (charge-off vs paid, closed vs open), or an account still appearing after it should have aged off. Bureau disputes are easy but the bureau just asks the bank — going directly to the bank is faster and creates a stronger paper trail under FCRA section 623.",
+    "preconditions": [
+      "User has pulled credit reports from all three bureaus (free at annualcreditreport.com).",
+      "Specific item identified: bureau, account number, what's wrong, what it should be.",
+      "User has supporting documentation: statements, paid-off letters, account-closure confirmations, identity-theft report if applicable.",
+      "User has NOT yet disputed this specific item with the bureau in the last 30 days (parallel disputes can create conflicting records).",
+      "User's identity verification info ready (last 4 SSN, full name as it appears on the account)."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Furnisher direct disputes under FCRA section 623 carry the same 30-day investigation duty as bureau disputes, but with the original-data holder. Faster, often more thorough.",
+    "Be precise about what is wrong AND what the correct value is. 'This account shows a 30-day late in March 2024; it should be paid as agreed because I have the autopay confirmation.' Vague disputes get rubber-stamped 'verified as accurate.'",
+    "Always FOLLOW UP in writing. Phone starts the clock under most banks' policies, but written submission to the credit-disputes address (NOT customer service) is the official record. Send certified mail or use the secure-message system.",
+    "Banks report to bureaus using the METRO 2 format. The fields you care about: account status code, payment history grid, date opened, date of last activity, balance, high credit. Asking 'which Metro 2 field is wrong?' signals competence and unlocks better help.",
+    "Pulling the credit report fresh AFTER the 30-day window confirms whether the correction was made. If it wasn't — the FCRA gives the user a private right of action and statutory damages.",
+    "Goodwill adjustments (asking the bank to remove an accurate-but-damaging late) are a SEPARATE workflow, NOT a dispute. Don't conflate — disputes are for incorrect data only."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to file a direct dispute under FCRA section 623 on an item the bank is reporting to the credit bureaus. The item is on my [Equifax / Experian / TransUnion] report — account ending in [last 4]. The specific inaccuracy is [precise description]. The correct value is [what it should be].",
+    "ask_for_credit_disputes_team": "Can you transfer me to the credit-disputes or credit-bureau-reporting team? Front-line customer service usually can't process furnisher disputes directly.",
+    "specify_the_field": "The item shows [field name / value] but should be [correct value]. In Metro 2 terms, I believe this is the [account status / payment history grid / DOLA / balance] field. Can you confirm which field is being disputed in your system?",
+    "documentation_offer": "I have [statements / paid-in-full letter / closure confirmation / identity-theft report]. Where do I submit it — secure message, fax, mail? I want documentation in the file before the investigation closes.",
+    "ask_about_aud": "After the investigation, will you send an AUD (Automated Universal Data form) update to all three bureaus, or only the bureau the report was pulled from? I'd like the correction propagated to all three.",
+    "ask_for_written_confirmation": "Can you send written confirmation that the dispute is open under FCRA 623 — the dispute description, the 30-day clock start date, and the case number?",
+    "follow_up_request": "Within 30 days, will you send me the investigation result in writing, including the Metro 2 field values you'll be reporting going forward?",
+    "graceful_close": "Thanks. Can you confirm: dispute opened under FCRA 623, case number [###], 30-day clock starts [date], correction will propagate to all three bureaus, and I'll receive written confirmation. Please give me your name."
+  },
+  "tactics": [
+    {
+      "name": "Route to the credit-disputes team",
+      "when": "Connected to CS.",
+      "script": "Use `ask_for_credit_disputes_team`. Furnisher-dispute workflow lives in a specific back-office team, not in front-line CS.",
+      "priority": 1
+    },
+    {
+      "name": "Open with FCRA 623 wording",
+      "when": "First substantive turn with the right team.",
+      "script": "Use `opener`. Mentioning section 623 explicitly anchors the bank's duty: investigate, correct, propagate to bureaus within 30 days.",
+      "priority": 2
+    },
+    {
+      "name": "Specify the field, not just the impression",
+      "when": "Rep asks what's wrong.",
+      "script": "Use `specify_the_field`. Different Metro 2 fields have different correction paths — being specific shortens the investigation.",
+      "priority": 3
+    },
+    {
+      "name": "Upload documentation in the same call",
+      "when": "Dispute is opened.",
+      "script": "Use `documentation_offer`. Banks often resolve documented disputes faster because the rep can attach the proof to the case file immediately."
+    },
+    {
+      "name": "Demand AUD propagation",
+      "when": "Resolution timing is discussed.",
+      "script": "Use `ask_about_aud`. Without an AUD, the correction may only update one bureau, leaving the other two wrong."
+    },
+    {
+      "name": "Get written confirmation of the open dispute",
+      "when": "Mid-call.",
+      "script": "Use `ask_for_written_confirmation`. The 30-day clock under FCRA 623 needs a start date in writing — protects the user if escalation to CFPB or court is needed."
+    },
+    {
+      "name": "Schedule the follow-up pull",
+      "when": "Closing.",
+      "script": "Calendar a credit-report pull at day 35 to confirm the change posted on all three bureaus."
+    }
+  ],
+  "boundaries": [
+    "Do NOT dispute items that are accurate. Filing frivolous disputes can have your dispute marked 'frivolous or irrelevant' and ignored under FCRA 611(a)(3).",
+    "Do NOT confuse a furnisher dispute (this skill) with a goodwill request (separate; for accurate-but-unflattering items). Wrong framing = denied.",
+    "Do NOT file a parallel bureau dispute while the furnisher dispute is open — conflicting investigation paths confuse the record.",
+    "Do NOT settle for a verbal 'we'll look into it'. Get a case number and written confirmation, or it didn't happen.",
+    "Do NOT share full SSN — last 4 is enough for almost all dispute workflows.",
+    "Do NOT accept a correction that only updates one bureau when the wrong item is on multiple — push for AUD propagation."
+  ],
+  "success_signals": [
+    "Transferred to the credit-disputes / credit-bureau-reporting team (not CS).",
+    "Dispute opened under FCRA section 623 with a case number.",
+    "Specific Metro 2 field identified.",
+    "Documentation uploaded into the case file.",
+    "AUD propagation to all three bureaus confirmed.",
+    "Written confirmation of open dispute promised."
+  ],
+  "failure_signals": [
+    "Rep insists you 'must dispute with the bureau first' (not true — FCRA 623 allows direct furnisher dispute).",
+    "Rep refuses to identify the Metro 2 field.",
+    "Case opened but no 30-day clock acknowledged.",
+    "Bank claims the item is 'verified as accurate' without explaining what was checked (push for documentation of what they verified)."
+  ],
+  "exit_strategy": {
+    "on_success": "Calendar day 35 to pull credit reports and confirm correction. Surface case number and rep name to operator. Keep documentation for 2+ years.",
+    "on_failure": "If furnisher denies the dispute or doesn't respond within 30 days: file a CFPB complaint, file a bureau dispute as a second channel, and consult an FCRA attorney about statutory damages. Inform operator and request approval to escalate.",
+    "follow_ups": [
+      "Day 30: written investigation result expected.",
+      "Day 35: pull credit reports from all 3 bureaus to verify correction posted.",
+      "If not corrected: CFPB complaint + bureau dispute + consider counsel.",
+      "Keep all written confirmations and the original dispute letter for at least 2 years."
+    ]
+  },
+  "required_user_info": [
+    "Bureau(s) where the item appears (Equifax / Experian / TransUnion)",
+    "Account number from the report (or last 4)",
+    "Exact inaccuracy: what is reported vs what should be reported",
+    "Supporting documentation files",
+    "Whether a parallel bureau dispute is already open",
+    "Operator approval to file CFPB complaint if needed"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

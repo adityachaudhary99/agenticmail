@@ -1,0 +1,113 @@
+{
+  "id": "confirm-next-step-ownership",
+  "name": "Confirm Next-Step Ownership: Who Does What By When",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "closing",
+    "ownership",
+    "raci",
+    "next-steps",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Before ending any call, enumerate every remaining action and assign each to a specific party — rep / user / a third party — with a specific deadline and a verification method. Most call failures aren't disagreements about what was promised; they're ambiguity about who was supposed to do what next.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call that ends with one or more remaining actions (the vast majority do — even 'all set' usually has at least an 'updates reflect in the next billing cycle' on the company's side). Use as part of the closing sequence, after readback and verbal lock-in.",
+    "preconditions": [
+      "The substantive negotiation / discussion is concluded.",
+      "You have a list (mental or written) of what needs to happen between now and 'fully resolved'.",
+      "You can spend 2-4 minutes on a structured ownership pass."
+    ],
+    "estimated_call_duration_minutes": 4
+  },
+  "principles": [
+    "Every action has exactly ONE owner. Two owners = no owner. If the company and the user both 'need to confirm', specify who confirms FIRST.",
+    "Every action has a deadline. 'When it's processed' is not a deadline — 'by end of business Friday' is.",
+    "Every action has a verification method. How will the user KNOW it happened? Email? Bill change? Portal update?",
+    "Sequence matters. List actions in order — A must happen before B. Out-of-order actions cause silent failures.",
+    "Reciprocal asks belong here too. If the user needs to enable autopay or upload a document, that's a user-owned action with a deadline."
+  ],
+  "phrases": {
+    "opener": "Before we hang up, can we walk through what happens next — step by step — and who's doing what? I want to make sure neither of us drops something.",
+    "action_template": "Action [N]: [description]. Owner: [you / me / a third party]. Deadline: [date / event]. I'll know it's done because [verification method]. Sound right?",
+    "two_owner_resolution": "You mentioned both your team and I would need to do something here — what's the order? Does [user action] need to happen first, or [rep action]?",
+    "vague_deadline_probe": "When you say 'when the system updates' — is that hours, days, the next billing cycle? I'd like to set a check-in around that.",
+    "verification_pin": "How will I know that step is complete? Will I see something on my bill, get an email, see a portal change?",
+    "user_action_confirm": "On my side, you need me to [user action] by [deadline]. If I don't do that, what happens — does the whole agreement reverse, or just that piece?",
+    "graceful_close_success": "Okay, so the punch list is: [1, 2, 3, ...]. We're aligned on who owns each and when. Thank you.",
+    "graceful_close_failure": "I'm hearing too much 'we'll see' on the next steps — could we get a supervisor to help structure this before I close out?"
+  },
+  "tactics": [
+    {
+      "name": "Enumerate every action out loud",
+      "when": "Start of the next-steps pass.",
+      "script": "Use the `opener` phrase, then walk through actions one by one using `action_template`. Force every action into the structured format. Actions the rep mumbles past are exactly the ones that get dropped.",
+      "priority": 1
+    },
+    {
+      "name": "Resolve dual-ownership immediately",
+      "when": "An action could be owned by either party.",
+      "script": "Use the `two_owner_resolution` phrase. Force the rep to either take ownership or hand it cleanly to the user — never split.",
+      "priority": 2
+    },
+    {
+      "name": "Convert vague deadlines into checkable ones",
+      "when": "Rep gives an event-based deadline ('when it processes', 'after the cycle closes').",
+      "script": "Use the `vague_deadline_probe` phrase. Translate every deadline into a calendar date or a date-range with an upper bound.",
+      "priority": 3
+    },
+    {
+      "name": "Pin the verification method",
+      "when": "Every action.",
+      "script": "Use the `verification_pin` phrase. Without verification, 'done' is unverifiable — and 'unverifiable' is functionally identical to 'didn't happen' six weeks later.",
+      "priority": 4
+    },
+    {
+      "name": "Confirm user-side actions with explicit consequences",
+      "when": "Rep states an action the user has to take.",
+      "script": "Use the `user_action_confirm` phrase. Knowing the consequence-of-default lets the user prioritise correctly. Often the rep reveals that the user's action isn't actually critical — useful information.",
+      "priority": 5
+    },
+    {
+      "name": "Recap the punch list at the end",
+      "when": "All actions enumerated.",
+      "script": "Use the `graceful_close_success` phrase. The recap creates a final recorded artifact: the full action plan in one block, easy to retrieve from the call audio.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept 'we'll take care of everything on our end' as a substitute for enumerated actions. Get the list.",
+    "Do NOT let actions be assigned to 'the system' or 'our back office' without a named human or team — abstractions don't pick up phones.",
+    "Do NOT close on more than one ambiguous next step. One you can live with; two means the agreement is structurally unstable.",
+    "Do NOT commit the user to actions the user hasn't authorised (e.g. enabling autopay, uploading sensitive documents). Hold via operator escalation instead."
+  ],
+  "success_signals": [
+    "Rep volunteers actions you hadn't asked about.",
+    "Rep can name the team or system that handles each step.",
+    "Rep gives consequences-of-default cleanly when asked.",
+    "Punch list at the end has every action mapped to one owner, one deadline, one verification method."
+  ],
+  "failure_signals": [
+    "Rep keeps using passive voice ('will be processed', 'will be reflected').",
+    "Rep can't or won't name owners.",
+    "Deadlines are exclusively relative ('a few days', 'next cycle') with no calendar anchor.",
+    "Verification methods are all 'check your bill' — single point of failure if the bill doesn't reflect it."
+  ],
+  "exit_strategy": {
+    "on_success": "Save the punch list in a structured format (owner / action / deadline / verification). Calendar each deadline. Schedule a check-in at the verification date for each step.",
+    "on_failure": "Escalate before closing. An agreement with ambiguous next steps is materially weaker than one with clear ownership — supervisors can often fix this in 3-5 minutes.",
+    "follow_ups": [
+      "On each deadline date, check the verification method and log status (done / pending / failed).",
+      "If a step fails, call back referencing the ticket number AND the punch list item — quote 'action 3 of our call on [date], owner was your team, deadline was [date]'."
+    ]
+  },
+  "required_user_info": [
+    "User-side capacity and willingness for each action (e.g. can they upload a document this week?)",
+    "Calendar / reminder system to track each deadline",
+    "Authority threshold — which user-side actions need re-confirmation before the agent commits"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

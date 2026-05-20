@@ -1,0 +1,134 @@
+{
+  "id": "k12-iep-504-enrollment",
+  "name": "K-12 Enrollment, Transfer, and IEP / 504 Meeting Request",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "K-12",
+    "IEP",
+    "504",
+    "enrollment",
+    "transfer",
+    "special-education",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call a K-12 district enrollment office, school principal, or special-education department to enroll a student, transfer between schools (in-district or out-of-district), or request / schedule an IEP or 504 plan meeting — including initial evaluation, annual review, amendment, or due-process disagreements.",
+  "disclaimer": "K-12 special education in the U.S. is governed by IDEA (federal) and state implementing law. Parents have substantial procedural rights — Procedural Safeguards must be provided in writing, evaluations must occur within state-mandated timelines, and disagreements have formal resolution options (mediation, due process, OCR complaint). This skill does not constitute legal advice.",
+  "context": {
+    "when_to_use": "Caregiver needs to (a) enroll a student new to the district, (b) transfer a student in or out (boundary exception, magnet, charter, private placement), (c) request an initial special-education evaluation, (d) schedule an annual or triennial IEP, (e) request an amendment to an existing IEP, (f) push for missed services or compensatory education, or (g) escalate a 504 / IEP disagreement.",
+    "preconditions": [
+      "Caregiver has: proof of residency (lease, utility bill), child's birth certificate, immunization records, prior school records / transcript / IEP / 504 plan if applicable.",
+      "Caregiver can articulate the child's specific needs in observable terms ('struggles with reading multisyllable words', 'has been hospitalized for anxiety twice', 'doesn't make eye contact, scripts').",
+      "Caregiver knows the school district's specific policies (district website) — request timelines, transfer windows, central enrollment vs. school enrollment.",
+      "If existing IEP: most recent evaluation reports, current IEP document, prior progress notes."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Put every important request IN WRITING. Verbal requests for evaluation, IEP meetings, or amendments don't start the federal/state clock. A short dated email or signed letter does.",
+    "Specific timelines are your friend. State law mandates evaluation timelines (e.g. 60 calendar days from signed consent to IEP) and meeting timelines (annual within 365 days, triennial within 3 years). Cite them.",
+    "Procedural Safeguards are a federal document. The district must give them to you in your native language. Ask for them at the first IEP-adjacent conversation.",
+    "The IEP is a team document, but parents are equal members. You can request more time, decline to sign, request the meeting be recorded, bring an advocate or attorney, and request a re-convene.",
+    "Front-desk and registrar staff can enroll but can't decide special-education eligibility. The Director of Special Education (or 'Pupil Services' / 'Student Services') is the office with authority.",
+    "When in dispute: mediation is non-binding and fast, due process is binding and slow, OCR complaints are free. Most disputes resolve at the building or director level if you escalate clearly."
+  ],
+  "phrases": {
+    "opener_enrollment": "Hi, I'd like to enroll my child in [school]. They're in grade [X]. We're [new to the district / transferring from / coming from a private school / homeschooled]. What's the enrollment process and what documents do you need?",
+    "opener_transfer": "Hi, I'd like to request a transfer from [school A] to [school B] for [grade X]. The reason is [academic fit / sibling / safety / IEP services]. What's the process — a boundary exception, an open-enrollment application, or a magnet / charter lottery?",
+    "request_evaluation": "I'm formally requesting a special-education evaluation for my child for suspected [SLD / ADHD / Autism / Speech / OHI]. I'm following up this call with a written request today. Could you confirm the 60-day clock starts from my signed consent?",
+    "request_IEP_meeting": "I'd like to request an IEP team meeting to [annually review / amend / discuss progress / discuss placement]. Could we schedule within the next 30 days? I'd like all required members present: general-ed teacher, special-ed teacher, district representative, and [related services as applicable].",
+    "request_504": "My child has a documented disability — [condition with provider name] — that affects [major life activity]. I'm requesting a 504 plan to provide [accommodations]. What's the process?",
+    "ask_procedural_safeguards": "Could you send me the Procedural Safeguards Notice in [language] before our meeting? I'd like to review my rights.",
+    "ask_for_advocate_or_recording": "I'll be bringing [name] as an advocate / attorney to the meeting. I'd also like to record the meeting — could you confirm the district's policy on recording?",
+    "ask_for_director": "Could I be connected with the Director of Special Education or Pupil Services? I want to make sure my requests are routed correctly and that timelines are being met.",
+    "compensatory_ed_request": "Services on the IEP have not been delivered as written from [date] to [date]. I'd like to discuss compensatory education to make my child whole for the missed services.",
+    "graceful_close_success": "Thank you. To confirm: enrollment / evaluation / meeting is set for [date], documents needed are [list], and the next step is [action]. May I have your email so I can send the written confirmation today?"
+  },
+  "tactics": [
+    {
+      "name": "Convert every important ask to writing same-day",
+      "when": "After any phone request for evaluation, IEP, amendment, transfer.",
+      "script": "Use phone to schedule and to soften, then email the same day: 'As discussed on [date] at [time] with [name], I am requesting [evaluation / IEP meeting / etc.]. Please confirm receipt.' This is what starts legal timelines.",
+      "priority": 1
+    },
+    {
+      "name": "Get Procedural Safeguards before any IEP-adjacent meeting",
+      "when": "Initial evaluation, annual review, triennial, amendment.",
+      "script": "Use `ask_procedural_safeguards`. The Notice describes your right to consent, refuse, request independent evaluation at district expense (IEE), mediation, due process, etc.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for the right office, not just the school",
+      "when": "Special-education request beyond what the building principal can decide.",
+      "script": "Use `ask_for_director`. Building staff implement; the district's Director of Special Education / Pupil Services / Student Services has program authority and budget. Most disputes resolve at that level.",
+      "priority": 3
+    },
+    {
+      "name": "Specify required IEP team members",
+      "when": "Scheduling an IEP meeting.",
+      "script": "Use `request_IEP_meeting`. Federal law requires specific roles. If the district shows up missing a general-ed teacher or a district representative with authority to commit resources, the meeting is procedurally defective — you can ask to reconvene.",
+      "priority": 4
+    },
+    {
+      "name": "Ask about advocacy and recording at the front end",
+      "when": "Before an IEP meeting.",
+      "script": "Use `ask_for_advocate_or_recording`. Some districts allow recording; some require notice. Advocates / attorneys are always allowed. Bringing either is not adversarial; it's standard.",
+      "priority": 5
+    },
+    {
+      "name": "Track missed services and ask for compensatory education",
+      "when": "Services on the IEP haven't been delivered (staff shortage, distance learning, scheduling).",
+      "script": "Use `compensatory_ed_request`. Districts owe make-up services when minutes-per-week aren't delivered. Most districts don't volunteer this; parents must ask. Tally minutes by week and present them.",
+      "priority": 6
+    },
+    {
+      "name": "Use mediation before due process",
+      "when": "Disagreement on placement, services, or eligibility.",
+      "script": "Mediation is fast, free, non-binding, and surprisingly effective. Due process is binding but expensive and slow. Try mediation first unless time-sensitive (e.g. denied access)."
+    }
+  ],
+  "boundaries": [
+    "Do NOT consent to anything in the meeting if you're unsure. You can sign 'attended' without consenting to placement or services. Take the document home, review it, and respond in writing.",
+    "Do NOT accept verbal denials of evaluation. If the district refuses to evaluate, they must issue a Prior Written Notice (PWN) with rationale and your appeal rights.",
+    "Do NOT skip the written follow-up to phone calls — phone alone doesn't start clocks.",
+    "Do NOT bring the child to a contentious meeting unless age-appropriate and prepared.",
+    "Do NOT make personal accusations about staff in writing — the record is discoverable. Stick to facts and timelines."
+  ],
+  "success_signals": [
+    "Written confirmation of evaluation consent date with 60-day clock acknowledged.",
+    "IEP meeting scheduled within 30 days with all required members.",
+    "Director of Special Education engaged directly.",
+    "Compensatory education calendar produced.",
+    "Procedural Safeguards delivered in the family's language."
+  ],
+  "failure_signals": [
+    "District refuses evaluation without issuing Prior Written Notice — escalate to OCR / state DOE.",
+    "Evaluation not completed within state timeline — file a state complaint (free, fast).",
+    "IEP meeting held without required members — request reconvene.",
+    "Placement decided unilaterally without team input — procedural violation.",
+    "Compensatory education refused despite documented missed minutes — escalate to mediation / due process."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the date and required actions. Send written follow-up the same day. Save every document. Calendar timelines (evaluation due, IEP due, services start).",
+    "on_failure": "Identify whether the issue is procedural (timeline / missing member) or substantive (placement / services). Procedural: state complaint is fast and free. Substantive: mediation, then due process. Always consider OCR for discrimination components.",
+    "follow_ups": [
+      "Email a written record of the call within 24 hours.",
+      "Calendar evaluation 60-day deadline.",
+      "Save every PWN, evaluation, IEP, progress report. They form the file.",
+      "Connect with a free Parent Training and Information Center (PTI) for advocacy support — every state has one funded under IDEA."
+    ]
+  },
+  "required_user_info": [
+    "Child's full name, DOB, grade, current school",
+    "Proof of residency (lease, utility, mortgage)",
+    "Birth certificate and immunization records",
+    "Prior school records, transcripts, IEPs, 504 plans, evaluations",
+    "Specific concerns in observable terms",
+    "Any existing diagnoses + provider names",
+    "Caregiver's preferred language for documents",
+    "Whether an advocate or attorney is involved"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

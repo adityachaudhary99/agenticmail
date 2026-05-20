@@ -1,0 +1,129 @@
+{
+  "id": "service-move-shutoff-start-no-overlap",
+  "name": "Service Move: Shutoff at Old + Start at New Without Overlap Charges",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "utility",
+    "telecom",
+    "service-move",
+    "transfer",
+    "phone-call",
+    "billing",
+    "utility-telecom"
+  ],
+  "description": "Call a utility or telecom to move service from an old address to a new one — landing the shutoff date and start date so the user is never billed for two premises at once and never goes dark on day-of-move.",
+  "disclaimer": "Some services (fiber, water with deposits) require physical work at the new address before service starts. Build in a 24-48 hour buffer at the NEW end so a missed appointment doesn't leave the user without service; never put the buffer on the OLD end (overlap charges).",
+  "context": {
+    "when_to_use": "User is moving and wants to transfer the same provider's service to the new address. NOT for switching providers (use cancellation skills for that) and NOT for adding a second service to an existing account.",
+    "preconditions": [
+      "Move-out date at old address (confirmed lease end or closing date).",
+      "Move-in date at new address (when keys are received / closing).",
+      "New address with unit number and ZIP (verify service is available there before calling).",
+      "Account number on file.",
+      "Whether the new address requires any equipment swap (different cable infrastructure, different gas type, well vs. municipal water)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Set the shutoff at the OLD address for the day AFTER move-out — never the same day. Movers can run late; a same-day shutoff means cleaning crews and walk-throughs in the dark.",
+    "Set the start at the NEW address for the day BEFORE move-in — never the same day. You want power and water to be on when the truck arrives, not 'scheduled for activation between 8am-8pm'.",
+    "Result: 1-2 days of overlap is FINE and worth a few dollars; 0 days of overlap is the trap that creates the all-day shutoff-day phone call.",
+    "If the rep books this as a 'service transfer' rather than 'disconnect old + connect new', the account number carries over and avoids a new deposit. Insist on transfer wording.",
+    "Recognise wrong-queue: 'new connects' and 'disconnects' are sometimes separate teams from 'moves'. If routed wrong, request a warm transfer that preserves your hold position."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm moving and I want to transfer service from [old address] to [new address]. Move-out is [date], move-in is [date]. I'd like to set this up as a transfer on the same account, not a disconnect-plus-new-connect.",
+    "queue_check": "Just to make sure I'm in the right place — is this the moves team, or are disconnects and new connects separate teams? I want to handle both in one call.",
+    "transfer_request": "Could you do a warm transfer to the moves team and stay on the line until they pick up? I'd rather not lose my hold position.",
+    "request_transfer_not_new": "Can we set this up as a service transfer — same account number, no new deposit, no new equipment installation? My understanding is that triggers a different workflow than a disconnect.",
+    "stage_dates": "I'd like the shutoff at the old address scheduled for [move-out date + 1] — day AFTER move-out — and the new address activated on [move-in date - 1] — day BEFORE move-in. I'm okay with one or two days of overlap.",
+    "check_service_availability": "Before we lock this in — can you confirm the new address is in your service area, what infrastructure is there [coax / fiber / DSL / electric panel size if known], and whether there's any pre-install requirement?",
+    "ask_truck_roll": "Will a tech need to come out to the new address? If yes, what's the earliest appointment, what's the window, and is there a fee?",
+    "ask_equipment": "Does my current equipment work at the new address, or do I need a swap? If a swap, can it be mailed ahead so I'm not waiting on a tech day-of?",
+    "ask_promo_preservation": "I'm on a [promo / loyalty rate]. Will that carry over to the new address, or does this trigger a re-rate? If it re-rates, I'd like that flagged before we proceed.",
+    "lock_in_writing": "Can you email or text the confirmation with both dates, both addresses, account number, any new charges, and any appointment windows? I want it in writing before we hang up.",
+    "graceful_close": "Thanks — so shutoff at old on [date], activation at new on [date], same account, no new deposit, promo carries, tech appointment [date / window], confirmation number [number]."
+  },
+  "tactics": [
+    {
+      "name": "Stage the dates correctly",
+      "when": "First substantive turn.",
+      "script": "Use `stage_dates`. Phrase it explicitly as 'day after move-out' / 'day before move-in' so the rep cannot mis-key it as same-day.",
+      "priority": 1
+    },
+    {
+      "name": "Insist on 'transfer' not 'disconnect + new'",
+      "when": "Rep starts opening two work orders.",
+      "script": "Use `request_transfer_not_new`. Same-account transfer skips new-customer credit check, deposit, and often promo loss.",
+      "priority": 2
+    },
+    {
+      "name": "Recognise wrong-queue / cross-team routing",
+      "when": "Rep can only do one side (disconnect OR new-connect).",
+      "script": "Use `queue_check` and `transfer_request`. Handling both in one call avoids the gap where one side gets done and the other never gets scheduled.",
+      "priority": 3
+    },
+    {
+      "name": "Verify service availability at new address",
+      "when": "Before locking the activation date.",
+      "script": "Use `check_service_availability`. Especially critical for fiber, gigabit cable, or 5G fixed-wireless — 'available' on the marketing map sometimes doesn't match the actual install database.",
+      "priority": 4
+    },
+    {
+      "name": "Pin down truck roll + equipment logistics",
+      "when": "After service availability is confirmed.",
+      "script": "Use `ask_truck_roll` and `ask_equipment`. A 4-hour install window on move-in day is the most common cause of move-day chaos.",
+      "priority": 5
+    },
+    {
+      "name": "Protect any existing promo / discount",
+      "when": "Before final confirmation.",
+      "script": "Use `ask_promo_preservation`. Many promos are address-locked; transferring sometimes re-rates to current pricing. Flag it before the move, not after the first bill."
+    },
+    {
+      "name": "Lock it in writing",
+      "when": "Before ending the call.",
+      "script": "Use `lock_in_writing`. Move-related verbal arrangements are the #1 source of billing disputes."
+    }
+  ],
+  "boundaries": [
+    "Do NOT schedule shutoff at the old address before the move-out date — even one day early can mean no water during the move-out clean.",
+    "Do NOT schedule activation at the new address after the move-in date — even one day late can mean no power for the first night.",
+    "Do NOT accept a new account number without explicit reason. New account = new deposit + new credit check + lost promo, in most cases.",
+    "Do NOT skip confirming equipment compatibility — showing up with the wrong modem on day one is a 3-day delay."
+  ],
+  "success_signals": [
+    "Both dates scheduled with 1-2 day buffer in the correct direction.",
+    "Same account number carries over, no new deposit.",
+    "Promo / loyalty rate confirmed to carry.",
+    "Written confirmation with both dates, both addresses, and appointment window.",
+    "Equipment plan confirmed (carry it / mail-ahead / day-of swap)."
+  ],
+  "failure_signals": [
+    "Rep insists on disconnect-then-new-connect with new deposit.",
+    "Promo silently re-rates to current pricing and rep won't escalate.",
+    "Truck-roll appointment is more than 1 week after requested activation date.",
+    "Service not actually available at new address despite map claim."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm both dates, both addresses, account, deposit status, promo status, equipment plan, and appointment window. Calendar both dates with 24-hour reminders.",
+    "on_failure": "If promo will be lost, evaluate switching providers at the new address (often cheaper than transfer with re-rate). If service is not available at new address, get the unavailable-area documentation in writing — you may need it to break a contract without ETF.",
+    "follow_ups": [
+      "Day before old-address shutoff: confirm via portal that the work order is still scheduled.",
+      "Day before new-address activation: confirm appointment time and tech ETA.",
+      "Day after activation: verify the new account looks right and old account shows final-bill status.",
+      "Two weeks after: verify the final bill at old address is reasonable (no phantom recurring charges)."
+    ]
+  },
+  "required_user_info": [
+    "Account number",
+    "Old address (full) and move-out date",
+    "New address (full, with unit) and move-in date",
+    "Any current promo / loyalty pricing",
+    "Existing equipment list",
+    "Best email/phone for written confirmation"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,112 @@
+{
+  "id": "handle-send-me-an-email-deflection",
+  "name": "Handle 'Send Me an Email' as a Deflection",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "objection-handling",
+    "deflection",
+    "phone-call",
+    "judgement-call",
+    "outreach-sales"
+  ],
+  "description": "When a prospect responds to a cold or follow-up call with 'just send me an email', distinguish between (a) a legitimate channel preference, (b) a polite brush-off, and (c) a buying signal in disguise — and respond appropriately to each, without forcing the call.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "On any outbound call where the prospect, before substantive conversation has happened, asks the agent to send information by email. The agent must read the situation in seconds and pick a response.",
+    "preconditions": [
+      "Agent has gotten past the gatekeeper and is speaking with the target (or their delegate).",
+      "Agent has a real, sendable artefact appropriate for this prospect — not a generic deck.",
+      "Operator has been briefed on the agent's policy for email follow-up (always comply / push once / never comply on cold)."
+    ],
+    "estimated_call_duration_minutes": 2
+  },
+  "principles": [
+    "'Send me an email' is information, not an answer. Read the tone, the speed, and the context before deciding.",
+    "Comply gracefully when in doubt. Refusing to send email when asked is a worse signal than sending and following up.",
+    "Push back ONLY when you have a clear, concrete reason a 30-second live exchange is more valuable for THEM than email — and you can say that reason out loud.",
+    "Never argue. The moment you sound like you're not accepting their stated preference, you lose.",
+    "An email follow-up is a real commitment. If you say you'll send something, send something real, within the window you named."
+  ],
+  "phrases": {
+    "comply_clean": "Sure — what's the best email for you? I'll keep it short, one or two paragraphs and a link, not a deck-bomb.",
+    "qualify_before_sending": "Happy to. Quick question first so I send the right thing rather than a generic email — is the [topic] something you're actively looking at, or more of a 'down the road' thing?",
+    "single_push": "Sure, I can do that. Honestly though — there's one thing I'd rather just ask you live for 30 seconds, then I'll send the rest as written follow-up. Is now OK, or worse timing than I think?",
+    "respect_the_no": "No problem — what's the best email? I won't follow up beyond the one note unless you tell me to.",
+    "honest_about_brushoff": "Totally cool if 'send me an email' is your nice way of saying not interested — would you tell me straight, just so I don't keep your inbox warm for no reason?",
+    "concrete_commitment": "I'll send it within the hour today. Subject line will say [X] so it's easy to find or ignore."
+  },
+  "tactics": [
+    {
+      "name": "Read the request in three seconds — preference, brush-off, or buying signal",
+      "when": "Immediately upon hearing the request.",
+      "script": "Preference (calm, neutral tone, after some engagement) → comply cleanly. Brush-off (fast, before any real exchange, slightly cool tone) → respect the no AND offer one honest out. Buying signal ('send me a proposal') → comply with qualification first.",
+      "priority": 1
+    },
+    {
+      "name": "Comply cleanly when the request is genuine",
+      "when": "Tone reads as legitimate channel preference.",
+      "script": "Use `comply_clean`. Some prospects genuinely do their best work async. Forcing live time on them is a tax they'll resent.",
+      "priority": 2
+    },
+    {
+      "name": "Qualify briefly before sending if the email would benefit",
+      "when": "Prospect seems engaged enough that 60 seconds of context would meaningfully change what you send.",
+      "script": "Use `qualify_before_sending`. One question — not three — to avoid sending a generic deck.",
+      "priority": 3
+    },
+    {
+      "name": "Push back exactly once if there's a real reason",
+      "when": "You have a specific live-only question whose answer reshapes the email.",
+      "script": "Use `single_push`. If they decline, drop it immediately — do not push twice on the same call.",
+      "priority": 4
+    },
+    {
+      "name": "Surface the brush-off if you suspect one",
+      "when": "Request was fast, before any real exchange, and follow-up emails are likely to vanish into ghosting.",
+      "script": "Use `honest_about_brushoff`. This surprises most prospects and produces honest answers — they'll either say 'no, actually, send it' or 'yeah, not for us', and either saves time.",
+      "priority": 5
+    },
+    {
+      "name": "Make the commitment concrete on the call",
+      "when": "Closing the conversation.",
+      "script": "Use `concrete_commitment`. Name a window, name a subject line. Vague 'I'll send something across' rarely gets opened."
+    }
+  ],
+  "boundaries": [
+    "Do NOT pretend a follow-up email requires live information you could easily figure out from public sources.",
+    "Do NOT push back more than once. Two attempts to keep them on the phone after they asked for email is pressure.",
+    "Do NOT promise an email and not send it. Better to not commit than to break the small promise.",
+    "Do NOT send a generic deck. Send something written FOR this prospect, even if 80% is templated.",
+    "Do NOT cc the operator or the prospect's boss on a follow-up email unless explicitly authorised."
+  ],
+  "success_signals": [
+    "Prospect gives their preferred email and a topic to focus on.",
+    "Prospect responds to the follow-up email within a reasonable window.",
+    "Prospect agrees to a small live exchange when the push-back was honest and well-framed.",
+    "Prospect admits it's a no — clean signal, time saved."
+  ],
+  "failure_signals": [
+    "Prospect repeats 'just email me' more crisply (push again and you've lost them).",
+    "Prospect goes silent on the email follow-up for 10+ business days.",
+    "Prospect's stated email bounces or is a generic shared inbox — they didn't want this to land."
+  ],
+  "exit_strategy": {
+    "on_success": "Send the promised email within the named window. Keep it under 8 lines. One link, one ask, one calendar option. End the call warmly with a thank-you.",
+    "on_failure": "If the brush-off was confirmed, log the prospect as 'declined — do not retry by phone'. If they went silent post-email, follow the ghosted-lead re-engagement cadence — not a re-call.",
+    "follow_ups": [
+      "Send the email by the committed deadline, with the committed subject line.",
+      "Single written nudge 5-7 business days later if no response — then stop.",
+      "Log outcome in CRM with the prospect's exact words about preferred channel."
+    ]
+  },
+  "required_user_info": [
+    "Operator's standing policy on email-deflection responses",
+    "Real artefacts the operator wants the agent to send (not 'a deck' — actual links/files)",
+    "Operator's preferred follow-up cadence after the email lands",
+    "Whether the agent can quote pricing or capabilities in the written follow-up",
+    "Operator's outbound email signature / sending identity"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

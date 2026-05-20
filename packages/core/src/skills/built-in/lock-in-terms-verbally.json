@@ -1,0 +1,127 @@
+{
+  "id": "lock-in-terms-verbally",
+  "name": "Lock In Dates, Amounts, and Conditions Verbally",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "closing",
+    "verbal-commitment",
+    "recording",
+    "specifics",
+    "phone-call",
+    "closing-commitment"
+  ],
+  "description": "Get the rep to say — out loud, on the recorded line — the specific numbers, dates, and conditions of the agreement, in their own voice. The recording itself becomes the artifact. Verbal commitments on a recorded line have substantially more enforceability than a customer's paraphrase of what they think was promised.",
+  "disclaimer": "Call recording is governed by jurisdiction. Confirm recording legality with the user before relying on this skill. In two-party states, ensure the rep was informed the call is recorded — most call centres announce this on their side.",
+  "context": {
+    "when_to_use": "Any commitment with a numeric, dated, or conditional component — billing changes, credits, refunds, service activation, contract terms, promised callbacks. Use AFTER `confirm-agreement-readback` has surfaced the items, but BEFORE `request-written-confirmation`.",
+    "preconditions": [
+      "An agreement has been reached on at least one specific number, date, or condition.",
+      "Call recording is in effect (verified, not assumed).",
+      "You know which side is recording — affects how you reference the recording in the lock-in phrasing."
+    ],
+    "estimated_call_duration_minutes": 3
+  },
+  "principles": [
+    "The customer's voice saying the number is not the artifact. The rep's voice saying the number IS the artifact. Always extract the commitment FROM the rep, not back AT them.",
+    "Specific > general. '$47.32 starting June 1, 2026, for 12 months' is enforceable; 'a lower bill soon' is not.",
+    "Frame the lock-in as 'for the recording' or 'for my notes' — never as 'so I can sue you later'. Same data, vastly different cooperation.",
+    "Date all conditions. 'When you renew' must become 'on or after [explicit date]'. Open-ended conditions are escape hatches.",
+    "If the rep gives a range ('between 30 and 45 days'), pin the upper bound. The longer end is the actual SLA in practice.",
+    "A 'one-time exception' that only exists if you commit NOW, before written confirmation, is bait. Durable concessions survive a 24-hour cool-off. If the rep insists the terms evaporate at hangup, the right move is to walk — not to commit faster.",
+    "Numbers the rep refuses to say OUT LOUD on the recorded line are not commitments. 'You'll see it on the bill' or 'I've keyed it in, you can trust me' are not artifacts. Make them speak the figure or treat it as unconfirmed."
+  ],
+  "phrases": {
+    "amount_lock": "Just so I have it exactly — can you state the new amount and when it takes effect? I want to make sure I write it down word for word.",
+    "date_lock": "And the effective date — is that [specific date], or [some other anchor]? Just want the exact day.",
+    "duration_lock": "How long does that rate / credit / promotion last? Is there an end date or a roll-off month?",
+    "condition_lock": "Are there any conditions attached — autopay, paperless billing, a contract term, a minimum spend? I want to list them out so I don't accidentally trip one.",
+    "rollback_clause": "If something on my side changes — say I switch plans or miss a payment — what happens to this agreement? Does it auto-cancel, prorate, or stay?",
+    "range_pin": "You said 30 to 45 days — if it goes the full 45, when's the latest it should land? I'll set my reminder around that date.",
+    "explicit_recording_reference": "Thanks for being precise on this — it saves both of us follow-up calls when the numbers are stated on the line.",
+    "graceful_close_success": "Got it: [amount] starting [date], lasting [duration], conditions [list], rollback rules [rules]. Thanks for being precise.",
+    "graceful_close_failure": "I'm not getting clean answers on the specifics — can we get a supervisor or a written quote before I close this out? I don't want to walk away on vague numbers."
+  },
+  "tactics": [
+    {
+      "name": "Extract the amount in the rep's voice",
+      "when": "An amount has been agreed to.",
+      "script": "Use the `amount_lock` phrase. Make the rep state the figure. If they say 'I just told you it's 47', respond: 'I want to be sure I caught it right — could you say it once more with the cents?'",
+      "priority": 1
+    },
+    {
+      "name": "Pin every date to a calendar day",
+      "when": "Any date or timeframe has been mentioned.",
+      "script": "Use the `date_lock` phrase. Convert relative phrases ('next billing cycle', 'starting soon') into 'June 1' or 'on or before June 15'. Calendar days are enforceable; relative phrases are not.",
+      "priority": 2
+    },
+    {
+      "name": "Bound the duration explicitly",
+      "when": "A promotional or temporary commitment is in play.",
+      "script": "Use the `duration_lock` phrase. Promotional rates that have no stated end are the #1 source of bill surprise 12 months later — `negotiate-bill-reduction` has the same lesson.",
+      "priority": 3
+    },
+    {
+      "name": "Enumerate conditions",
+      "when": "Any 'as long as you…' or 'provided that…' has been mentioned, even in passing.",
+      "script": "Use the `condition_lock` phrase. Conditions stated quickly mid-call are how companies later claim the agreement was voided. Make the rep list them.",
+      "priority": 4
+    },
+    {
+      "name": "Pre-litigate the rollback rules",
+      "when": "After conditions are listed.",
+      "script": "Use the `rollback_clause` phrase. Find out IN ADVANCE what voids the deal. This is the question reps least expect — and the answer often reveals fine print they would have otherwise glossed.",
+      "priority": 5
+    },
+    {
+      "name": "Pin ranges to their upper bound",
+      "when": "Rep gives a range ('5 to 10 business days', '30-45 days').",
+      "script": "Use the `range_pin` phrase. The agent's reminders/follow-ups should be calibrated to the worst case; ranges are misleading when used as expected values.",
+      "priority": 6
+    },
+    {
+      "name": "STOP and re-evaluate on manufactured urgency",
+      "when": "Rep claims the offer expires 'when we hang up' / 'in five minutes' / 'before midnight' / 'while we're on the line' and pressures the agent to commit before specifics are locked.",
+      "script": "Pause out loud: 'I hear the urgency, but I'm not authorised to commit on terms I haven't verified. If the offer genuinely needs a written quote and a 24-hour review, that's the path — otherwise, the offer wasn't real.' If the rep insists, route to `ask_operator` BEFORE committing — never let the rep's clock override the operator's authority.",
+      "priority": 7,
+      "decision_point": "If the rep refuses to put the same terms in writing for review and insists on a verbal commitment NOW — assume the terms wouldn't survive scrutiny. Decline the verbal commit. The right answer is 'I'll need to call back if those terms are available outside this minute.' True one-time offers are rare; manufactured one-time offers are common."
+    }
+  ],
+  "boundaries": [
+    "Do NOT say 'this call is being recorded' if you cannot verify that's true on your side — false recording claims undermine trust if the rep checks.",
+    "Do NOT badger the rep for specifics they genuinely cannot give (e.g. 'when exactly will the system update?' on a back-office process). Switch to a written commitment instead.",
+    "Do NOT accept vague answers a second time. If the first ask returns 'soon', ask once more; if still vague, escalate.",
+    "Do NOT invent a deadline to pressure the rep ('I need to know by Friday') unless the user actually has one. Manufactured urgency is detectable and counterproductive.",
+    "Do NOT commit to terms the rep won't say on the recorded line. Whispered, off-record, 'between us' figures are non-binding.",
+    "Do NOT accept a 'this offer evaporates at hangup' frame as a reason to skip readback or written confirmation. If it really does evaporate, the bait was the offer — let it go."
+  ],
+  "success_signals": [
+    "Rep states the full amount with cents, the full date, and the duration in one sentence.",
+    "Rep volunteers conditions you hadn't asked about — they're being thorough.",
+    "Rep gives a concrete rollback rule ('if you miss a payment, the promo stops the next cycle').",
+    "Rep references their own system: 'I've keyed it in as $47.32 effective 06/01/2026'."
+  ],
+  "failure_signals": [
+    "Rep keeps redirecting to 'check the next bill' instead of stating the amount.",
+    "Rep refuses to commit to a specific date.",
+    "Rep mentions conditions only when prompted, and the list keeps growing.",
+    "Rep says 'I can't make that promise on the recording'  — major red flag.",
+    "Rep demands a verbal yes NOW citing an offer that 'expires at hangup' — manufactured-urgency tell.",
+    "Rep refuses to put the same terms in a written quote / portal note before committing — durable concessions survive writing; bait does not."
+  ],
+  "exit_strategy": {
+    "on_success": "Log the locked terms verbatim with the call timestamp so the recording can be retrieved if needed. Pass to `request-written-confirmation` to triangulate.",
+    "on_failure": "Do not close. Escalate to a supervisor or request a written quote / email / portal note before ending the call. A call without locked specifics is functionally a call without an agreement.",
+    "follow_ups": [
+      "Calendar a check-in for the rollback / expiry date.",
+      "If the written confirmation contradicts the locked verbal terms, the recording is the authoritative version — reference its timestamp in the dispute."
+    ]
+  },
+  "required_user_info": [
+    "Specific numbers and dates the user expects (so the agent can compare against what the rep states)",
+    "Knowledge of recording status on both sides of the call",
+    "User authorisation for any conditions that may be agreed to (autopay, paperless, term commitments)"
+  ],
+  "contributed_by": "closing-commitment agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,109 @@
+{
+  "id": "report-fbi-tip",
+  "name": "Report a Tip to the FBI",
+  "version": "1.0.0",
+  "category": "emergency-services",
+  "tags": [
+    "fbi",
+    "federal",
+    "tip",
+    "report",
+    "1-800-CALL-FBI",
+    "tips.fbi.gov",
+    "emergency_services"
+  ],
+  "description": "Place a call to the FBI tip line (1-800-CALL-FBI / 1-800-225-5324) to report a federal crime, suspicious activity, or information about an active FBI matter. Most non-imminent tips are better submitted via tips.fbi.gov; the phone line is for tips where time matters or the operator can't use the web form.",
+  "disclaimer": "(1) The FBI handles FEDERAL crimes — not most local matters. If unsure whether something is federal, call the local police non-emergency line first; they will redirect. (2) Imminent threats to life go to 911, NOT the FBI tip line. (3) The FBI does NOT take in-progress hostage / terror calls on the tip line — 911 first. (4) Identify yourself as an AI on the first sentence. (5) Knowingly false statements to a federal agent are a felony under 18 U.S.C. § 1001.",
+  "context": {
+    "when_to_use": "Operator wants to report information about a federal crime to the FBI and prefers (or needs) the phone line over the web form (tips.fbi.gov). Time-sensitive context, language barrier with the form, or the operator is reporting on someone they want to keep their info contained around. Examples of FBI-jurisdiction matters: kidnapping crossing state lines, organised cybercrime, financial fraud involving interstate wire, federal corruption, foreign-influence concerns, threats against federal officials, civil-rights violations, hate crimes, public-corruption cases.",
+    "preconditions": [
+      "Explicit operator authorisation for THIS specific FBI tip call.",
+      "A clear, short summary of the tip — who / what / where / when / why this is federal jurisdiction.",
+      "Operator's contact info to leave with the tip line (anonymous tips are allowed but reduce follow-up).",
+      "Confirmation this is NOT an in-progress emergency (those route to 911).",
+      "An understanding that the FBI may take days / weeks to follow up — not a rapid-response channel."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Identify as an AI on the first sentence and explain you are relaying a tip on behalf of the operator.",
+    "Lead with the federal nexus — why this is the FBI's jurisdiction and not local police's.",
+    "Stick to what the operator can attest to. Don't speculate; flag speculation as speculation if you must include it.",
+    "Give the agent on the line time to take notes. Speak at the pace of dictation.",
+    "Get the tip reference number / agent name before disconnecting.",
+    "If the agent on the line says this isn't an FBI matter, ask for the right referral and end politely."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm an AI assistant calling 1-800-CALL-FBI on behalf of <operator name>. We have a tip about <one-line: 'a suspected wire fraud scheme', 'a possible threat against a federal building', 'a missing person we believe was taken across state lines', etc>. Is now a good time to walk through it?",
+    "federal_nexus_statement": "We're bringing this to the FBI specifically because <one-line federal-nexus reason: 'the suspect operates across multiple states', 'the victim is a federal employee', 'the fraud crossed state lines via wire transfer'>. Happy to walk through what we know.",
+    "factual_walkthrough_prompt": "I'm going to walk through what my operator told me. Stop me whenever you need clarification or want to slow down. Some of this is observed fact and some is the operator's inference — I'll flag which is which.",
+    "flag_speculation": "(Speculation, not fact:) <…>",
+    "ask_for_reference": "Could I get a tip reference number, your name, and the best way for my operator to follow up if they remember anything else?",
+    "ask_about_followup_window": "Roughly when might my operator hear back, if at all? They'd like to know what to expect.",
+    "graceful_close_referral": "Thank you. If this is the wrong office, could you direct me to where my operator should redirect this — the local field office, USPIS, ICE, Secret Service, etc?"
+  },
+  "tactics": [
+    {
+      "name": "State the federal nexus early",
+      "when": "Within the first 60 seconds.",
+      "script": "Use `federal_nexus_statement`. Without it, the agent will spend their time figuring out whether it's their case.",
+      "priority": 1
+    },
+    {
+      "name": "Walk through facts at dictation pace",
+      "when": "After establishing the federal nexus.",
+      "script": "Use `factual_walkthrough_prompt`. Slow down; the agent is taking notes.",
+      "priority": 2
+    },
+    {
+      "name": "Flag observation vs. speculation",
+      "when": "Throughout the walkthrough.",
+      "script": "Use `flag_speculation` whenever the operator's information is inference rather than direct knowledge. Federal investigators value clean attribution.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for a tip reference + agent name",
+      "when": "Before closing.",
+      "script": "Use `ask_for_reference`. Without it, the operator has nothing to hand to a lawyer or follow up with."
+    },
+    {
+      "name": "Accept a referral gracefully",
+      "when": "Agent indicates this isn't FBI jurisdiction.",
+      "script": "Use `graceful_close_referral`. Common redirects: USPIS (mail fraud), Secret Service (counterfeit / financial-instrument fraud), ICE (immigration), HSI, state AG, local PD."
+    }
+  ],
+  "boundaries": [
+    "NEVER call the FBI for an in-progress emergency. That's 911.",
+    "NEVER call to inquire about an ongoing investigation involving the operator (lawyer matter, not a tip line).",
+    "NEVER fabricate facts. 18 U.S.C. § 1001 makes lying to federal agents a felony — and the agent on the line will have notes.",
+    "NEVER name third parties as suspects unless the operator has direct knowledge.",
+    "NEVER use this as a retaliation channel against someone the operator dislikes. The audit log will be subpoenable."
+  ],
+  "success_signals": [
+    "Agent takes the tip and gives a reference number.",
+    "Agent commits to a follow-up window or says 'we'll be in touch if there's a need'.",
+    "Agent transfers the call to the correct field office if jurisdiction is local."
+  ],
+  "failure_signals": [
+    "Agent says 'this is a local matter' and gives a referral — accept it, end the call, and consider the local route.",
+    "Agent says 'submit at tips.fbi.gov' and there's no time-sensitive reason to stay on the phone — accept it, end the call, draft the web tip.",
+    "Operator's information is too vague to leave a useful tip — pause, gather more from the operator via ask_operator before re-calling."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference number, agent's name, and follow-up expectations. Email operator a summary including the verbatim federal-nexus statement.",
+    "on_failure": "If redirected, email the operator the agent's recommended channel (local FBI office, USPIS, etc) and offer to place the next call.",
+    "follow_ups": [
+      "Email operator: tip reference, agent name, follow-up expectation, original walkthrough summary.",
+      "If the agent committed to a follow-up window, calendar a check-in past that window so the operator can chase if needed."
+    ]
+  },
+  "required_user_info": [
+    "Operator's explicit authorisation for this FBI tip call",
+    "One-line summary of the tip + federal nexus reason",
+    "Detailed facts the operator can attest to (and which are inference)",
+    "Whether to leave operator's contact info or submit anonymously",
+    "Operator's callback number (if non-anonymous)",
+    "Confirmation that this is NOT an in-progress emergency"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

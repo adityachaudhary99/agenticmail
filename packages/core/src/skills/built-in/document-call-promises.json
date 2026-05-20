@@ -1,0 +1,145 @@
+{
+  "id": "document-call-promises",
+  "name": "Document the Call So the Next Rep Can't Deny What Was Promised",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "documentation",
+    "phone-call",
+    "paper-trail",
+    "promises",
+    "evidence",
+    "follow-up",
+    "customer-support"
+  ],
+  "description": "Build an evidence trail during and immediately after a support call — names, IDs, case numbers, exact wording of commitments, and contemporaneous notes — so a future rep can't say 'no record of that' or 'we never agreed to that'. This skill is foundational; every other escalator skill is multiplied by it.",
+  "disclaimer": "Recording laws vary by state. In one-party-consent states (most of US), you can record without disclosing. In all-party-consent states (CA, FL, IL, MA, MD, NH, PA, WA, etc.), you must inform the rep — and most call-center reps will then say 'we can't be recorded' and hang up, so consider their disclosure 'this call may be recorded' as also covering your end and rely on contemporaneous notes instead. Verify your jurisdiction before recording.",
+  "context": {
+    "when_to_use": "Every customer-service call, but especially: any call where a commitment is made (credit, refund, service restore, callback), any call about an ongoing issue you'll need to reference later, any call after a previous rep made promises you want to lock down.",
+    "preconditions": [
+      "User has note-taking method ready BEFORE the call: paper + pen, text editor, voice memo, or recording app where legal.",
+      "User has a consistent location to store call notes (folder, doc, notes app) — disorganized notes are nearly as bad as no notes.",
+      "User has a few minutes available immediately after the call to consolidate notes while memory is fresh."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Memory degrades fast — names you heard 20 minutes ago feel solid until you go to write them down and realize you have 'Susan or Sarah, S-something'. Capture in REAL TIME, not after.",
+    "What to capture, every call: date + time started, rep name + employee ID, the queue/department, case or ticket number, the exact problem stated, the EXACT WORDING of any commitment ('we will refund $X by [date]' is dramatically different from 'we'll try to refund some of that soon'), and the time the call ended.",
+    "Reps rarely lie outright, but they paraphrase generously. 'We'll see what we can do' becomes 'I was told I'd get a refund' in customer memory. Capturing exact wording protects you from that drift AND protects you from the next rep claiming 'no one would have said that'.",
+    "Decision point — when a rep makes a verbal commitment, STOP and ask them to repeat it. 'I want to make sure I have this right — can you say back exactly what we just agreed to?' Reps often soften the commitment on the readback ('well, we'll try to get the refund processed within 5-7 business days, though it could be longer'). Better to hear the real version now than to discover it next call.",
+    "Get commitments in writing whenever possible. 'Could you email me a summary of what we agreed to?' is a perfectly reasonable ask — and many reps can do it. A written commitment is 10x stronger than a verbal one.",
+    "Case numbers are the universal currency. They survive across reps, queues, and channels. Always ask. Always write down. Always read back. Always reference next time.",
+    "Recording is sometimes legal, sometimes not, often gray. Notes are ALWAYS legal everywhere. Default to thorough notes; recording is a bonus where allowed, not a substitute for notes anywhere."
+  ],
+  "phrases": {
+    "name_id_capture": "Could you spell your first name for me, and what's your employee ID or extension? I'm taking notes so I can credit you if this works out.",
+    "case_number_request": "Have you opened a case or ticket for this? Could you read me the number, and read back the first line of what's noted?",
+    "the_readback_request": "I want to make sure I'm capturing this correctly. Could you read back exactly what we've agreed to, including any specific amounts and dates?",
+    "ask_for_written_confirmation": "Could you email me a summary of what we just agreed to? Even a few lines is fine — I just want to have it in writing for both our records.",
+    "lock_the_commitment": "Just to confirm: [exact restatement of commitment, including amount, action, and date]. Is that accurate?",
+    "promise_to_followup_yourself": "If I don't see [committed action] by [date], may I call back and reference this case number and your name? I want to make sure the path is clear for next time.",
+    "end_of_call_summary": "Before we hang up, let me read back what I have: [name + ID], [department], [case #], [problem], [commitment], [date]. Anything I have wrong?",
+    "after_call_email_template": "Subject: Confirming our call today — case [#]\n\nHi — following up on our phone call today at [time]. To confirm what we agreed:\n\n  • Issue: [one line]\n  • Rep: [name + ID]\n  • Case: [#]\n  • Commitment: [exact words]\n  • Expected by: [date]\n\nPlease reply to confirm this is accurate. If anything is off, let me know so we can correct it. Thanks for your help today."
+  },
+  "tactics": [
+    {
+      "name": "Set up your note-taking before dialing",
+      "when": "Before the call.",
+      "script": "Open a doc or notebook. Pre-fill: date, company, phone number called, the problem in one sentence, what outcome you want. Now you have a scaffold. Don't start a call without one.",
+      "priority": 1
+    },
+    {
+      "name": "Capture name + ID in the first minute",
+      "when": "Right after the rep introduces themselves.",
+      "script": "Use `name_id_capture` if they didn't spell it. Get the ID even if they only volunteered the name. Reps occasionally refuse IDs — note the refusal, that's also data.",
+      "priority": 2,
+      "decision_point": "If the rep refuses to give an employee ID after a polite ask — that's a YELLOW FLAG. Either (a) note it and proceed but be ready to escalate, or (b) immediately ask for a supervisor; refusing identification on a recorded call is unusual."
+    },
+    {
+      "name": "Get a case number opened — explicitly",
+      "when": "Within the first 2-3 minutes once you've stated the issue.",
+      "script": "Use `case_number_request`. If they say 'we don't open a case for this kind of inquiry', push back: 'I'd still appreciate one — even just for my records and follow-up.' Most CRMs let reps open a case in 30 seconds; they just don't volunteer it.",
+      "priority": 3
+    },
+    {
+      "name": "Catch commitments in flight",
+      "when": "Rep says anything that sounds like a promise.",
+      "script": "STOP and use `the_readback_request`. Even 'I'll get that looked into' deserves a clarifying readback: 'When you say looked into — what specifically will happen, by when?' Pin it down while you're both on the line.",
+      "priority": 4,
+      "decision_point": "If the rep softens the commitment on readback (a real refund becomes 'we'll review it'), you now know the real commitment. Don't be upset — be glad you caught the gap before you hung up. Either accept the real version or push for a firmer one."
+    },
+    {
+      "name": "Lock the commitment by repeating it back",
+      "when": "Commitment finalized.",
+      "script": "Use `lock_the_commitment`. Your version, their confirmation. Now it's locked in the recording — if the next rep claims 'no one would have agreed to that', you have the readback to reference.",
+      "priority": 5
+    },
+    {
+      "name": "Ask for written confirmation",
+      "when": "Any non-trivial commitment.",
+      "script": "Use `ask_for_written_confirmation`. Some reps will do it; some can't. Don't fight if they can't — but always ask. A 'yes' is worth more than 30 minutes of negotiation.",
+      "priority": 6
+    },
+    {
+      "name": "End-of-call summary",
+      "when": "Before ending the call.",
+      "script": "Use `end_of_call_summary`. This is the most important sixty seconds of the call. Read back everything you have. Lets you catch errors before you hang up — and signals to the rep that you're documenting.",
+      "priority": 7
+    },
+    {
+      "name": "Send the confirmation email within 1 hour",
+      "when": "Immediately after the call.",
+      "script": "Use `after_call_email_template`. Send to the company's published support address, your own personal address (creates a sent-record), and if you have it, the rep's queue-specific address. Even if the company doesn't reply to confirm, the SEND is your contemporaneous record.",
+      "priority": 8,
+      "decision_point": "If the company replies to the confirmation email contradicting your version of events — you have a problem to flag NOW, not on the day the commitment is supposed to execute. Reply within 24h asking them to reconcile."
+    },
+    {
+      "name": "Store and index the notes",
+      "when": "Same day as the call.",
+      "script": "Move your notes to a single, searchable location with a consistent naming pattern: [Date]_[Company]_[Case#]_[OneLineProblem]. Six months from now, when you need to reference 'that call with Verizon last March', you'll find it in 10 seconds.",
+      "priority": 9
+    }
+  ],
+  "boundaries": [
+    "Do NOT record calls in jurisdictions that require all-party consent without informing the rep — it's illegal AND the recording is inadmissible.",
+    "Do NOT fabricate quotes when reconstructing notes after the fact. Note what you remember in your own words and clearly label any verbatim quotes.",
+    "Do NOT use the notes to publicly shame individual reps. Use them for escalation, regulator complaints, and your own records.",
+    "Do NOT lie about having a recording when you don't ('we have you on tape saying X'). Reps and supervisors will request the recording; you'll be caught.",
+    "Do NOT share confirmation emails or call notes publicly when they contain other parties' employee IDs or personal info.",
+    "Do NOT skip note-taking on 'easy' calls — half the time the easy call turns out to be relevant six weeks later when something goes wrong. Notes are cheap insurance."
+  ],
+  "success_signals": [
+    "Rep voluntarily gives name + ID + case number without being asked.",
+    "Rep agrees to a written summary email.",
+    "Rep's readback of the commitment matches your understanding.",
+    "Confirmation email gets a 'yes, confirmed' reply within 24h.",
+    "Next call: you reference the case number and the new rep pulls up complete notes matching your records."
+  ],
+  "failure_signals": [
+    "Rep refuses to give employee ID.",
+    "Rep refuses to read back the commitment.",
+    "Rep refuses to send a written summary AND claims the company 'doesn't do that' (often false — they do, the rep just doesn't want to).",
+    "Confirmation email is met with silence or auto-reply only.",
+    "Next call: case number doesn't exist in the system, OR exists but notes contradict your version of the commitment."
+  ],
+  "exit_strategy": {
+    "on_success": "File the notes + the confirmation email + any reply in your call-log folder. Set a calendar alert for the commitment date. On that date, verify execution. If executed — close. If not — call back, citing your full documentation.",
+    "on_failure": "If the rep refused to identify themselves OR refused to read back a commitment, treat the call as if NO commitment was made — and either re-engage at a higher tier (`request-supervisor-gracefully`, `bypass-i-am-the-supervisor`) or pivot channels (`multi-channel-escalation`).",
+    "follow_ups": [
+      "On the commitment date: check whether it executed. If yes — close out. If no — call back same day with full documentation.",
+      "If a commitment fails to execute, the documentation becomes the spine of a regulator complaint or executive escalation. Make it count.",
+      "Periodically (quarterly) prune your call-log of resolved issues to keep active files manageable.",
+      "If a company pattern emerges (multiple commitments not honored), the documentation supports a BBB / state-AG complaint of pattern-of-unfulfilled-promises — much stronger than any single case."
+    ]
+  },
+  "required_user_info": [
+    "Note-taking medium ready (doc, paper, notes app)",
+    "Knowledge of recording laws in user's jurisdiction",
+    "User's email address for confirmation",
+    "Account identifier",
+    "A consistent file location / naming convention for storing call records"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:10:28Z"
+}

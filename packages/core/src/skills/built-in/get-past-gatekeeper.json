@@ -1,0 +1,115 @@
+{
+  "id": "get-past-gatekeeper",
+  "name": "Get Past a Gatekeeper to the Decision-Maker",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "cold-call",
+    "gatekeeper",
+    "executive-assistant",
+    "phone-call",
+    "routing",
+    "outreach-sales"
+  ],
+  "description": "When the agent calls a target organisation on behalf of the operator and reaches a receptionist, executive assistant, or main-line gatekeeper, navigate to the right decision-maker with honesty and respect — not tricks.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "Operator has asked the agent to reach a specific person (named or by role) at a company, and the call is intercepted by a gatekeeper. The operator has a legitimate, named reason for the call (introduction, follow-up, referral, prior touch).",
+    "preconditions": [
+      "Operator has authorised this specific outreach (not a mass campaign).",
+      "Agent has the target's name or, at minimum, a precise role title.",
+      "Agent has a one-sentence honest reason for the call ready.",
+      "Agent has the referring party's name on hand if this is a referral."
+    ],
+    "estimated_call_duration_minutes": 4
+  },
+  "principles": [
+    "The gatekeeper is a colleague, not an obstacle. Treating them as an obstacle is the fastest way to be permanently blocked.",
+    "Be specific about who you want and why. Vagueness reads as sales; specificity reads as legitimate business.",
+    "Never lie about who you are, who you represent, or what the call is about. Gatekeepers verify and have long memories.",
+    "Match the formality of the receiving organisation. A law firm gatekeeper expects more formality than a startup's front desk.",
+    "If the gatekeeper says 'they're not available', accept it on the first ask. Pressing turns a soft no into a hard no."
+  ],
+  "phrases": {
+    "opener_named": "Hi, this is [agent name] calling from [operator name]'s office. Could you put me through to [target full name], please?",
+    "opener_referral": "Hi, this is [agent name] on behalf of [operator name]. [Referrer name] suggested I reach out to [target name] about [topic] — is [target] the right person, and could I be put through?",
+    "opener_role": "Hi, this is [agent name] calling for [operator name]. Could you tell me who handles [specific function] there, and whether they're available to speak briefly?",
+    "honest_reason": "It's about [one-sentence honest topic]. I'm not selling anything on this call — [operator] just wants to introduce themselves / follow up on [prior touch].",
+    "voicemail_redirect": "Thank you. Could you send me to their voicemail, or is there a better time to try them?",
+    "polite_decline_accept": "No problem at all — thank you for checking. Could I leave a brief message, or would email be better for a first touch?",
+    "name_request": "I want to make sure I send the right thing in writing — could I get your name? Thanks, [name], appreciate it."
+  },
+  "tactics": [
+    {
+      "name": "Lead with the target's name if you have it",
+      "when": "You know exactly who you want to speak to.",
+      "script": "Use the `opener_named` phrase. Saying the target's first and last name signals you actually know them, not that you're dialing a list.",
+      "priority": 1
+    },
+    {
+      "name": "Cite the referrer immediately if there is one",
+      "when": "This call exists because someone introduced the operator.",
+      "script": "Use `opener_referral`. The referrer's name does most of the work — drop it in the first sentence, not deep in the call.",
+      "priority": 2
+    },
+    {
+      "name": "If you only have a role, ask who owns it",
+      "when": "Operator only knows 'the head of partnerships' or similar.",
+      "script": "Use `opener_role`. Phrase it as a discovery question, not a demand. Gatekeepers respond well to 'help me figure out who I should be talking to'.",
+      "priority": 3
+    },
+    {
+      "name": "Offer the honest reason BEFORE being asked",
+      "when": "Gatekeeper pauses or asks 'what is this regarding?'.",
+      "script": "Use the `honest_reason` phrase pre-emptively on calls into formal organisations. It disarms the screening question.",
+      "priority": 4
+    },
+    {
+      "name": "Ask the gatekeeper's name and remember it",
+      "when": "After the gatekeeper has spent more than ~20 seconds helping.",
+      "script": "Use `name_request`. Logging the gatekeeper's name and using it on future calls compounds enormously — within 2-3 calls they recognise you as 'one of the good ones'.",
+      "priority": 5
+    },
+    {
+      "name": "Accept the first soft no",
+      "when": "Gatekeeper says target is in a meeting / unavailable / travelling.",
+      "script": "Use `polite_decline_accept`. Ask for best time or for voicemail. Do NOT ask twice in the same call to override the answer."
+    }
+  ],
+  "boundaries": [
+    "Do NOT pretend to be a personal friend, family member, or colleague of the target.",
+    "Do NOT claim the target 'is expecting your call' unless it is literally true.",
+    "Do NOT use the 'I'll just leave my number, they have my email' trick to extract direct lines.",
+    "Do NOT push past a gatekeeper who has clearly said no. Try a different channel (email, LinkedIn) next instead.",
+    "Do NOT call back the same day after being told the target is unavailable — that escalates to harassment fast."
+  ],
+  "success_signals": [
+    "Gatekeeper transfers the call to the target.",
+    "Gatekeeper provides a direct dial, email, or 'best time to call'.",
+    "Gatekeeper offers to take a detailed message and confirms it will be passed on.",
+    "Gatekeeper confirms the right role/owner for the topic."
+  ],
+  "failure_signals": [
+    "Gatekeeper firmly says 'we don't take cold calls — send an email'.",
+    "Gatekeeper repeats target is unavailable on a second probe.",
+    "Gatekeeper asks the agent to remove them from a list (treat as a hard stop).",
+    "Gatekeeper recognises this is the third call this week and is now cold."
+  ],
+  "exit_strategy": {
+    "on_success": "Note the gatekeeper's name and any callback window they suggested. If transferred, lean into the voicemail or live-call skill depending on what answers.",
+    "on_failure": "Thank the gatekeeper warmly by name, ask for the best written channel (general inbox vs. role-specific email), and end the call. Log a 'do not retry by phone for N days' note for the operator.",
+    "follow_ups": [
+      "Email the operator: who answered, gatekeeper's name, what was learned (target's correct role / spelling / best channel).",
+      "If a callback window was given, schedule the next attempt inside that window — not earlier."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name and the name of the company/identity being represented",
+    "Target's name OR precise role at the target organisation",
+    "One honest sentence about why the call is happening",
+    "Referrer's name if applicable",
+    "Whether voicemail is acceptable as a fallback"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

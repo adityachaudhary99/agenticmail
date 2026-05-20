@@ -1,0 +1,143 @@
+{
+  "id": "reset-by-callback",
+  "name": "Reset by Hanging Up and Calling Back to a Different Rep",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adaptive-strategy",
+    "phone-call",
+    "rep-routing",
+    "bias-reset",
+    "critical-reasoning"
+  ],
+  "description": "Recognise when the current call has gone unrecoverable — bad rep luck, locked-in refusal, account flagged 'difficult', stale context — and reset cleanly by ending the call and dialing back. Different rep, different judgement, sometimes different policy interpretation. Done well, this is a legitimate tool; done badly, it's spam.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any of: (a) repeated unrecoverable refusal where you've already escalated once, (b) rep is clearly improvising and won't stabilise, (c) rep has flagged the call hostile / 'note on account', (d) call is going past 30+ minutes with no movement, (e) you suspect you got the wrong department but the rep refuses to transfer.",
+    "preconditions": [
+      "Agent has tried at least one escalation and one reframing within the current call.",
+      "User has authorised additional call attempts (or per-call discretion).",
+      "Agent can end the current call politely without burning future leverage."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Different reps have different latitude, different moods, different training cohorts, and different scripts. The dispersion is real — not folklore.",
+    "Calling back is NOT a punishment to the rep. It's resource-rotation. Hang up cleanly without burning the relationship; you might get the same rep back.",
+    "Account notes follow the user, not the call. If you behaved well, the next rep often inherits a clean slate. If you escalated to hostility, the next rep starts with a 'handle with care' tag.",
+    "Time-of-day matters. Retention teams are often best staffed midday weekdays. Late-night reps often have less authority. Some companies route by region in ways that shift judgement.",
+    "Do NOT call back more than 2-3 times on the same goal in the same day. After that, you're harassing — and the system is now optimised against you.",
+    "Between calls, change something: route, time, ask phrasing, IVR path. Repeating identical inputs reproduces identical outputs."
+  ],
+  "phrases": {
+    "clean_close_current_call": "Thanks for the help on this — I'm going to think about my options and may call back. Appreciate your time.",
+    "fresh_call_opener": "Hi, I have a question about [topic]. Could you help, or is there a team better suited?",
+    "new_route_request": "Could you route me to [retention / loyalty / billing / supervisor] directly? I think that's the best fit for what I'm trying to do.",
+    "ivr_correction": "[Internal] On callback, choose [different IVR option] instead of [the option that landed you in the wrong queue].",
+    "honest_re_disclosure": "I called earlier today and we couldn't quite get there. I want to take another swing with a fresh look. Here's what I'm trying to accomplish: [restated ask]."
+  },
+  "tactics": [
+    {
+      "name": "Recognise the unrecoverable call",
+      "when": "Any of the trigger conditions above.",
+      "script": "Internal check: have you escalated once? reframed once? checked for invented policy? If yes and still no movement, the call is unrecoverable from this rep. Continuing wastes leverage.",
+      "priority": 1
+    },
+    {
+      "name": "Close the current call cleanly",
+      "when": "Decision made to reset.",
+      "script": "Use `clean_close_current_call`. Tone neutral, even warm. No grievance, no threat. Future-you needs the rep's good notes.",
+      "priority": 2
+    },
+    {
+      "name": "Change at least one variable before redial",
+      "when": "Between calls.",
+      "script": "Pick at least one: IVR path, time of day, framing of the ask, whether you ask for retention immediately, language used. Don't change everything — change deliberately.",
+      "priority": 3
+    },
+    {
+      "name": "Open the new call without leading with the old one",
+      "when": "Reaching a new rep.",
+      "script": "Use `fresh_call_opener`. Treat the new rep as new. Do NOT open with 'the last rep said no' — that primes them to confirm the prior refusal.",
+      "priority": 4
+    },
+    {
+      "name": "Mention prior call only if useful",
+      "when": "If the prior call resulted in a partial offer, a promise, or a documented note.",
+      "script": "Use `honest_re_disclosure`. Cite confirmation numbers, not grievances. Past-rep behaviour is data; weaponising it makes the new rep defensive."
+    },
+    {
+      "name": "Route deliberately by IVR",
+      "when": "Pre-dial.",
+      "script": "Choose the IVR path that lands you in the team with authority for your ask. Retention is rarely the front menu — often it's 'thinking of cancelling' or 'change plan'."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "First rep refused, second rep refused identically.",
+      "consider": [
+        "The refusal is real, written policy — three reps will give the same answer. Stop calling.",
+        "Both reps were in the same training cohort and quoted the same script — try a different time of day to hit a different cohort.",
+        "Account is flagged in a way every rep can see. Ask the next rep 'is there a note on my account?' before escalating.",
+        "Your framing is consistently triggering the same refusal branch — try a different reframing.",
+        "Wrong department both times — try a deliberate retention/loyalty/specialist route."
+      ],
+      "next_action": "If the refusal language is identical between reps, treat it as real policy. If it varies, keep trying. One more rotation, not infinite."
+    },
+    {
+      "observation": "Second rep is suddenly much more accommodating than the first.",
+      "consider": [
+        "Genuine dispersion — real and common.",
+        "Second rep has higher authority (retention vs. tier-1).",
+        "Second rep is new and unsure of the limit — accept gracefully but get it in writing IMMEDIATELY.",
+        "Note on the account asks for retention to make a save offer — first rep was the gate, second was the close.",
+        "Time of day or volume changed the rep's calculus."
+      ],
+      "next_action": "Accept the better offer with full lifecycle confirmation. Get it in writing before hanging up — re-call risk is asymmetric."
+    },
+    {
+      "observation": "Third call gets the same refusal as one and two.",
+      "consider": [
+        "Real policy. Stop.",
+        "User has hit a system-level flag that won't move via phone — try written escalation or executive customer service.",
+        "Channel-specific limit — try chat, email, or in-person branch.",
+        "Regulatory complaint may be the path forward."
+      ],
+      "next_action": "Disengage from phone. Report to user with full call history. Suggest written escalation or alternative channel."
+    }
+  ],
+  "boundaries": [
+    "Do NOT call more than 2-3 times in a day on the same goal — diminishing returns plus harassment risk.",
+    "Do NOT lie to the new rep about the prior call. Selective omission is fine; fabrication is not.",
+    "Do NOT impersonate a different account holder when calling back.",
+    "Do NOT use callback as a punishment ('I'll call until someone gives me what I want'). Use it as a sampling strategy."
+  ],
+  "success_signals": [
+    "New rep gives a meaningfully different answer.",
+    "New rep transfers to the right team without resistance.",
+    "New rep has no negative note on your account.",
+    "Resolution achieved within the second or third call."
+  ],
+  "failure_signals": [
+    "Multiple reps converge on the same refusal in the same language.",
+    "Each callback inherits more 'handle with care' tone — calls are getting harder, not easier.",
+    "User patience is exhausted before a path appears.",
+    "Account starts hitting rate limits or security holds."
+  ],
+  "exit_strategy": {
+    "on_success": "Document everything: which call attempt, which rep, which framing succeeded. Adds to the playbook for next time.",
+    "on_failure": "Stop. Switch channels (written complaint, executive customer service, regulator if applicable). Report to user with the full call log.",
+    "follow_ups": [
+      "Log call times, rep names, reference numbers, exact refusal wording.",
+      "Note what variable changed between attempts and whether the change mattered."
+    ]
+  },
+  "required_user_info": [
+    "Authority to make multiple call attempts.",
+    "Time budget for total resolution effort.",
+    "Channels other than phone the user is willing to try."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

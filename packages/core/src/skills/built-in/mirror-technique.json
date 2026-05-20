@@ -1,0 +1,145 @@
+{
+  "id": "mirror-technique",
+  "name": "The Mirror: Repeat to Unlock",
+  "version": "1.0.0",
+  "category": "negotiation",
+  "tags": ["voss", "mirroring", "isopraxism", "stalling", "phone-call", "real-time"],
+  "description": "Repeat the last 1-3 words (or a critical phrase) of what the counterparty just said, with upward inflection. Triggers them to elaborate, exposes constraints, and buys you thinking time without disrupting flow.",
+  "disclaimer": "Mirroring overused sounds parrot-like and condescending. 3-4 mirrors per 30-minute call is normal; 10+ is a tic. Vary with labels and calibrated questions.",
+  "context": {
+    "when_to_use": "When you want the counterparty to keep talking — to surface constraints, expand on policy, justify a number, or reveal a hidden lever. Especially useful in the first 10 minutes when you're building a map of what's negotiable.",
+    "preconditions": [
+      "Voice channel (mirrors via email work but are much weaker — they read as snark).",
+      "Counterparty has just said something containing a number, policy, jargon term, or hesitation marker.",
+      "You can deliver the mirror with curious upward inflection — same words but as a question."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "A mirror is the last 1 to 3 words of what they said, repeated as a question. Not paraphrased. Verbatim. The verbatim repetition is what triggers the elaboration instinct.",
+    "Pair every mirror with silence (4-6 seconds). The mirror is the question; the silence is the rest of the question.",
+    "Pick the words that carry the constraint. If they say 'we can't go below $200 for new accounts', mirror 'new accounts?' — that's where the flex lives.",
+    "Mirroring buys you time. While they elaborate, you're free to think about what to ask next or to consult your notes.",
+    "Mirrors are non-confrontational. You're not arguing; you're inviting more detail. The counterparty rarely notices the move.",
+    "When in doubt between a label and a mirror: use a label for emotion, a mirror for information."
+  ],
+  "phrases": {
+    "policy_mirror": "[Rep: 'It's a 30-day return policy.'] → 'A 30-day return policy?'",
+    "number_mirror": "[Rep: 'The list price is $4,200.'] → '$4,200?'",
+    "jargon_mirror": "[Rep: 'That account is on a legacy tier.'] → 'A legacy tier?'",
+    "qualifier_mirror": "[Rep: 'We don't usually do that mid-cycle.'] → 'Usually?'",
+    "hesitation_mirror": "[Rep: 'I don't think I can…'] → 'You don't think you can?'",
+    "constraint_mirror": "[Rep: 'For new accounts only.'] → 'New accounts only?'",
+    "mirror_followup_silence": "[Just stay quiet for 4-6 seconds — do not soften the mirror.]"
+  },
+  "tactics": [
+    {
+      "name": "Mirror the constraint word",
+      "when": "Rep states a rule, policy, or limit with a qualifying word (only, usually, typically, currently, for now).",
+      "script": "Repeat the qualifying word back as a question. 'Usually?' / 'For now?' / 'Currently?' — qualifiers signal the rule has exceptions; the mirror invites the exception out.",
+      "priority": 1
+    },
+    {
+      "name": "Mirror the jargon",
+      "when": "Rep uses internal terminology ('legacy account', 'grandfathered rate', 'override code', 'CC promo').",
+      "script": "Mirror the jargon as a question. The rep will explain — and the explanation will tell you about adjacent tiers and override paths you didn't know existed.",
+      "priority": 2
+    },
+    {
+      "name": "Mirror the number",
+      "when": "Rep delivers a price, fee, or limit number.",
+      "script": "Mirror the number with upward inflection. Forces the rep to either justify it or move it.",
+      "priority": 3
+    },
+    {
+      "name": "Mirror the hesitation",
+      "when": "Rep uses softening verbs: 'I think', 'I believe', 'I might be able to', 'probably'.",
+      "script": "Mirror the hedge. 'You think?' / 'Might be able to?' — converts a soft maybe into either a firm yes or a firm no, which is more actionable than soft maybe.",
+      "priority": 4
+    },
+    {
+      "name": "Mirror to stall",
+      "when": "You need 5-10 seconds to think and don't want a verbal 'um' or 'let me think'.",
+      "script": "Mirror the last few words of what the rep said. The rep will spend 20-30 seconds elaborating, giving you cover.",
+      "priority": 5
+    }
+  ],
+  "decision_tree": {
+    "description": "Mirrors must be deployed within ~2 seconds of the counterparty finishing their sentence — any longer and the moment is gone. Listen for the trigger word; when you hear it, mirror immediately.",
+    "branches": [
+      {
+        "if_you_hear": "A qualifying word: 'usually', 'typically', 'for now', 'currently', 'normally', 'in most cases'.",
+        "interpretation": "There IS an exception. The qualifier is the door.",
+        "say": "Mirror the qualifier alone: 'Usually?' / 'For now?'",
+        "do_not": "Do not say 'so there are exceptions?' — too direct. The mirror does the same work without confrontation."
+      },
+      {
+        "if_you_hear": "A specific number — price, fee, term length, limit.",
+        "interpretation": "Numbers spoken aloud often have flex the rep is mentally bracketing.",
+        "say": "Mirror the number with upward inflection: '$200?' / '12 months?'",
+        "do_not": "Do not add 'is that flexible?' — the mirror already asks that."
+      },
+      {
+        "if_you_hear": "Internal jargon you don't know the meaning of.",
+        "interpretation": "Hidden product/policy layer. Probably has tiers you haven't explored.",
+        "say": "Mirror the jargon: 'A legacy tier?' / 'Override code?'",
+        "do_not": "Do not pretend to know what it means. The mirror is a free education that doesn't reveal ignorance."
+      },
+      {
+        "if_you_hear": "Soft modal verbs: 'I think', 'I believe', 'might', 'probably', 'maybe'.",
+        "interpretation": "The rep is uncertain. There's space to move.",
+        "say": "Mirror the hedge: 'You think?' / 'Might be able to?'",
+        "do_not": "Do not call out the uncertainty directly ('you don't sound sure'). Mirror is friendlier."
+      },
+      {
+        "if_you_hear": "An emotionally charged statement ('that's just how it is', 'I'm being honest with you').",
+        "interpretation": "Emotional, not informational. Mirror is the WRONG tool.",
+        "say": "Use a label from `01-tactical-empathy-labeling` instead.",
+        "do_not": "Do not mirror emotion — it reads as mockery."
+      },
+      {
+        "if_you_hear": "A flat 'no' with no surrounding qualifying language.",
+        "interpretation": "Not enough material to mirror. Need a different tool.",
+        "say": "Use a calibrated question from `02-calibrated-questions`: 'What about it doesn't work for you?'",
+        "do_not": "Do not mirror 'no?' — it's combative."
+      },
+      {
+        "if_you_hear": "A long rambling explanation.",
+        "interpretation": "Rep is overexplaining; they're not sure of their position OR they're stalling.",
+        "say": "Mirror the SINGLE most consequential phrase from the ramble: the one with the constraint.",
+        "do_not": "Do not mirror the whole sentence. Pick 1-3 words."
+      },
+      {
+        "if_you_hear": "Silence after your mirror.",
+        "interpretation": "Mirror is working — they're constructing the elaboration.",
+        "say": "Nothing. Wait 6-8 seconds.",
+        "do_not": "Do not rescue. The mirror's power comes from forcing them to fill the air."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT mirror more than 4 times in a single 30-minute call — diminishing returns and reads as parrot.",
+    "Do NOT mirror emotional outbursts — label them instead.",
+    "Do NOT mirror sarcastically — tone must be genuinely curious.",
+    "Do NOT mirror your own previous mirror (loops happen — break with a label or calibrated question)."
+  ],
+  "success_signals": [
+    "Rep elaborates on the mirrored word for 20+ seconds, revealing nuance.",
+    "Rep softens the qualifier ('well, usually — but I could see making an exception if…').",
+    "Rep explains the jargon AND volunteers an adjacent tier you didn't know existed.",
+    "Number you mirrored gets moved by the rep without you asking."
+  ],
+  "failure_signals": [
+    "Rep responds 'yes, that's what I said' — your mirror was clumsy or too obvious. Pivot to label.",
+    "Rep gets annoyed — you've mirrored too often or with wrong tone.",
+    "Mirror produces only a one-word confirmation, not elaboration — try a calibrated question instead."
+  ],
+  "exit_strategy": {
+    "on_success": "Once the mirror surfaces the exception/flex, immediately use it: 'Got it — and how do I get access to that legacy tier?'",
+    "on_failure": "If mirrors aren't producing elaboration, the rep may be too disengaged or too scripted. Switch tools: try `01-tactical-empathy-labeling` to break the script."
+  },
+  "required_user_info": [
+    "None directly — this is a real-time technique. But knowing the user's goal helps pick WHICH word to mirror."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

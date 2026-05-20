@@ -1,0 +1,149 @@
+{
+  "id": "wedding-vendor-intake",
+  "name": "Wedding / Event Vendor Intake: Deposits, Refund Clauses, Cancellation",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "wedding",
+    "event",
+    "vendor",
+    "venue",
+    "photographer",
+    "caterer",
+    "florist",
+    "dj",
+    "deposit",
+    "cancellation",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Place an intake / inquiry call with a wedding or event vendor (venue, photographer, caterer, florist, DJ, planner, officiant) to confirm availability, get a realistic price range, surface deposit / refund / force majeure / cancellation terms, and request a written contract BEFORE any money moves.",
+  "disclaimer": "Wedding-vendor deposits are the highest-volume source of contract disputes in this category. Never wire, Zelle, or charge a deposit on this call. All commitments are deferred to ask_operator after written-contract review.",
+  "context": {
+    "when_to_use": "Operator is sourcing vendors for a wedding or large event. Use one call per vendor early in the process. Date-blocking is the leverage point — popular vendors release dates on a first-deposit basis, so the operator's clarity on terms matters BEFORE the date is held.",
+    "preconditions": [
+      "Operator has the event date (preferably with one or two alternates), location, and guest count.",
+      "Operator has a clear budget range for this specific vendor category.",
+      "Operator has a 2-3 sentence description of the event style and any vendor-specific specifics (cuisine style for catering, photo style for photographer, etc.).",
+      "Operator has identified at least 2-3 vendors to compare so this isn't a one-quote engagement."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Date availability is the gating question. Without an open date, fit and price are irrelevant.",
+    "Wedding contracts skew vendor-friendly. Deposits are typically non-refundable; the operator's leverage is at the PRE-signature stage, not after.",
+    "Pricing varies seasonally and by day of week. Friday and Sunday rates are often 20-40% below Saturday. Off-season can be 30%+ lower. Mention flexibility if the operator has it.",
+    "Force majeure / postponement language is now standard post-2020 but inconsistently written. Pin down what triggers a free reschedule vs a forfeited deposit.",
+    "Vendor scope creep is the second-biggest cost driver. Travel, overtime, setup, breakdown, vendor meals, parking — surface every add-on category before signing.",
+    "References from the operator's specific venue or planner often matter more than star ratings. Ask for them."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm calling for a client planning a wedding on [date] in [location], roughly [guest count] guests. Quick first question before anything else: are you available that date, and at a high level what's your deposit and cancellation policy?",
+    "date_probe": "Are you available on [date], and what about [alt date 1] and [alt date 2] as backups? And is there a price difference by day of week?",
+    "pricing_probe": "For an event of this size and style, what's a realistic baseline package, and what's the typical all-in including the common add-ons — travel, overtime, setup, meals, gratuity?",
+    "deposit_probe": "What's the deposit, when is it due, is it refundable, and what's the payment schedule for the remainder?",
+    "cancellation_probe": "What's the cancellation policy at 90 days, 60 days, 30 days, and 7 days out? Is the deposit forfeited, are partial refunds tiered, and are there fees beyond the deposit?",
+    "postponement_probe": "If we postpone due to [force majeure event — illness, weather, venue loss], can we reschedule without forfeiting the deposit? What's the window — 6 months, 12 months, 18 months?",
+    "scope_probe": "What's explicitly in the package, and what's commonly billed separately — overtime hours, additional staff, travel, parking, vendor meals, equipment rentals, model releases, raw files, edits?",
+    "team_probe": "Who actually shows up on the day — you personally, a team you employ, or freelancers? If a backup, who, and is there an additional fee for the operator's first-choice point person?",
+    "insurance_probe": "Do you carry liability insurance, and can you provide a Certificate of Insurance naming the venue as additional insured if required?",
+    "references_probe": "Could you share two recent events at [venue / same planner / similar style] completed in the last 12-18 months — with contacts the operator can reach?",
+    "hold_probe": "If the operator wants to proceed, can you provide a 5-7 day soft hold on the date while we review the written contract?",
+    "stall_to_check": "Let me run the deposit and cancellation terms past my client before we lock anything — I'm not going to put money down on this call.",
+    "graceful_close": "Thanks — could you email the written contract over with the deposit, cancellation, postponement, and an itemised package? My client will review and get back to you within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Date first, always",
+      "when": "Opening minute.",
+      "script": "Use `date_probe`. If the primary date is gone and the operator has no flex, end politely and move on. Don't waste either side's time.",
+      "priority": 1
+    },
+    {
+      "name": "Baseline + add-ons",
+      "when": "After date.",
+      "script": "Use `pricing_probe` and `scope_probe`. The baseline package is rarely the operator's all-in number. Get the typical add-ons named so the comparison across vendors is apples-to-apples.",
+      "priority": 2
+    },
+    {
+      "name": "Deposit and cancellation explicit",
+      "when": "Money comes up.",
+      "script": "Use `deposit_probe` and `cancellation_probe`. Wedding deposits are typically 25-50%. Cancellation grids range from 100% loss to tiered partial refunds. Get the numbers.",
+      "priority": 3
+    },
+    {
+      "name": "Postponement / force majeure",
+      "when": "Right after cancellation.",
+      "script": "Use `postponement_probe`. Post-2020, vendors are more willing to write in a one-time free reschedule for force majeure within 12-18 months. Make sure it's in writing, not verbal.",
+      "priority": 4
+    },
+    {
+      "name": "Surface backups and team",
+      "when": "Mid-call.",
+      "script": "Use `team_probe`. Photographers and DJs especially: who is the contracted person, who is the realistic backup, and what fee structure applies if the backup is sent.",
+      "priority": 5
+    },
+    {
+      "name": "Venue-required insurance",
+      "when": "Vendor is venue-facing.",
+      "script": "Use `insurance_probe`. Many venues require COI with additional-insured language. Surface this early so a chosen vendor can comply."
+    },
+    {
+      "name": "Real references at comparable venues",
+      "when": "Late in call.",
+      "script": "Use `references_probe`. Two recent events at the same venue or similar style beats 500 Instagram followers."
+    },
+    {
+      "name": "Soft hold while reviewing",
+      "when": "Fit looks strong.",
+      "script": "Use `hold_probe`. A 5-7 day soft hold lets the operator review the contract without losing the date. Reasonable vendors offer this."
+    }
+  ],
+  "boundaries": [
+    "Do NOT pay a deposit, retainer, or 'date hold fee' mid-call. NO exceptions. Use ask_operator.",
+    "Do NOT provide credit card, Zelle, Venmo, CashApp, or bank-transfer details to anyone on this call. Vendor payments go through the operator and an audited channel only.",
+    "Do NOT sign a contract or e-sign a 'simplified booking form' on the call. Every wedding contract requires offline review.",
+    "Do NOT accept a verbal-only quote. Wedding pricing is famously creative — written quote or it didn't happen.",
+    "Do NOT agree to a contract without force-majeure / postponement language the operator has approved.",
+    "Do NOT release the operator's full address, parents' contact info, or co-host details before booking. Vendor side-channel mailing is a known nuisance.",
+    "Do NOT commit to vendor meal counts, parking allocation, or overtime authority without the operator's say-so."
+  ],
+  "success_signals": [
+    "Date availability confirmed with day-of-week pricing notes.",
+    "Written baseline package with add-ons enumerated as line items.",
+    "Deposit, cancellation grid, and postponement window explicit and in writing.",
+    "Force-majeure clause covers a sensible window (12-18 months reschedule).",
+    "Team / backup plan is clear, with named primary and backup.",
+    "Vendor will issue COI if the venue requires it.",
+    "Soft hold offered for 5-7 days while contract is under review."
+  ],
+  "failure_signals": [
+    "Pressure to deposit on the call to 'lock the date'.",
+    "Deposit non-refundable AND no postponement clause at all.",
+    "Verbal-only quote with promise to 'figure out the contract later'.",
+    "No backup plan for sole-proprietor vendors (photographer / officiant) who could be sick on the day.",
+    "Refusal to provide references at comparable venues.",
+    "Aggressive add-on disclosure ('that's billed separately, but everyone pays it').",
+    "Refusal to write a force-majeure clause post-2020 norms."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm vendor will email: written contract, deposit and cancellation grid, postponement clause, itemised package and common add-ons, references, COI if needed, and a soft hold confirmation. Operator reviews and decides within the soft-hold window.",
+    "on_failure": "Politely close. If terms are the issue, ask if they have a counterpart in the same network whose contract terms are more reasonable. Report back with the specific deal-breaker for the operator.",
+    "follow_ups": [
+      "Email the operator: vendor name, package, deposit / cancellation terms, postponement clause, add-on totals, references, red/green flags, comparison vs other quotes.",
+      "Calendar a hard deadline 24-48 hours BEFORE the soft hold expires to ensure the operator decides.",
+      "If proceeding: a separate contract-review pass before any signature."
+    ]
+  },
+  "required_user_info": [
+    "Event date (primary + 1-2 alternates if flexible)",
+    "Venue (city, name if booked) and guest count",
+    "Vendor category and a 2-3 sentence style description",
+    "Budget range for this vendor specifically",
+    "Operator's tolerance for non-Saturday or off-season dates (price leverage)",
+    "Operator's preferred communication channel and decision timeline",
+    "Names and contacts to keep private vs share with vendor"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:10:08Z"
+}

@@ -1,0 +1,103 @@
+{
+  "id": "irrops-waiver-awareness",
+  "name": "IRROPS Waiver Awareness — Use the Fee-Free Change Window",
+  "version": "1.0.0",
+  "category": "travel",
+  "tags": ["airline", "waiver", "irrops", "change-fee", "weather", "free-rebook"],
+  "description": "When weather, ATC, or operational events trigger a published airline travel waiver, you can change or cancel your ticket without fees — often without fare difference — even if your specific flight hasn't been touched yet. This skill teaches the agent how to find, cite, and exploit the waiver before the airline closes the window.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User has an upcoming flight in the next 1–7 days, AND there is a weather event, ATC delay program, IT outage, or operational disruption that might trigger or has triggered a published waiver at one of the involved airports. Also useful proactively — if a hurricane is forecast, the waiver often appears 24-48 hours BEFORE the storm.",
+    "preconditions": [
+      "User knows the origin, destination, and date of travel.",
+      "User has a PNR and is logged in to the airline's app or website.",
+      "Internet access to check the airline's travel-alerts page."
+    ],
+    "estimated_call_duration_minutes": 10
+  },
+  "principles": [
+    "Waivers are published on each airline's website — usually at /travel/notices, /travel-alerts, or /flight-status. Find the page once, bookmark it for the future.",
+    "The waiver text always specifies: which airports/cities, which dates of original travel, which dates you can rebook to (the 'travel window'), and what's waived (change fee, fare difference, or both).",
+    "Self-serve via app first. Phone agents are often slammed during waivers; the app will execute a free change in 90 seconds. If the app can't, then call.",
+    "Many waivers allow you to fly EARLIER than originally booked — leaving a day ahead of a storm at no charge. Use this aggressively.",
+    "Waivers usually cover same city pair, but some let you reroute to a nearby airport (e.g. EWR ↔ JFK ↔ LGA, MIA ↔ FLL, IAD ↔ DCA).",
+    "Citations matter. Read the waiver number or the alert URL to the agent — 'I'm referencing your travel alert dated [date] for [airport]'."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm looking at your travel alert for [airport/region] dated [date]. My ticket [PNR] is in the affected window. I'd like to rebook to [new flight] under the waiver.",
+    "cite_alert_directly": "The alert says original travel between [date range], rebook by [date range], same origin/destination or [list of acceptable alternates], no change fee and no fare difference in same cabin. I want to use that.",
+    "self_serve_check": "Before we get on the phone — let me try the app. The 'change flight' option usually shows the waiver automatically if you're inside the window.",
+    "ask_for_alt_airport": "The waiver mentions co-terminals. Can I rebook from [origin] to [alt destination] like [airport pair]?",
+    "ask_for_earlier_flight": "I'd like to fly out a day earlier than the storm. The waiver covers that, right?",
+    "graceful_close_success": "Great — can you confirm the new flight numbers, new record locator, and email the itinerary? Same fare class, no fare difference?",
+    "graceful_close_failure": "If the system isn't applying the waiver, can you have a supervisor force-apply it? The terms clearly cover my city pair and date."
+  },
+  "tactics": [
+    {
+      "name": "Check the alert page before doing anything else",
+      "when": "First step.",
+      "script": "Go to: aa.com/i18n/travel-info/travel-alerts.jsp (AA), united.com/ual/en/us/fly/travel/notices.html (UA), delta.com/us/en/advisories/travel-advisories (DL), alaskaair.com/content/travel-info/advisories (AS), jetblue.com/at-the-airport/flight-disruptions (B6), southwest.com/travel-disruption (WN). Read the EXACT terms — dates, cities, alternate airports, fare cabin, expiry.",
+      "priority": 1
+    },
+    {
+      "name": "Try the app self-serve change first",
+      "when": "Waiver is published and your ticket qualifies.",
+      "script": "Open the app → My Trips → Change Flight. If the airline's IT systems are working, the waiver auto-applies inside the affected window. This is faster than a call and consumes no agent time.",
+      "priority": 2
+    },
+    {
+      "name": "Cite the alert by date and content",
+      "when": "App didn't apply the waiver and you're on the phone.",
+      "script": "Read the alert verbatim: 'Original travel between [date]–[date], rebook by [date], same origin/destination or [alt pair], no change fee no fare difference.' Agents have the same internal memo; reading it out shortcuts the conversation.",
+      "priority": 3
+    },
+    {
+      "name": "Move EARLIER, not just later",
+      "when": "A storm or operational event is forecast.",
+      "script": "Push the original travel forward by 24-48 hours to escape the storm window. Most waivers allow this. Beats spending a night at the airport.",
+      "priority": 4
+    },
+    {
+      "name": "Use co-terminal flexibility",
+      "when": "Origin or destination has nearby airports.",
+      "script": "Ask if the waiver covers co-terminals (EWR/JFK/LGA, IAD/DCA/BWI, MDW/ORD, OAK/SFO/SJC, MIA/FLL, HOU/IAH, DAL/DFW). Often yes, not always advertised."
+    },
+    {
+      "name": "Force-apply if the system pushes back",
+      "when": "Agent insists there's a fare difference inside an explicit waiver.",
+      "script": "Ask for the supervisor or 'have the override desk force-apply the waiver'. Internal codes exist (e.g. WAIVE/EX, OSI WAIVE) — agents know how but won't volunteer it."
+    }
+  ],
+  "boundaries": [
+    "Do NOT claim a waiver applies if the airport, date range, or fare cabin doesn't match — agents check.",
+    "Do NOT pay a fare difference inside a waiver window without asking why; that's the most common 'mistake' agents make.",
+    "Do NOT change to a cabin higher than your original under a waiver expecting it free — most waivers are same-cabin.",
+    "Do NOT delay using the waiver. Waiver windows are short (often 7-14 days) and inventory drains fast."
+  ],
+  "success_signals": [
+    "App auto-applies the waiver and produces a new boarding pass with no charge.",
+    "Agent acknowledges the waiver by name/date when you cite it.",
+    "Co-terminal or earlier-date rebooking is granted.",
+    "New PNR comes back with $0 collected."
+  ],
+  "failure_signals": [
+    "Agent insists the waiver doesn't cover your origin even though it's listed.",
+    "System asks for a fare difference inside the waiver window.",
+    "Waiver mentions only 'change fee' waived but you're being charged fare difference for a same-cabin swap (challenge this — usually a misread)."
+  ],
+  "exit_strategy": {
+    "on_success": "Get the new PNR, the new flight numbers, and screenshot the confirmation in case the change reverts (rare but happens during IRROPS).",
+    "on_failure": "Take screenshots of the published waiver page (the URL, the date stamp, the terms). File a written customer-service ticket citing the discrepancy — these get fixed by the back office reliably within 48 hours.",
+    "follow_ups": [
+      "If you used the waiver to fly earlier, double-check checked-bag handling — bags sometimes get tagged for the original flight.",
+      "If the storm hits and your original flight cancels, you're already on a new itinerary — no further action needed."
+    ]
+  },
+  "required_user_info": [
+    "PNR / record locator and flight number",
+    "Current origin, destination, and date",
+    "Desired new date and time (a day earlier? a day later? same day different airport?)",
+    "URL of the airline's travel alert if user has already found it"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

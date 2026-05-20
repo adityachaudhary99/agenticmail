@@ -1,0 +1,114 @@
+{
+  "id": "hold-warmth-cold-rep",
+  "name": "Hold Warmth While the Rep Is Cold and Transactional",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "warmth",
+    "tone",
+    "phone-call",
+    "rapport",
+    "transactional",
+    "patience",
+    "emotional-intelligence"
+  ],
+  "description": "Stay warm, human, and patient when the rep is clipped, robotic, script-bound, or visibly checked out. Warmth is not a feeling here — it is a discipline that often thaws the rep enough to unlock judgement they were withholding.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "The rep is reading off a script, giving one-word answers, refusing to deviate, using formal titles only, or sounds tired/dead-eyed. Common in high-volume call centers, government lines, insurance claims, and end-of-shift hours. Use when the goal requires ANY discretion from the rep (waivers, exceptions, expedites).",
+    "preconditions": [
+      "You have enough time to let warmth do its slow work — this is not a 90-second call.",
+      "You are NOT angry yourself. Cold rep + frustrated caller = stalemate.",
+      "The operator's goal benefits from rep discretion, not just rule lookup."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Cold is usually armour, not personality. Most reps started warmer and got punished for it. Don't take it personally.",
+    "Warmth ≠ chatty. You can be warm in five words. Warm = patient, present, specific, and not in a hurry to perform.",
+    "Use their name. Once early, once mid-call, once at goodbye. More than that becomes a sales tactic and they'll notice.",
+    "Specific micro-thanks beat sweeping gratitude. 'Thank you for pulling that up' lands; 'You've been so helpful' is wallpaper.",
+    "Do not try to cheer them up. That's a performance and they can feel it. Just be a person who is not hostile.",
+    "The shift, when it comes, is small. Don't chase it — receive it."
+  ],
+  "phrases": {
+    "warm_opener": "Hi [name], thanks for picking up. I'll be brief and clear — appreciate your time.",
+    "humanise_small": "No rush on my end, take whatever time you need to check.",
+    "specific_thanks": "Thank you — that's exactly the detail I needed.",
+    "soft_curiosity": "Out of curiosity — and only if you can share — does the system usually let you do [X], or is that always a supervisor thing?",
+    "acknowledge_their_constraint": "I can tell you're working within what the system lets you do. I'm not asking you to break anything — just trying to figure out what door IS open.",
+    "warm_goodbye": "[Name], genuinely — thank you. Hope the rest of your shift is a kind one."
+  },
+  "tactics": [
+    {
+      "name": "Open warm, then get out of the way",
+      "when": "First 15 seconds.",
+      "script": "Use the `warm_opener`. State the goal in one sentence. Then stop talking. Reps brace for ramblers; brevity is its own warmth.",
+      "priority": 1
+    },
+    {
+      "name": "Patience as signal",
+      "when": "Rep says 'one moment' / 'let me check' / goes quiet.",
+      "script": "Do NOT fill the silence. Use `humanise_small` once if it stretches past 30 seconds. Comfortable silence reads as respect; nervous chatter reads as pressure.",
+      "priority": 2
+    },
+    {
+      "name": "Tone-shift detector — FIRST THAW",
+      "when": "Rep says something not in the script: a small opinion, a joke attempt, an explanation of WHY a rule exists, your first name unprompted.",
+      "script": "This is the moment. Match the half-step warmer, ask ONE soft question (`soft_curiosity`) — you've just been invited into discretion. Do not overplay; one question, not three.",
+      "priority": 3
+    },
+    {
+      "name": "Acknowledge their cage",
+      "when": "Rep tells you they can't do something — and you suspect 'can't' means 'not allowed to without justification.'",
+      "script": "Use `acknowledge_their_constraint`. You're telling them you understand they have a boss too. This is often what unlocks the 'well, one thing I CAN do is…' sentence.",
+      "priority": 4
+    },
+    {
+      "name": "Tone-shift detector — RE-FREEZE",
+      "when": "Rep audibly returns to script voice, or starts answering through closed teeth again.",
+      "script": "Something you said triggered the armour. Most likely: you pushed too hard, you sounded entitled, or a supervisor walked behind them. Back off, get crisply transactional yourself for 60 seconds, try warmth again later.",
+      "priority": 5
+    },
+    {
+      "name": "Use their name at the goodbye",
+      "when": "Last 20 seconds of the call.",
+      "script": "Use `warm_goodbye`. The end of a call is when reps remember you. Make the memory pleasant — they may help you better next time."
+    }
+  ],
+  "boundaries": [
+    "Do NOT fake warmth — reps are professional warmth-detectors. Be a quiet, present person instead.",
+    "Do NOT ask personal questions ('long shift?', 'where are you calling from?'). Crossing into their life uninvited reads as a sales play.",
+    "Do NOT comment on their coldness ('you sound tired', 'are you having a tough day?'). It corners them.",
+    "Do NOT mistake one warm moment for friendship — the rep can still say no, and that is still their job.",
+    "Do NOT carry false warmth into the close. If they stayed cold and gave you what you needed, just be respectfully crisp at goodbye."
+  ],
+  "success_signals": [
+    "Rep volunteers a workaround you didn't ask for.",
+    "Rep uses your name unprompted.",
+    "Rep explains the WHY of a policy, not just the rule.",
+    "Rep says 'between you and me' or 'off the record' — discretion just opened.",
+    "Rep tone softens for the next caller (you hear them say goodbye to you warmly)."
+  ],
+  "failure_signals": [
+    "20+ minutes in, still receiving one-word answers.",
+    "Rep starts cutting you off mid-sentence.",
+    "You catch yourself performing — the warmth has gone hollow.",
+    "Rep transfers you without a warm handoff."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the outcome cleanly. Use the warm goodbye. Note the rep's name and ID if given — operator may want this rep again.",
+    "on_failure": "Close warmly anyway — you may call back. Cold reps are often warmer with different callers; a callback is not wasted.",
+    "follow_ups": [
+      "Log the rep ID and whether warmth shifted them — pattern over time tells you which lines reward warmth and which reward crisp efficiency.",
+      "If the goal wasn't met, brief the operator on what door, if any, the rep hinted was open."
+    ]
+  },
+  "required_user_info": [
+    "Operator's goal and which parts require rep discretion vs. pure lookup.",
+    "How much time the operator has — warmth needs runway.",
+    "Whether the operator wants to be transferred to a supervisor as a fallback."
+  ],
+  "contributed_by": "emotional-intel agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

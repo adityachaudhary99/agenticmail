@@ -1,0 +1,127 @@
+{
+  "id": "close-account-no-residual-fees",
+  "name": "Close a Bank or Credit-Card Account Without Residual Fees",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "account-closure",
+    "zombie-fees",
+    "credit-utilization",
+    "retention",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call the bank to formally close a checking, savings, or credit-card account in a way that prevents zombie fees, residual interest, unintentional credit-score damage, and accidental reopening.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User wants an account permanently closed. Common reasons: switching banks, consolidating cards, dodging an annual fee, paying off + closing a card no longer needed. Different mechanics apply for deposit accounts vs credit accounts — credit closure can hit credit utilization and average-age-of-accounts. ALWAYS surface this trade-off before closing a credit card.",
+    "preconditions": [
+      "Operator has confirmed the closure decision. For credit cards: operator understands the potential credit-score impact (utilization spike + AAoA reduction).",
+      "All pending transactions have cleared (or user knows their status). Account balance is zero or paid in full.",
+      "Recurring ACH / autopay / direct deposit on this account has been re-routed elsewhere (or user has a plan).",
+      "User has the account number, last 4, and balance.",
+      "For credit cards: rewards balance redeemed (closing forfeits most rewards) and pending statements known."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "For credit cards: closing CAN drop the credit score via two channels — (1) higher overall utilization (less total credit available) and (2) lower average age of accounts when the closed card eventually falls off the report (10 years later for closed in good standing). If the user has multiple cards and/or a long history, impact is small. If this is one of two cards, impact can be significant.",
+    "Closure isn't always best. Consider a 'product change' or 'downgrade' (e.g., AmEx Gold → Green, Chase Sapphire Preferred → Freedom Flex) to dodge the annual fee while keeping the credit line and account age. ASK about this before closing.",
+    "Zombie fees are the #1 closure failure: a residual interest charge or maintenance fee posts AFTER closure, the account silently re-opens or goes to collections. Prevent by (a) confirming balance is exactly zero, (b) asking 'what's the final-statement protocol?', and (c) calling back 60 days later.",
+    "Get closure in writing. A phone closure without confirmation gets disputed later when the bank's system shows the account 'open'.",
+    "If the bank pivots to retention with offers, the user must have decided in advance whether ANY offer would change their mind. If not — politely decline and proceed.",
+    "Stop direct deposits / autopay BEFORE closing the source account, not after. Closed-account ACH attempts trigger NSF, returned-item fees, and merchant-side late fees."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to close my [checking / savings / credit card] account ending in [last 4]. Before we close it, can you confirm any pending charges, residual interest, fees, or balance — and walk me through the protocol to ensure no residual posts after closure?",
+    "downgrade_alternative": "Before closing — is there a product change or downgrade available on this card that would let me keep the credit line and account age while dropping the annual fee?",
+    "credit_impact_question": "For my awareness — when this card closes, will it (a) close immediately on my credit report or remain visible for 10 years, (b) how is utilization recalculated, and (c) is there anything I should know about the impact on my score?",
+    "zero_balance_check": "Can you confirm the current balance is exactly $0.00 — no pending interest, no pending fees, no pending transactions — before we proceed with closure?",
+    "redirect_rewards": "I have [points / cash back / miles] balance. What's the policy on closure — do I lose them, can I redeem now, can they be transferred to another account?",
+    "decline_retention": "Thanks, but I've already decided — not changing course today. Can you go ahead and close it?",
+    "ach_handoff": "I want to confirm: any incoming ACH or direct deposit that lands AFTER closure — does the bank return it, hold it, or forward it? I want zero surprise reversals on my employer / payer side.",
+    "graceful_close": "Thanks. Can you confirm: account is closed effective today, balance is $0, no further charges or interest will post, the closure is reported correctly to credit bureaus (closed by consumer / in good standing), and I'll receive a written confirmation. Please give me a reference number and your name."
+  },
+  "tactics": [
+    {
+      "name": "Ask about product change before closing",
+      "when": "Credit-card closure, especially for premium / annual-fee cards.",
+      "script": "Use `downgrade_alternative`. Downgrading to a no-annual-fee version of the same card line preserves account age and credit line — best of both worlds.",
+      "priority": 1
+    },
+    {
+      "name": "Confirm zero balance",
+      "when": "Before authorizing closure.",
+      "script": "Use `zero_balance_check`. If a residual interest charge would post, ASK to pay it now and re-confirm $0. Zombie fees almost always start as 'I thought it was zero.'",
+      "priority": 2
+    },
+    {
+      "name": "Cash in rewards",
+      "when": "Credit-card closure.",
+      "script": "Use `redirect_rewards`. Closure typically forfeits cash-back and miles, unless they're already redeemed or transferred. Pause closure if a redemption is needed.",
+      "priority": 3
+    },
+    {
+      "name": "Decline retention crisply",
+      "when": "Rep pivots to retention offers.",
+      "script": "Use `decline_retention`. ONE polite decline is enough. Repeated decline turns becomes a long call without unlocking new offers if the user has truly decided."
+    },
+    {
+      "name": "Surface credit-bureau reporting",
+      "when": "Account is being closed.",
+      "script": "Use `credit_impact_question`. Confirm it'll be reported 'closed by consumer / in good standing' (or 'paid in full' for credit cards), not 'closed by issuer.'"
+    },
+    {
+      "name": "Handle ACH gracefully",
+      "when": "Deposit-account closure.",
+      "script": "Use `ach_handoff`. Set the expectation that any incoming ACH will be returned, then trigger employer/payer to switch BEFORE you close."
+    },
+    {
+      "name": "Confirmation writeback",
+      "when": "Closure agreed.",
+      "script": "Use `graceful_close`. Written confirmation via secure message, plus a reference number, is the user's defense against zombie fees and 'still open' errors."
+    }
+  ],
+  "boundaries": [
+    "Do NOT close a credit account with a non-zero balance without confirming the residual will be billed and paid promptly — open-account closures with balances roll over and accrue interest.",
+    "Do NOT close a deposit account without first redirecting payroll / autopay — closed-account ACH triggers a cascade of fees on the user's bills.",
+    "Do NOT cancel rewards-rich cards without redeeming the balance — most cash-back and miles forfeit at closure.",
+    "Do NOT accept retention offers without operator approval — keeping a card the user already decided to close is a new commitment.",
+    "Do NOT close the only credit card a user with thin credit history has — that can drop the score significantly.",
+    "Do NOT close without written confirmation."
+  ],
+  "success_signals": [
+    "Zero balance verified.",
+    "Product-change alternative considered (and chosen or declined intentionally).",
+    "Rewards redeemed or transferred.",
+    "Closure confirmed effective today.",
+    "Written confirmation promised via secure message.",
+    "Reference number issued."
+  ],
+  "failure_signals": [
+    "Residual interest / fees expected to post after closure — fix before closing.",
+    "Rep insists on a 30-day cooling period — that's a retention tactic; politely insist on immediate closure.",
+    "Account flagged with pending dispute, hold, or investigation — closure may be delayed; surface to operator.",
+    "Rep cannot guarantee correct credit-bureau reporting code."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference number, written-confirmation timing, expected credit-bureau reporting code. Calendar a 60-day check-back to verify no zombie fee posted.",
+    "on_failure": "If a residual is expected, pay it via the bank's online system, wait one cycle, re-call to close. If retention won't stop pitching, ask to escalate to account-services supervisor and politely insist.",
+    "follow_ups": [
+      "Day +7: confirm written confirmation arrived.",
+      "Day +30 and Day +60: verify account shows closed in online banking AND no new charges have posted.",
+      "Day +60: pull credit report to confirm 'closed by consumer / in good standing' is reflected.",
+      "For credit cards: keep the written confirmation for at least 2 years."
+    ]
+  },
+  "required_user_info": [
+    "Account or card last 4",
+    "Confirmed current balance and any pending items",
+    "ACH / autopay / direct-deposit list to reroute (for deposit accounts)",
+    "Rewards balance and redemption plan (for credit cards)",
+    "Operator pre-decision on retention offers (Yes accept / No decline)",
+    "Operator awareness of credit-score impact (for credit-card closures)"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

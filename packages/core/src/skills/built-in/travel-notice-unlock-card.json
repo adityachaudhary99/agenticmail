@@ -1,0 +1,119 @@
+{
+  "id": "travel-notice-unlock-card",
+  "name": "Set a Travel Notice or Unlock a Card Flagged for Fraud",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "travel",
+    "card-lock",
+    "fraud-flag",
+    "false-positive",
+    "phone-call",
+    "international",
+    "banking-finance"
+  ],
+  "description": "Call the card issuer to either (a) place a proactive travel notice before a trip or (b) clear a fraud-flag block while the user is already mid-purchase or mid-trip, restoring card function quickly without weakening fraud protection.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "Use BEFORE a trip to add a travel notice (still helpful with many issuers, even though some — Chase, AmEx, Cap One — no longer require it). Use IN THE MOMENT when a card has been declined or locked, the user is at a register, hotel desk, or trying to book travel, and needs the block lifted.",
+    "preconditions": [
+      "User has the card in hand (or knows the card last 4).",
+      "User can describe the failed transaction: amount, merchant, approximate time, location.",
+      "User is calling the number on the BACK of the card — not a number from a text/email alert.",
+      "If pre-trip: dates, countries / states, and approximate spend levels are ready."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "If the trigger was an 'unusual activity alert' text — DO NOT click the link. Call the card-back number directly. Scammers blast fake alerts to spoof the bank.",
+    "Confirm 'is this an actual hold, or is the merchant declining for their own reason?' Banks blame merchants and vice versa; the user wastes time if you call the wrong party.",
+    "Pre-trip notices reduce false positives but aren't bulletproof. Have a backup payment method.",
+    "When a transaction is blocked, the rep will usually ask you to confirm the SPECIFIC declined attempt — be ready with the amount and merchant.",
+    "Do NOT ask the rep to disable fraud monitoring entirely. The right ask is 'whitelist this trip / merchant / amount range', not 'turn the protection off'.",
+    "If the user is overseas and locked out, also ask about no-fee international ATM access on this card."
+  ],
+  "phrases": {
+    "pre_trip_opener": "Hi, I'd like to set a travel notice on my card. I'll be in [countries / states] from [date] to [date], with an expected spend range of [amount]. Can you add the notice and confirm whether your bank still uses them or relies on real-time fraud algorithms?",
+    "in_the_moment_opener": "Hi, my card was just declined at [merchant] for [amount] around [time]. I'm trying to confirm whether this is a fraud hold on your end or a merchant decline. Can you check?",
+    "verify_the_attempt": "Yes — that decline was me. The transaction is legitimate. Can you authorize the retry and lift the hold?",
+    "confirm_no_blanket_off": "Please leave the fraud monitoring on — I just need this transaction / merchant / trip whitelisted, not the protection disabled.",
+    "ask_for_alerts": "Can you confirm my alert phone number and email on file, and switch to push-notification approval if available? That way next time I can approve a flagged charge in-app without a phone call.",
+    "international_extras": "While we're on the line — for the trip, can you confirm the foreign-transaction fee on this card, daily ATM limits, and whether the bank has partner ATMs in [country] that waive fees?",
+    "graceful_close_unlock": "Thanks. Can you confirm the hold is lifted, the previous transaction will go through on retry, the travel notice is in place, and give me your name plus a reference number?",
+    "graceful_close_pretrip": "Thanks. Can you confirm the dates and countries on file, that no further action is needed, and that you'd contact me by [phone / push notification] if a charge looks unusual?"
+  },
+  "tactics": [
+    {
+      "name": "Triage: bank hold vs merchant decline",
+      "when": "Card was just declined.",
+      "script": "Use `in_the_moment_opener`. Most reps can see in 30 seconds whether the issuer blocked the auth or the merchant's processor returned a decline code. If merchant — call the merchant, not the bank.",
+      "priority": 1
+    },
+    {
+      "name": "Verify the attempt was real",
+      "when": "Rep confirms there's a fraud hold.",
+      "script": "Use `verify_the_attempt`. Confirming the specific declined attempt is the unlock — once they see the legitimate user verify, the algorithm whitelists similar patterns.",
+      "priority": 2
+    },
+    {
+      "name": "Whitelist, don't disable",
+      "when": "Rep offers to 'turn off fraud alerts on this card.'",
+      "script": "Use `confirm_no_blanket_off`. Disabling protection broadly creates a much bigger downside if the card is later compromised.",
+      "priority": 3
+    },
+    {
+      "name": "Pre-trip extras",
+      "when": "Setting a travel notice.",
+      "script": "Use `pre_trip_opener` + `international_extras`. Confirm fee structure and ATM partners — saves real money on a multi-week trip.",
+      "priority": 4
+    },
+    {
+      "name": "Upgrade alerts to push",
+      "when": "Discussion turns to how the user will be reached next time.",
+      "script": "Use `ask_for_alerts`. Push-approval in the bank's app is the fastest unlock channel — usually 1 tap to approve."
+    },
+    {
+      "name": "Confirm the writeback",
+      "when": "Wrapping the call.",
+      "script": "Use the matching `graceful_close_*` phrase. Get hold-lifted confirmation, travel-notice dates, and a reference number."
+    }
+  ],
+  "boundaries": [
+    "Do NOT call any number from an 'unusual activity' text or email — only the card-back number.",
+    "Do NOT verify an account by reading back a one-time code that the bank just texted — legitimate reps will never ask for that code.",
+    "Do NOT request blanket fraud-monitoring disable — request transaction / merchant / trip-range whitelist only.",
+    "Do NOT share full SSN — last 4 of card and last 4 of SSN are typically enough.",
+    "Do NOT close the call without a reference number and a confirmed unlock."
+  ],
+  "success_signals": [
+    "Rep identifies the specific declined transaction.",
+    "Hold lifted, retry authorized to go through.",
+    "Travel notice on file with dates and countries.",
+    "Push-approval channel enabled.",
+    "Reference number issued."
+  ],
+  "failure_signals": [
+    "Rep insists the decline was on the merchant side but the merchant's processor disagrees (you're between two systems — escalate).",
+    "Hold cannot be lifted because the account is under suspended status (escalate to fraud team or account-services supervisor).",
+    "Travel notice 'isn't supported' AND the algorithm is aggressive (use a backup card abroad).",
+    "Caller-ID does not match the card-back number (you may be on a spoofed line — terminate, redial)."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm hold lifted, travel notice on file, alerts channel, reference number, rep name. Tell the operator the new alert settings.",
+    "on_failure": "If unlock fails mid-purchase, the user pays another way and you call back from a quiet location. If the account is suspended, escalate to a fraud / account-services supervisor and request a written summary of what triggered the suspension.",
+    "follow_ups": [
+      "Day +1: confirm the retried transaction posted successfully.",
+      "Pre-trip: bring a backup card from a different issuer for redundancy.",
+      "Post-trip: remove the notice if the issuer doesn't auto-expire it."
+    ]
+  },
+  "required_user_info": [
+    "Card last 4 and issuing bank name",
+    "Specific declined transaction: amount, merchant, time, location (if mid-purchase)",
+    "Travel dates, countries / states, expected spend range (if pre-trip)",
+    "Backup payment method in case unlock fails",
+    "Operator preference on push-notification vs phone alerts"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,118 @@
+{
+  "id": "not-sound-like-spam-dialer",
+  "name": "Don't Sound Like a Spam Dialer — Mass-Outreach Hygiene",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "voice-quality",
+    "anti-pattern",
+    "self-check",
+    "phone-call",
+    "ethics",
+    "outreach-sales"
+  ],
+  "description": "When the agent is making multiple outbound calls in a session, actively audit its own behaviour against the patterns that make prospects (and carriers, and operators of the line) flag the agent as a spam dialer. Refuse to operate as one.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "Continuously, but especially when the agent is making more than 2-3 outbound calls in the same session, OR has been asked to run through a list. This skill is a self-check, not a customer-facing script.",
+    "preconditions": [
+      "Operator has authorised each prospect on the list individually — not just 'call this list of 200'.",
+      "The agent's outbound calls are coming from a number registered to the operator with a published presence.",
+      "The agent has a real, distinct reason for calling each named prospect — not a copy-pasted reason."
+    ],
+    "estimated_call_duration_minutes": 0
+  },
+  "principles": [
+    "Volume is the enemy of trust. Three high-quality calls produce more pipeline than thirty templated ones — and don't burn the operator's caller-ID reputation.",
+    "If the agent finds itself reading the same opener verbatim on call #5, the agent is now a spam dialer. Stop and personalise.",
+    "Each prospect deserves at minimum: their name, their company, one specific real reason this call is for THEM.",
+    "Carriers (and increasingly the recipient's phone OS) flag numbers based on patterns: short calls, high volume, low pickup rate, recipients tapping 'spam'. The operator's number is at stake.",
+    "Per-prospect operator authorisation is NOT optional. 'Here's a list' is not authorisation; 'here are 20 named prospects, one sentence on each' is.",
+    "If the operator has handed the agent a list without per-prospect reasons, the right move is to push back, not to dial."
+  ],
+  "phrases": {
+    "self_check_pre_call": "Before this call: do I know the prospect's first name, company, and one specific reason THIS person is being called today? If any of the three is missing, do not dial.",
+    "operator_pushback": "I've got the list of 50 names you sent. Before I start calling, I want to confirm — do you want me to call all 50, or pick the 10 strongest fits and do those properly? My experience is the second option produces more meetings and doesn't burn the number's reputation.",
+    "self_check_mid_session": "If I'm on call N and find myself saying the same opener I said on call N-1: stop. Re-personalise. Or end the session.",
+    "honest_opener_when_listy": "Hi [name], it's [agent] from [operator]'s side. I'll be upfront — I'm working through a short list of people we think might care about [specific topic]. You came up because [specific reason]. Got 30 seconds?"
+  },
+  "tactics": [
+    {
+      "name": "Per-prospect authorisation check",
+      "when": "Before the FIRST call of any session.",
+      "script": "Verify the operator has supplied named prospects with per-prospect reasons. If not, use `operator_pushback`. Refuse to start the session on an unauthorised list.",
+      "priority": 1
+    },
+    {
+      "name": "Three-fact gate before every dial",
+      "when": "Immediately before placing each call.",
+      "script": "Use `self_check_pre_call`. Name + company + specific reason for THIS prospect. Missing one → skip this prospect, do not call.",
+      "priority": 2
+    },
+    {
+      "name": "Vary the opener consciously",
+      "when": "On every call, but particularly call #3 and beyond.",
+      "script": "Read the personalising clause of your opener BACK to yourself before dialing. If it would apply equally to the previous prospect, the personalisation is fake. Rewrite.",
+      "priority": 3
+    },
+    {
+      "name": "Be upfront when you're working a list",
+      "when": "When the personalisation is real but the call is part of a small batch.",
+      "script": "Use `honest_opener_when_listy`. Naming 'I'm working a short list' is disarming and respectful, and it filters out 'no interest' fast.",
+      "priority": 4
+    },
+    {
+      "name": "Cap session volume",
+      "when": "After call #8 in a single session.",
+      "script": "Stop. Even with full personalisation, fatigue degrades quality. Resume next day or hand the rest back to the operator for re-prioritisation.",
+      "priority": 5
+    },
+    {
+      "name": "Honour every spam-flag signal",
+      "when": "Any time a recipient says 'how did you get my number?' / 'take me off your list' / 'don't call here again'.",
+      "script": "Apologise, remove from any list immediately, confirm the removal out loud, end the call. Log the removal request with date and time.",
+      "priority": 6
+    }
+  ],
+  "boundaries": [
+    "Do NOT make calls from a number the operator does not own and have legitimate presence on.",
+    "Do NOT call prospects whose numbers were scraped, purchased from data brokers, or pulled from sources the operator can't show consent for.",
+    "Do NOT make more than ~8 outbound calls per session per operator identity.",
+    "Do NOT use predictive-dialing patterns (rapid auto-redial, very short calls in sequence) — these are exactly what carriers flag.",
+    "Do NOT use the same identical opener verbatim across calls.",
+    "Do NOT proceed on a list the operator handed over without per-prospect reasons. Push back instead.",
+    "Do NOT ignore do-not-call requests, ever. They are absolute, regardless of jurisdiction."
+  ],
+  "success_signals": [
+    "Operator confirms per-prospect authorisation when challenged on a large list.",
+    "Each call has a personalising clause that wouldn't make sense for any other prospect.",
+    "Pickup rate stays healthy across the session.",
+    "Zero 'how did you get my number?' challenges across the day.",
+    "Zero spam labels on the operator's caller ID across the week."
+  ],
+  "failure_signals": [
+    "Two consecutive prospects ask 'how did you get my number?'.",
+    "Pickup rate collapses mid-session (a sign the number has been flagged).",
+    "The agent catches itself reading the same opener.",
+    "The operator's outbound number starts showing 'Spam Likely' on tests.",
+    "More than one removal request per session."
+  ],
+  "exit_strategy": {
+    "on_success": "Continue the session within the volume cap. Log per-call notes that preserve the personalisation rationale.",
+    "on_failure": "Stop calling. Notify the operator. Audit the list / number / approach. Do not resume until the cause is understood and corrected — caller-ID reputation, once damaged, takes weeks to recover.",
+    "follow_ups": [
+      "Daily summary to operator: calls placed, contacts reached, removal requests, spam-flag signals.",
+      "Weekly check on the outbound number's spam-likely status via a test call from an external phone.",
+      "Quarterly review of which lists / sources are producing 'how did you get my number?' challenges."
+    ]
+  },
+  "required_user_info": [
+    "Per-prospect authorisation (named prospects with named reasons)",
+    "Provenance of each prospect's phone number",
+    "Operator's daily / session volume cap preferences",
+    "Operator's outbound caller-ID number and confirmation of ownership",
+    "Operator's preference on whether to push back vs. proceed when a list arrives without per-prospect detail"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

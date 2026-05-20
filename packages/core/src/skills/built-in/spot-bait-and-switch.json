@@ -1,0 +1,155 @@
+{
+  "id": "spot-bait-and-switch",
+  "name": "Spot Bait-and-Switch and Hidden-Hook Offers",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adversarial-robustness",
+    "deception-detection",
+    "pricing",
+    "phone-call",
+    "subscriptions",
+    "critical-reasoning"
+  ],
+  "description": "Recognise when an offer the rep is presenting carries a back-end hook — auto-renew at full price, mandatory bundle add-ons, introductory rates that revert, retention 'gifts' that extend contract terms, free trials that require a card. Surface and price the full lifetime cost before accepting.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any offer the rep makes that sounds materially better than market, especially: 'free for X months', 'introductory rate', 'bundle and save', 'one-time credit', 'loyalty gift', 'we'll throw in X', 'just need a credit card on file'.",
+    "preconditions": [
+      "Agent knows the user's current price and the realistic market price.",
+      "Agent has authority to ask clarifying questions before accepting any offer.",
+      "Agent has not been told 'just accept whatever they offer' — if so, decline this skill and ask the user to reauthorise."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Every offer has a duration and a reversion. Both must be named explicitly before you accept.",
+    "Any 'free' that requires a card on file is a paid product with a cancel-by date. Treat the cancel-by date as the real expiration.",
+    "Any 'gift' offered in retention is usually paid for with contract length, paperless billing, autopay, or a bundled add-on. Look for the trade.",
+    "If the rep can't or won't quote the post-promo price, the offer is incomplete — and incomplete offers are not safe to accept.",
+    "Compute lifetime cost over 24 months at minimum. A six-month $20 promo with an $80 reversion is a $1,560/yr product, not a $20/mo product.",
+    "Read the trade out loud back to the rep. Recorded calls cut both ways."
+  ],
+  "phrases": {
+    "ask_for_post_promo": "What's the rate after the promotional period ends, and what's the exact end date?",
+    "ask_for_contract_change": "Does accepting this change my contract length, my early-termination fee, or my eligibility for future promotions?",
+    "ask_for_autorenew": "Will this automatically renew at the same rate, at the standard rate, or end? And how do I opt out if I want to?",
+    "ask_for_bundle_strings": "Does this require me to add or keep [service]? And what happens to the price if I drop it later?",
+    "lifecycle_recap": "Let me play it back: I pay [$X] for [N months], then it goes to [$Y] on [date], unless I [cancel | downgrade | call back]. Is that right?",
+    "request_in_writing": "Could you send me that in writing — email or in-account notification — before we lock it in?",
+    "decline_until_clear": "I'd love to take it, but I want to make sure I understand the full picture before I commit. Can you walk me through what happens after the promo ends?"
+  },
+  "tactics": [
+    {
+      "name": "Always ask for the reversion",
+      "when": "Any time-limited offer is on the table.",
+      "script": "Use `ask_for_post_promo`. Do not accept until you have BOTH the post-promo price AND the exact end date. 'About six months' is not an end date.",
+      "priority": 1
+    },
+    {
+      "name": "Probe for contract strings",
+      "when": "Offer sounds materially generous.",
+      "script": "Use `ask_for_contract_change`. Retention offers frequently extend term commitment or reset the early-termination clock. The trade is what makes the offer affordable to the company.",
+      "priority": 2
+    },
+    {
+      "name": "Probe for bundle strings",
+      "when": "Offer involves more than one service or a new add-on.",
+      "script": "Use `ask_for_bundle_strings`. Bundled price is contingent on keeping every line. Dropping one often re-rates the others to standalone — quietly.",
+      "priority": 3
+    },
+    {
+      "name": "Play back the lifecycle out loud",
+      "when": "Before any verbal 'yes'.",
+      "script": "Use `lifecycle_recap`. Two purposes: forces the rep to confirm or correct on a recorded line, AND surfaces details they 'forgot' to mention.",
+      "priority": 4
+    },
+    {
+      "name": "Ask for it in writing",
+      "when": "Anything material.",
+      "script": "Use `request_in_writing`. Real offers can be confirmed in writing within minutes. Offers that 'can't be put in writing' are a bright red flag."
+    },
+    {
+      "name": "Compute and state lifetime cost",
+      "when": "Comparing competing offers.",
+      "script": "Out loud: 'So over 24 months, with the promo and reversion, that's [$total] versus [$alternative]. Got it.' If the rep tries to walk it back, you have your real number."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep offers '3 months free' on a new service.",
+      "consider": [
+        "It's a genuine acquisition promo with an easy cancel — best case.",
+        "Card-on-file requirement, auto-renews at full price, cancel-by date is buried in the email.",
+        "Free for the service, but install fees / equipment fees / activation fees are not waived.",
+        "Free, but contract length is 24 months with a stiff ETF.",
+        "Free for 3 months, then a non-disclosed 'introductory rate' for 9 more, THEN standard rate."
+      ],
+      "next_action": "Ask for all four: card requirement, auto-renew default, fees, contract length AND the date each kicks in."
+    },
+    {
+      "observation": "Retention rep offers a $30/mo credit if you 'just keep autopay on'.",
+      "consider": [
+        "Genuine autopay discount — common, fine.",
+        "Credit applies for 6 months, then evaporates while autopay obligation continues.",
+        "Autopay enables price-creep without the user noticing.",
+        "Autopay waives a billing-dispute right (rare, but check)."
+      ],
+      "next_action": "Ask `ask_for_post_promo` and `ask_for_contract_change`. Confirm credit duration ≠ autopay duration."
+    },
+    {
+      "observation": "Rep adds a 'free' premium channel / streaming line / device protection.",
+      "consider": [
+        "Genuine throw-in to close the deal.",
+        "Free for 1-3 months, auto-bills after at $10-$20/mo unless user opts out.",
+        "Counted as a 'service line' that triggers a different bundle tier elsewhere.",
+        "User must call back to remove it; the rep cannot."
+      ],
+      "next_action": "Ask: 'Is this added to my account? When does it start billing? And can you confirm-cancel it now if I don't want it?'"
+    },
+    {
+      "observation": "Rep says 'this offer is only available today'.",
+      "consider": [
+        "Possibly true (campaign ends), but verify — see `resist-urgency-manipulation`.",
+        "Same offer is available tomorrow under a different name.",
+        "Today's version has a worse hook than tomorrow's standard version.",
+        "Pressure tactic to short-circuit your evaluation of the hook."
+      ],
+      "next_action": "Take a short pause, run the lifecycle recap, decide on cost not urgency."
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept any offer without naming both the post-promo price AND the end date out loud.",
+    "Do NOT accept a card-on-file 'free' offer without an explicit auto-cancel mechanism (or a user-set reminder).",
+    "Do NOT agree to a contract extension you weren't authorised to agree to.",
+    "Do NOT trust a verbal-only offer for anything material — push for writing."
+  ],
+  "success_signals": [
+    "Rep names the reversion price and end date without prompting.",
+    "Rep sends the offer in writing while you're still on the call.",
+    "Rep volunteers the contract impact and any bundle dependencies.",
+    "Lifetime cost math actually beats the user's current plan."
+  ],
+  "failure_signals": [
+    "Rep refuses or hedges on naming the post-promo rate.",
+    "Rep says 'it's all in the email you'll receive' but won't summarise.",
+    "Rep insists you must accept before they can send anything in writing.",
+    "Post-promo price isn't actually known to the rep."
+  ],
+  "exit_strategy": {
+    "on_success": "Accept the offer with the lifecycle recap on record. Calendar the reversion date as a future check-back.",
+    "on_failure": "Decline politely and ask for a call-back when the rep can produce the full lifecycle in writing. Do not let urgency override.",
+    "follow_ups": [
+      "Calendar 7 days before reversion to evaluate cancel vs renegotiate.",
+      "Save the written confirmation. If it doesn't arrive within 24 hours, call back and ask why."
+    ]
+  },
+  "required_user_info": [
+    "Current monthly amount and what the user expects to pay.",
+    "Whether the user is willing to accept any contract extension and for how long.",
+    "Whether the user wants autopay enabled."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

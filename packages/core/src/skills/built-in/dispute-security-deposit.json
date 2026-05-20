@@ -1,0 +1,130 @@
+{
+  "id": "dispute-security-deposit",
+  "name": "Dispute a Withheld Security Deposit",
+  "version": "1.0.1",
+  "category": "real-estate",
+  "tags": [
+    "security-deposit",
+    "move-out",
+    "itemization",
+    "small-claims",
+    "landlord",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the former landlord or property manager to dispute deductions from a security deposit — demanding an itemized statement, challenging specific charges (especially normal wear-and-tear), and preserving the right to small-claims court if not resolved.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "User has moved out and received either: (a) less than their full deposit back without itemization, (b) an itemized statement with charges they believe are improper (normal wear-and-tear, pre-existing damage, inflated repair quotes), or (c) nothing at all past the statutory deadline (commonly 14–30 days, varies by jurisdiction).",
+    "preconditions": [
+      "Lease end date and move-out date are confirmed.",
+      "User has the original deposit amount and what was returned (if anything).",
+      "User has the itemized statement (if received) OR knows the statutory deadline has passed.",
+      "User has move-in photos / video (ideal), move-out photos / video, and the move-out walkthrough record (see `move-out-walkthrough` skill).",
+      "User knows their state's statutory deadline for deposit return AND any statutory penalty (some states triple-damages for bad-faith withholding)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Itemization is the first ask — most states REQUIRE an itemized statement, and its absence alone can entitle the tenant to the full deposit back plus a statutory penalty in some jurisdictions.",
+    "Normal wear-and-tear is not chargeable. Faded paint, minor carpet wear, small nail holes, slightly dusty blinds — these are not damages.",
+    "Demand RECEIPTS, not estimates. 'We charged $400 to repaint' without a paid invoice means the landlord may not have spent it.",
+    "Stay calm. The deposit is your money and the law is largely on the tenant's side IF documentation exists — anger costs leverage.",
+    "Always set a written-response deadline. 'I'd like a response by [date]' creates the timeline for the next step (formal demand letter, then small-claims).",
+    "Do not threaten litigation on the first call — but do mention 'I'd like to resolve this without small-claims.' That signals you know the path exists."
+  ],
+  "phrases": {
+    "opener_no_itemization": "Hi, I'm calling about the security deposit for [unit, address]. My move-out date was [date] and I haven't received an itemized statement of deductions. Under [state] law I'm entitled to that within [X] days. Can we resolve this today?",
+    "opener_disputed_items": "Hi, I'm calling about the deposit statement for [unit]. I received it on [date] and I want to dispute a few items before I escalate.",
+    "request_itemization": "Could you send me a fully itemized statement with the receipts or paid invoices for each deduction? Estimates aren't sufficient — I need the actual paid amounts.",
+    "challenge_wear_and_tear": "The charge for [item] looks like normal wear-and-tear, not damage. Under [state] law, normal wear isn't deductible. Can you walk me through why this was assessed as damage?",
+    "challenge_pre_existing": "That item was already in that condition at move-in — I have move-in photos timestamped [date] showing it. I can send them. Can you remove that charge?",
+    "challenge_inflated": "The $[amount] for [repair] is well above market — a typical [repair] runs $[range]. Can you share the contractor's invoice so I can verify?",
+    "ask_for_resolution": "Based on what we've discussed, I think the fair amount returned is $[amount]. Can you confirm that today and reissue the check?",
+    "set_deadline": "I need a written response and the corrected amount by [date — usually 7–10 days]. After that I'll need to put this in a formal demand letter.",
+    "graceful_close_resolved": "Thanks. To confirm: $[amount] reissued by [method] by [date], and you'll send an updated itemization. Glad we sorted this out.",
+    "graceful_close_unresolved": "Sounds like we're not going to agree on this call. I'll send a written demand letter by [date]. If that doesn't resolve it I'll file in small-claims court. I'd rather avoid that — please reconsider the items we discussed."
+  },
+  "tactics": [
+    {
+      "name": "Establish the timeline upfront",
+      "when": "First substantive turn.",
+      "script": "Use one of the two openers. State move-out date and what the user has (or hasn't) received. Frames the call around statutory obligation, not opinion.",
+      "priority": 1
+    },
+    {
+      "name": "Demand the itemization with receipts",
+      "when": "If no itemization received OR estimates not invoices were sent.",
+      "script": "Use `request_itemization`. Many landlords pad with estimates that never get spent — receipts force honesty.",
+      "priority": 2
+    },
+    {
+      "name": "Challenge wear-and-tear line by line",
+      "when": "Itemization in hand.",
+      "script": "Use `challenge_wear_and_tear`. Go through each line — paint, carpet, blinds, scuffs, minor holes. These are landlord costs of doing business, not tenant damages.",
+      "priority": 3
+    },
+    {
+      "name": "Counter pre-existing-condition charges with photos",
+      "when": "A charge is for damage the tenant believes existed at move-in.",
+      "script": "Use `challenge_pre_existing`. Move-in photos with timestamps win this argument almost every time. Send them by email AFTER the call as the paper trail.",
+      "priority": 4
+    },
+    {
+      "name": "Demand invoices on inflated repair charges",
+      "when": "A repair number looks padded.",
+      "script": "Use `challenge_inflated`. Many landlords mark up or invent repair costs; asking for the contractor's paid invoice often makes the charge disappear.",
+      "priority": 5
+    },
+    {
+      "name": "Set the next-step deadline",
+      "when": "Before ending the call.",
+      "script": "Use `set_deadline`. Specific dates create urgency. Without a deadline the landlord can let it drift past the statute of limitations.",
+      "priority": 6
+    },
+    {
+      "name": "Preserve the small-claims posture",
+      "when": "Landlord refuses to budge.",
+      "script": "Use `graceful_close_unresolved`. Naming small-claims signals seriousness without bluffing. Many landlords settle the moment they see a demand letter."
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept a partial refund in exchange for waiving the right to dispute the rest. Hold via `ask_operator`.",
+    "Do NOT agree to sign any release of claims on the phone.",
+    "Do NOT threaten small-claims as a bluff — only mention it as a real next step the user is willing to pursue.",
+    "Do NOT raise habitability or other lease disputes on this call. One topic per call keeps the record clean.",
+    "Do NOT accept verbal-only agreements about a refund. Get the new amount and refund date in writing (email is fine)."
+  ],
+  "success_signals": [
+    "Landlord agrees to remove or reduce specific charges.",
+    "Landlord agrees to send full itemization with paid invoices.",
+    "Landlord proposes a refund amount higher than original.",
+    "Landlord commits to a specific reissue date in writing."
+  ],
+  "failure_signals": [
+    "Landlord refuses to itemize.",
+    "Landlord stands on inflated charges with no invoices.",
+    "Landlord stops responding after the call.",
+    "Landlord claims charges that exceed the deposit and threatens to send the user to collections — note this and consult an attorney before responding."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the new refund amount, method, and date in writing within 24 hours. Operator should send a recap email immediately summarising the call.",
+    "on_failure": "Send a formal written demand letter (certified mail + email) citing the specific statute and the disputed charges. If unresolved within the demand-letter deadline, file in small-claims court. Consider a tenant attorney consult before filing if amounts are large.",
+    "follow_ups": [
+      "Operator sends recap email within 1 hour: call time, who spoke, what was promised or refused.",
+      "Send move-in / move-out photos as email attachments to support disputed items.",
+      "Calendar the response deadline; on the day of, escalate per failure-path if no response.",
+      "Research the jurisdiction's statutory bad-faith penalty — in some states it's 2x or 3x the wrongfully withheld amount."
+    ]
+  },
+  "required_user_info": [
+    "Original deposit amount, amount returned, amount disputed",
+    "Move-out date and the statutory deadline for return in the jurisdiction",
+    "Itemized statement (if any) and any receipts attached",
+    "Move-in and move-out photos / videos",
+    "Move-out walkthrough record (see `move-out-walkthrough`)",
+    "Lease copy showing deposit terms"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

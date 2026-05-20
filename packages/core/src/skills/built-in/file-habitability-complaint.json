@@ -1,0 +1,115 @@
+{
+  "id": "file-habitability-complaint",
+  "name": "File a Habitability Complaint with the City Housing Department",
+  "version": "1.0.0",
+  "category": "real-estate",
+  "tags": [
+    "habitability",
+    "code-enforcement",
+    "housing-department",
+    "inspection",
+    "tenant-rights",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the city or county housing / code-enforcement department to open an official habitability complaint after the landlord has failed to repair an urgent issue — opening an inspection record that preserves the tenant's legal posture for future rent-withholding, repair-and-deduct, or lease-break.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "Landlord has been notified (in writing — see `report-urgent-maintenance`) of a habitability issue and has either: ignored it past a reasonable deadline (often 24–72 hours for emergencies; days to weeks for non-emergency code issues), refused to repair it, or repaired it badly enough that the issue persists. Use this BEFORE rent-withholding or lease-break — the inspection record is the foundation for either move.",
+    "preconditions": [
+      "User has already reported the issue to the landlord IN WRITING (text or email) with a timestamp.",
+      "Landlord has either not responded, missed a stated deadline, or refused to repair.",
+      "User has documentation: photos, videos, the original report, any landlord response.",
+      "User has the name of the city / county housing department or code-enforcement agency. (If unknown, ask the operator to look it up first.)",
+      "User understands that an inspection may put the unit on a public record AND may prompt landlord retaliation (which is illegal in most places but does happen)."
+    ],
+    "estimated_call_duration_minutes": 18
+  },
+  "principles": [
+    "An inspection record is leverage — once the city has cited the unit, the landlord's repair obligation is no longer optional.",
+    "Be factual, not emotional. Code-enforcement officers take notes that become evidence; opinions get filtered out, dates and conditions do not.",
+    "Anti-retaliation laws exist in most US jurisdictions — landlords cannot legally raise rent, refuse to renew, or evict in response to a code complaint. Mention it on the call only if asked; do not threaten.",
+    "Get the complaint number, the inspector's name, and the expected inspection window before hanging up. Without those three, you have nothing to follow up on.",
+    "If a city offers an anonymous complaint option, ask the operator first — anonymous filings sometimes have weaker enforcement and weaker retaliation protections than named ones."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to file a habitability complaint against my landlord. The address is [full address, unit number]. The issue is [one-sentence description]. I reported it to the landlord in writing on [date] and the repair hasn't happened.",
+    "describe_issue": "Specifically, [issue]. It started on [date]. The landlord was notified by [text/email] on [date], and as of today it's still [unrepaired / worsening / partially fixed and still failing].",
+    "ask_about_process": "Can you walk me through what happens next — when an inspector comes out, whether I need to be home, and what the timeline is for the landlord to fix it after a citation?",
+    "ask_for_complaint_number": "Could I get the complaint or case number for this so I can refer to it in any follow-up?",
+    "ask_about_retaliation_protection": "If the landlord retaliates — like trying to raise rent or non-renew — is there a separate complaint I should file at that point?",
+    "ask_about_anonymous_option": "Is filing anonymously an option, and does it change how the complaint is enforced?",
+    "graceful_close": "Thank you. To confirm: case number [#], inspector or contact [name], inspection window [dates], next step on my side is [action]. I'll be available for the inspection."
+  },
+  "tactics": [
+    {
+      "name": "Open with the address, the issue, and the prior-notice date",
+      "when": "First substantive turn.",
+      "script": "Use the `opener`. The prior-notice date is the single most important fact — it proves the landlord had a chance to fix it.",
+      "priority": 1
+    },
+    {
+      "name": "State facts in date order",
+      "when": "When asked to describe what happened.",
+      "script": "Use `describe_issue`. Walk it chronologically: when it started, when reported, what landlord said or didn't say, current condition. Stick to facts.",
+      "priority": 2
+    },
+    {
+      "name": "Pin the process",
+      "when": "After the complaint is logged.",
+      "script": "Use `ask_about_process`. Find out: inspection window, whether the tenant must be present, what the landlord's repair deadline becomes after citation, and what happens if the landlord doesn't comply.",
+      "priority": 3
+    },
+    {
+      "name": "Capture the case number",
+      "when": "Before ending the call.",
+      "script": "Use `ask_for_complaint_number`. Get the number, the inspector's name (if assigned), and the direct line for follow-up.",
+      "priority": 4
+    },
+    {
+      "name": "Pre-arm the retaliation complaint",
+      "when": "If the user has expressed concern about landlord retaliation.",
+      "script": "Use `ask_about_retaliation_protection`. Find out the path before retaliation happens — knowing it exists makes it easier to spot the moment it starts.",
+      "priority": 5
+    }
+  ],
+  "boundaries": [
+    "Do NOT exaggerate or embellish the condition. Inspectors will see the unit themselves and a credibility loss hurts the entire case.",
+    "Do NOT promise to withhold rent in the same call. Rent-withholding has separate legal procedure — handle via `ask_operator` after a tenant attorney consult.",
+    "Do NOT name other tenants or share their issues without their permission.",
+    "Do NOT make claims about the landlord's other properties or other tenants — only your unit.",
+    "Do NOT discuss settlement amounts, lawsuits, or attorney involvement on the call. Code enforcement is a parallel track, not a negotiation venue."
+  ],
+  "success_signals": [
+    "Complaint accepted, case number issued, inspector assigned.",
+    "Inspection window is within days, not weeks (true habitability issues are usually prioritised).",
+    "Officer explains the citation-and-cure timeline clearly.",
+    "Anti-retaliation protections are confirmed."
+  ],
+  "failure_signals": [
+    "Department says the issue isn't in their jurisdiction (call back to ask which agency handles it).",
+    "Officer is dismissive of a clear habitability issue — ask politely for a supervisor.",
+    "No case number issued — the complaint isn't real yet.",
+    "Inspection window quoted is weeks out for a true emergency (heat, water, sewage) — ask about expedited review."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm case number, inspector name (if known), inspection window, what the tenant must do (be home, document conditions, etc.), and the post-citation landlord timeline. Report all of this to the operator.",
+    "on_failure": "Ask which agency DOES handle it (housing inspection, public health, fire marshal, building department all overlap) and call that next. Report the runaround to the operator.",
+    "follow_ups": [
+      "Operator emails landlord a copy of the complaint case number for the record (do this ONLY after talking to a tenant attorney if retaliation is a concern).",
+      "Calendar the inspection window — tenant must be reachable.",
+      "Photo / video the unit conditions the morning of the inspection so the timestamped record matches what the inspector sees.",
+      "After the inspection, request the inspector's written report — operator should follow up if not received within 5 business days."
+    ]
+  },
+  "required_user_info": [
+    "Full unit address and unit number",
+    "City / county and the housing or code-enforcement department name + phone number",
+    "Date the issue started and date the landlord was notified in writing",
+    "Copy of the written notification (text screenshot, email)",
+    "Photos / video / readings documenting the condition",
+    "Whether the user is concerned about retaliation"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

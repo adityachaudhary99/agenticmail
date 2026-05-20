@@ -1,0 +1,159 @@
+{
+  "id": "walkaway-threats",
+  "name": "Walk-Away Threats: When They're Real, When They're a Fold",
+  "version": "1.0.1",
+  "category": "negotiation",
+  "tags": ["BATNA", "walkaway", "ultimatum", "leverage", "phone-call", "real-time"],
+  "description": "Threatening to leave a negotiation is leverage only if (a) you have a real BATNA and (b) you are psychologically prepared to actually walk. False walks teach the counterparty you bluff and destroy future leverage. This skill teaches how to set the line, deliver the walk, and recover when one or the other side actually leaves.",
+  "disclaimer": "Walking away is a high-cost, sometimes-irrevocable move. Do not deploy without explicit user authorization. Some counterparties will not call you back. Others will treat your return as full surrender. Walks should be rare and considered.",
+  "context": {
+    "when_to_use": "Late-stage stalled negotiation where (a) you have a credible BATNA, (b) the gap is large enough to justify the walk, and (c) you would genuinely prefer the BATNA to a bad deal. Also: when the counterparty has issued an ultimatum and you must respond.",
+    "preconditions": [
+      "User has explicitly authorized walking away.",
+      "BATNA is real and quantified — not just 'I'll keep looking'.",
+      "You are emotionally prepared to leave and mean it.",
+      "You have NOT signaled urgency or attachment earlier in the call."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "A walk is leverage only if it is credible. Credibility = real BATNA × visible composure × stated line.",
+    "Soft walks ('if we can't get to X, I'll have to pass — not a threat, just being honest about my constraints') outperform hard walks ('this is my final offer or I'm out'). Soft walks preserve the relationship and let the counterparty save face.",
+    "Never ultimate in anger. The most credible walks are calm, almost regretful — they signal 'I have somewhere else to go' more than 'I'm bluffing for effect'.",
+    "The line you draw must be specific and falsifiable. 'I need a better deal' is not a line. 'I need to be at $X with N-day payment terms' is a line.",
+    "Once the line is drawn, you must HOLD it. Drawing a line and then crossing it yourself trains the counterparty that every line is negotiable — destroying all future lines.",
+    "If you walk, walk cleanly. No parting shots, no 'you'll regret this', no last-minute concessions on the way out. Clean walks come back. Messy walks don't.",
+    "When THEY walk, do not chase. The counterparty who returns after walking gives you 80% of what you wanted. The counterparty you chase gives you 20%."
+  ],
+  "phrases": {
+    "soft_walk_signal": "I want to make this work — and I will if we can get to [X]. But if we can't, I'll need to pass and explore other options. Not as a threat, just being honest about where I am.",
+    "draw_the_line": "I can do [A], [B], and [C]. I can't do [D] — that's a line for me. If [D] is non-negotiable on your end, we may not have a deal.",
+    "respond_to_ultimatum": "I hear that's where you are. Is that final-final, or final-for-today?",
+    "ask_for_BATNA_check": "Before we both walk, let me ask: what's your best alternative if this doesn't close?",
+    "graceful_exit": "Thanks for the time. We weren't able to bridge it today, but I'd like to leave the door open. Can I follow up in [N] weeks?",
+    "they_called_my_bluff_recover": "OK, you're right that I want this to work — let me find another angle. What if [creative move]?",
+    "they_walked_clean": "I understand. Best of luck with [next step]. If anything changes, you have my number.",
+    "they_came_back_calmly": "Good to hear from you. Where do you want to pick up?"
+  },
+  "tactics": [
+    {
+      "name": "Set the line BEFORE you signal walk",
+      "when": "Before any walk threat — usually early in the call.",
+      "script": "Use `draw_the_line`. Specific. Falsifiable. Said calmly. Sets expectations and saves you from having to walk later if they hit the line.",
+      "priority": 1
+    },
+    {
+      "name": "Soft walk first, hard walk only if needed",
+      "when": "After multiple stalled exchanges and the line you drew is being pushed.",
+      "script": "Use `soft_walk_signal`. Gives counterparty a chance to find a path without losing face — often produces movement.",
+      "priority": 2
+    },
+    {
+      "name": "Test their ultimatum before treating it as final",
+      "when": "Counterparty says 'take it or leave it' or similar.",
+      "script": "`respond_to_ultimatum`: 'Is that final-final, or final-for-today?' Said warmly. Almost always reveals room.",
+      "priority": 3
+    },
+    {
+      "name": "If you walk, walk clean",
+      "when": "Line is being crossed and your BATNA is genuinely better.",
+      "script": "Use `graceful_exit`. No anger. No final speech. Door stays open. Leave with composure.",
+      "priority": 4
+    },
+    {
+      "name": "If they walk, don't chase",
+      "when": "Counterparty terminates the call after your hold.",
+      "script": "Use `they_walked_clean`. Calmly close. 60% return within 48 hours. The 40% who don't were never going to give you a deal you wanted.",
+      "priority": 5
+    },
+    {
+      "name": "If they call your bluff and you weren't really walking, recover cleanly",
+      "when": "You threatened a walk; they called it; you're not actually willing to leave.",
+      "script": "Use `they_called_my_bluff_recover`. Don't double down — that just digs the hole. Acknowledge and pivot to a new angle. You've lost some leverage but the deal is salvageable."
+    }
+  ],
+  "decision_tree": {
+    "description": "Walk decisions are existential — they reshape the call entirely. Run this carefully. Each branch has long-tail consequences.",
+    "branches": [
+      {
+        "if_you_hear": "Counterparty hits or crosses your stated line.",
+        "interpretation": "Decision point. You said this was a line; if you don't hold it, the line never existed.",
+        "say": "If your BATNA is real → `soft_walk_signal` first, then `graceful_exit` if no movement. If your BATNA is weak → admit it and pivot to multi-issue (see `08-multi-issue-tradeoffs`).",
+        "do_not": "Do not cross your own line in the same call you drew it. That nukes your credibility for the rest of the relationship."
+      },
+      {
+        "if_you_hear": "Counterparty issues an ultimatum: 'take it or leave it.'",
+        "interpretation": "Almost always not final-final. Test it.",
+        "say": "`respond_to_ultimatum`: 'Is that final-final, or final-for-today?'",
+        "do_not": "Do not accept on the spot. Do not walk on the spot. Test first."
+      },
+      {
+        "if_you_hear": "Counterparty says 'I'm going to have to walk away from this.'",
+        "interpretation": "Soft walk signal from them. They want you to find movement.",
+        "say": "Acknowledge calmly. Offer a small move OR introduce a new dimension (see `08-multi-issue-tradeoffs`). Or call it: 'I hear you — I'd hate to lose this, but I also can't go past [line]. Can you check with [manager / system] one more time?'",
+        "do_not": "Do not panic-concede. The soft walk is theater 70% of the time."
+      },
+      {
+        "if_you_hear": "You realize you're about to walk over a small gap.",
+        "interpretation": "Walks have high transaction cost. Confirm the gap is worth it.",
+        "say": "Buy time: 'Let me think about this for a moment.' Compute: gap × probability of BATNA succeeding × value of relationship. If gap × ~ relationship value, accept and move on.",
+        "do_not": "Do not walk over $50 from a $5,000 deal because your line was a round number. Lines are tactical, not sacred."
+      },
+      {
+        "if_you_hear": "You walked, they called back within hours.",
+        "interpretation": "You won. They will likely give 80% of what you asked for.",
+        "say": "`they_came_back_calmly` — no gloating, no 'I told you so'. Pick up calmly.",
+        "do_not": "Do not punish them with new asks. Take the win cleanly."
+      },
+      {
+        "if_you_hear": "You walked, 48 hours pass, no call.",
+        "interpretation": "Either they had a real wall OR they're testing your patience too.",
+        "say": "Decide: re-engage gently ('wanted to check if anything's shifted?') OR pursue BATNA fully. Re-engaging is fine if you have the patience to be soft about it.",
+        "do_not": "Do not crawl back with desperate concessions. Re-engagement should be light, not pleading."
+      },
+      {
+        "if_you_hear": "Counterparty calls YOUR bluff: 'I'm sorry to hear that. Best of luck.'",
+        "interpretation": "They believed you and let you go. Your move now.",
+        "say": "If BATNA is real → leave cleanly. If BATNA is weak → recover with `they_called_my_bluff_recover` — but expect to give up some leverage to come back to the table.",
+        "do_not": "Do not pretend the bluff was real if it wasn't. They'll see through it on the next call."
+      },
+      {
+        "if_you_hear": "Mid-call gridlock and you have no real BATNA.",
+        "interpretation": "You CANNOT credibly walk. A walk threat would be a lie.",
+        "say": "Don't threaten. Pivot to multi-issue trading (see `08-multi-issue-tradeoffs`) or schedule a callback to develop BATNA off-call.",
+        "do_not": "Do not bluff a walk you can't execute. Cost of being called is much higher than cost of slowing down."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT threaten a walk without user authorization AND a real BATNA.",
+    "Do NOT walk in anger. Walks must be calm — anger destroys the return option.",
+    "Do NOT use a walk as a manipulation tactic when you intend to stay. Bluffs caught are catastrophic.",
+    "Do NOT walk and then concede mid-walk ('OK, fine, just $X more'). That's worse than not walking at all.",
+    "Do NOT chase a counterparty who walked. Wait 48 hours minimum before re-engaging, and only if it's light-touch."
+  ],
+  "success_signals": [
+    "Counterparty offers movement immediately after your soft walk signal.",
+    "Counterparty escalates to supervisor after you draw the line — supervisor often has authority.",
+    "You walked; counterparty called back within 48 hours.",
+    "Your line held and counterparty came up to meet it.",
+    "Counterparty respects your line and proposes alternate dimensions to close the gap."
+  ],
+  "failure_signals": [
+    "Your line gets crossed and you're not willing to walk — you've lost credibility for future asks.",
+    "You walked and 7 days pass with no contact — BATNA was probably weaker than you thought; review.",
+    "Counterparty called your bluff and you concede on the way back — expect worse next time.",
+    "Counterparty walked permanently after your hold — re-evaluate whether the line was correctly calibrated."
+  ],
+  "exit_strategy": {
+    "on_success": "Once line is held and counterparty meets it, close confidently. Get terms in writing.",
+    "on_failure": "If walk doesn't produce return AND BATNA isn't viable, debrief: did you signal urgency? Was the line too aggressive? Adjust before next negotiation."
+  },
+  "required_user_info": [
+    "EXPLICIT authorization to walk away.",
+    "A real, quantified BATNA — 'what we do if this deal doesn't happen'.",
+    "Lines the user is unwilling to cross (specific numbers / terms).",
+    "User's tolerance for the counterparty actually walking and not returning."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

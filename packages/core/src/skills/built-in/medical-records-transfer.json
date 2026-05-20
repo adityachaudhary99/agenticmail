@@ -1,0 +1,138 @@
+{
+  "id": "medical-records-transfer",
+  "name": "Request Medical Records or Chart Transfer Between Providers",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "medical-records",
+    "hipaa",
+    "release-of-information",
+    "chart-transfer",
+    "phone-call",
+    "healthcare"
+  ],
+  "description": "Call a healthcare provider's medical records / ROI (Release of Information) department to request the operator's chart be sent to themselves, to a new provider, to a specialist, or to a legal/administrative recipient — within HIPAA timelines and without paying inflated copy fees.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator is switching providers, seeing a specialist who needs prior records, applying for disability/insurance/legal use, or just wants a personal copy. The friction is real but the law is on the operator's side: under HIPAA, patients have a right to their records within 30 days (sometimes extendable to 60).",
+    "preconditions": [
+      "Operator's name (current and any prior names on the chart), DOB (read-only).",
+      "Approximate date range of care at the source provider.",
+      "Exact name of the source provider/clinic/hospital and address/fax/portal of their medical-records department.",
+      "Exact destination: another provider (with name, fax/portal, NPI), the operator themselves (email/portal/mailing address), or a third party (with operator's explicit authorization).",
+      "Scope: full chart, specific date range, specific record types (labs, imaging, notes, immunizations), or specific encounters.",
+      "Whether operator has already signed and submitted a Release of Information form — they almost always need to."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Under HIPAA, providers must respond to a patient records request within 30 days (one 30-day extension allowed with written notice). Knowing this turns 'we'll get to it' into 'I'd like to note the request date for the 30-day clock'.",
+    "Records-direct-to-another-provider is usually free; records-to-the-patient sometimes has a per-page fee. Have the records go provider-to-provider when the destination is another doctor.",
+    "Electronic format is your right. Under HIPAA's right-of-access rule and the 21st Century Cures Act, you can request records electronically in the format the provider keeps them (PDF, CCDA, etc.). Don't accept 'we only mail paper' as a final answer for an EMR-based practice.",
+    "The ROI department is separate from the front desk. If front desk says they can't help, that doesn't mean ROI can't.",
+    "Records can be lost in transit (fax misroute, portal mismatch, wrong NPI). Always verify with the DESTINATION provider that they actually received and ingested the chart — 'sent' is not 'received'."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling on behalf of [Operator]. We need to request a copy of their medical records / chart transfer. Could you get me to your Medical Records or Release of Information department?",
+    "state_request": "We need [scope: full chart / date range / record type] for [Operator], DOB [as provided], from approximately [year range]. The destination is [recipient].",
+    "ask_about_roi_form": "What's the Release of Information form process? Is it digital through the portal, or do you need a signed PDF? Once it's signed, where does it go?",
+    "request_electronic_format": "We'd like the records delivered electronically — PDF or CCDA preferred. Can you send them through [destination portal / secure email / direct messaging]?",
+    "invoke_hipaa_clock": "I want to note today's date as the request submission so we have the HIPAA 30-day timeline on record. Could you give me a tracking or request number?",
+    "ask_about_fees": "What fees, if any, apply? For provider-to-provider transfer, fees are usually waived — can you confirm?",
+    "ask_about_special_records": "Are mental-health notes, substance-use treatment notes, HIV results, or genetic information held separately? Those sometimes need additional authorization — what's the process?",
+    "destination_verify": "Just to confirm the destination: that's [Recipient Name], at [fax / portal / address / NPI]. Once you send, how will I know it went out?",
+    "stall_research": "One moment — let me pull up the destination provider's contact info.",
+    "verify_readback": "So: records request for [Operator] from [source provider] to [destination], scope [X], format [electronic], submission date [today], request number [Y], fee [$Z or waived], expected delivery within [N] days. Did I get that right?",
+    "graceful_close": "Thank you. I'll follow up with the destination provider in [N] days to confirm receipt. Have a good day."
+  },
+  "tactics": [
+    {
+      "name": "Get to ROI, not the front desk",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. The front desk often deflects with 'fill out a form'; the ROI team knows the actual process. Don't get stuck at the wrong queue.",
+      "priority": 1
+    },
+    {
+      "name": "Be specific about scope to avoid delay",
+      "when": "Describing what records you need.",
+      "script": "Use `state_request`. 'Full chart' takes longer to process than 'visit notes + labs from 2022-2024'. If operator only needs a slice, ask for the slice.",
+      "priority": 2
+    },
+    {
+      "name": "Request electronic format explicitly",
+      "when": "ROI starts describing process.",
+      "script": "Use `request_electronic_format`. Under federal rules, the operator has a right to electronic delivery if the provider keeps records electronically. Paper-by-mail is slow and lossy.",
+      "priority": 3
+    },
+    {
+      "name": "Start the HIPAA clock with a timestamp + request number",
+      "when": "Before ending the call.",
+      "script": "Use `invoke_hipaa_clock`. Get a request number and submission date on record. If the 30-day window lapses, this is the evidence used to escalate.",
+      "priority": 4
+    },
+    {
+      "name": "Surface special-category records up front",
+      "when": "Operator has had behavioral health, substance use treatment, HIV testing, or genetic testing at this provider.",
+      "script": "Use `ask_about_special_records`. These categories often have separate authorization requirements (42 CFR Part 2 for SUD, state laws for mental health, etc.). Missing the separate auth = these records get silently omitted.",
+      "priority": 5
+    },
+    {
+      "name": "Push back on inflated fees",
+      "when": "Provider quotes a per-page fee for patient-direct records.",
+      "script": "HIPAA limits patient-records fees to 'reasonable, cost-based' — generally meaning labor + supplies, often under $25 for electronic delivery regardless of page count. If quoted hundreds of dollars, ask for the rate sheet and reference the HHS guidance. Provider-to-provider transfers are typically free.",
+      "priority": 6
+    },
+    {
+      "name": "Pause and re-verify if 'we don't have records that old'",
+      "when": "Provider claims records have been purged.",
+      "script": "State retention laws vary (5-10+ years typical for adult records, longer for minors). If the date range falls within the legal retention window and the provider claims no records, ask for written confirmation of destruction date — that's a chain-of-custody issue, not just a 'no'.",
+      "priority": 7
+    },
+    {
+      "name": "Verify receipt at the destination",
+      "when": "After records are reportedly sent.",
+      "script": "Use `destination_verify`. Then call the destination 3-5 business days later to confirm they actually received and ingested. Lost-in-transit records are common.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to financial responsibility on the operator's behalf. The Release of Information form must be signed by the operator personally — surface to `ask_operator` if a signature is requested.",
+    "NEVER request that records be sent to a third party (lawyer, insurance, employer, family member) without explicit, documented operator authorization for THAT specific recipient.",
+    "NEVER agree to fees above the HIPAA reasonable-cost standard without operator approval.",
+    "NEVER characterize the operator's records contents during the call — you have no business reading the chart on this call. Records move sealed."
+  ],
+  "success_signals": [
+    "ROI department reached and request submitted with a tracking/request number.",
+    "Electronic delivery format agreed.",
+    "Fee waived (provider-to-provider) or clearly disclosed (patient-direct).",
+    "Special-category authorizations identified if applicable.",
+    "Estimated delivery within HIPAA's 30-day window."
+  ],
+  "failure_signals": [
+    "Provider refuses electronic delivery and insists on mail-only for what's clearly EMR data.",
+    "Fee quoted is inconsistent with HIPAA's reasonable-cost rule and provider won't budge.",
+    "Provider claims records purged within retention window without written confirmation.",
+    "Special-category records exist but operator hasn't authorized the additional release."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm: source, destination, scope, format, submission date, tracking number, fee, ETA. Operator knows exactly when to expect records and how to verify.",
+    "on_failure": "Politely close. Report the specific blocker: ROI form needs operator's wet signature, fee dispute, special-category authorization missing, or transit issue. Present options.",
+    "follow_ups": [
+      "Call the destination 5 business days later to confirm receipt.",
+      "If the 30-day HIPAA window approaches with no records, escalate in writing and reference the tracking number.",
+      "If escalation fails, file a HIPAA right-of-access complaint with HHS Office for Civil Rights."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name (incl. prior names if chart predates a name change), DOB (read-only)",
+    "Source provider name, ROI contact info, approximate date range of care",
+    "Destination: name, fax/portal/address/NPI",
+    "Scope: full chart / date range / record types",
+    "Whether ROI form has been signed and submitted",
+    "Whether special-category records (mental health, SUD, HIV, genetic) are in scope and authorized"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,159 @@
+{
+  "id": "read-vocal-tone",
+  "name": "Reading Vocal Tone for Movement, Resistance, and Sincerity",
+  "version": "1.0.1",
+  "category": "negotiation",
+  "tags": ["voice", "tone", "paralinguistics", "real-time", "phone-call", "voss"],
+  "description": "On a voice call, content is a fraction of the signal. Pitch, pace, breath, throat-clearing, hesitation, and inflection carry the rep's real position. This skill teaches what to listen FOR and what each pattern means tactically.",
+  "disclaimer": "Vocal cues are probabilistic, not deterministic. A throat-clear before a number suggests uncertainty about that number, but it could also be allergies. Treat cues as Bayesian updates, not proofs.",
+  "context": {
+    "when_to_use": "Any voice negotiation. Most critical during numeric exchanges (price, term, fee) where the rep's tone reveals whether the number is firm or soft.",
+    "preconditions": [
+      "Voice channel with good audio quality — bad VOIP destroys paralinguistic signal.",
+      "You can attend to tone WITHOUT losing the content thread. This requires practice; if you're new, take notes.",
+      "You're not so anxious that your own tone is leaking — your tone affects theirs (mirror neurons)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Voss's three voices to DEPLOY: (1) Late-night FM DJ voice — slow, downward inflection, calm. Use to project authority and de-escalate. (2) Positive/playful — default 80% of the time. (3) Direct/assertive — rare, brief, for hard nos and hard limits only.",
+    "Pitch RISING at the end of a statement = uncertainty, even if the words are confident. The rep saying 'the price is two hundred?' (with rise) is asking your reaction.",
+    "Pitch FALLING firmly = conviction or finality. Falling-pitch 'no' is real; rising-pitch 'no' has room.",
+    "Pace ACCELERATING during a script = defensive recital. The rep wants to get through it and onto closure.",
+    "Pace SLOWING into a number = thinking, calculating, or fabricating. Slow + 'uhhh, let me see' before a number often means that number has 10-20% flex.",
+    "Throat-clearing, sigh, audible breath = state change. The rep just shifted internal position — could be giving in, could be hardening. The NEXT sentence reveals which.",
+    "Silence from the rep is data. 2-3 seconds = thinking; 5+ seconds = either consulting a system OR they want YOU to fill the silence. Don't."
+  ],
+  "phrases": {
+    "match_their_dj_voice": "(Lower your pitch, slow down to 60% pace, downward inflection.) 'I hear you. Let's see what we can do here.'",
+    "match_their_playful": "(Slight upward energy, smile in your voice.) 'Ha, fair enough — let me think for a second.'",
+    "break_their_script": "Quick question — off-script for a second — what would you do in my shoes?",
+    "address_hesitation": "I can hear you weighing this — what would help you feel more certain?",
+    "address_finality": "It sounds like that's a hard line for you. Can you help me understand where it comes from?",
+    "address_acceleration": "We can slow down a bit — I want to make sure I'm tracking with you."
+  },
+  "tactics": [
+    {
+      "name": "Default to the FM DJ voice in tense moments",
+      "when": "Rep raises pitch, accelerates pace, or audibly stresses.",
+      "script": "Drop YOUR pitch, slow YOUR pace. Within 30 seconds the rep's tone often syncs to yours (paralinguistic mirroring). Use `match_their_dj_voice`.",
+      "priority": 1
+    },
+    {
+      "name": "Mirror playful with playful",
+      "when": "Rep is chatty, light, joking.",
+      "script": "Match it — be warm and a little playful. People discount your asks by 10-20% when the call feels warm. Don't over-do it; you're not friends, but you're not adversaries either.",
+      "priority": 2
+    },
+    {
+      "name": "Use direct/assertive voice sparingly",
+      "when": "You need to signal a true limit ('I cannot do month-to-month at that rate, full stop.').",
+      "script": "Drop to lower pitch, sharper pace, no hedging language. Use ONCE per call max — overuse corrodes the FM DJ default.",
+      "priority": 3
+    },
+    {
+      "name": "Listen for the throat-clear before the number",
+      "when": "Rep is about to deliver a price or term.",
+      "script": "If you hear throat-clear, sigh, or 'uhhh' before the number — that number has flex. Mirror it back as a question (see `04-mirror-technique`) and wait.",
+      "priority": 4
+    },
+    {
+      "name": "Break the scripted cadence",
+      "when": "Rep is delivering a long monotone block with no breaks.",
+      "script": "At the next breath, use `break_their_script`. Interrupting the script gently breaks the rep out of compliance mode and into problem-solving mode.",
+      "priority": 5
+    }
+  ],
+  "decision_tree": {
+    "description": "Run this WHILE the rep is talking. Listen for paralinguistic patterns and route. The decision is made in the moment, not on review.",
+    "branches": [
+      {
+        "if_you_hear": "Rising pitch at the end of a 'no' or refusal.",
+        "interpretation": "Soft no. Uncertainty. There's room.",
+        "say": "Calibrated question: 'What would need to change for that to work?'",
+        "do_not": "Do not accept the no as final. Pitch told you it wasn't."
+      },
+      {
+        "if_you_hear": "Falling pitch at the end of a 'no'.",
+        "interpretation": "Hard no. Conviction.",
+        "say": "Either pivot to a different dimension (see `08-multi-issue-tradeoffs`) or escalate authority.",
+        "do_not": "Do not press the same lever. The rep is firm on this specific ask."
+      },
+      {
+        "if_you_hear": "Pace accelerating, especially during the rep's pricing recital.",
+        "interpretation": "Scripted, defensive. Trying to get through it.",
+        "say": "`break_their_script`: 'Quick question — off-script for a second…'",
+        "do_not": "Do not let the script finish on its own terms. The script's design is to terminate negotiation."
+      },
+      {
+        "if_you_hear": "Pace slowing, with 'uhhh' or 'let me see' before a number.",
+        "interpretation": "Either calculating or improvising. That number has flex.",
+        "say": "Mirror the number: '$X?' Then silence.",
+        "do_not": "Do not assume the number is a system-derived hard limit. The hesitation tells you it isn't."
+      },
+      {
+        "if_you_hear": "Audible sigh or deep exhale.",
+        "interpretation": "State change. Frustration, surrender, or recalibration.",
+        "say": "Label it: 'It sounds like that's a tough position to be in.' Then silence.",
+        "do_not": "Do not push immediately. The sigh is an opening — but only if you respect it."
+      },
+      {
+        "if_you_hear": "Rep says 'honestly' / 'to be honest' / 'I'll level with you'.",
+        "interpretation": "Either real disclosure incoming OR a softening before a no. Listen carefully to the next sentence.",
+        "say": "Acknowledge briefly ('thanks for saying that') and listen.",
+        "do_not": "Do not interrupt. The next 10 seconds are high-information."
+      },
+      {
+        "if_you_hear": "Rep's voice flattens — monotone, all energy gone.",
+        "interpretation": "Disengagement. Either tired, defeated, or has decided to stonewall.",
+        "say": "Inject warmth: 'I know I've been pushing — what would make this easier on your end?'",
+        "do_not": "Do not continue with the same tone. Mirror the flatness and the call dies."
+      },
+      {
+        "if_you_hear": "Sudden warmth or playfulness from a previously stiff rep.",
+        "interpretation": "Genuine engagement. They've decided to help you.",
+        "say": "Match the warmth. Land your ask soon while the window is open.",
+        "do_not": "Do not stay stiff out of professional habit — meet them where they are."
+      },
+      {
+        "if_you_hear": "Long silence (5+ seconds) after your ask, no typing/system sounds.",
+        "interpretation": "They are thinking, weighing, or hoping you'll fill the silence first.",
+        "say": "Nothing. Hold for 12 seconds.",
+        "do_not": "Do not soften your ask in the silence. Self-discounting is the most common amateur mistake."
+      },
+      {
+        "if_you_hear": "Long silence with audible typing or clicking.",
+        "interpretation": "They are consulting a system. Genuine work. Good sign.",
+        "say": "Nothing. Wait. Maybe gentle 'take your time'.",
+        "do_not": "Do not interrupt the system look-up — they may be finding a discount code."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT over-claim cue interpretation. Cues are probabilistic. Hold them lightly.",
+    "Do NOT mirror an angry tone — that escalates. Mirror calm, mirror warmth; do not mirror hostility.",
+    "Do NOT use the direct/assertive voice more than once per call.",
+    "Do NOT comment on the rep's tone aloud unless they bring it up first ('you sound stressed?' is patronizing)."
+  ],
+  "success_signals": [
+    "Rep's pitch drops toward your FM DJ baseline within 60 seconds of you using it.",
+    "Rep's pace slows to match yours.",
+    "Rep starts using disclosure markers ('honestly', 'between us').",
+    "Rep's voice warms after extended labeling — sincere engagement.",
+    "Rep audibly hesitates before a number you'd like to be flexible — and it is."
+  ],
+  "failure_signals": [
+    "Rep's pitch keeps rising despite your calm tone — they may be in a real bind; back off.",
+    "Rep flattens to monotone and stays there — disengaged; consider escalation or callback.",
+    "You can't hear the cues — bad audio. Switch to a better line if possible."
+  ],
+  "exit_strategy": {
+    "on_success": "Once tone is synchronized and warm, land your ask. Tone-aligned asks succeed at much higher rates.",
+    "on_failure": "If you cannot establish tonal alignment in 5-10 minutes, the rep may have been instructed to maintain affect-neutral posture. Pivot to written follow-up where tone is less relevant."
+  },
+  "required_user_info": [
+    "User's natural speaking pace and pitch — for coaching them into the FM DJ voice if they are operating the call.",
+    "Audio quality of the line."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

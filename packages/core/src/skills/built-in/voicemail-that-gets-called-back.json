@@ -1,0 +1,114 @@
+{
+  "id": "voicemail-that-gets-called-back",
+  "name": "Leave a Voicemail That Actually Gets Called Back",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "voicemail",
+    "cold-call",
+    "callback",
+    "phone-call",
+    "first-touch",
+    "outreach-sales"
+  ],
+  "description": "When the agent reaches a target's voicemail on a first or early-stage outreach call, leave a message that produces a callback — short, specific, low-pressure, and ending with a clean reason to call back.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "Agent has placed an authorised outreach call and the line has gone to the target's voicemail. The operator wants a callback (not just to 'have left a message').",
+    "preconditions": [
+      "Operator has authorised this contact attempt specifically.",
+      "Agent has a real, specific reason for the call — not a generic 'wanted to connect'.",
+      "Agent has a callback number that will be answered or routed sensibly.",
+      "Agent knows whether to leave the operator's name, the agent's name, or both."
+    ],
+    "estimated_call_duration_minutes": 1
+  },
+  "principles": [
+    "Under 30 seconds. Long voicemails get deleted at the 20-second mark — every word past that hurts you.",
+    "The hook is in the first sentence. State who the call is about and why it might matter to them, immediately.",
+    "Specificity over polish. 'About the Hartwell contract' beats 'about a business opportunity' every time.",
+    "Give one clean reason to call back, not a menu. Multiple options = decision fatigue = no callback.",
+    "Repeat the callback number twice — once early, once at the end. Recipients listen back to capture digits.",
+    "Sound like a human leaving a message for one person, not a script being read at a list."
+  ],
+  "phrases": {
+    "opener_referral": "Hi [target first name], this is [agent name] calling on behalf of [operator name]. [Referrer name] suggested I reach out about [specific topic].",
+    "opener_prior_touch": "Hi [target first name], it's [agent name] from [operator]'s office — following up on [specific prior thing: your reply / your post / our exchange at X].",
+    "opener_cold_warm": "Hi [target first name], this is [agent name] calling for [operator name]. We work on [one-sentence what], and [specific reason this person in particular].",
+    "the_ask": "Wanted to ask you one quick question — best to do it live for two minutes. My number is [number], again that's [number].",
+    "soft_close": "No rush, no pitch — if it's not relevant, I'd rather know so I'm not bothering you. Thanks [name], talk soon."
+  },
+  "tactics": [
+    {
+      "name": "Open with their name, then yours",
+      "when": "First 3 seconds of the voicemail.",
+      "script": "Say the target's first name first. People listen harder when they hear their own name at the start.",
+      "priority": 1
+    },
+    {
+      "name": "State the one specific reason in sentence two",
+      "when": "Immediately after the opener.",
+      "script": "Use the most specific anchor you have: a referrer, a prior interaction, a public post they made, a customer they have in common. Generic = delete.",
+      "priority": 2
+    },
+    {
+      "name": "Ask one question, not three",
+      "when": "Middle of the voicemail.",
+      "script": "Use the `the_ask` phrase. Curiosity is the engine — give them a clean question to come back to, not a sales summary.",
+      "priority": 3
+    },
+    {
+      "name": "Number twice, slowly",
+      "when": "Toward the end.",
+      "script": "Read the callback number with deliberate pauses between groups. Repeat it. Recipients are often writing while they listen.",
+      "priority": 4
+    },
+    {
+      "name": "Out with a permission-giver",
+      "when": "Closing sentence.",
+      "script": "Use `soft_close`. Telling them it's OK to say no makes them more likely to call back. Pressure compresses the funnel.",
+      "priority": 5
+    },
+    {
+      "name": "Leave at most two voicemails per cycle",
+      "when": "Deciding whether to leave a voicemail at all on attempt N.",
+      "script": "Voicemail #1 is welcomed. Voicemail #2 (3-5 days later, only if no response) is acceptable. Voicemail #3 reads as harassment — switch channel instead."
+    }
+  ],
+  "boundaries": [
+    "Do NOT leave voicemails on consecutive days — minimum 2-3 business days between attempts.",
+    "Do NOT fabricate urgency ('time-sensitive', 'closing today') that isn't real.",
+    "Do NOT pretend you've spoken before if you haven't.",
+    "Do NOT leave a voicemail that name-drops a referrer without the referrer's permission.",
+    "Do NOT ramble. If you find yourself past 30 seconds, hang up and re-record (most voicemail systems allow it — press # or *)."
+  ],
+  "success_signals": [
+    "Target calls back within 24-72 hours.",
+    "Target replies via email referencing the voicemail.",
+    "Target's assistant calls back to schedule.",
+    "Recorded greeting confirms you reached the right person (not a wrong number)."
+  ],
+  "failure_signals": [
+    "Two voicemails left, no response, no other channel response in 10 business days.",
+    "Voicemail box is full (target is unreachable this way — switch channel).",
+    "Number rings to a generic shared mailbox (your message will be lost — try the direct dial or email).",
+    "Recorded greeting says 'this is the wrong person' / outdated."
+  ],
+  "exit_strategy": {
+    "on_success": "When the callback comes in, the agent / operator should be ready with the specific reason cited in the voicemail. Mismatched payoff destroys trust.",
+    "on_failure": "After 2 voicemails with no response, retire the phone channel for this prospect. Switch to email or, if relevant, a referred-warm introduction.",
+    "follow_ups": [
+      "Log the voicemail in the operator's CRM/notes with timestamp and exact wording used.",
+      "Schedule the next-attempt window (no sooner than 3 business days) if a second voicemail is authorised."
+    ]
+  },
+  "required_user_info": [
+    "Target's first name (correct pronunciation if unusual)",
+    "Operator's name and one-line description of what they do",
+    "The single most specific reason for the call",
+    "Callback number — and confirmation it will be answered or routed",
+    "Referrer's name and explicit permission to use it (if applicable)"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

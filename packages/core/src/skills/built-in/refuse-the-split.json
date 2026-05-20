@@ -1,0 +1,142 @@
+{
+  "id": "refuse-the-split",
+  "name": "Refuse the Split: Why 'Meet in the Middle' Is Often the Worst Outcome",
+  "version": "1.0.1",
+  "category": "negotiation",
+  "tags": ["splitting", "fairness-frame", "creative-trades", "phone-call", "real-time"],
+  "description": "'Let's just split the difference' sounds fair and ends the call quickly — and that is precisely why it usually leaves money on the table. This skill teaches when to refuse the split, when to redirect to non-price concessions, and when accepting the split is actually correct.",
+  "disclaimer": "Refusing the split has social cost — it signals you're not 'reasonable' in a folk sense. The cost is real but usually small relative to the dollars. Only refuse when the dollars justify the friction.",
+  "context": {
+    "when_to_use": "Mid-to-late in a price negotiation when the counterparty proposes meeting halfway between two anchors. Especially relevant when the midpoint represents real dollars and the relationship is transactional or recurring.",
+    "preconditions": [
+      "Two anchors are on the table (yours and theirs).",
+      "You have at least one non-price dimension you could trade on (term, scope, payment timing, references, exclusivity).",
+      "You're not in a hurry to close — refusing the split adds 5-15 minutes to the call."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "'Meet in the middle' rewards the more aggressive anchor. If they anchored extreme and you anchored reasonable, splitting the difference gives them 70% of the spread they wanted.",
+    "The split is a heuristic for fairness, not a measurement of value. Both sides agreeing 'this is fair' does not mean it's optimal — it means the call ends fast.",
+    "Splitting is highest-cost when it terminates exploration of OTHER dimensions. Once you've split on price, you've also closed the door on negotiating term, support, payment, and scope — those would have moved if you'd refused the split.",
+    "Refusing the split is NOT being unreasonable. It's saying 'the price is one of many things; let's solve more of them'.",
+    "Sometimes the split IS the right move: tiny gap, relationship matters, time-cost of further negotiation exceeds the gap. Recognize these and accept cleanly.",
+    "Never propose the split yourself. Make THEM propose it; that gives you the option to refuse, redirect, or accept."
+  ],
+  "phrases": {
+    "polite_refuse": "Thanks for the offer to meet in the middle — but I'm not quite there yet on the dollars. What if we held the price closer to my number and you covered [shipping / setup / training / month-one] instead?",
+    "redirect_to_term": "Splitting on price is one option — but what if I committed to [longer term / multi-year / autopay] in exchange for getting closer to my number?",
+    "redirect_to_scope": "Rather than splitting on price, what if we trimmed [feature/scope item] and held the price where I need it?",
+    "redirect_to_timing": "What if I paid net-15 / annual upfront / in 30 days, and we held the price?",
+    "hold_my_number": "I get it, and I want to make this work — but my number is my number for [reason]. What else might we put on the table to bridge it?",
+    "accept_the_split_cleanly": "You know what, given how close we are — let's do it. Read me back the final terms.",
+    "name_the_pattern": "I notice we keep landing back at the midpoint — but the midpoint is where both of us walk away slightly unhappy. Can we try one more pass with something other than price moving?"
+  },
+  "tactics": [
+    {
+      "name": "Refuse politely, redirect to a cheap-to-them dimension",
+      "when": "Rep proposes meeting in the middle on price.",
+      "script": "Use `polite_refuse` or one of the redirect phrases. Pick the dimension cheapest to the rep — many reps can give 'free shipping' or 'waived setup fee' more easily than a price cut, because those don't hit their pricing-discount KPI.",
+      "priority": 1
+    },
+    {
+      "name": "Hold your number until they've traded across dimensions twice",
+      "when": "Rep offers a small price move plus a verbal 'meet me in the middle'.",
+      "script": "Use `hold_my_number`. The rule: never split on price until you've traded across non-price dimensions at least twice. If you've done so and they're still stuck, then split — but knowing you've extracted the cross-dimension value first.",
+      "priority": 2
+    },
+    {
+      "name": "Name the pattern when the rep keeps proposing splits",
+      "when": "Third or fourth time the rep proposes splitting.",
+      "script": "Use `name_the_pattern`. Naming the pattern interrupts it. The rep will either reveal real authority limits ('I literally can't do anything but splits') or pivot to creative concessions.",
+      "priority": 3
+    },
+    {
+      "name": "Accept the split when it's actually right",
+      "when": "Gap is small (under 5% of total deal), relationship is long-term, time-cost of further negotiation exceeds the gap.",
+      "script": "Use `accept_the_split_cleanly`. Take the split warmly — banked goodwill pays out on next renewal. Don't grudgingly accept; that wastes the relationship dividend.",
+      "priority": 4
+    },
+    {
+      "name": "Trade SMALL price moves for LARGE non-price gains",
+      "when": "Rep offers half-the-difference; you want to give some but not split.",
+      "script": "Counter: 'I can move a quarter of the way on price IF you can move on [term / scope / payment]. Otherwise I stay at my number.' Asymmetric trade — small price concession for large structural win."
+    }
+  ],
+  "decision_tree": {
+    "description": "When 'meet in the middle' is proposed, run this tree BEFORE accepting. The rep is signaling end-of-call energy; you have one window to redirect.",
+    "branches": [
+      {
+        "if_you_hear": "'Let's just meet in the middle.' / 'Let's split the difference.'",
+        "interpretation": "Standard offer. Rep wants to close. Now decide: is the gap big enough to fight for?",
+        "say": "Compute: gap × your discount factor. If >5% of total deal AND you have non-price dimensions to trade, use `polite_refuse` + redirect. If <5% AND relationship matters, `accept_the_split_cleanly`.",
+        "do_not": "Do not auto-accept. Do not auto-refuse. The 5% heuristic decides."
+      },
+      {
+        "if_you_hear": "'I can come up X if you come down Y' (asymmetric move).",
+        "interpretation": "Better than a midpoint split. They've moved more than you. Decide whether to mirror their move or trade non-price.",
+        "say": "Mirror the larger number ('Y?') — buys time, may pull them further. Then propose `redirect_to_term` to capture remaining gap on non-price.",
+        "do_not": "Do not reflex-counter their proportional move. Treat their move as new information, not a binding template."
+      },
+      {
+        "if_you_hear": "'This is the best I can do — let's just meet in the middle.'",
+        "interpretation": "Closing pressure + appeal to fairness. Likely 1-2 more moves available.",
+        "say": "Use `hold_my_number`: 'I hear you, but my number is my number for [reason]. What else could move?'",
+        "do_not": "Do not buy 'best I can do' on first delivery. It usually isn't."
+      },
+      {
+        "if_you_hear": "'I have to get a sign-off if I move further' / 'I'm at the limit'.",
+        "interpretation": "Real authority constraint, possibly. Escalation is the right call now.",
+        "say": "Trade the split for an escalation: 'I get that — what if you bring in your manager and we explore non-price options together?'",
+        "do_not": "Do not accept the split as a way to spare them the escalation. The escalation produces more value than the split."
+      },
+      {
+        "if_you_hear": "Tone shifts to 'frustrated but trying' after your refusal of the split.",
+        "interpretation": "Rep is invested in closing. Good. They will work harder.",
+        "say": "Label it: 'It sounds like you really want to make this work — I do too. Let's solve it together.' Then redirect to a non-price dimension.",
+        "do_not": "Do not feel guilty and accept. Their frustration is leverage, not a moral signal."
+      },
+      {
+        "if_you_hear": "Gap is small (<3% of total) AND rep proposes split.",
+        "interpretation": "Take it. Time is more valuable than the remaining gap.",
+        "say": "`accept_the_split_cleanly` — warmly. Bank the goodwill.",
+        "do_not": "Do not refuse on principle. Refusing a small split costs the relationship more than it earns."
+      },
+      {
+        "if_you_hear": "Rep proposes split number 3 in a row, same offer each time.",
+        "interpretation": "Rep has hit their authority ceiling and is repeating themselves.",
+        "say": "Pivot entirely. `name_the_pattern` + redirect to non-price OR escalate to supervisor.",
+        "do_not": "Do not keep refusing identically — same input from you produces same output from them."
+      }
+    ]
+  },
+  "boundaries": [
+    "Do NOT refuse a split when the gap is trivial and the relationship is long-term. Bad math.",
+    "Do NOT lecture the rep on why splitting is suboptimal — just redirect.",
+    "Do NOT use 'meet in the middle' phrasing yourself. Force them to propose it; you keep the option to refuse.",
+    "Do NOT refuse split #1 and then accept split #2 at the same number — you've trained them you fold under repetition."
+  ],
+  "success_signals": [
+    "Rep proposes a non-price concession unprompted ('what about waiving the setup fee?').",
+    "Rep offers an asymmetric move ('I can come down X, can you come up Y?').",
+    "Rep loops in a supervisor or escalates to higher authority.",
+    "Rep accepts your number with a face-saving condition you can grant cheaply (longer term, autopay).",
+    "Final outcome captures both: closer to your price target AND a non-price win you didn't have before."
+  ],
+  "failure_signals": [
+    "Rep firmly refuses any non-price discussion ('it's price or nothing').",
+    "Call duration > 60 min and you've refused 3 splits with no movement.",
+    "You're now 5% further from your target than before refusing — you've burned credibility; consider taking the split before it disappears.",
+    "Rep ends the call entirely after your refusal."
+  ],
+  "exit_strategy": {
+    "on_success": "Once the rep moves on non-price OR splits asymmetrically toward you, lock the deal. Confirm all terms with `commitment_check`.",
+    "on_failure": "If refusing the split has stalled the call hard, reset: 'OK, I've been pushing — let me hear what you'd consider truly final, and I'll make a call.' Sometimes the right move is taking the split late and gracefully."
+  },
+  "required_user_info": [
+    "User's target AND walk-away number.",
+    "What non-price dimensions the user is empowered to trade (term length, payment terms, scope, exclusivity, references).",
+    "User's tolerance for additional call time — refusing the split costs time."
+  ],
+  "contributed_by": "negotiation-master agent (v0.9.87 community drop)"
+}

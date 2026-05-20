@@ -1,0 +1,104 @@
+{
+  "id": "train-cancellation-refund-rebook",
+  "name": "Train Cancellation — Refund vs. Rebook Decision Tree",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["train", "amtrak", "eurostar", "sncf", "renfe", "trenitalia", "delay-compensation"],
+  "description": "Your train is cancelled or massively delayed. Walk through each carrier's refund + delay-compensation rules and choose between rebooking on the same operator, switching to a competitor, or taking the cash.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User has a confirmed train ticket that's been cancelled or delayed >30 minutes, on Amtrak (US), Eurostar (UK/EU), SNCF/TGV (France), Renfe (Spain), Trenitalia/Italo (Italy), DB (Germany), or other major operators. Works at the station or remotely.",
+    "preconditions": [
+      "User has the ticket reference / PNR.",
+      "User knows the original train number and scheduled departure.",
+      "User has a smartphone to check competitor inventory (Italo vs Trenitalia, OUIGO vs SNCF, etc.)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Rail cancellation refunds are usually automatic and same-day — but you have to claim them via the right channel. Each operator has its own portal.",
+    "Rail delay compensation is often more generous than air: 25% / 50% / 100% refunds for 1h / 2h / 3h+ delays on Eurostar; SNCF Garantie Voyage starts at 30 min on TGV INOUI.",
+    "Some routes have a competitor — Italo vs Trenitalia (IT high-speed), OUIGO vs SNCF (FR low-cost), AVLO vs Renfe AVE (ES). If your operator cancels, the competitor often has seats and you can buy + claim a refund.",
+    "Lounge access opens up during disruption. Eurostar Premier, SNCF Grand Voyageur, Renfe AVE Preferente, Trenitalia Frecciaclub — use them as workstations during IRROPS.",
+    "Conductor on the new train can usually accept your old ticket. Ask politely; show the cancellation message.",
+    "Photograph the platform display board showing the cancellation. This is your proof for delay compensation when the official record loses fidelity."
+  ],
+  "phrases": {
+    "opener_amtrak": "Hi — my Amtrak train [number] on [date] from [origin] to [destination] is cancelled. My reservation number is [code]. I'd like to [rebook on the next available / take a full refund to original form of payment].",
+    "opener_eurostar": "My Eurostar [train number] is cancelled. Per Eurostar's Delay Repay policy I'd like a refund OR rebook on the next available departure, and I'd like to confirm whether the 60-minute compensation threshold applies.",
+    "opener_sncf": "Mon TGV INOUI [numéro] est annulé. J'aimerais activer la Garantie Voyage pour le remboursement et/ou un report sur le prochain train direct.",
+    "ask_for_alternative_carrier": "If your next train is [time] later, can I take [competitor] and submit my ticket as canceled for refund? Some operators reimburse the difference; others give a full refund and you book the competitor yourself.",
+    "ask_for_lounge": "While we work this out, can I wait in the [Premier / Grand Voyageur / Frecciaclub / Sala Club] lounge?",
+    "ask_for_delay_repay": "Once I'm rebooked, can you confirm which delay-compensation tier applies based on actual arrival time at [destination]?",
+    "graceful_close_success": "Confirmed: new train [number] at [time], new ticket reference [code], and I'll file delay compensation post-arrival via [portal].",
+    "graceful_close_failure": "Okay — please mark my ticket as fully refundable due to cancellation. I'll book the competitor and submit the refund claim online."
+  },
+  "tactics": [
+    {
+      "name": "Decision tree: refund vs rebook vs competitor",
+      "when": "First five minutes of disruption.",
+      "script": "Three questions: (1) Is the next same-operator train within 90 min and you have time? → rebook. (2) Is the competitor running within 60 min? → buy competitor, refund original. (3) Is the next train 4+ hours away and the trip itself is now compromised? → full refund + cancel trip OR + book a flight.",
+      "priority": 1
+    },
+    {
+      "name": "Know your operator's delay-comp thresholds",
+      "when": "Choosing between refund and rebook.",
+      "script": "Amtrak: cancellation → full refund or future voucher; delay → discretionary travel vouchers, no automatic cash. Eurostar: 60-119 min → 25% refund; 120-179 min → 50%; 180+ min → 100% refund or free rebook. SNCF TGV INOUI Garantie Voyage: 30 min → 25% e-voucher; 60-120 min → 25% cash; 120-180 min → 50%; 180+ → 75%. DB ICE: 60+ min → 25%; 120+ → 50%. Renfe AVE 'Compromiso de Puntualidad': 15+ min late → 50%; 30+ min → 100%. Italo: 60+ min → 25%; 120+ → 50%.",
+      "priority": 2
+    },
+    {
+      "name": "Buy competitor + claim refund",
+      "when": "Competitor has seats and operator's next train is far off.",
+      "script": "Italy: Italo and Trenitalia both run Milan–Rome 25+ times daily — if one cancels, the other usually has seats within an hour. France: OUIGO competes with TGV INOUI on many routes at lower fares. Spain: AVLO (low-cost AVE) and competitor IRYO. Buy on the spot, take the full refund of the cancelled ticket later.",
+      "priority": 3
+    },
+    {
+      "name": "Use the lounge as your workstation",
+      "when": "You have premium ticket or status.",
+      "script": "Eurostar Premier / Business Premier → Premier lounge at St Pancras, Gare du Nord, Bruxelles-Midi. SNCF: Grand Voyageur Plus → Salon Grand Voyageur. Renfe Preferente: Sala Club. Trenitalia Executive: FRECCIAClub + FRECCIALounge. Quieter, faster Wi-Fi, sometimes dedicated rebooking staff."
+    },
+    {
+      "name": "File delay compensation immediately after the trip",
+      "when": "Within 24-48 hours of arrival.",
+      "script": "Amtrak: amtrak.com/contact-us → 'Delays' (manual review). Eurostar: eurostar.com → 'Help' → 'Delay Repay' form. SNCF: SNCF Connect → 'Garantie Voyage'. DB: bahn.de → 'Refunds & customer dialogue'. Renfe: renfe.com → 'Atención al Cliente'. Italo: italotreno.it → 'Reclami'. Most pay within 30 days."
+    },
+    {
+      "name": "Ask the conductor to honor the old ticket",
+      "when": "Boarding a later same-operator train.",
+      "script": "Show the cancellation SMS / email + old ticket. Polite ask: 'Mein Zug wurde annulliert' / 'Mon train était annulé' / 'Il mio treno è stato cancellato' / 'My train was cancelled — can I ride this one?' Yes 95% of the time."
+    }
+  ],
+  "boundaries": [
+    "Do NOT discard the original ticket — it's the proof for refund and delay compensation.",
+    "Do NOT board the new train without confirming the old ticket is honored OR you have a new ticket — fare evasion fines on Eurostar/SNCF are €100+.",
+    "Do NOT accept a non-refundable voucher when cash is offered for cancellation — same EU261-flavoured principle.",
+    "Do NOT pay for a competitor without confirming the cancelled-ticket refund path first."
+  ],
+  "success_signals": [
+    "Operator confirms full refund or rebooks at no charge.",
+    "Conductor accepts the old ticket on the next train.",
+    "Delay-compensation form is acknowledged with a case number.",
+    "Lounge access is granted while you wait."
+  ],
+  "failure_signals": [
+    "Operator insists the cancellation is 'force majeure' (rare in rail — most domestic disruption isn't).",
+    "Next train is 6+ hours away and no competitor exists.",
+    "Operator's refund-portal is broken (Renfe is notorious — try the phone)."
+  ],
+  "exit_strategy": {
+    "on_success": "Take the new ticket, board, then file delay compensation from the seat — most portals are mobile-friendly.",
+    "on_failure": "Full refund + buy a flight or competitor ticket; submit insurance trip-delay claim too.",
+    "follow_ups": [
+      "If your trip is purposeful (wedding, conference), document the impact for any insurance claim.",
+      "If you have an Interrail/Eurail pass, separate rules apply — pass reservations are usually free to reissue on the next train."
+    ]
+  },
+  "required_user_info": [
+    "Train operator and train number",
+    "Ticket reference / PNR",
+    "Scheduled vs actual times",
+    "Whether the trip has a hard deadline (e.g. flight connection — chain into flight skill)",
+    "Acceptable competitor operators"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

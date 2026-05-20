@@ -21,6 +21,26 @@ time.
 
 User-contributed skills override built-ins if the `id` matches.
 
+## v0.9.87 — 160+ built-in skills, including life-safety bundle
+
+The 0.9.87 community-skills drop added 150 new playbooks across 15
+categories (customer-support, healthcare, government-services,
+insurance, banking, travel, utility/telecom, housing, education,
+professional-services intake, outbound sales, advanced negotiation,
+critical reasoning, emotional intelligence, closing/commitment) —
+all author-and-reviewed by an 18-agent build farm (15 creators + 3
+reviewers covering schema, adversarial robustness, and tone).
+
+The 0.9.87 release also added a hand-written **emergency-services
+bundle** (10 skills) covering 911 (medical / fire / violent crime
+in progress), the local police non-emergency line, welfare-check
+requests, the FBI tip line, 988 (suicide & crisis lifeline),
+poison control (1-800-222-1222), elder + child abuse reporting
+(APS/CPS), and fraud reporting (IC3/FTC/state AG). Each emergency
+skill has airtight boundaries: explicit per-call operator
+authorisation, AI-self-identification on the first sentence, and
+hard refusal of false reports / SWATting / coerced disclosure.
+
 ## How an agent uses a skill mid-call
 
 ```

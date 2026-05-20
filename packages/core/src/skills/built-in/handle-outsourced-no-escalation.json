@@ -1,0 +1,138 @@
+{
+  "id": "handle-outsourced-no-escalation",
+  "name": "Handle Outsourced Support That Cannot Escalate",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "outsourced",
+    "BPO",
+    "phone-call",
+    "routing",
+    "bypass",
+    "customer-support"
+  ],
+  "description": "Recognize when you've reached an outsourced BPO (business process outsourcer) that genuinely has no escalation path to the actual company — and route around it to reach the brand's own internal escalation team or corporate office.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Several signals point to outsourced support: significant background noise (large call-center room), heavy accent suggesting offshore location for a domestic-US brand, scripted answers that don't match your actual issue, rep can't access certain account features ('our system doesn't show that'), rep refers to 'the client' or 'the company' as a third party. The rep may be competent and well-meaning but structurally limited.",
+    "preconditions": [
+      "User has already attempted standard escalation with this rep / queue at least once.",
+      "User is willing to invest research time to find the brand's internal channels (Office of the President, executive relations, social-care team).",
+      "User stays patient with the BPO rep — they're often skilled professionals whose hands are tied by their contract."
+    ],
+    "estimated_call_duration_minutes": 22
+  },
+  "principles": [
+    "Outsourced support is a contract relationship. The BPO has a contract with the brand specifying EXACTLY what they can and can't do. The rep isn't refusing to help out of laziness — they literally cannot make decisions outside their contract. Treat them with respect; they're as constrained as you are.",
+    "The fastest path is NOT to argue with the BPO rep. It's to confirm the limitation, capture documentation, and pivot to a different access point to the actual brand.",
+    "Tells that you've reached a BPO: rep refers to 'the client' or 'the partner' (meaning the brand they're outsourcing for), rep can't transfer 'outside our team', rep's call-center has audibly different noise/scale than the brand would suggest, rep apologizes for tools they obviously don't control, time-of-day mismatch (US brand answered at 2am US time = likely offshore BPO).",
+    "Every BPO contract has SOMEONE on the brand side who manages the relationship. You can't reach them directly, but they exist. Your path is around the BPO, not through it.",
+    "Decision point — am I trying to fix this on THIS call, or am I gathering enough info to escape to a different channel? Once you've identified BPO, the answer is almost always 'escape' — but the call still has value because the rep can give you names, case numbers, and the brand-side address for written escalations.",
+    "BPO reps often hold internal knowledge a customer wouldn't have: the brand-side 'escalation address', the official 'cases the BPO can't handle' workflow, the contractual carve-outs. Ask for it nicely.",
+    "Some BPOs handle ALL escalations including supervisor — so 'speaking to the supervisor' just gets you another BPO employee with the same contract limitations. Don't escalate vertically inside the BPO; escalate sideways out of it."
+  ],
+  "phrases": {
+    "diagnostic_probe": "I want to make sure I understand the structure — are you part of [Brand] directly, or are you a partner / contracted support center? I'm trying to understand my options here, not put you on the spot.",
+    "the_polite_ask": "Okay — sounds like this is outside what your team can handle. Could you share what the right channel is for cases that need to go to [Brand] directly? Most companies have a brand-side address or an escalation team that handles cases outside the standard support contract.",
+    "ask_for_brand_address": "Do you have a [Brand]-side corporate address, an executive escalations contact, or a 'cases above this team's authority' email that I should use?",
+    "name_the_constraint_kindly": "I can tell you're working within a tight scope and I respect that — that's a contract issue, not a you issue. Let me ask a different question: how do other customers in my situation get their issues resolved?",
+    "request_the_internal_referral": "Could you internally flag this case to be reviewed by [Brand] directly? Some BPO contracts allow that for specific case types — is mine one of them?",
+    "capture_breadcrumbs": "Before we end the call — what's the case number you've opened, what's your name and ID, and what's the name of your call center / BPO so I have it for my records?",
+    "graceful_transition": "Thank you. Honestly — you've been more helpful than you might realize. You've given me what I need to take the next step through a different channel.",
+    "brand_email_opener": "Hello [Brand] Customer Relations,\n\nI'm writing because your outsourced support center (BPO: [name if known], case ref [#]) was unable to resolve [issue]. The BPO rep was professional but indicated this case is outside their contract's scope. I'd appreciate review by your internal team."
+  },
+  "tactics": [
+    {
+      "name": "Confirm BPO status carefully",
+      "when": "You suspect outsourced support but aren't certain.",
+      "script": "Use `diagnostic_probe`. Ask it with a curious-not-confrontational tone. Reps trained at BPOs almost always confirm honestly when asked directly. The answer reframes the rest of the call.",
+      "priority": 1,
+      "decision_point": "If the rep confirms BPO status — STOP trying to win the call. Pivot to information-gathering for the next channel. If the rep claims to be in-house but other signals contradict it — proceed gently; you may be wrong, or they may not realize how their company is organized."
+    },
+    {
+      "name": "Acknowledge the constraint without resentment",
+      "when": "BPO confirmed.",
+      "script": "Use `name_the_constraint_kindly`. Reps who feel respected often go off-script and tell you exactly what works — including 'most customers who get past this contact their corporate office directly' or 'send an email to [address]'. That info is gold and only flows if you treat the rep as a partner.",
+      "priority": 2
+    },
+    {
+      "name": "Ask for the brand-side escape route",
+      "when": "After acknowledging the constraint.",
+      "script": "Use `ask_for_brand_address`. Some BPO scripts forbid sharing certain addresses; others encourage it (because the brand wants out-of-scope cases off the BPO's plate). Worth asking — worst case is 'I can't share that', best case is the direct path you need.",
+      "priority": 3
+    },
+    {
+      "name": "Request the internal-flag option",
+      "when": "Some BPO contracts include an 'escalate to brand' workflow.",
+      "script": "Use `request_the_internal_referral`. Some contracts have a literal button for this. Some don't. Asking costs nothing.",
+      "priority": 4,
+      "decision_point": "If the rep flags the case to the brand-side team and gives you a separate case number — track it. It's a real, separate workflow. Set a 5-business-day follow-up calendar. If no separate flag is possible, accept it and pivot."
+    },
+    {
+      "name": "Capture every breadcrumb before disengaging",
+      "when": "Right before ending the call.",
+      "script": "Use `capture_breadcrumbs`. The BPO's name, the case number, your rep's name/ID — all of these are referenceable when you contact the brand directly. The brand's internal team can look up the BPO case and pick up the timeline.",
+      "priority": 5
+    },
+    {
+      "name": "Disengage warmly",
+      "when": "End of call.",
+      "script": "Use `graceful_transition`. The rep often appreciates being treated as a competent professional facing structural limits — they may even add notes to your case that help the next escalation.",
+      "priority": 6
+    },
+    {
+      "name": "Pivot to brand-direct channel within 24h",
+      "when": "Post-call.",
+      "script": "Email the brand's corporate / executive relations address using `brand_email_opener`. Reference the BPO name, the BPO case number, and the rep ID. This frames you as a thoughtful customer who already did the work — not as a complaint trying to skip the line.",
+      "priority": 7
+    },
+    {
+      "name": "Use research channels to find the brand-direct contact",
+      "when": "BPO couldn't or wouldn't share the brand-direct address.",
+      "script": "LinkedIn (find a Customer Experience VP at the brand). Press releases. SEC filings. The brand's investor relations email is a back-door — it's monitored and the team will forward customer escalations to the right place.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "Do NOT take frustration out on the BPO rep — their hands are genuinely tied and they're often paid little to absorb yelling.",
+    "Do NOT assume offshore = incompetent. Many offshore BPO reps are extremely skilled; what they lack is authority, not capability.",
+    "Do NOT lie about who you are to bypass the BPO ('I'm a journalist'). Caller verification can catch you and the call gets flagged.",
+    "Do NOT keep escalating inside the BPO. Three calls to the same BPO queue is three identical experiences. The constraint is the contract, not the rep.",
+    "Do NOT post the BPO's name in a public review as 'bad support' — the brand chose the BPO; the rep didn't. Direct any public criticism at the brand.",
+    "Do NOT share account credentials or PII more than necessary. BPO reps see your account but may not have the same data-handling controls as in-house teams.",
+    "Do NOT bypass the BPO unless you actually have a substantive issue. The brand-side team is small and reserves attention for real escalations."
+  ],
+  "success_signals": [
+    "Rep confirms BPO status when asked.",
+    "Rep voluntarily names the brand-side escalation address or contact function.",
+    "Rep agrees to internally flag the case for brand review and provides a separate case number.",
+    "Brand-direct email gets a response from a different domain or different signature line than the BPO ('Customer Advocacy', 'Executive Relations').",
+    "The brand's internal team picks up the BPO case file by reference — meaning your BPO documentation work paid off."
+  ],
+  "failure_signals": [
+    "BPO rep won't acknowledge their structure ('we are [Brand] customer service') and routes you in circles.",
+    "Brand has no published corporate address — sometimes intentional, sometimes lazy. Either way, you need LinkedIn / press releases as backup.",
+    "Brand-direct email gets routed BACK to the BPO with a 'we've forwarded your case' auto-reply. This is the trap — you're back where you started.",
+    "Multiple BPOs in the chain (BPO routes to another BPO). Possible but rare; tells you the brand has minimal direct customer-facing infrastructure.",
+    "Rep claims 'there is no brand-side team, this IS the [Brand] support'. Could be true (rare) or could be a script. Verify via independent research before believing it."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the case is being handled by the brand-side team, get the new contact's name and the brand-side case number, and stop interacting with the BPO. Calendar a check-back at the brand-side team's promised timeline.",
+    "on_failure": "If brand-direct email also bounces you to the BPO, the brand has structurally minimized its consumer support. Escalate via `multi-channel-escalation` (social + executive office + regulator if applicable). Public/regulator channels often force brand-direct engagement.",
+    "follow_ups": [
+      "Document the BPO interaction thoroughly — BPO escalations are NOT visible to the brand's internal CRM in some cases, which is why you reconstruct them in the brand-direct email.",
+      "If the brand keeps routing you back to the BPO despite a substantive issue, that's a possible BBB / state-AG topic — pattern of inaccessible support, not just one bad call.",
+      "Keep the brand's executive-relations contact in a personal log for future issues. Outsourced support is usually a permanent choice by the brand; you'll need this contact again."
+    ]
+  },
+  "required_user_info": [
+    "Account identifier",
+    "Description of the issue stated in one sentence",
+    "Any prior interactions including dates and what was promised",
+    "Brand's known direct channels (corporate website's 'contact us' section, executive team page, social handles)",
+    "Willingness to wait 5-7 business days for brand-direct response"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

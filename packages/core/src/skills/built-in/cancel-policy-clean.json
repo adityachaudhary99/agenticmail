@@ -1,0 +1,130 @@
+{
+  "id": "cancel-policy-clean",
+  "name": "Cancel a Policy Without Surprise Pro-Rating or Short-Rate Fees",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "cancellation",
+    "pro-rate",
+    "short-rate",
+    "refund",
+    "phone-call",
+    "insurance"
+  ],
+  "description": "Cancel an insurance policy mid-term with full visibility into the refund (or unpaid balance), avoiding short-rate cancellation penalties, ensuring continuous coverage if switching carriers, and getting the cancellation confirmation in writing on the same call.",
+  "disclaimer": "Agent must NEVER admit fault, NEVER agree to a settlement on the operator's behalf, NEVER speculate about prior conditions, NEVER sign a release. All of those route through ask_operator.",
+  "context": {
+    "when_to_use": "User wants to cancel a policy mid-term — switching carriers, selling the insured property, life-event change, or no longer needing coverage. Use AFTER the user has either (a) bound the replacement policy or (b) confirmed they no longer need coverage.",
+    "preconditions": [
+      "Policy number and named-insured info ready.",
+      "Cancellation effective date decided (usually same day OR the date the replacement policy starts).",
+      "Replacement policy info ready if switching (carrier, policy number, effective date) — critical for auto and home where coverage gaps cause registration suspension or lender force-placement.",
+      "User has reviewed whether the policy has a short-rate cancellation clause vs pure pro-rate."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Pro-rate refund = fair; short-rate refund = penalty. Know which your policy uses before calling. Personal auto in most states is pure pro-rate; commercial and some specialty lines are short-rate.",
+    "Coverage MUST be continuous for auto (state law) and home (lender requirement). Cancel-effective-date should be ≥ replacement-effective-date, NEVER less.",
+    "Cancellation by phone is fine in most states, but the carrier must give a WRITTEN cancellation confirmation. Demand it on the call.",
+    "Retention departments have unlock authority. If the user is cancelling because of price, the carrier may surprise-discount to retain. Decide upfront whether the user is open to staying.",
+    "Auto-renew billing continues until cancellation is processed — get an effective date in writing or the next charge will hit."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to cancel policy [number], effective [date]. Could you walk me through the refund calculation and whether this is pro-rate or short-rate before we process?",
+    "ask_calc_method": "Is this cancellation pro-rated or short-rated? If short-rate, what's the penalty percentage, and is there a way to convert to pro-rate?",
+    "ask_continuous_coverage": "I have a replacement policy starting [date] with [carrier]. I want to make sure there's no gap — please set cancellation effective on [date] so coverage is continuous.",
+    "decline_retention_offer": "Thanks, but I've already bound the replacement — let's go ahead with the cancellation as scheduled.",
+    "consider_retention_offer": "That's a meaningful change. Could you put that offer in writing so I can compare it to my new policy before deciding? I'm still going to need to cancel today if we don't proceed.",
+    "request_confirmation_number": "Could I have the cancellation confirmation number and the date the written confirmation will arrive?",
+    "ask_refund_method_and_timing": "How will the refund be issued — check, ACH, credit to card — and when should I expect it?",
+    "ask_auto_renew_disable": "Please also turn off auto-renew and any auto-draft from my account, effective immediately.",
+    "graceful_close": "Thank you. To confirm: policy cancelled effective [date], confirmation number [N], refund of [amount] via [method] by [date], written confirmation by [date], auto-renew disabled. Thanks for your help."
+  },
+  "tactics": [
+    {
+      "name": "Open with the effective date AND the calc-method question",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase + `ask_calc_method`. Setting the date right and clarifying the math upfront avoids 80% of cancellation disputes.",
+      "priority": 1
+    },
+    {
+      "name": "Lock continuous coverage",
+      "when": "Switching carriers.",
+      "script": "Use the `ask_continuous_coverage` phrase. Cancel-effective-date = replacement-effective-date (not earlier). For auto, even a one-day lapse can suspend registration in some states.",
+      "priority": 2
+    },
+    {
+      "name": "Handle the retention pitch",
+      "when": "Rep offers a discount or 'one-time loyalty rate' to keep the policy.",
+      "script": "Either `decline_retention_offer` (if the replacement is already bound) or `consider_retention_offer` (if the replacement isn't yet bound and the offer might be better). Don't get talked out of cancellation if the replacement is already in force — that creates double-coverage and disputes.",
+      "priority": 3
+    },
+    {
+      "name": "Confirm refund mechanics",
+      "when": "Mid-call.",
+      "script": "Use the `ask_refund_method_and_timing` phrase. Refunds via check can take 4-6 weeks; via ACH 5-10 business days. Knowing which sets expectations.",
+      "priority": 4
+    },
+    {
+      "name": "Kill auto-renew and auto-draft",
+      "when": "Before ending the call.",
+      "script": "Use the `ask_auto_renew_disable` phrase. The #1 surprise charge post-cancellation is the next auto-draft hitting before cancellation processed.",
+      "priority": 5
+    },
+    {
+      "name": "Get the confirmation number",
+      "when": "Before ending the call.",
+      "script": "Use the `request_confirmation_number` phrase. No confirmation number = no proof you cancelled. The next billing cycle becomes the user's problem.",
+      "priority": 6
+    },
+    {
+      "name": "Demand written confirmation",
+      "when": "Before ending the call.",
+      "script": "Verbal cancellation + confirmation number is good; verbal + written confirmation letter/email is better. Most carriers can send within 24 hours.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "Do NOT cancel with an effective date earlier than the replacement-policy effective date. A coverage gap is worse than paying a few extra days of premium.",
+    "Do NOT cancel auto coverage without a replacement bound, unless the vehicle is genuinely off the road and the registration is being suspended/sold/donated.",
+    "Do NOT cancel home coverage without coordinating with the mortgage lender — force-placed insurance is brutally expensive.",
+    "Do NOT accept a retention discount on this call without checking it against the replacement quote — `ask_operator` if the offer is significant.",
+    "Do NOT sign or verbally agree to any 'release of claims' that the carrier slips into the cancellation process. Cancellation does not require a release.",
+    "Do NOT cancel if there's an open claim being processed unless the operator has explicitly approved it — cancellation can complicate the claim."
+  ],
+  "success_signals": [
+    "Confirmation number issued on the call.",
+    "Effective date matches the user's preference and provides continuous coverage.",
+    "Refund amount, method, and timing disclosed.",
+    "Auto-renew and auto-draft disabled.",
+    "Written confirmation committed.",
+    "No short-rate penalty (or penalty is documented if unavoidable)."
+  ],
+  "failure_signals": [
+    "Rep won't issue a confirmation number on the call.",
+    "Rep insists on a future effective date that doesn't align with the user's need.",
+    "Rep applies a short-rate penalty when the policy/state requires pro-rate.",
+    "Rep refuses to disable auto-renew."
+  ],
+  "exit_strategy": {
+    "on_success": "Read back: effective date, confirmation number, refund amount/method/timing, written-confirmation ETA, auto-renew status. Email a recap to the user. Calendar refund-arrival date.",
+    "on_failure": "Document. If short-rate is applied incorrectly: route to `ask_operator` with the state's cancellation regulation. If the rep refuses to disable auto-renew: cancel the auto-draft at the bank as a backup. If written confirmation never arrives: send a certified-mail cancellation letter as the legal record.",
+    "follow_ups": [
+      "Email a recap with confirmation number within 1 hour.",
+      "Calendar refund arrival date.",
+      "Save the written confirmation when it arrives.",
+      "If switching carriers, send proof of cancellation to the new carrier and any lienholders.",
+      "Verify the next billing cycle doesn't auto-draft. Dispute with the bank if it does."
+    ]
+  },
+  "required_user_info": [
+    "Policy number and named-insured info",
+    "Desired effective cancellation date",
+    "Replacement policy info if switching (carrier, policy #, effective date)",
+    "Confirmation that no open claims are pending (or operator approval to cancel anyway)",
+    "Preference on engaging retention offers (open / not open)"
+  ],
+  "contributed_by": "insurance-claims agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

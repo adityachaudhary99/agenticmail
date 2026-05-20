@@ -1,0 +1,132 @@
+{
+  "id": "accommodation-intake",
+  "name": "Disability / Accommodation Services Intake",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "accommodation",
+    "disability",
+    "ADA",
+    "504",
+    "DSS",
+    "intake",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call a college Disability Services / Accessibility / Student Accessibility Resources office to start an accommodation intake, request testing accommodations, housing accommodations, or note-taking / recording support — including for newly diagnosed conditions, temporary injuries, and undiagnosed-but-impacting concerns.",
+  "disclaimer": "Accommodations under ADA and Section 504 are granted based on documented disability + functional impact in the academic environment. The accommodations office determines what's reasonable, not the student or the faculty. This skill does not constitute legal advice; for denials, the Office for Civil Rights and disability-rights attorneys are formal recourse.",
+  "context": {
+    "when_to_use": "The user (a) has a recent or longstanding diagnosis (ADHD, learning disability, anxiety, depression, autism, chronic illness, mobility, vision, hearing, etc.) and hasn't yet registered with the disability office, (b) needs a temporary accommodation (broken arm, concussion, surgery recovery), (c) had high-school accommodations (IEP / 504) but they don't carry over, or (d) suspects they qualify but doesn't have documentation yet.",
+    "preconditions": [
+      "User has Student ID and contact info.",
+      "User can describe the functional impact in school terms: 'I can't sit for 50 minutes', 'I can't filter noise during tests', 'I freeze on timed exams', not just the diagnosis.",
+      "User has — or has a plan to obtain — documentation from a qualified provider. (IEP / 504 from K-12 is helpful but typically NOT sufficient on its own at the college level.)",
+      "User has reviewed the school's accommodation request form and intake calendar (some schools require 4–6 weeks lead time before testing accommodations are active)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Diagnosis is necessary but not sufficient — the office needs to see FUNCTIONAL IMPACT in the academic environment. Lead with impact, support with diagnosis.",
+    "The first call is intake, not approval. The goal is to open a file, get the documentation list, and book the substantive meeting with a Disability Services Coordinator.",
+    "Accommodations are forward-looking. They don't usually fix a grade you already earned. Register the moment you suspect you'll need them — earlier is always better.",
+    "K-12 IEP / 504 plans do NOT carry over to college. The student now has to self-disclose and re-document. This surprises a lot of families.",
+    "Faculty don't decide accommodations. Disability Services issues a letter; faculty are required to honor it. If a professor pushes back, the office advocates for you — that's their job.",
+    "If the user lacks documentation but has impact, ask about 'provisional' or 'interim' accommodations and the office's referral list for testing providers (some schools subsidize testing)."
+  ],
+  "phrases": {
+    "opener_new": "Hi, I'd like to start an intake with your office. I [have a diagnosis of / suspect I have] [condition] and it's affecting [specific academic task]. What's the process to get registered, and what's the realistic timeline?",
+    "opener_temporary": "Hi, I had [injury / surgery] on [date] and I need temporary accommodations for the next [duration]. Can you walk me through what your office offers and how fast we can put it in place?",
+    "ask_about_documentation": "What specifically do you need from a provider? Is there a form they should fill out, or a list of required elements (testing, diagnosis date, functional impact, recommended accommodations)?",
+    "ask_about_interim": "While I'm gathering documentation, are interim or provisional accommodations available? I have an exam on [date] and I'm worried about gap coverage.",
+    "ask_about_testing_referrals": "I don't currently have a recent psychoeducational evaluation. Does your office have a list of providers who test, and any subsidies or sliding-scale options?",
+    "ask_about_housing": "I'd also like to request housing accommodation for [reason — single, AC, ground floor, ESA, etc.]. Is that a separate process or part of the same intake?",
+    "name_specific_accommodations": "Based on my history, what's typically been effective is: extended time on tests (1.5x or 2x), distraction-reduced testing environment, lecture recording permission, note-taking support, flexible attendance, and assignment-deadline flexibility. Can we discuss which of these would be reasonable in my case?",
+    "ask_for_director": "Could I speak with the Director or an Associate Director of your office? I want to make sure the file is set up correctly and that I understand the appeal process if any accommodation is denied.",
+    "graceful_close_success": "Thank you. To confirm: intake meeting scheduled for [date] with [name], documentation list is [items], and I should expect my accommodation letter by [date]. May I have your direct email?"
+  },
+  "tactics": [
+    {
+      "name": "Lead with functional impact, support with diagnosis",
+      "when": "Describing the situation to the intake coordinator.",
+      "script": "Frame it as: 'When I [academic task], I [specific impact], because of [diagnosis or working hypothesis].' Office staff are trained on impact-based determination — diagnosis alone doesn't establish disability under ADA.",
+      "priority": 1
+    },
+    {
+      "name": "Book the intake meeting same-call",
+      "when": "First call.",
+      "script": "Don't leave the call without a calendar slot with a Coordinator. Many offices have 2-4 week wait lists; getting on the calendar is the actual win of this call.",
+      "priority": 2
+    },
+    {
+      "name": "Get the documentation checklist in writing",
+      "when": "Office describes what's required.",
+      "script": "Ask them to email the documentation requirements. Providers waste weeks producing letters that miss the school's required elements (date of testing, scores, DSM criteria, functional impact, recommended accommodations).",
+      "priority": 3
+    },
+    {
+      "name": "Ask about interim accommodations explicitly",
+      "when": "Documentation is pending but an exam or deadline is imminent.",
+      "script": "Use `ask_about_interim`. Many schools allow 30–60 days of interim accommodations on the basis of a provider's brief letter or pending evaluation — but only if you ask.",
+      "priority": 4
+    },
+    {
+      "name": "Bundle housing, testing, and classroom accommodations",
+      "when": "User has multiple needs.",
+      "script": "Use `ask_about_housing`. Housing accommodations (single room, AC, ESA, ground floor) often have separate deadlines (months before move-in) and separate documentation. Surface them all at intake.",
+      "priority": 5
+    },
+    {
+      "name": "Name common accommodations the office may not volunteer",
+      "when": "Discussing what accommodations might apply.",
+      "script": "Use `name_specific_accommodations`. Offices sometimes only offer extended time + distraction-reduced testing as defaults. Lecture recording, note-takers, flexible deadlines, and reduced-course-load status are equally available and rarely surfaced unsolicited.",
+      "priority": 6
+    },
+    {
+      "name": "Escalate to Director on denial",
+      "when": "An accommodation is denied or the request gets stuck.",
+      "script": "Use `ask_for_director`. There's usually an internal appeal process, and the Director has authority to override Coordinator-level decisions. Past that: the ADA Coordinator for the institution, then Office for Civil Rights complaint."
+    }
+  ],
+  "boundaries": [
+    "Do NOT disclose more medical detail than necessary. The office needs enough to verify a disability — they do not need a full history. Provider letters are the right channel for clinical detail.",
+    "Do NOT promise faculty anything about accommodations on the call — the office issues letters, faculty don't negotiate.",
+    "Do NOT use someone else's accommodations or letter — schools verify and the consequence is academic misconduct.",
+    "Do NOT skip registering 'because the semester is almost over' — register now for the next term; accommodations rarely apply retroactively to existing grades.",
+    "Do NOT make legal threats casually. They can be appropriate (ADA / Section 504 / OCR) but only after internal appeal."
+  ],
+  "success_signals": [
+    "Intake appointment booked.",
+    "Documentation checklist arrives by email.",
+    "Interim accommodations are confirmed in writing for the gap period.",
+    "Coordinator name and direct email are captured.",
+    "Office volunteers accommodations the user hadn't asked for."
+  ],
+  "failure_signals": [
+    "Office insists IEP / 504 from K-12 is sufficient without re-evaluation (it usually isn't at college level — push back).",
+    "Wait time for intake exceeds 6 weeks and no interim coverage offered.",
+    "Office tells user to 'talk to your professor' instead of issuing a formal accommodation — that's a misroute; the office's job is to issue the letter.",
+    "Documentation is rejected and the office won't specify what additional elements are needed.",
+    "Specific accommodation denied without written rationale or appeal pathway."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm intake date, Coordinator name, documentation requirements, interim coverage if any, and target letter-issuance date. Get the direct email.",
+    "on_failure": "Get any denial in writing with reasoning. Pathways: internal appeal to Director, ADA Coordinator for the institution, Office for Civil Rights complaint. Also consider a disability-rights legal aid org for a free consult before escalating.",
+    "follow_ups": [
+      "Email operator the documentation checklist and intake date.",
+      "Confirm provider letter is in draft and matches the school's required elements before submission.",
+      "Calendar 7 days after intake to confirm letter arrived.",
+      "Once letter is issued, email it to instructors at the start of each term — accommodations don't auto-deploy."
+    ]
+  },
+  "required_user_info": [
+    "Student ID and current term",
+    "Diagnosis (or working hypothesis) + provider name",
+    "Functional impact in academic terms",
+    "Whether documentation exists, is in progress, or is needed",
+    "K-12 IEP / 504 history if applicable",
+    "Specific upcoming deadlines (exams, papers, housing application)",
+    "Any accommodations previously used at another institution"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

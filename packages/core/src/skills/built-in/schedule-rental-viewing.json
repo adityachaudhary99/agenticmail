@@ -1,0 +1,111 @@
+{
+  "id": "schedule-rental-viewing",
+  "name": "Schedule a Rental Viewing with Landlord or Property Manager",
+  "version": "1.0.0",
+  "category": "real-estate",
+  "tags": [
+    "rental",
+    "viewing",
+    "landlord",
+    "property-manager",
+    "phone-call",
+    "screening",
+    "housing-tenancy"
+  ],
+  "description": "Call a landlord, leasing office, or property manager to set up an in-person (or video) viewing of a listed rental — while also pre-qualifying the unit and quietly screening for scams or bait-and-switch.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "User has found a listing and wants to view the unit before applying. Works for both private landlords and large property-management companies. Use BEFORE submitting any application or paying any fee.",
+    "preconditions": [
+      "User has the listing URL / address / unit number.",
+      "User has 2–3 windows of availability for a viewing.",
+      "User knows their hard requirements (move-in date, pets, parking, lease length).",
+      "User has NOT yet sent money, ID scans, or a signed application."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "A viewing call is also a screening call — you're qualifying the landlord as much as they're qualifying the tenant.",
+    "Real landlords welcome in-person viewings before money changes hands. Pressure to pay first is the single strongest scam signal.",
+    "Get the address spoken aloud and confirm it matches the listing — scammers reuse photos with different addresses.",
+    "Ask permission-style questions ('Is it okay if I bring a friend?') — they reveal a landlord's flexibility and tone before you're locked in.",
+    "Write down the leasing agent's full name and direct number during the call. You will need it later for follow-up and for the paper trail.",
+    "Do not volunteer credit score, income, or eviction history on this call. That's for the application stage, after you've seen the unit."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling about the [bed/bath] unit listed at [address or listing site] for [rent amount]. Is that still available?",
+    "confirm_address": "Just so I have it right — can you confirm the full street address and the unit number?",
+    "ask_for_viewing": "I'd love to come see it in person before I apply. What times are you showing it this week?",
+    "ask_about_application_flow": "Walk me through what happens after the viewing — application fee, where I send documents, and how soon you decide?",
+    "deflect_money_request": "I'd rather not send anything until I've walked through the unit. Is there a time I can come by today or tomorrow?",
+    "ask_about_lease_terms": "Quick questions before I come out — what's the lease length, is the deposit one month or more, and are pets / parking included?",
+    "graceful_close": "Great — putting [day/time] in my calendar. Can I get your full name and the best number to reach you if I'm running late?"
+  },
+  "tactics": [
+    {
+      "name": "Confirm the unit is real and still listed",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` and `confirm_address` phrases back-to-back. If the spoken address doesn't match the listing, or they dodge confirming, escalate to `ask_operator` — this is a scam signal.",
+      "priority": 1
+    },
+    {
+      "name": "Get a concrete viewing window",
+      "when": "After confirming availability.",
+      "script": "Offer two specific windows from the user's calendar. Avoid 'whenever you're free' — that bounces back and burns a turn.",
+      "priority": 2
+    },
+    {
+      "name": "Screen for scams without accusing",
+      "when": "If the landlord asks for money, a deposit, or ID scans BEFORE a viewing.",
+      "script": "Use `deflect_money_request`. If they insist on payment first or claim they're 'out of the country' and can't show it, politely end the call and report to operator. Real landlords let you walk the unit.",
+      "priority": 3
+    },
+    {
+      "name": "Pre-qualify the unit on the phone",
+      "when": "Once a viewing is on the calendar.",
+      "script": "Use `ask_about_lease_terms` to surface dealbreakers (lease length, pets, parking, utilities) before driving out. Saves a trip if it's not a fit.",
+      "priority": 4
+    },
+    {
+      "name": "Capture identity and contact info",
+      "when": "Before hanging up.",
+      "script": "Use `graceful_close`. Get the agent's full name, direct number, and the company name. Note it in the call summary."
+    }
+  ],
+  "boundaries": [
+    "Do NOT share the user's SSN, DOB, or full bank info on a viewing call. Those belong on the formal application.",
+    "Do NOT agree to send a deposit, application fee, or 'holding fee' BEFORE the viewing. Hold via `ask_operator` if pressed.",
+    "Do NOT commit the user to a viewing window outside the times the user provided.",
+    "Do NOT escalate or argue if the landlord is rude — note the tone and end politely; the user can decide whether to pursue."
+  ],
+  "success_signals": [
+    "Landlord confirms the address matches the listing.",
+    "Viewing is scheduled at the unit, in person, with no money requested upfront.",
+    "Landlord answers basic lease-term questions clearly and consistently.",
+    "Landlord provides full name + direct contact number without hesitation."
+  ],
+  "failure_signals": [
+    "Landlord refuses to show the unit before payment.",
+    "Spoken address doesn't match the listed address.",
+    "Landlord claims they're traveling / out of country and asks to wire a deposit.",
+    "Listing price quoted on the call is materially different from the listed price.",
+    "Landlord pressures the user to apply sight-unseen 'because demand is high.'"
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm viewing day, time, address, agent name, and direct number. Ask whether to bring photo ID or pay-stubs to the viewing (some agents do a soft pre-app onsite).",
+    "on_failure": "Politely end the call. Do NOT send any money or documents. Report to operator with the red flag observed (price mismatch, payment-first demand, traveling landlord, etc.).",
+    "follow_ups": [
+      "Calendar reminder 1 hour before the viewing.",
+      "Email the operator the agent name, direct number, viewing time, and any red flags worth re-checking onsite."
+    ]
+  },
+  "required_user_info": [
+    "Listing URL, address, and quoted rent",
+    "Two or three viewing-time windows",
+    "Move-in date",
+    "Hard requirements: pets, parking, lease length, smoking, roommates",
+    "Whether the user has been asked for any money so far (and what for)"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

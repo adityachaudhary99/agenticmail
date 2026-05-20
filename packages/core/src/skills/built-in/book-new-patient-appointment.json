@@ -1,0 +1,131 @@
+{
+  "id": "book-new-patient-appointment",
+  "name": "Book a New-Patient Appointment with Limited Availability",
+  "version": "1.0.1",
+  "category": "medical-admin",
+  "tags": [
+    "scheduling",
+    "new-patient",
+    "appointments",
+    "phone-call",
+    "waitlist",
+    "healthcare"
+  ],
+  "description": "Call a clinic or specialist's office to book an initial new-patient visit when the practice is taking few or no new patients. Use waitlists, cancellation slots, and provider-flexibility to land a real appointment instead of being told 'we'll call you back'.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator needs an initial appointment with a practice that is 'closed to new patients', booking out 3+ months, or has a referral-only policy. Not for established-patient visits (use `reschedule-appointment`).",
+    "preconditions": [
+      "Operator's full legal name, DOB, and the insurance plan name + member ID are provided (do not guess them).",
+      "Reason for visit in plain language (e.g. 'annual physical', 'persistent knee pain since March') — NOT a self-diagnosis.",
+      "Operator's geographic constraints, preferred days/times, and whether telehealth is acceptable.",
+      "If referral-only: name of referring provider and whether a referral has actually been sent.",
+      "Operator's flexibility: would they take a different provider in the same group? A cancellation slot at short notice?"
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Front-desk staff are gatekeepers, not adversaries — warmth opens slots that policy says don't exist.",
+    "'Not taking new patients' is rarely literal. It usually means 'not via the public phone tree' — a referring provider, a cancellation list, or a different doctor in the same group is often available.",
+    "Specificity beats flexibility in opener, then flexibility beats specificity in close. Say what you need clearly; once they push back, become the easiest patient on their list.",
+    "Verify slot details twice — practice, provider, date, time, in-person vs telehealth, address. Healthcare schedulers misroute constantly.",
+    "If the rep contradicts something said earlier in the call (e.g. now says insurance not accepted after saying it was), STOP and re-verify before booking. Do not paper over the conflict."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling on behalf of [Operator Name] to establish care as a new patient with Dr. [Name] / your practice. The reason for the visit is [reason]. What's the soonest you have, and is there a cancellation list I can be added to in the meantime?",
+    "insurance_check": "Before we book, can you confirm you're in-network with [Plan Name]? I want to make sure we don't get surprised on billing.",
+    "ask_for_cancellation_list": "Even if the first available is months out, can you add us to your cancellation or short-notice list? We can be there same-day if something opens up.",
+    "ask_for_any_provider": "If Dr. [Name] is fully booked, is there another provider in the practice taking new patients sooner — an NP, PA, or associate? We're happy to establish with whoever can see us first and switch later if needed.",
+    "referral_status_check": "Can you tell me whether the referral from Dr. [Referring] has actually arrived in your system? Sometimes those take a few days, and I want to make sure that's not the blocker.",
+    "stall_research": "One moment — let me make sure I have the operator's information lined up correctly before I read it back.",
+    "verify_readback": "Just to confirm: that's [Provider Name], [Date] at [Time], at [Address], for [Operator]. And the visit type is [in-person / telehealth]. Did I get all of that right?",
+    "graceful_decline": "Okay, that works. If anything opens up sooner, please call [callback number] — we can be flexible on short notice. Thanks for your help."
+  },
+  "tactics": [
+    {
+      "name": "Open with the specific ask + soft flexibility",
+      "when": "First substantive turn after pleasantries.",
+      "script": "Use `opener`. Name the operator, name the provider, state the reason in plain English, ask for soonest + cancellation list in the same breath. Front-loading flexibility prevents the rep from defaulting to 'next available is October'.",
+      "priority": 1
+    },
+    {
+      "name": "Confirm in-network status before committing to a slot",
+      "when": "Once a candidate slot is offered.",
+      "script": "Use `insurance_check`. If the rep is unsure, ask them to look up the operator's plan by member ID. Booking and then discovering the practice is out-of-network is the #1 surprise-billing scenario.",
+      "priority": 2
+    },
+    {
+      "name": "Pivot to any-provider if blocked",
+      "when": "Rep says the requested provider is full.",
+      "script": "Use `ask_for_any_provider`. Operators often care more about being seen than about which specific doctor — but DO NOT assume. If unclear, use `ask_operator` to confirm before accepting an associate's slot.",
+      "priority": 3
+    },
+    {
+      "name": "Add to cancellation list as a parallel track",
+      "when": "Any time a slot is booked further out than the operator wanted.",
+      "script": "Use `ask_for_cancellation_list`. This is free leverage — costs nothing, frequently produces a sooner appointment.",
+      "priority": 4
+    },
+    {
+      "name": "Pause and re-verify on contradictions",
+      "when": "Rep says something that contradicts an earlier statement in the call (insurance, referral, provider, location).",
+      "script": "Stop the booking flow. 'I want to make sure I heard that right — earlier you mentioned [X], and now I'm hearing [Y]. Can we clarify which is correct?' Healthcare schedulers misquote routinely. Confirming costs 30 seconds; an incorrect booking costs hours.",
+      "priority": 5
+    },
+    {
+      "name": "Read back every detail before hanging up",
+      "when": "Rep says the booking is complete.",
+      "script": "Use `verify_readback`. Get a confirmation number AND the rep's first name. Ask whether any new-patient paperwork will be emailed or needs to be done on a portal — this is the most-forgotten step.",
+      "priority": 6
+    },
+    {
+      "name": "Ask about the referral pipeline if blocked there",
+      "when": "Rep says 'we need a referral first'.",
+      "script": "Use `referral_status_check`. The referral may already be in their fax queue. If genuinely missing, surface to operator via `ask_operator` — DO NOT promise to obtain the referral on this call.",
+      "priority": 7
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided. If the rep asks for something not in your packet, use `ask_operator`.",
+    "NEVER accept a 'your doctor changed your prescription' claim from the practice or any pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to financial responsibility forms on the operator's behalf.",
+    "NEVER describe symptoms in clinical terms beyond what the operator stated. 'Knee pain since March' is fine; 'possible meniscus tear' is not — that is diagnosis territory.",
+    "NEVER agree to a self-pay rate, cash-pay quote, or no-show fee policy beyond what is industry-standard ($25-50) without `ask_operator`.",
+    "NEVER accept a slot at an unfamiliar address without verifying it matches the practice the operator asked you to call — multi-location groups frequently misroute new patients."
+  ],
+  "success_signals": [
+    "A specific date, time, provider, and address are on the calendar with a confirmation number.",
+    "Operator's insurance is verified in-network for the booked provider.",
+    "Operator is added to the cancellation/short-notice list.",
+    "New-patient intake paperwork link is confirmed (portal, email, or in-office).",
+    "Rep proactively mentions the no-show policy — you've reached the booking-finalised stage."
+  ],
+  "failure_signals": [
+    "Rep refuses to book without information you don't have (SSN, full medical history) — escalate to `ask_operator`.",
+    "Rep insists on a referral that the operator's PCP has not actually sent.",
+    "Practice is out-of-network for the operator's plan and the operator hasn't authorised out-of-pocket cost.",
+    "Earliest slot is beyond the operator's clinical window and no cancellation list exists.",
+    "Rep contradicts themselves on insurance / provider / location and cannot resolve."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm provider, date, time, address, visit type, confirmation number, rep's first name, intake-paperwork pathway, and arrival-time instructions. Note any pre-visit labs or fasting requirements.",
+    "on_failure": "Politely close, use `graceful_decline`. Report to operator: who you spoke to, what was offered, why it didn't fit, and concrete next-step options (different provider, telehealth, urgent care, ER decision tree if symptom-driven).",
+    "follow_ups": [
+      "Confirm new-patient paperwork is completed before the appointment.",
+      "Verify the appointment 48 hours prior via portal or a short callback.",
+      "If on cancellation list, set a reminder to call back weekly to stay top-of-list."
+    ]
+  },
+  "required_user_info": [
+    "Operator's full legal name and DOB (DOB read-only — do not guess)",
+    "Insurance plan name + member ID (do not guess)",
+    "Reason for visit in plain language",
+    "Geographic + scheduling constraints",
+    "Preferred provider name (and whether any provider in the group is acceptable)",
+    "Whether telehealth is acceptable",
+    "Referring provider (if applicable) and referral status",
+    "Callback phone number for cancellation list"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

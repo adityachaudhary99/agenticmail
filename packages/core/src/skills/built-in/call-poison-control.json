@@ -1,0 +1,115 @@
+{
+  "id": "call-poison-control",
+  "name": "Call Poison Control — 1-800-222-1222",
+  "version": "1.0.0",
+  "category": "emergency-services",
+  "tags": [
+    "poison-control",
+    "1-800-222-1222",
+    "medical",
+    "ingestion",
+    "overdose",
+    "child-safety",
+    "emergency_services"
+  ],
+  "description": "Call the US Poison Control hotline (1-800-222-1222) for guidance after an ingestion, exposure, or suspected overdose. Poison Control is FREE, confidential, and 24/7. They handle the vast majority of cases without ER referral — saving lives AND ER visits.",
+  "disclaimer": "(1) For UNCONSCIOUS / not breathing / seizing patients, call 911 (call-911-medical-emergency) FIRST. Poison Control is for awake patients where the exposure was non-life-threatening at the moment of call. (2) Identify as an AI on the first sentence. (3) Don't guess at substances — relay only what the operator can confirm. (4) Stay on the line; Poison Control may want to follow up at intervals.",
+  "context": {
+    "when_to_use": "Operator (or someone with the operator) ingested / inhaled / was exposed to a substance and you need real-time guidance. Common: child ate a pill / cleaning product / plant, adult took a wrong dose, someone splashed chemicals on skin or in eyes, animal bites with unknown species. Operator wants medical guidance without driving to the ER if avoidable.",
+    "preconditions": [
+      "Patient is conscious + breathing + not actively seizing (otherwise 911 first).",
+      "Operator's authorisation to make the call.",
+      "What was taken / encountered (substance name, container, photo of label if available).",
+      "How much (estimate — Poison Control is used to estimates).",
+      "When (within how many minutes / hours).",
+      "Patient's age, rough weight (especially for children), any known allergies / current medications."
+    ],
+    "estimated_call_duration_minutes": 18
+  },
+  "principles": [
+    "Identify as an AI on the first sentence so the specialist adapts their script.",
+    "Read substance information VERBATIM from the label / packaging when available. The active ingredient + concentration is what they need, not the product name.",
+    "Don't guess at amount; give a range ('between half a teaspoon and 2 teaspoons') and let the specialist decide whether that matters.",
+    "Stay on the line — they will give a treatment plan AND often want to follow up at 30 / 60 / 120 minutes.",
+    "If the patient deteriorates mid-call (loses consciousness, seizes, stops breathing), tell the specialist and dial 911 in parallel. Don't try to handle it solo."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm an AI assistant calling on behalf of <operator>. We have a possible <ingestion / exposure / overdose>. <Patient's age> with <weight if relevant>. They took <substance — read the label> at approximately <time>. They are currently <conscious and alert / drowsy but responsive / etc>. May I walk you through what we know?",
+    "read_label_verbatim": "I'm going to read the label exactly as it appears: <verbatim text including active ingredients, concentrations, warnings>.",
+    "estimate_amount": "My operator estimates <range — 'between 2 and 5 pills' / 'about half a bottle' / 'a sip'>. They aren't sure of the exact amount.",
+    "patient_status_check": "Current status: <conscious, breathing normally, GCS 15 / drowsy but rouseable / etc>. No new symptoms since I started this call.",
+    "ask_for_followup_schedule": "When would you like us to check back in? My operator will be watching the patient.",
+    "deterioration_alert": "The patient is now <new symptom: vomiting / drowsy / unresponsive / seizing>. I want to flag that change.",
+    "graceful_close": "Thank you. To summarise: the plan is <verbatim plan>. Follow-up is scheduled for <time>. If anything changes we should call 911. Is that right?"
+  },
+  "tactics": [
+    {
+      "name": "Triage out 911-tier first",
+      "when": "Before dialing Poison Control.",
+      "script": "Confirm with operator: patient conscious? breathing? not seizing? If any 'no', use call-911-medical-emergency INSTEAD — Poison Control will redirect you anyway.",
+      "priority": 0
+    },
+    {
+      "name": "Lead with age, substance, amount, time, status",
+      "when": "First substantive turn.",
+      "script": "Use `opener` — five facts in order: age, substance, amount, time, status. Same triage logic specialists are trained on.",
+      "priority": 1
+    },
+    {
+      "name": "Read labels verbatim",
+      "when": "Specialist asks 'what's in it?'.",
+      "script": "Use `read_label_verbatim`. Active ingredient + concentration matters; the brand name often doesn't.",
+      "priority": 2
+    },
+    {
+      "name": "Honest amount ranges, not made-up numbers",
+      "when": "Specialist asks how much.",
+      "script": "Use `estimate_amount`. Specialists are TRAINED on estimates from caregivers — giving them a range is more honest than fake precision."
+    },
+    {
+      "name": "Schedule follow-up checks",
+      "when": "Before closing the initial call.",
+      "script": "Use `ask_for_followup_schedule`. Many exposures get a 'we'll call back at X' protocol."
+    },
+    {
+      "name": "Flag deterioration immediately",
+      "when": "Patient's status changes mid-call.",
+      "script": "Use `deterioration_alert`. If it's a 911-tier change (unconscious, seizing, stopped breathing), dial 911 in parallel; Poison Control is great at non-911, not 911."
+    }
+  ],
+  "boundaries": [
+    "NEVER call Poison Control for an unconscious / non-breathing patient — that's 911 first.",
+    "NEVER fabricate amounts or substances. Honest estimates beat fake precision.",
+    "NEVER give the patient food / drink / induce vomiting on your own initiative — wait for the specialist's instruction. (Inducing vomiting can be dangerous; the modern protocol is rarely 'make them vomit'.)",
+    "NEVER end the call before confirming the follow-up schedule and the deterioration triggers ('if they X, call 911').",
+    "NEVER share Poison Control's guidance as medical advice for OTHER situations. Each call is specific."
+  ],
+  "success_signals": [
+    "Specialist gives a treatment plan and follow-up schedule.",
+    "Specialist confirms the operator can manage at home.",
+    "Specialist gives clear escalation triggers ('if they X, go to the ER immediately')."
+  ],
+  "failure_signals": [
+    "Specialist recommends ER — go, don't argue. Email the operator the substance + Poison Control's reference for the ER team.",
+    "Patient deteriorates mid-call — flag + 911.",
+    "Operator can't read the label clearly — relay what they CAN see, specialist may have a database lookup."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm plan + follow-up schedule + escalation triggers verbatim. Get the case reference. Email operator a summary + the schedule. Set a reminder to receive the follow-up call.",
+    "on_failure": "If ER referral: stop the call, email operator the substance details and PC's case reference so the ER team has the workup.",
+    "follow_ups": [
+      "Schedule the follow-up checks Poison Control recommended (e.g. 30/60/120 min) via schedule_callback.",
+      "Email operator the substance summary + the case reference for their pediatrician / GP records."
+    ]
+  },
+  "required_user_info": [
+    "Operator's authorisation for this call",
+    "Patient age + rough weight (especially for children)",
+    "Substance — label / packaging if possible",
+    "Amount estimate + time of exposure",
+    "Current status: conscious + breathing + no seizing",
+    "Allergies + current medications",
+    "Operator's callback number for follow-up checks"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

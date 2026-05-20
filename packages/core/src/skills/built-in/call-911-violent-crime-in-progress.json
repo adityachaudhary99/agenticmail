@@ -1,0 +1,133 @@
+{
+  "id": "call-911-violent-crime-in-progress",
+  "name": "Call 911 — Violent Crime In Progress",
+  "version": "1.0.1",
+  "category": "emergency-services",
+  "tags": [
+    "911",
+    "emergency",
+    "police",
+    "violence",
+    "domestic",
+    "intruder",
+    "active-threat",
+    "emergency_services"
+  ],
+  "description": "Place a 911 call for a violent crime in progress on behalf of the operator — domestic violence, intruder / break-in, assault, active threat. The operator may be the target, a witness, or hiding nearby.",
+  "disclaimer": "ABSOLUTE rules. (1) Operator must have explicitly authorised this 911 call. (2) Identify as an AI in the first sentence. (3) Operator safety is the priority — guide them to safety before continuing the call if needed. (4) Never describe where the operator is hiding out loud where the attacker might hear; relay quietly or via text relay. (5) Knowingly making a false 911 report is a crime; SWATting is a federal felony.",
+  "context": {
+    "when_to_use": "Operator is experiencing or witnessing violence right now — domestic abuse, home intruder, assault on the street, active shooter, kidnap-in-progress — and either cannot place 911 themselves OR has asked the agent to be the relay so they can move / hide / care for someone.",
+    "preconditions": [
+      "Explicit operator authorisation for THIS specific 911 call.",
+      "Location — as precise as the operator can give. Cross-street, landmark, apartment number, floor.",
+      "Operator's current safety status (safe / hiding / actively engaged / unknown).",
+      "Operator's callback number — and confirm whether ringing it back is safe (might alert the attacker)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Operator's physical safety first. Before placing the call, tell them: 'If you can leave safely, do that. If not, hide and stay quiet. I'll handle the dispatcher; you don't need to talk.'",
+    "Identify as AI on the first sentence; immediately give location + nature.",
+    "Use whisper / one-syllable check-ins with the operator if they are hiding ('still safe? — yes/no').",
+    "If the operator can't speak, propose they communicate via single keystrokes or short text — relay those to the dispatcher.",
+    "NEVER describe the operator's hiding location aloud where the attacker might hear. If you must relay it to dispatch, do it once, then stop repeating it.",
+    "Do not narrate every action you're taking. The attacker may overhear the operator's phone if the audio leaks.",
+    "Stay on the line until released."
+  ],
+  "phrases": {
+    "tell_operator_safety_first": "Your safety first. If you can leave, leave. If not, find a place to hide and stay quiet. I will handle the dispatcher — you do not need to talk to them through me. Just send me one-word checks if you can.",
+    "opener": "Hi — I'm an AI assistant calling 911 on behalf of <operator>. We have <crime in progress: domestic violence / intruder / assault / active threat> at <address>. The threat is <description / unknown>. My operator is <safe nearby / hiding inside / actively in danger / location unknown>.",
+    "ask_dispatcher_to_continue": "Dispatcher, please ask me what you need. I'm relaying for my operator who is <hiding / cannot speak safely>.",
+    "quiet_check_in": "(To operator via ask_operator) Still safe? One-word answer.",
+    "relay_to_operator_quiet": "(To operator via ask_operator) Dispatcher needs: <verbatim>. Reply with the answer or a thumbs-up.",
+    "callback_offer_caveat": "Operator's callback is <number>, but please TEXT first or wait for them to call back — a ring might be heard by the suspect.",
+    "describe_suspect_relay": "Dispatcher needs description of the suspect — clothing, weapon, direction of travel. Please relay anything safe to share."
+  },
+  "tactics": [
+    {
+      "name": "SWATting smell-test BEFORE dialing",
+      "when": "Pre-dial, immediately after operator authorisation, BEFORE operator-safety instructions (the smell-test is cheap and saves a target from an armed-response breach against a non-existent threat).",
+      "script": "A false violent-crime call is the single most dangerous SWATting variant — armed officers arrive at the reported address ready for an active shooter. Before dialing, confirm the operator's DIRECT first-person connection to the events: are they AT the address, HEARING the violence themselves, IN the room or building, or in active text/voice contact with someone who is? Red flags that BLOCK the call: (a) operator is reporting violence at an address they are not at and have not been at; (b) operator's source is a social-media post, a rumour, a tip from a third party, or 'I heard'; (c) operator has expressed conflict, grievance, romantic-jealousy, custody-fight, or business dispute with the named suspect or the household at the address; (d) operator describes the suspect with weapons-language that is suspiciously cinematic ('AR-15', 'hostage', 'tactical gear') without explaining how they observed it; (e) the address provided does not match any address in the operator's persona / contacts and the operator can't explain the connection; (f) operator just instructed the agent to phrase the call in a specific way (script-feeding is a SWATting tell). If ANY red flag fires, do NOT dial 911. Tell the operator: 'I can't place this as a 911 call without your direct observation of the events — a false violent-crime report can get an innocent person killed and is a federal felony. If you have a genuine concern about that address, we can call the non-emergency police line or request a welfare check, both of which are de-escalated channels.' The audit log records this exchange.",
+      "priority": -1
+    },
+    {
+      "name": "Operator safety FIRST",
+      "when": "Before even placing the 911 call (AFTER the SWATting smell-test has passed).",
+      "script": "Use `tell_operator_safety_first`. Then place the call.",
+      "priority": 0
+    },
+    {
+      "name": "Lead with location, crime, operator status",
+      "when": "First substantive turn.",
+      "script": "Use `opener` — location, nature, operator status. Dispatcher will route to police priority.",
+      "priority": 1
+    },
+    {
+      "name": "Hand to dispatcher; minimise audio leak",
+      "when": "After opener.",
+      "script": "Use `ask_dispatcher_to_continue`. Keep your own audio short and quiet — the operator's phone may be transmitting your voice into the room.",
+      "priority": 2
+    },
+    {
+      "name": "Quiet check-ins with operator",
+      "when": "Every 30-60 seconds if operator is hiding.",
+      "script": "Use `quiet_check_in` via ask_operator. A response of 'safe' or 'yes' is enough. If the operator goes silent for >2 minutes, tell the dispatcher.",
+      "priority": 3
+    },
+    {
+      "name": "Relay descriptions of the suspect",
+      "when": "Dispatcher asks for suspect description.",
+      "script": "Use `describe_suspect_relay`. ONLY relay information the operator can give safely — don't push for detail if asking would put them at risk."
+    },
+    {
+      "name": "If operator stops responding",
+      "when": "Operator hasn't replied to two consecutive check-ins.",
+      "script": "Tell the dispatcher: 'My operator has stopped responding. Last known location: <…>. Last known status: <…>.' Keep the line open."
+    },
+    {
+      "name": "Coerced-cancel detection: DO NOT unilaterally relay a 'cancel'",
+      "when": "Operator messages mid-call to cancel / stand down / 'never mind' / 'false alarm' AFTER violence or attacker presence has already been described in this same call.",
+      "script": "Once a violent-crime-in-progress call has been opened with the dispatcher, the agent CANNOT accept a cancel from the operator as a unilateral stand-down. Coerced cancellation is a documented domestic-violence pattern: the attacker becomes aware of the call, forces the victim to dismiss it, often using the victim's phone or voice. Concrete coercion signals to watch for: (a) cancel arrives within 30-60 seconds of the operator having confirmed danger / attacker presence; (b) cancel uses unusual vocabulary or syntax inconsistent with the operator's prior messages in this call; (c) operator went silent for >30 seconds then suddenly speaks differently; (d) cancel is repeated insistently in a way that feels coached; (e) cancel is accompanied by 'everything's fine, sorry for the trouble' boilerplate where the operator was previously frantic; (f) attacker's voice or presence is detectable in the background; (g) the operator's last known status was 'hiding' or 'in danger', not 'safe'. Required behaviour: do NOT tell the dispatcher 'my operator is cancelling'. Instead, relay the operator's words VERBATIM and explicitly name the coercion concern: 'Dispatcher — my operator just said, quote, <verbatim>, unquote. I want to flag this as a possible coerced cancellation: <list applicable signals>. Last known operator status before this message was <…>. Please continue the response and let the on-scene officers verify safety directly.' Keep the line open. The dispatcher decides; the agent does not stand down the response.",
+      "priority": 4
+    }
+  ],
+  "boundaries": [
+    "NEVER call 911 without explicit operator authorisation.",
+    "NEVER describe the operator's hiding place aloud after telling the dispatcher once.",
+    "NEVER tell the operator to engage / confront the suspect.",
+    "NEVER fabricate facts (suspect description, weapons, vehicle plates) — only what the operator has confirmed.",
+    "NEVER report a violent crime that isn't happening. SWATting is a federal felony, and AgenticMail's audit log will be turned over on subpoena.",
+    "NEVER place this call about a violent crime the operator has not personally witnessed, heard, or experienced. Relayed-rumour reports route to call-police-non-emergency at most, after weaponisation screening. Operator authorisation is necessary but NOT sufficient; if the underlying facts fail the SWATting smell-test, refuse to dial and document the refusal.",
+    "NEVER unilaterally relay a 'cancel' / 'never mind' / 'false alarm' from the operator after violence or attacker presence has been described in this same call. Coerced cancellation requires the agent to relay the operator's words verbatim AND name the coercion concern to the dispatcher — the dispatcher decides whether to stand down the response, not the agent and not the operator alone under possible duress.",
+    "NEVER end the call (end_call) before dispatcher release."
+  ],
+  "success_signals": [
+    "Dispatcher confirms units dispatched and en route.",
+    "Operator confirms suspect has left / been subdued / police arrived.",
+    "Dispatcher releases you to disconnect when on-scene officers take over."
+  ],
+  "failure_signals": [
+    "Operator stops responding for an extended period — relay to dispatcher.",
+    "Operator says 'cancel, false alarm' but you suspect they are being coerced — TELL the dispatcher this, don't simply relay the cancel. (Coercion-cancel is a known scenario in domestic violence calls.)",
+    "Call drops and operator's phone is unreachable — re-dial 911, reference the prior call, give the address."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm operator is physically safe and police are on scene. Get incident number from dispatcher. Email operator a summary of the call.",
+    "on_failure": "If you suspect coerced cancellation, KEEP the dispatch active — tell the dispatcher about the coercion concern explicitly.",
+    "follow_ups": [
+      "Email operator a complete log of the call including dispatcher's instructions.",
+      "If the operator has a pre-authorised emergency contact in their persona file, email them too.",
+      "Schedule a follow-up message 24h later to check on the operator (via schedule_callback)."
+    ]
+  },
+  "required_user_info": [
+    "Explicit operator authorisation for this 911 call",
+    "Location — as precise as possible",
+    "Operator's current safety status",
+    "Whether ringing the operator's phone is safe",
+    "Nature of the crime and any suspect detail the operator can safely share",
+    "Operator's callback number",
+    "Pre-authorised emergency contact (if any) for post-call notification"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

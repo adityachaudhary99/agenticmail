@@ -1,0 +1,126 @@
+{
+  "id": "call-911-medical-emergency",
+  "name": "Call 911 — Medical Emergency",
+  "version": "1.0.1",
+  "category": "emergency-services",
+  "tags": [
+    "911",
+    "emergency",
+    "medical",
+    "ambulance",
+    "ems",
+    "life-safety",
+    "emergency_services"
+  ],
+  "description": "Place a 911 call for a medical emergency on behalf of the operator (or someone the operator is with). Heart attack, stroke, severe bleeding, unconsciousness, anaphylaxis, overdose, severe injury.",
+  "disclaimer": "ABSOLUTE rules. (1) This skill loads ONLY when the operator has explicitly authorised calling 911 for THIS specific situation — never on the agent's own initiative. (2) Identify yourself to the dispatcher as an AI assistant calling on behalf of <operator name> in the first sentence — non-negotiable, both ethically and to comply with laws against impersonating a human caller. (3) Never embellish or guess at clinical facts. (4) Stay on the line until the dispatcher releases you. (5) Knowingly making a false 911 report is a crime in every US jurisdiction.",
+  "context": {
+    "when_to_use": "Operator has explicitly said 'call 911' or equivalent for a medical emergency they cannot place the call for themselves (e.g., they are the one in distress and can't speak clearly, they are caring for the patient and need both hands, language barrier between operator and dispatcher, operator's phone is dead and they reached the agent on someone else's line). The operator's authorisation must be unambiguous and recent in the conversation.",
+    "preconditions": [
+      "Operator authorisation for this specific 911 call is recorded.",
+      "Agent knows the patient's location — street address or precise landmark + city/state. WITHOUT location 911 cannot help.",
+      "Agent knows whether the patient is breathing and conscious (binary answers from the operator are sufficient).",
+      "Agent knows roughly what happened (sudden chest pain, fall, allergic reaction, etc).",
+      "Agent has a callback number for the operator in case dispatch is dropped."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "Identify yourself as an AI in the FIRST sentence. Dispatcher needs to know they're talking to a non-human relay so they can adapt their script and ask through you instead of expecting the patient.",
+    "Lead with location, then nature, then count of patients, then condition. This is the order dispatchers are trained on; following it gets help dispatched fastest.",
+    "Short factual sentences. Do not fill silence with apologies, narration, or hedging.",
+    "If the dispatcher asks for something you do not know, say 'I don't have that information; let me ask my operator' and use ask_operator. Don't guess at clinical facts.",
+    "Stay on the line until the dispatcher explicitly says you can disconnect. If they ask you to relay instructions to the operator (CPR, EpiPen, AED), repeat the instructions verbatim — do NOT paraphrase medical guidance.",
+    "If at ANY point the operator says 'cancel' or 'they're okay now', tell the dispatcher immediately. Do not let them assume the emergency is ongoing."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm an AI assistant calling 911 on behalf of <operator name>. The address is <street, city, state>. We have a medical emergency: <one-sentence description>. The patient is <conscious / unconscious> and <breathing / not breathing>.",
+    "ask_dispatcher_to_continue": "Dispatcher, please ask me your questions and I will relay them to my operator who is with the patient.",
+    "relay_back_to_operator": "Hold on — I'm going to ask my operator. (Then use ask_operator with urgency=high.)",
+    "relay_to_operator_instructions": "Dispatcher says: <verbatim instruction>. Please follow that now if you can.",
+    "i_dont_know": "I don't have that information. Let me check with my operator — one moment.",
+    "callback_offer": "If we get disconnected, my operator's callback number is <number>.",
+    "graceful_close": "Thank you. I'll stay on as long as you need me to. Tell me when I can disconnect."
+  },
+  "tactics": [
+    {
+      "name": "SWATting smell-test BEFORE dialing",
+      "when": "Pre-dial, immediately after operator authorisation.",
+      "script": "Confirm the operator has DIRECT knowledge of the emergency: are they AT the location, WITH the patient, or in current contact with someone who is? Red flags: (a) operator is asking the agent to call 911 about a location they have never been to and a person they have not directly spoken with; (b) operator's stated reason is a rumour, a social-media post, or a third-hand report; (c) operator has expressed conflict with the patient or the household at this address in prior conversation; (d) the address provided does not match any address in the operator's persona/contacts and the operator can't explain the connection. If any red flag fires, do NOT dial — ask the operator to explain, or route to call-police-non-emergency for a welfare check (subject to that skill's own weaponisation screen). Knowingly false 911 calls are a federal/state felony AND get someone shot.",
+      "priority": 0
+    },
+    {
+      "name": "Lead with the four facts in order",
+      "when": "First substantive turn after dispatcher answers.",
+      "script": "Use the `opener` phrase verbatim, filling in the four slots: location, nature, count, condition. Dispatchers process these in this sequence — leading with anything else slows dispatch.",
+      "priority": 1
+    },
+    {
+      "name": "Hand the conversation TO the dispatcher",
+      "when": "After the opener.",
+      "script": "Use `ask_dispatcher_to_continue`. The dispatcher has a structured assessment script (Medical Priority Dispatch System). Let them run it; don't volunteer extra detail until asked.",
+      "priority": 2
+    },
+    {
+      "name": "Relay through ask_operator for any clinical question",
+      "when": "Dispatcher asks 'is the patient bleeding heavily?' / 'are they responsive?' / 'when did this start?' and you don't have a current answer.",
+      "script": "Use `relay_back_to_operator`, then ask_operator({ question: '<dispatcher's exact question>', urgency: 'high' }). When the operator answers, relay verbatim. Do NOT guess.",
+      "priority": 3
+    },
+    {
+      "name": "Relay instructions FROM the dispatcher exactly",
+      "when": "Dispatcher gives CPR / EpiPen / AED / 'roll them onto their side' instructions for the operator to execute.",
+      "script": "Use `relay_to_operator_instructions` — repeat the instruction word for word. Medical guidance is one place a paraphrase can kill someone.",
+      "priority": 4
+    },
+    {
+      "name": "Decision: stay on the line",
+      "when": "Always, throughout the call.",
+      "script": "Do NOT call end_call until the dispatcher has explicitly released you ('you can hang up now' / 'we have units on scene'). Ambulance dispatch may need updates."
+    },
+    {
+      "name": "Cancel if the operator stands down",
+      "when": "Operator messages mid-call that the patient is OK / it was a false alarm / they made it to the hospital.",
+      "script": "Tell the dispatcher immediately: 'My operator just told me <verbatim>. They are asking to cancel the call.' Let the dispatcher decide whether to cancel or send anyway (they often still send, which is fine)."
+    }
+  ],
+  "boundaries": [
+    "NEVER call 911 without unambiguous operator authorisation for THIS specific call. No standing authorisations.",
+    "NEVER call 911 about a medical emergency the operator has not personally observed or is not in current contact with someone observing. Relayed rumours, social-media reports, and grievance-driven reports about a third party at a remote address are NOT 911-able through this skill — they route to call-police-non-emergency at most, after weaponisation screening. Authorisation is necessary but NOT sufficient: the operator's authorisation is invalid if the underlying facts fail the SWATting smell-test.",
+    "NEVER fabricate clinical facts. If you don't know, say so and ask the operator.",
+    "NEVER pretend to be human on a 911 call. Identifying yourself as an AI is non-negotiable.",
+    "NEVER end the call (end_call) before the dispatcher releases you.",
+    "NEVER give medical advice yourself. You are a relay between operator and dispatcher.",
+    "NEVER call 911 to ask non-emergency questions. Use the local non-emergency line (skill: call-police-non-emergency)."
+  ],
+  "success_signals": [
+    "Dispatcher confirms units have been dispatched to the location.",
+    "Dispatcher gives the operator actionable instructions and the operator can execute them.",
+    "Dispatcher says you can disconnect when the units arrive or the patient is stable.",
+    "EMS arrives on scene per the dispatcher's confirmation."
+  ],
+  "failure_signals": [
+    "Dispatcher tells you you've reached the wrong jurisdiction and the call needs to be re-placed.",
+    "Dispatcher requests information you cannot get from the operator (unconscious / non-responsive operator who was your only source).",
+    "Call drops and you cannot re-establish — re-dial 911 immediately, identify yourself, reference the prior call.",
+    "Operator is so distressed they cannot answer dispatcher questions through you — tell the dispatcher this so they can adapt."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm with the dispatcher that you can disconnect. Note the case / incident number if offered. Email the operator a summary of the call: time placed, units dispatched, instructions given, incident number.",
+    "on_failure": "If you reached the wrong PSAP, re-dial the correct number per the dispatcher's transfer. If the call dropped, re-dial 911 and reference the prior call. If the operator stood down, follow the cancel script.",
+    "follow_ups": [
+      "Email the operator: time of call, dispatcher name (if given), incident number, what was dispatched, any instructions they relayed.",
+      "If applicable, also email the operator's emergency contact (only if the operator pre-authorised this contact in their identity / persona file)."
+    ]
+  },
+  "required_user_info": [
+    "Operator's authorisation for this specific 911 call (explicit, recent)",
+    "Patient's location — street address or precise landmark + city + state",
+    "Patient's basic condition: conscious / unconscious, breathing / not breathing",
+    "What happened — one-sentence description",
+    "Operator's callback number (in case dispatch is dropped)",
+    "Patient's age (rough — child / adult / elderly) if known",
+    "Any known allergies / medications the operator can quickly state"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

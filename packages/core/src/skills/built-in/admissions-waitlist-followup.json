@@ -1,0 +1,129 @@
+{
+  "id": "admissions-waitlist-followup",
+  "name": "Admissions Decision Follow-Up — Waitlist Nudge, Deposit Extension",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "admissions",
+    "waitlist",
+    "deferred",
+    "deposit",
+    "yield",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call an undergraduate or graduate admissions office to (a) reaffirm interest while on a waitlist, (b) request a deposit-deadline extension while a financial-aid appeal or competing decision is pending, (c) check status of a deferred application, or (d) get specific reviewer feedback to inform a re-application.",
+  "disclaimer": "Admissions officers are people with limited discretion within institutional policy. Some asks (deposit extension, waitlist nudge) are routine; others (admit-now decisions, fee waivers post-deadline, discretionary reconsideration) are rare. Match the ask to the office's actual authority.",
+  "context": {
+    "when_to_use": "User is (a) on a waitlist and the school has either invited Letters of Continued Interest or hasn't moved in 2+ weeks past historical waitlist activation, (b) staring at a deposit deadline that conflicts with another decision still pending, (c) deferred from Early Action / Early Decision and now in the regular-decision pool, or (d) denied and wants to understand why before re-applying.",
+    "preconditions": [
+      "User knows their applicant ID and the exact decision they received.",
+      "User has reviewed the school's published waitlist / yield communications policy — some schools explicitly invite LOCIs, others explicitly say no further contact.",
+      "User has something new to say. A waitlist nudge with no update lands as noise.",
+      "User has competing offers and deadlines mapped, so the extension ask is specific."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Admissions officers remember enthusiasm + specificity. They forget generic 'I really want to attend' emails the second they close the tab.",
+    "The right cadence is one substantive update — not weekly check-ins. Two LOCIs at most: one after waitlist notification, one if you have a real new accomplishment.",
+    "Deposit extensions for a pending aid appeal are routine. Deposit extensions to compare other schools are routine but should be requested politely. Deposit extensions because you 'haven't decided' are softer asks.",
+    "If you say 'I will absolutely attend if admitted from the waitlist', schools take that VERY seriously and may hold you to it. Don't say it unless it's true.",
+    "Reviewer feedback after a denial is sometimes available (especially at law / business / graduate level) and is gold for the next application. Always ask.",
+    "Phone is sometimes better than email — your name gets associated with a person. But never call your way past a 'no further contact' policy."
+  ],
+  "phrases": {
+    "opener_waitlist": "Hi, I'm a waitlisted applicant — applicant ID [ID]. I wanted to confirm you have my updated transcript / new accomplishments on file, and to reaffirm that [school] is my top choice. Could you let me know if there's a way to submit a Letter of Continued Interest or new materials?",
+    "opener_deposit_extension": "Hi, I have a deposit deadline of [date]. I have a financial-aid appeal pending [or: a decision pending from another school I need to compare]. Could I request an extension of [N] days / weeks?",
+    "opener_deferred": "Hi, I was deferred from Early Action / ED. I'd like to check that my file is complete in the regular-decision pool and ask whether you accept updates (mid-year grades, new test scores, new awards).",
+    "opener_post_denial": "Hi, I received a denial decision and I respect that. I'd like to ask whether your office offers reviewer feedback or if there's a specific reason that would help me strengthen a reapplication.",
+    "reaffirm_top_choice": "I want to be clear: [school] is my first choice, and if I'm admitted from the waitlist I will absolutely deposit and attend. I'm saying that because I know schools want to know yield is real.",
+    "what_changed_since": "Since I applied: I [first-author publication / new role / 4.0 last semester / state championship / new portfolio piece]. I think this strengthens my fit because [one sentence].",
+    "ask_for_admissions_officer": "Could I be connected with my regional admissions officer or the reader assigned to my file? I'd like 60 seconds of their time, not the front desk's.",
+    "ask_about_LOCI_policy": "What's your office's policy on Letters of Continued Interest? Is there a preferred format, length, or recipient — and is there a 'no further contact' line I should respect?",
+    "graceful_close_success": "Thank you. To confirm: [extension granted to / LOCI accepted / reviewer feedback scheduled]. May I have your name and email for the record? And is there anything else that would help my file?"
+  },
+  "tactics": [
+    {
+      "name": "Lead with one substantive update, not warm air",
+      "when": "Waitlist LOCI.",
+      "script": "Use `what_changed_since`. The update should be specific (grades, role, publication, award, project). 'Still very interested' is not an update. If there's no new fact, skip the call.",
+      "priority": 1
+    },
+    {
+      "name": "Make the deposit-extension ask concrete",
+      "when": "Requesting more time.",
+      "script": "Use `opener_deposit_extension`. State exact dates, exact reason (aid appeal, competing offer), and exact requested extension. Vague 'a little more time' lands as indecision.",
+      "priority": 2
+    },
+    {
+      "name": "Reaffirm top choice ONLY if true",
+      "when": "Waitlist conversation.",
+      "script": "Use `reaffirm_top_choice`. Schools' yield models are sensitive to this — a clean reaffirmation moves applicants up. But schools also remember; if you take it back, your name is mud at that office and in the region.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for the regional admissions officer",
+      "when": "Front desk is friendly but not the reader.",
+      "script": "Use `ask_for_admissions_officer`. Decisions are made by readers and committees, not by phone-line staff. A 60-second voice memo to a regional officer is more valuable than a 5-minute call with intake.",
+      "priority": 4
+    },
+    {
+      "name": "Ask about LOCI policy explicitly",
+      "when": "Before sending any LOCI.",
+      "script": "Use `ask_about_LOCI_policy`. Some schools (e.g. parts of the Ivy+ set) explicitly invite LOCIs; others mark applications as over-contact if you flood them. Get the rule before you act.",
+      "priority": 5
+    },
+    {
+      "name": "Request reviewer feedback after denial",
+      "when": "Post-denial reapplication is being considered.",
+      "script": "Use `opener_post_denial`. Not all schools offer feedback, but graduate programs (especially MBA, JD, MD, MFA, PhD) sometimes do. Tone: gracious, not aggrieved. The same officer may read the next application."
+    },
+    {
+      "name": "Frame an extension request around what the school cares about",
+      "when": "Pushing for more time.",
+      "script": "Schools care about yield certainty. Frame the extension as 'I want to commit cleanly with my family confident in the finances' rather than 'I'm shopping.' Same ask, very different reception."
+    }
+  ],
+  "boundaries": [
+    "Do NOT promise to attend if admitted unless you mean it — schools track and remember.",
+    "Do NOT flood the office with calls/emails. One substantive contact beats five generic ones.",
+    "Do NOT bypass a stated 'no further contact' policy — it's a screen, and contact past it counts against the applicant.",
+    "Do NOT have a parent call instead of the student for an adult applicant — admissions reads this as a maturity signal.",
+    "Do NOT fabricate new accomplishments for an LOCI. They can be verified and the consequence is rescission."
+  ],
+  "success_signals": [
+    "Admissions officer named and direct email obtained.",
+    "Deposit extension granted in writing.",
+    "LOCI accepted and routed to the reader.",
+    "Mid-year report / new transcript confirmed received.",
+    "Reviewer feedback session scheduled or written feedback offered."
+  ],
+  "failure_signals": [
+    "Office cites 'no further contact' policy explicitly — stop.",
+    "Waitlist is closed and the school has moved to summer melt only.",
+    "Deposit extension denied and no alternative offered.",
+    "Officer is non-committal in a way that signals over-contact (vague answers, deflection to website).",
+    "Reapplication isn't allowed for one year and timing doesn't work."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm what was agreed (extension date, LOCI submission, feedback meeting). Get name + email. Send a brief thank-you email within 24h reiterating the next concrete step.",
+    "on_failure": "If denied or stalled, note the office's exact words. Plan the alternative: another waitlist, a gap year + reapplication, transfer pathway after a year at another school, or a different program.",
+    "follow_ups": [
+      "Send the LOCI within 24h of the call if invited.",
+      "Email operator the extension date and confirmation source.",
+      "Calendar 2 weeks for follow-up if expected decision hasn't arrived.",
+      "If denied: archive the feedback for the next cycle."
+    ]
+  },
+  "required_user_info": [
+    "Applicant ID + program",
+    "Current decision status (waitlisted, deferred, admitted, denied)",
+    "Deposit deadline (if applicable)",
+    "Competing offers + deadlines (if relevant)",
+    "Specific new updates since application",
+    "School's published LOCI / further-contact policy"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

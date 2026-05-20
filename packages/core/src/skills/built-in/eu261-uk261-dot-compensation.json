@@ -1,0 +1,113 @@
+{
+  "id": "eu261-uk261-dot-compensation",
+  "name": "EU261 / UK261 / DOT Denied-Boarding Cash Compensation",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["regulation", "eu261", "uk261", "dot", "compensation", "denied-boarding", "regulator"],
+  "description": "File a cash-compensation claim for cancellation, long delay, or denied boarding under EU Regulation 261/2004, UK Regulation 261, or US DOT 14 CFR 250 / 14 CFR 259. Push the airline directly first, escalate to the regulator only if denied.",
+  "disclaimer": "Regulations and amounts cited reflect the rules as of 2025. EU261 amounts are set in the Regulation; UK261 mirrors them in GBP; DOT denied-boarding caps are indexed and updated by DOT periodically. Always confirm the current cap on the DOT or airline's site at time of claim.",
+  "context": {
+    "when_to_use": "User experienced one of: (a) flight cancelled within 14 days of departure, (b) arrival delay >3 hours, (c) involuntary denied boarding (bumped). On a flight that is either (i) departing the EU/UK on any airline, or (ii) arriving in the EU/UK on an EU/UK airline (EU261/UK261), OR (iii) any US domestic/international flight with involuntary denied boarding (DOT). Note: in the US, cancellations and delays do NOT mandate cash — only a refund for cancellation.",
+    "preconditions": [
+      "User has the flight number, date, original schedule, and actual schedule.",
+      "User has boarding pass (printed, screenshot, or in app).",
+      "User has the airline-issued cancellation/delay notification or photo of the airport board.",
+      "User knows the cause cited by the airline (because 'extraordinary circumstances' is the carrier's main defense)."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Regulator citation by article number is the difference between being taken seriously and being fobbed off. 'Article 7 of Regulation (EC) 261/2004' is the magic phrase for EU.",
+    "Cash, not voucher. EU261 Article 7(3) entitles you to cash by bank transfer; airlines will offer vouchers worth more — the law says cash. Vouchers are fine if you'll use them; refuse if you want money.",
+    "'Extraordinary circumstances' is the airline's defense (weather, ATC, security, political instability, hidden manufacturing defects). Mechanical issues are NOT extraordinary per CJEU Case C-549/07 (Wallentin-Hermann). Crew shortages are NOT extraordinary per Case C-28/20 (Airhelp v SAS).",
+    "Direct claim first. Most airlines have an EU261/UK261 web form. File there with the right citation; you'll often get paid in 4-8 weeks without escalation.",
+    "Time limits vary: UK 6 years (England/Wales), 5 years (Scotland), EU member-state law (typically 2-6 years). File early.",
+    "DOT denied-boarding is different: it's about IDB (involuntary denied boarding) only, with a cash cap pegged to one-way fare. Voluntary bumps don't trigger statutory amounts — those are negotiated."
+  ],
+  "phrases": {
+    "opener_eu261": "I am claiming compensation under Article 7 of Regulation (EC) No. 261/2004 for flight [number] on [date] from [origin] to [destination]. The flight was [cancelled / delayed by X hours / I was denied boarding involuntarily]. I am owed [€250 / €400 / €600] based on the great-circle distance of [km].",
+    "opener_uk261": "I am claiming under UK Regulation 261 for flight [number] on [date]. The Civil Aviation Authority enforces this and the amounts are [£220 / £350 / £520] depending on distance.",
+    "opener_dot_idb": "I was involuntarily denied boarding on [flight] on [date]. Under 14 CFR 250.5 I am entitled to [200% / 400%] of my one-way fare, up to the current cap, in cash or check — not a voucher.",
+    "rebut_extraordinary": "The cause cited is [reason]. Under CJEU case law — Wallentin-Hermann for technical issues, Airhelp v SAS for crew strikes — this does not qualify as extraordinary circumstances. Please reassess.",
+    "demand_cash_not_voucher": "Article 7(3) provides for payment in cash, by electronic bank transfer, bank order or cheque. I'm declining the voucher and requesting bank transfer.",
+    "escalate_to_regulator": "I'm noting that as a denial. I'll be filing with [the National Enforcement Body in [country] / the UK Civil Aviation Authority / the US DOT at file.dot.gov] and pursuing through small claims if necessary.",
+    "graceful_close_success": "Thank you. Please confirm the amount, the payment method, and the timeline. I'll expect the bank transfer within 14 days.",
+    "graceful_close_failure": "Okay — please send me your final written denial with reasoning. I'll be escalating from there."
+  },
+  "tactics": [
+    {
+      "name": "Determine the right regulation",
+      "when": "Before filing.",
+      "script": "EU261: applies to ALL flights departing from EU/EEA/Switzerland (any airline) AND flights arriving in EU/EEA/Switzerland on an EU/EEA-licensed airline. UK261: flights departing UK (any airline) or arriving UK on UK/EU airline. DOT IDB: any US-touching flight where you were involuntarily denied boarding. A flight from JFK to LHR on BA: both UK261 (arriving UK on UK carrier) AND DOT (departing US) — pick the more favourable.",
+      "priority": 1
+    },
+    {
+      "name": "Calculate the entitlement amount",
+      "when": "Drafting the claim.",
+      "script": "EU261/UK261 distance bands: ≤1500 km → €250/£220. 1500-3500 km or any intra-EU >1500 → €400/£350. >3500 km → €600/£520. Halve if the airline rebooked you within (2/3/4 hours of original arrival) per Article 7(2). DOT IDB: 0-1 hr late → no comp; 1-2 hr domestic / 1-4 hr int'l → 200% of one-way fare up to ~$1,075; >2/4 hr → 400% up to ~$2,150. Caps are indexed.",
+      "priority": 2
+    },
+    {
+      "name": "File the airline's direct web form first",
+      "when": "Before escalating.",
+      "script": "Every EU/UK airline has an EU261 form (e.g. BA 'Manage My Booking → Submit a Claim', LH 'Compensation Application', Ryanair customer services). US carriers have IDB compensation desks at the gate immediately, but you can also file post-flight customer relations.",
+      "priority": 3
+    },
+    {
+      "name": "Rebut 'extraordinary circumstances' with case law",
+      "when": "Airline denies with extraordinary defense.",
+      "script": "Cite Wallentin-Hermann (C-549/07) for mechanical issues; Airhelp v SAS (C-28/20) for own-crew strikes; Krüsemann (C-195/17) for so-called 'wildcat strikes'. ATC strikes ARE extraordinary; airline's own crew strikes are NOT.",
+      "priority": 4
+    },
+    {
+      "name": "Refuse voucher, demand cash",
+      "when": "Airline offers a voucher higher than the statutory cash amount.",
+      "script": "Article 7(3) says cash, bank transfer, or cheque. Voucher requires your written agreement (Article 7(3)). Politely decline if you want money. Accept if the voucher is meaningfully larger AND you fly that airline often."
+    },
+    {
+      "name": "Escalate to the National Enforcement Body",
+      "when": "Airline denies and the denial is weak.",
+      "script": "EU: each member state has an NEB (Germany LBA, France DGAC, Netherlands ILT, Spain AESA, etc.). UK: CAA's PACT (Passenger Advice and Complaints Team). US: file.dot.gov for DOT IDB or for tarmac-rule violations. Free, but slow (3-6 months)."
+    },
+    {
+      "name": "Small-claims as backstop",
+      "when": "Airline drags or denies despite clear case.",
+      "script": "EU: Money Claim Online (UK), European Small Claims Procedure (cross-border ≤€5000). Airlines settle 70%+ of small claims without contesting because legal costs exceed payout. Companies like AirHelp / Bott & Co take 25-35% but handle filings — only use if you don't want the hassle."
+    }
+  ],
+  "boundaries": [
+    "Do NOT confuse EU261 (cancellation/delay/denied boarding cash) with the EU Package Travel Directive (tour-operator obligations) — different law.",
+    "Do NOT accept a voucher disguised as 'compensation' without realising you've forfeited cash rights.",
+    "Do NOT pursue EU261 for purely US domestic flights — it doesn't apply.",
+    "Do NOT inflate the delay length. Compensation is based on ARRIVAL delay at final destination, measured by door-open time (Case C-452/13, Germanwings)."
+  ],
+  "success_signals": [
+    "Airline acknowledges the claim and sends a case reference number within 14 days.",
+    "Cause of disruption is one of: own mechanical, crew shortage, IT outage, operational decision — none extraordinary.",
+    "Bank-transfer confirmation issued.",
+    "Regulator opens a case file."
+  ],
+  "failure_signals": [
+    "Airline cites extraordinary circumstances and refuses, providing weather METAR or ATC slot evidence.",
+    "Claim is for arrival delay <3 hours (no compensation, only Article 9 'right to care').",
+    "Flight is outside EU261/UK261/DOT territorial scope."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm payment hits the account. If a partial offer is reasonable, accept; if not, escalate. Save all correspondence for the next claim.",
+    "on_failure": "Take the written denial and file with the appropriate NEB / CAA / DOT, or with a claims company on contingency. Note that even after a denial, small claims has a high success rate.",
+    "follow_ups": [
+      "Article 9 'right to care' (meals + accommodation during the delay) is SEPARATE from Article 7 cash. You can claim both.",
+      "Save boarding passes — required as proof of presence for most claims.",
+      "If you have travel insurance with trip-delay coverage, that's ON TOP of EU261 — claim both."
+    ]
+  },
+  "required_user_info": [
+    "Flight number, date, origin, destination",
+    "Carrier IATA code and operating carrier (codeshare matters — claim against the operating carrier)",
+    "Scheduled vs actual departure and arrival times",
+    "Cause cited by the airline",
+    "Boarding pass (image)",
+    "Passenger name(s) and bank details for payout"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

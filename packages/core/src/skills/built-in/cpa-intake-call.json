@@ -1,0 +1,134 @@
+{
+  "id": "cpa-intake-call",
+  "name": "CPA / Accountant Intake: Pricing, Scope, and Tax-Season Availability",
+  "version": "1.0.1",
+  "category": "finance-admin",
+  "tags": [
+    "accounting",
+    "cpa",
+    "tax",
+    "bookkeeping",
+    "intake",
+    "phone-call",
+    "engagement-letter",
+    "professional-services"
+  ],
+  "description": "Call a CPA or accounting firm to scope the engagement (returns, bookkeeping, advisory), confirm pricing structure, surface tax-season vs off-season capacity, and verify the firm signs returns under PTIN — without committing to retain the firm.",
+  "disclaimer": "This call evaluates the firm. It does not establish privilege (accountant-client privilege is narrower than attorney-client and varies by jurisdiction). Do not share unfiled-return details or anomalies the firm hasn't yet been engaged to handle.",
+  "context": {
+    "when_to_use": "Operator needs a CPA for an individual return (1040 with schedules), small-business return (1120/1120-S/1065/Sch C), bookkeeping monthly close, payroll, sales tax, IRS/state notices, or advisory (entity choice, retirement, R&D credits). Use BEFORE engagement letter is signed.",
+    "preconditions": [
+      "Operator has summarised the return types and entity structure (sole prop / LLC / S-corp / C-corp / partnership / trust).",
+      "Operator has prior-year complexity summary: number of W-2s, 1099s, K-1s, Sch C revenue, rentals, state filings.",
+      "Operator has approximate revenue and expense magnitudes so the firm can size the engagement.",
+      "Operator has surfaced any known IRS/state notices, prior amendments, or open audits — the firm needs to know what they're stepping into."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "CPA capacity is seasonal. A firm with great reviews in October may be impossible to reach March 15. Probe capacity FOR THE WORK YOU NEED, on the timeline you need it.",
+    "Pricing in accounting is more variable than people expect: hourly, fixed-fee per return, monthly retainer, or value-based. Get apples-to-apples quotes by specifying the same scope to every firm.",
+    "A real CPA signs returns under a Preparer Tax Identification Number (PTIN) AND, for federal practice rights, holds CPA or EA. 'Tax preparers' without these credentials cannot represent the operator before the IRS.",
+    "The engagement letter defines scope. 'We do your taxes' is meaningless; '2025 federal 1040 + state X + Sch C + 2 rentals + 4 K-1s + IRS Notice CP2000 response, fixed fee $X, paid in two installments' is meaningful.",
+    "Off-season is the cheaper and saner time for advisory work. Surface this when the operator's question is strategic, not deadline-driven.",
+    "Bookkeeping and tax preparation are separate engagements with different price logic. Don't conflate them or you'll be quoted the wrong number."
+  ],
+  "phrases": {
+    "opener": "Hi — calling for a client who's looking for an accountant for [scope: '2025 personal + S-corp returns' / 'monthly bookkeeping + quarterly review' / 'IRS notice response']. Got a few minutes to talk through fit, pricing, and whether you'd have capacity?",
+    "credentials_probe": "Could you confirm who would actually be doing the work — CPA, EA, or staff preparer — and what their PTIN status is? And is the signing preparer the same person we'd be talking to on questions?",
+    "scope_probe": "Here's the scope as we understand it: [list returns, schedules, states, special items]. Can you confirm what's included in your quote and what would be billed separately?",
+    "pricing_probe": "How does the firm charge — hourly, fixed-fee per return, or monthly retainer? For this scope, what's a realistic low-end and high-end estimate?",
+    "tax_season_probe": "For 2025 returns, what's your current new-client capacity? If we engage by [date], do you commit to filing by [deadline] or extending? And what's the cost of an extension if needed?",
+    "notice_probe": "If we receive an IRS or state notice during the engagement year, is response work included or billed separately? At what rate?",
+    "software_probe": "What tax / bookkeeping software does the firm use, and what's the document portal for sharing sensitive PII?",
+    "audit_representation_probe": "If the operator is audited on a return you prepared, do you provide representation? At what rate, and is there pre-paid audit protection?",
+    "stall_to_check": "Let me share the quote and timeline with the operator — I won't sign the engagement letter on the call. We'll review and confirm by [timeframe].",
+    "graceful_close": "Thank you — could you send a written engagement letter with the scope and pricing exactly as discussed, plus the secure portal link? The operator will review and decide."
+  },
+  "tactics": [
+    {
+      "name": "Anchor the scope precisely",
+      "when": "Opening minute of the call.",
+      "script": "State the scope in enumerated form before asking for a quote. Vague intake yields vague quotes. Use `scope_probe`.",
+      "priority": 1
+    },
+    {
+      "name": "Pin down WHO signs the return",
+      "when": "After scope.",
+      "script": "Use `credentials_probe`. A CPA firm where a non-CPA staffer prepares and a CPA signs is normal; what matters is that the signer holds active credentials and the operator can reach them. PTIN is mandatory for paid preparers.",
+      "priority": 2
+    },
+    {
+      "name": "Force apples-to-apples pricing",
+      "when": "Firm gives a range.",
+      "script": "Use `pricing_probe`. If they say 'depends', restate the scope as bullets and ask for low/high. Note any 'beyond scope' items they flag — those become the surprise bills.",
+      "priority": 3
+    },
+    {
+      "name": "Tax-season capacity is the real question",
+      "when": "Before agreeing to anything timeline-sensitive.",
+      "script": "Use `tax_season_probe`. Firms that say 'we always make the deadline' without qualifying are either lying or about to extend you. An honest answer often includes 'we'd extend and finalise in May/June.' Extensions are fine — surprise extensions are not.",
+      "priority": 4
+    },
+    {
+      "name": "Probe notice and audit handling",
+      "when": "Mid-call once basics are clear.",
+      "script": "Use `notice_probe` and `audit_representation_probe`. Many surprise bills come from CP2000 / state-tax notice responses. Confirm the hourly rate and whether the firm caps fees on notice responses.",
+      "priority": 5
+    },
+    {
+      "name": "Secure document handling",
+      "when": "Before sharing any PII.",
+      "script": "Use `software_probe`. Refuse to email SSNs or full prior-year returns — every reputable firm has a secure portal (SmartVault, Canopy, ShareFile, etc.). If they ask for unencrypted email, that's a major red flag."
+    },
+    {
+      "name": "Defer engagement-letter signature",
+      "when": "Firm sends DocuSign mid-call.",
+      "script": "Use `stall_to_check`. Engagement letters bind the operator to fees, scope, and arbitration clauses. Operator reviews offline."
+    }
+  ],
+  "boundaries": [
+    "Do NOT sign the engagement letter mid-call. Use ask_operator.",
+    "Do NOT email unencrypted SSN, full prior-year return, or bank-account routing numbers. Use the firm's secure portal only after engagement.",
+    "Do NOT share unfiled-return anomalies, undeclared income, or potential criminal exposure on this call. Those facts go to an ATTORNEY first, then through Kovel arrangement to the CPA.",
+    "Do NOT authorise the firm to file extensions or sign returns under power of attorney (Form 2848) mid-call.",
+    "Do NOT accept a fee quote that excludes 'normal' items typical for the operator's situation. Flag and re-quote.",
+    "Do NOT engage a 'tax preparer' without PTIN or with no CPA/EA credentials for anything more complex than a simple W-2 1040."
+  ],
+  "success_signals": [
+    "Firm names the signing CPA/EA and confirms PTIN.",
+    "Pricing is given as a specific low-high range with named in-scope and out-of-scope items.",
+    "Tax-season capacity is honestly described, including the realistic extension scenario.",
+    "Notice-response and audit-representation policies are explicit.",
+    "Firm uses a secure portal and never asks for SSN via email.",
+    "Engagement letter will be sent in writing for offline review."
+  ],
+  "failure_signals": [
+    "'We'll figure out the price after we see your stuff' with no range provided.",
+    "Preparer cannot confirm PTIN or credentials.",
+    "Firm asks for SSNs or full returns via unencrypted email.",
+    "Pressure to sign the engagement letter on the call to 'lock in this year's rate'.",
+    "Refusal to discuss capacity at the dates the operator needs.",
+    "Notice / audit response policy is vague or open-ended hourly."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm firm will email: engagement letter, scope and fees in writing, secure-portal invite, and document checklist. Note signer's CPA/EA license and PTIN, capacity commitment for the specific deadline, and the not-to-exceed for the engagement.",
+    "on_failure": "Politely close. Ask for one or two referrals to firms specialising in the operator's entity type. Report back to operator with specifics of why the firm wasn't a fit.",
+    "follow_ups": [
+      "Email the operator: firm name, signer credentials, exact scope, low/high fees, tax-season commitment, notice/audit terms, red/green flags, recommended decision.",
+      "If proceeding: schedule a 48-hour offline review window for the engagement letter.",
+      "Calendar reminder for renewal conversation in October before the next tax season."
+    ]
+  },
+  "required_user_info": [
+    "Entity structure (sole prop / LLC / S-corp / C-corp / partnership / trust) and number of entities",
+    "Return types and schedules needed (1040, Sch C, Sch E, 1120-S, 1065, K-1s, state returns)",
+    "Approximate revenue, expense, and complexity (employees, contractors, multi-state, foreign accounts)",
+    "Any open IRS/state notices, prior audits, or amendments",
+    "Bookkeeping status (DIY in QuickBooks / Xero / spreadsheets / nothing)",
+    "Deadline target (file by Apr 15, extend to Oct 15, monthly close cadence)",
+    "Operator's preferred email and willingness to use the firm's secure portal"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

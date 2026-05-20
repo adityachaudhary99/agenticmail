@@ -1,0 +1,159 @@
+{
+  "id": "mid-call-evidence-collection",
+  "name": "Mid-Call Evidence Collection — Names, Refs, Times, Exact Wordings",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "evidence",
+    "phone-call",
+    "documentation",
+    "audit-trail",
+    "critical-reasoning"
+  ],
+  "description": "Every call should leave a paper trail. Collect rep name, confirmation/reference numbers, exact wordings of any commitment, timestamp, and ideally a written follow-up — all while staying conversational and not turning the call into an interrogation. Evidence is the lifeline for every downstream escalation.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Every call. Especially any call involving: money, contract changes, claim decisions, policy interpretations, commitments to do something later, promises of credit, escalations.",
+    "preconditions": [
+      "Agent is keeping a structured log alongside the call (rep name, time, key statements).",
+      "Agent has a clear post-call report template the user can read."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Without evidence, the call didn't happen. Memory degrades; documentation does not.",
+    "Collect evidence WITHOUT signalling that you are collecting evidence. Curiosity and politeness, not surveillance.",
+    "Three pieces of evidence are non-negotiable: (1) rep's first name (or ID), (2) date/time of call, (3) any reference/case/confirmation number created.",
+    "For commitments, get the EXACT WORDING. 'You'll waive the fee' is not the same as 'a one-time courtesy waiver of $35 on the November statement'. Specificity is the evidence.",
+    "Ask for written confirmation by default. Email, in-account message, or text. Verbal is worth less than written, and written from the rep is worth more than written from the user.",
+    "When the rep says they 'can't' provide a confirmation number — ask what the alternative trace is. There's always an internal ticket ID, an interaction ID, or a transfer log.",
+    "Don't push evidence collection past the point of damaging the relationship. A friendly call with imperfect documentation beats a hostile call with perfect documentation."
+  ],
+  "phrases": {
+    "initial_name_capture": "Sorry, I missed your name when we started — could you say it again? I want to make sure I credit you properly in my notes.",
+    "ref_number_request": "Could I get a confirmation number or reference for this conversation? Just for my records.",
+    "exact_wording_playback": "Let me make sure I have this exactly right: you said [paraphrase]. Did I get that wording right, or do you want to adjust it?",
+    "written_follow_up_request": "Could you send me an email or in-account note summarising what we just agreed? Even a one-liner is helpful.",
+    "soft_timestamp": "Just to anchor my notes — what time are you showing on your end?",
+    "ask_alternative_trace": "Okay, no confirmation number for this one — is there an interaction ID, ticket number, or note ID I can reference instead?",
+    "transfer_handoff_note": "Before you transfer me, could you note on the account the discussion we just had — and give me the reference for that note?"
+  },
+  "tactics": [
+    {
+      "name": "Capture the rep's name early and naturally",
+      "when": "Within the first minute, ideally after the rep introduces themselves.",
+      "script": "Use `initial_name_capture` if you missed it; otherwise just acknowledge ('Thanks, [name]'). Use the name a few times in conversation — both warmer AND solidifies your memory of it.",
+      "priority": 1
+    },
+    {
+      "name": "Log call start time and rep ID",
+      "when": "Pre-call or at first hello.",
+      "script": "Record system time. If rep volunteers an ID number, log that too. If not, names + timestamps usually triangulate well enough.",
+      "priority": 2
+    },
+    {
+      "name": "Playback any commitment in their language",
+      "when": "Rep agrees to do anything specific.",
+      "script": "Use `exact_wording_playback`. The act of playing back creates the auditable utterance — and forces the rep to confirm or revise. Both outcomes are good for you.",
+      "priority": 3
+    },
+    {
+      "name": "Demand a confirmation/reference number",
+      "when": "Any account change, credit, transfer, or policy decision.",
+      "script": "Use `ref_number_request`. Don't accept 'we'll just have a record of it' — push for a number you can quote.",
+      "priority": 4
+    },
+    {
+      "name": "Get written follow-up",
+      "when": "Any material commitment.",
+      "script": "Use `written_follow_up_request`. Even a one-line email is gold. Note whether it arrives — if it doesn't within 24-48 hours, that itself is evidence."
+    },
+    {
+      "name": "Mark transfers with an account note",
+      "when": "Being transferred to a different rep / team.",
+      "script": "Use `transfer_handoff_note`. Otherwise, mid-transfer context evaporates and you re-explain from zero — usually with weaker leverage."
+    },
+    {
+      "name": "Fall back to alternative trace IDs",
+      "when": "Rep refuses or can't provide a confirmation number.",
+      "script": "Use `ask_alternative_trace`. Every modern CRM creates SOME identifier per interaction. The rep's tool has it."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep says 'we don't give out confirmation numbers for that'.",
+      "consider": [
+        "Genuinely true for trivial interactions (general questions).",
+        "False; every CRM logs interactions, rep just doesn't want to provide.",
+        "Means the change wasn't actually made — there's nothing to confirm.",
+        "Rep doesn't know how to find the ID in their tool.",
+        "Different team handles confirmations and rep isn't authorised."
+      ],
+      "next_action": "Use `ask_alternative_trace`. If still nothing, ask: 'Then how will I prove this conversation happened if I need to reference it later?' The honest answer reveals whether the commitment is real."
+    },
+    {
+      "observation": "Rep gives a vague commitment ('we'll take care of it').",
+      "consider": [
+        "Friendly closer, real action will happen.",
+        "Friendly closer, no action will happen because nothing was actually filed.",
+        "Real action, but in 3-10 business days and the rep is bad at expectation-setting.",
+        "Filed under a different account or different fee than expected."
+      ],
+      "next_action": "Use `exact_wording_playback` to force specificity: what exactly, by when, against which line item, with which ID."
+    },
+    {
+      "observation": "Rep promises a callback / follow-up.",
+      "consider": [
+        "Will happen at the named time.",
+        "Will happen, but later than promised.",
+        "Will not happen — promise was a closer.",
+        "Will happen from a different rep with no context."
+      ],
+      "next_action": "Ask: 'If the callback doesn't happen by [time], what's the best number for me to call to find you or someone with context?' Locks in a fallback plan."
+    },
+    {
+      "observation": "You notice you're not logging anything — call is conversational and flowing.",
+      "consider": [
+        "Good rapport, weak documentation. The rapport is fine; the documentation is not.",
+        "You're being deliberately disarmed by a skilled rep.",
+        "Nothing material has happened yet — logging will matter later.",
+        "Your attention is being managed away from things you should ask about."
+      ],
+      "next_action": "Pause internally. Re-engage the log. Take the next opportunity to capture name, time, and the key claim made so far."
+    }
+  ],
+  "boundaries": [
+    "Do NOT record the call covertly. Two-party-consent jurisdictions require disclosure; even one-party jurisdictions have ethical norms.",
+    "Do NOT make up confirmation numbers if a rep refuses to provide them — note 'rep refused to provide' instead.",
+    "Do NOT badger the rep for ID — most companies don't require last names from reps for safety reasons.",
+    "Do NOT use evidence collection as a threat ('I'm writing this down') — that escalates without benefit."
+  ],
+  "success_signals": [
+    "Rep proactively provides a confirmation/reference number.",
+    "Written follow-up arrives during or shortly after the call.",
+    "Rep names a specific date, amount, and account for any commitment.",
+    "Transfers come with a noted handoff and a traceable interaction ID."
+  ],
+  "failure_signals": [
+    "Rep refuses or evades all forms of evidence (no name, no ref, no written follow-up).",
+    "Commitments stay vague no matter how many times you replay them.",
+    "Written follow-up never arrives despite promise.",
+    "Account notes vanish between calls (next rep says 'I don't see anything')."
+  ],
+  "exit_strategy": {
+    "on_success": "Compile the call log: rep name(s), times, ref numbers, exact commitments, written follow-up status, and any open items. Share with user.",
+    "on_failure": "Document the evasion itself — that IS evidence. Note exact refusal wording, time, and rep name (if obtained). User has grounds for written escalation citing failure to document.",
+    "follow_ups": [
+      "Check whether promised written follow-up arrives within 24-48 hours; if not, callback citing the prior conversation by ref number.",
+      "Calendar any future-dated commitments (credit on next bill, callback date) for verification."
+    ]
+  },
+  "required_user_info": [
+    "Account number / login so confirmations can be tied to record.",
+    "Email and/or phone for written follow-up to be sent to.",
+    "Authority for the agent to request written follow-up by default."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

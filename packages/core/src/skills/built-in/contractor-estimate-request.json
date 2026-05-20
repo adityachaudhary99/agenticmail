@@ -1,0 +1,142 @@
+{
+  "id": "contractor-estimate-request",
+  "name": "Contractor Estimate Request: No-Show Defence and Escrow Basics",
+  "version": "1.0.1",
+  "category": "home-services",
+  "tags": [
+    "contractor",
+    "remodel",
+    "home-improvement",
+    "estimate",
+    "license",
+    "bond",
+    "insurance",
+    "escrow",
+    "phone-call",
+    "professional-services"
+  ],
+  "description": "Call a general contractor or specialty trade (plumbing, electrical, roofing, HVAC, GC remodel) to vet license, bond, insurance, request a written estimate, and establish anti-no-show / payment-schedule terms BEFORE the operator signs a contract or wires a deposit.",
+  "disclaimer": "Contractor scams are widespread. Never authorise a deposit, sign a contract, or grant property access mid-call. Always defer to ask_operator. State-specific contractor law varies — surface the operator's state explicitly.",
+  "context": {
+    "when_to_use": "Operator is collecting 2-4 estimates for a home-improvement project (remodel, roof, HVAC swap, plumbing repipe, electrical panel, fencing, painting). Use one call per contractor. Pair with `contractor-contract-review` (separate skill) once written estimates arrive.",
+    "preconditions": [
+      "Operator has a 3-5 sentence scope description and any drawings, photos, or rough dimensions.",
+      "Operator has identified the contractor's business name AND license number from state contractor board website (verified active).",
+      "Operator has a realistic budget range and timeline window.",
+      "Operator knows whether they want a fixed-fee, T&M, or cost-plus structure — and has a preference."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Verify license, bond, and insurance BEFORE inviting the contractor on-site. State contractor boards have free lookups; use them.",
+    "A no-cost in-home estimate is industry standard for projects above ~$5k. Don't pay for estimates unless the project is design-build with engineering work involved.",
+    "Reasonable deposits are 10% or $1,000 max for most states (e.g. California CSLB rule). Never wire 33–50% on day one to a contractor you don't know.",
+    "'Cash discount' usually means uninsured, unlicensed, or untaxed work. Walk away — your homeowners insurance won't cover claims arising from unpermitted, unlicensed work.",
+    "Permits are the contractor's job to pull, not the operator's. A pitch to 'skip the permit to save money' makes the operator legally liable.",
+    "Lien rights are real. In many states, an unpaid subcontractor can lien the home even if the operator paid the GC. Conditional and unconditional lien waivers per payment milestone are non-negotiable on larger jobs.",
+    "Written estimates beat verbal ones. A scope-of-work doc with line items beats a single bottom-line number every time."
+  ],
+  "phrases": {
+    "opener": "Hi — calling for a homeowner in [city, state] looking to get an estimate on [scope summary]. Before we set up a site visit, mind if I ask a few quick questions about your license, insurance, and how the estimate works?",
+    "license_probe": "Could you confirm your state contractor license number, the classification, and that it's currently active? The operator will verify with [state board] before anything is signed.",
+    "insurance_probe": "Could you confirm general liability and workers' comp coverage, the carrier, and policy limits? And could you have your carrier email the operator a current Certificate of Insurance listing [operator's address] as certificate holder?",
+    "estimate_probe": "Is the in-home estimate no-cost and no-obligation, and will you provide a written, line-item scope of work — not just a bottom-line number?",
+    "deposit_probe": "What's your standard deposit, and what does the payment schedule look like across the project — tied to milestones, not calendar dates?",
+    "permit_probe": "Who pulls the permit on this work, and is the cost included in the estimate? Does your scope assume any work without permit?",
+    "lien_waiver_probe": "On payments, do you provide conditional and unconditional lien waivers from yourself and any subs at each milestone?",
+    "subcontractor_probe": "What portion of this work do you self-perform vs subcontract, and do your subs carry their own insurance? Will subs be named on the contract?",
+    "timeline_probe": "When could you realistically start, what's the duration, and what's the change-order process if scope shifts mid-job?",
+    "references_probe": "Could you share three references for jobs of similar scope completed in the last 12-18 months — ideally one I can visit?",
+    "stall_to_check": "Let me share the estimate timing with the operator before we lock a site visit. I won't sign anything or authorise a deposit on this call.",
+    "graceful_close": "Thank you — please email your COI, license details, and the written estimate after the site visit. The operator will compare against other bids and reply within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "License-bond-insurance gate",
+      "when": "Opening 3 minutes.",
+      "script": "Use `license_probe` and `insurance_probe`. If they can't provide a license number on the spot, this contractor doesn't pass the gate — politely end the call.",
+      "priority": 1
+    },
+    {
+      "name": "Confirm estimate is free and written",
+      "when": "After credentials.",
+      "script": "Use `estimate_probe`. Verbal-only numbers vanish under pressure. A written line-item scope is the only document that lets the operator compare bids.",
+      "priority": 2
+    },
+    {
+      "name": "Anchor deposit law early",
+      "when": "Money comes up.",
+      "script": "Use `deposit_probe`. Cite the operator's state cap if known (e.g. CA: 10% or $1,000). Demand a milestone-based payment schedule; reject 'pay 50% to start'. Final 10% on punchlist completion.",
+      "priority": 3
+    },
+    {
+      "name": "Permits are non-negotiable",
+      "when": "Scope is permittable work (electrical, plumbing, structural, mechanical, additions).",
+      "script": "Use `permit_probe`. If the contractor proposes 'no permit', that's an automatic disqualification — it shifts legal and insurance liability to the operator.",
+      "priority": 4
+    },
+    {
+      "name": "Lien waivers per payment",
+      "when": "Project size > $10k or involves subs.",
+      "script": "Use `lien_waiver_probe`. Conditional waiver on cheque issuance, unconditional once funds clear. Many states have statutory forms — the operator can require them.",
+      "priority": 5
+    },
+    {
+      "name": "Request three recent references",
+      "when": "End of call, after fit is confirmed.",
+      "script": "Use `references_probe`. Ask for jobs completed in the last 12-18 months, similar scope, ideally local. A drive-by check beats a phone reference."
+    },
+    {
+      "name": "Defer all commitments",
+      "when": "Coordinator asks for credit card to 'hold the site visit slot' or wants verbal contract acceptance.",
+      "script": "Use `stall_to_check`. NEVER provide payment info on this call. A reputable contractor does not need a deposit to come look at the job."
+    }
+  ],
+  "boundaries": [
+    "Do NOT authorise a site visit on a date the operator hasn't approved.",
+    "Do NOT provide credit card, ACH, or bank info to hold an estimate or slot.",
+    "Do NOT sign a contract, scope of work, or change order mid-call. Use ask_operator.",
+    "Do NOT accept a contractor without a current license number you can verify with the state board.",
+    "Do NOT engage anyone offering a 'cash discount to skip permits'. Walk away politely.",
+    "Do NOT share gate codes, lockbox codes, or alarm codes on this call.",
+    "Do NOT accept payment milestones that front-load more than 30% of total contract value before substantial physical progress."
+  ],
+  "success_signals": [
+    "License number and classification are given on the spot and match state-board records.",
+    "Carrier and limits are named for GL and workers' comp, and a COI can be sent.",
+    "Estimate will be written, line-item, no-cost.",
+    "Deposit is within state cap and payment schedule is milestone-based.",
+    "Contractor pulls the permit and includes it in the estimate.",
+    "Three recent references are offered without hesitation.",
+    "Lien waivers will be issued at each payment milestone."
+  ],
+  "failure_signals": [
+    "Cannot or will not provide a license number.",
+    "'Cash only' or 'cash discount to skip permit' suggestion.",
+    "Demands large upfront deposit (>25% or above state cap).",
+    "Pressure to sign on a same-day 'today only' price.",
+    "Refusal to provide a written line-item scope.",
+    "Refusal or stalling on COI / references / lien waivers.",
+    "Bait-and-switch language about sub-quality materials being 'just as good'."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the site-visit date and time, attendees, expected duration, and what the contractor will inspect. Note license, classification, insurance carrier and limits, deposit policy, payment schedule, permit policy, and reference contacts. Operator authorises the visit, not anything beyond.",
+    "on_failure": "Politely close. If the failure was on credentials or deposit policy, you can be direct: 'For this project the operator needs an in-state licensed contractor with milestone-based payments — appreciate your time.' Move to the next candidate.",
+    "follow_ups": [
+      "Email the operator: contractor name, license number and state-board verification status, insurance summary, deposit/payment terms, permit handling, reference contacts, red/green flags, recommended next step.",
+      "Calendar the site visit; ensure operator (not the agent) is on-site or has authorised a representative.",
+      "After visit and written estimate: compare bids side-by-side on identical scope before any signature."
+    ]
+  },
+  "required_user_info": [
+    "Project scope (3-5 sentences) and any photos / drawings / measurements",
+    "Property address, state, and any HOA constraints",
+    "Operator's budget range and required start/finish window",
+    "Verified license number from state contractor board (operator's pre-call homework)",
+    "Whether the operator wants fixed-fee, T&M, or cost-plus pricing",
+    "Operator's availability for the in-home estimate (date/time windows)",
+    "Whether the operator already has 1-3 competing bids in hand"
+  ],
+  "contributed_by": "professional-intake agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

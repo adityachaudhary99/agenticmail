@@ -1,0 +1,130 @@
+{
+  "id": "leave-of-absence-deferral",
+  "name": "Request a Deferral or Leave of Absence",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "deferral",
+    "leave-of-absence",
+    "gap-year",
+    "dean",
+    "phone-call",
+    "education"
+  ],
+  "description": "Call admissions (pre-matriculation) or the dean of students / registrar (post-matriculation) to request a deferral or leave of absence — gap year, military, mission, family, financial, mental-health, professional opportunity — and to lock down the re-entry path so the seat / financial aid / scholarships are protected.",
+  "disclaimer": "Deferral (before you've started) and leave of absence (after you've matriculated) are different processes with different decision-makers and consequences. Scholarships, financial aid, and housing are sometimes preserved across leaves and sometimes not — get every promise in writing.",
+  "context": {
+    "when_to_use": "User has either (a) been admitted but wants to defer starting by a semester or a year, or (b) is currently enrolled and wants to step away for one or more terms without withdrawing entirely. Common reasons: gap year, financial, mental-health, family caregiving, internship / job opportunity, military deployment, religious mission, athletic Olympic training.",
+    "preconditions": [
+      "User can articulate the reason and the intended return date.",
+      "User has reviewed the school's deferral / LOA policy (most schools cap deferral at 1–2 years and LOA at 1–4 terms).",
+      "User has a sense of what they'll be doing during the leave — schools are friendlier to structured plans (job, service, treatment) than to undefined time off.",
+      "User has identified anchoring deadlines: deposit deadline, financial-aid renewal, scholarship renewal, housing waitlist, health insurance, immigration status."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Deferral is admissions' decision; LOA is the dean's. Calling the wrong office wastes a day.",
+    "Reasons matter for approval, but documentation matters for protection. Get the leave in writing with explicit return conditions.",
+    "Scholarships and merit aid don't automatically follow you. Ask each award separately whether it survives the leave.",
+    "Re-entry should be a checkbox, not a re-application. Negotiate a return process at the front end: 'I email by [date], you reactivate me.' If it's an interview + committee, that's a red flag for friction at return.",
+    "Federal student loans enter grace-period countdown when the student drops below half-time. A 12-month leave can exhaust the entire grace period before re-entry.",
+    "International students: an LOA usually terminates SEVIS. Plan with the DSO before filing."
+  ],
+  "phrases": {
+    "opener_deferral": "Hi, I've been admitted for [term] and I'd like to request a one-[semester / year] deferral. I'm planning to [activity]. Could you walk me through the process and what happens to my scholarship and aid package?",
+    "opener_loa": "Hi, I'm currently enrolled and I'd like to take a leave of absence starting [term]. My intended return is [term]. Could we walk through the process — the form, the decision-maker, and what happens with aid, housing, and re-entry?",
+    "ask_about_scholarship": "I have a [scholarship name] award. Does it carry over through a deferral / LOA, or do I need to re-apply, or is it forfeited? If carry-over is conditional, what are the conditions?",
+    "ask_about_aid": "How does my financial-aid package handle a leave? Does Pell / institutional grant / loan eligibility reset, freeze, or expire?",
+    "ask_about_housing": "What happens to my housing assignment? Am I in the next year's lottery automatically, or do I lose priority?",
+    "ask_about_re_entry": "What's the re-entry process exactly? Do I email by a date, fill a form, attend an interview, or re-apply? I'd like the simplest possible path documented in writing.",
+    "ask_about_F1": "I'm on F-1 status. How does an LOA affect SEVIS, and has the DSO been brought into this conversation?",
+    "ask_for_dean_of_students": "Could I speak with the dean of students or associate dean? I want to make sure the LOA is set up so re-entry is straightforward.",
+    "graceful_close_success": "Thank you. To confirm in writing: leave effective [date], return [date], scholarship [status], aid [status], housing [status], re-entry process [steps], and the decision letter will come from [office]. Could you email me a confirmation?"
+  },
+  "tactics": [
+    {
+      "name": "Route to the right office on the first call",
+      "when": "Opening.",
+      "script": "If pre-matriculation: admissions. If post-matriculation: dean of students or registrar. If athlete: also compliance. If F-1/J-1: also DSO. Calling the wrong office burns a day and you'll be told to call back, often missing a deadline.",
+      "priority": 1
+    },
+    {
+      "name": "Pin down each financial bucket separately",
+      "when": "Discussing consequences.",
+      "script": "Use `ask_about_scholarship`, `ask_about_aid`, and ask about each merit award by name. Front-line staff often answer 'yes it carries over' generically — but specific scholarships have donor-specific rules. Ask them to verify in the system.",
+      "priority": 2
+    },
+    {
+      "name": "Negotiate a minimal re-entry process",
+      "when": "Discussing return logistics.",
+      "script": "Use `ask_about_re_entry`. The ideal: 'Email by [date], the dean reactivates you, you register for classes.' Less ideal: re-application, committee review, interview. Push for the lighter option and ask for it in writing.",
+      "priority": 3
+    },
+    {
+      "name": "Loop the DSO before filing if F-1 / J-1",
+      "when": "User is an international student.",
+      "script": "Use `ask_about_F1`. A leave can terminate SEVIS within 15 days unless an Authorized Early Withdrawal or Reduced Course Load is in place. The DSO is the only office that can protect status.",
+      "priority": 4
+    },
+    {
+      "name": "Plan a 'structured' leave narrative",
+      "when": "Discussing the reason.",
+      "script": "Schools approve gap years more easily when there's a plan: internship, service, treatment, family caregiving with a defined timeline. 'I want to figure things out' is harder. Frame the time as productive even if it's recovery.",
+      "priority": 5
+    },
+    {
+      "name": "Escalate to the dean of students for non-standard timing",
+      "when": "Mid-term LOA, multi-term LOA, or LOA across a graduation cohort.",
+      "script": "Use `ask_for_dean_of_students`. Standard policies cover standard cases; non-standard cases need dean-level approval. The dean of students has discretion that registrars don't."
+    },
+    {
+      "name": "Ask about insurance + immunization holds",
+      "when": "Re-entry planning.",
+      "script": "Health insurance enrollment, immunization records, and Title IX trainings often expire during a leave and create silent re-entry holds. Surface them at the LOA conversation so they don't ambush the return."
+    }
+  ],
+  "boundaries": [
+    "Do NOT fabricate a reason for leave. If asked, schools may verify employers, programs, or providers.",
+    "Do NOT defer without confirming scholarship carry-over in writing — verbal yeses don't survive staff turnover.",
+    "Do NOT take an LOA without confirming the half-time-status loan implications.",
+    "Do NOT file an LOA on F-1 / J-1 without DSO involvement.",
+    "Do NOT assume housing rolls over — most schools require a new application even after approved LOA."
+  ],
+  "success_signals": [
+    "Form submitted and decision date named.",
+    "Scholarship and aid carry-over confirmed in writing.",
+    "Re-entry process is one or two steps (email + form), not a re-application.",
+    "Housing path is mapped (lottery priority preserved or queue reentry).",
+    "DSO has authorized leave for F-1 students."
+  ],
+  "failure_signals": [
+    "Scholarship is non-deferrable — admit-and-attend or forfeit.",
+    "Re-entry requires re-application + committee review with no protection of admit / aid.",
+    "F-1 SEVIS termination is unavoidable, requiring a new visa for return.",
+    "Mid-term LOA falls outside policy and dean's office won't grant exception.",
+    "Loans enter accelerated grace period and would come due before realistic re-entry."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm all of: effective date, return date, scholarship, aid, housing, insurance, immunizations, re-entry process, decision-maker office, and DSO status. Get email confirmation before the call ends.",
+    "on_failure": "Identify the blocker. If scholarship: explore donor petition. If F-1: explore Reduced Course Load instead of LOA. If aid grace-period: explore in-school deferment by enrolling at a community college part-time. If timing: petition the dean of students.",
+    "follow_ups": [
+      "Email operator a one-pager with all confirmed dates and protections.",
+      "Calendar return-paperwork deadline minus 14 days.",
+      "Calendar scholarship-renewal date during the leave year.",
+      "30 days before return, confirm health insurance, immunizations, and Title IX trainings are current."
+    ]
+  },
+  "required_user_info": [
+    "Student ID and current / admit term",
+    "Intended leave start + return terms",
+    "Reason and rough plan during the leave",
+    "Scholarship / merit-aid names and donors",
+    "Financial-aid composition + loans",
+    "Housing status",
+    "Immigration status (F-1, J-1, citizen, PR)",
+    "Athletic / military / religious affiliations affecting timing"
+  ],
+  "contributed_by": "education-admin agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

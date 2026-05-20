@@ -1,0 +1,125 @@
+{
+  "id": "uscis-case-status-and-biometrics",
+  "name": "USCIS: Case Status, Biometrics Reschedule, or RFE / NOID Response",
+  "version": "1.0.0",
+  "category": "civic",
+  "tags": [
+    "uscis",
+    "immigration",
+    "case-status",
+    "biometrics",
+    "rfe",
+    "noid",
+    "phone-call",
+    "government-services"
+  ],
+  "description": "Call the USCIS Contact Center to inquire about a case past published processing time, reschedule a biometrics appointment, ask administrative questions about an RFE/NOID, or request an InfoPass-equivalent in-person appointment at a Field Office. This skill is strictly administrative — substantive immigration questions go to an attorney or accredited representative.",
+  "disclaimer": "Not legal or immigration advice. The agent will NOT advise on case strategy, how to answer an RFE/NOID, eligibility for any visa or benefit, or interactions with ICE/CBP. For substantive immigration questions, refer to a licensed immigration attorney or a Department-of-Justice-accredited representative (AILA referral or nonprofit legal-aid). Misadvice here can have life-altering consequences.",
+  "context": {
+    "when_to_use": "Case is OUTSIDE published processing time on egov.uscis.gov (use the 'Case Inquiry' eligibility checker FIRST). Biometrics appointment was missed or conflicts with travel. RFE / NOID has been received and the user needs to confirm the deadline / mailing instructions / receipt-acknowledgement procedure. Receipt notice was lost and the receipt number is needed.",
+    "preconditions": [
+      "Receipt number (3 letters + 10 digits, e.g. MSC2390123456).",
+      "A-Number (if applicable).",
+      "Form type (I-130, I-485, I-765, N-400, etc.) and filing date.",
+      "Notice in question (date, type, deadline, response address).",
+      "Petitioner / beneficiary roles understood — calls are usually made by or on behalf of the petitioner or beneficiary.",
+      "Patience: USCIS tier-1 will route to tier-2 (an actual officer callback) for most non-trivial questions; tier-2 callbacks can be 1–30 days out."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "USCIS Contact Center (1-800-375-5283) tier-1 reps cannot make case decisions and have read-only case-status access. The actual movement happens via tier-2 officer callbacks ('a Service Request' or 'Case Inquiry').",
+    "Only file a Service Request if the case is genuinely outside published processing time per egov.uscis.gov/processing-times — filing early gets you a boilerplate denial.",
+    "Biometrics reschedules MUST be requested before the appointment date when possible. Missing biometrics without reschedule can lead to case denial for abandonment.",
+    "Receipt numbers begin with a service-center code (MSC/EAC/WAC/LIN/NBC/IOE) — calling out the right service center sometimes helps routing.",
+    "The agent NEVER answers substantive RFE/NOID questions ('what evidence do I send?'). Those go to an attorney. The agent confirms only: deadline date, response address, whether the response is by mail vs online, and confirmation of receipt once mailed."
+  ],
+  "phrases": {
+    "opener_status": "Hi, I'd like to file a Case Inquiry / Service Request for receipt number [RECEIPT]. The form is [I-XXX], filed on [DATE]. Per egov.uscis.gov, the published processing time for this form at the [SERVICE CENTER / FIELD OFFICE] is [TIME]. We're past that window. Can you open a Service Request?",
+    "opener_biometrics": "Hi, I need to reschedule a biometrics appointment. The receipt number is [RECEIPT], the appointment was scheduled for [DATE] at the [CITY] ASC. The reason for reschedule is [REASON]. What's the procedure?",
+    "opener_rfe": "Hi, I have an administrative question about an RFE I received on case [RECEIPT]. I'm not asking how to respond — I just want to confirm the response deadline, the response mailing address, and whether a courier signature is acceptable.",
+    "opener_receipt_lookup": "Hi, my client / I filed Form [I-XXX] on [DATE] from [ADDRESS]. I never received a receipt notice and the check cleared on [DATE]. Can you look up the receipt number or initiate a tracer?",
+    "ask_for_tier2": "Could this be escalated to a tier-2 officer callback? I'd like to make sure the right person can act on this.",
+    "boundary_redirect": "Thanks — to be clear, I'm not asking for legal advice or strategy. I'm just trying to confirm administrative procedure. Could you tell me [the specific procedural fact]?",
+    "stall_documents": "One moment — let me read the receipt number off the notice so I have it exactly.",
+    "graceful_close": "Thank you. Can I confirm: the Service Request number, the date by which I should expect a response, the tier-2 callback window if applicable, and the agent's ID?"
+  },
+  "tactics": [
+    {
+      "name": "Check processing time and case status online BEFORE calling",
+      "when": "Always.",
+      "script": "egov.uscis.gov/processing-times AND egov.uscis.gov/casestatus. The Contact Center will not open a Service Request if the case is still inside the published window — calling first wastes both of your time.",
+      "priority": 1
+    },
+    {
+      "name": "Open a Service Request only when outside processing time",
+      "when": "Status inquiry where the case is overdue.",
+      "script": "Tier-1 will open the Service Request and give you a SR number. The actual response comes by mail or callback in 15–60 days. Set expectations with the user — this is not a same-call resolution.",
+      "priority": 2
+    },
+    {
+      "name": "Biometrics reschedule has tight constraints",
+      "when": "Biometrics call.",
+      "script": "Reschedules typically require good cause (travel, illness, immovable conflict) and are handled via the Contact Center OR by submitting a written request that arrives BEFORE the appointment date. Confirm the procedure for THIS user's field office.",
+      "priority": 3
+    },
+    {
+      "name": "For RFE / NOID timing, get the exact deadline and address",
+      "when": "Notice received.",
+      "script": "Capture: the date stamped on the notice, the deadline (usually 30/87 days from notice), the response address (often a lockbox or service center mailroom, NOT a field office), and whether a courier signature is acceptable. Confirm whether ANY portion of response is via myUSCIS online.",
+      "priority": 4
+    },
+    {
+      "name": "Receipt-notice tracer",
+      "when": "Filing fee cleared but no receipt received in 4+ weeks.",
+      "script": "Tier-1 can sometimes look up the receipt number by petitioner name + filing date + form type. If not, ask them to open a Service Request for a duplicate receipt notice."
+    }
+  ],
+  "boundaries": [
+    "Do NOT advise on RFE/NOID content, evidence selection, or case strategy. Refer to immigration counsel.",
+    "Do NOT advise on visa eligibility, admissibility, inadmissibility, removal/deportation, or interactions with ICE/CBP.",
+    "Do NOT impersonate the petitioner or beneficiary — identify as their assistant; the Contact Center may require the principal on the line for certain matters.",
+    "Do NOT share A-Number, DOB, or sensitive identifiers with inbound callers claiming USCIS — initiate calls outbound to 1-800-375-5283.",
+    "Do NOT promise a specific case outcome or timeline — even tier-2 officers cannot guarantee one.",
+    "Do NOT engage with anyone offering to expedite a case for a fee — only USCIS itself can grant expedites, and they require documented criteria."
+  ],
+  "success_signals": [
+    "Service Request opened with a SR number and a response-window quote.",
+    "Tier-2 officer callback scheduled.",
+    "Biometrics rescheduled with new appointment confirmation.",
+    "RFE / NOID administrative details confirmed (deadline, address, format).",
+    "Receipt number recovered or duplicate-receipt request initiated."
+  ],
+  "failure_signals": [
+    "Case is still inside the published processing window — no SR will open. Re-engage when overdue.",
+    "Tier-1 refuses to escalate to tier-2 despite an overdue case — call back another day and try again.",
+    "Rep begins providing what sounds like substantive legal information — politely thank them and verify any such information with an attorney before relying on it.",
+    "Caller-claiming-USCIS demands payment / threatens deportation — that is a SCAM. Hang up."
+  ],
+  "exit_strategy": {
+    "on_success": "Capture: SR number, tier-2 callback window, agent ID/badge, exact next step. Repeat back receipt number digit-by-digit. Email the operator a summary including any deadline dates.",
+    "on_failure": "Capture the obstacle and the next legitimate path: re-call after a date, written request, attorney referral, or congressional caseworker (Senator/Representative immigration caseworker — they have privileged tier-2 access for true emergencies).",
+    "follow_ups": [
+      "Calendar the SR response window; if no response, call back referencing the SR number.",
+      "Calendar the RFE/NOID deadline with 14-day, 7-day, and 48-hour reminders.",
+      "Confirm new biometrics appointment is on the user's calendar with 24-hour reminder.",
+      "If congressional caseworker engaged, follow up after 5–7 business days."
+    ]
+  },
+  "required_user_info": [
+    "Receipt number, A-Number (if any), and form type",
+    "Filing date and current case status (per online tracker)",
+    "Notice(s) received: type, date, deadline, response address",
+    "Petitioner vs beneficiary role; who is on the line",
+    "Whether immigration counsel is on file (Form G-28)",
+    "Reason for biometrics reschedule, if applicable"
+  ],
+  "hang_up_and_call_back_signals": [
+    "Caller-claiming-USCIS demands money, gift cards, or threatens deportation — scam; hang up and report to USCIS.",
+    "Rep is reading from a script that doesn't match the form type — verify they understand which form before continuing.",
+    "User has been transferred > 2 times in a loop — note the last department reached and call back asking for that department by name.",
+    "Question is drifting into legal-strategy territory — stop and route to immigration counsel; do not try to extract advice."
+  ],
+  "contributed_by": "govt-services-pro agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

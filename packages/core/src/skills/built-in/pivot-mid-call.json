@@ -1,0 +1,141 @@
+{
+  "id": "pivot-mid-call",
+  "name": "Pivot Mid-Call When the Original Goal Is Unreachable",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adaptive-strategy",
+    "phone-call",
+    "negotiation",
+    "goal-reframing",
+    "critical-reasoning"
+  ],
+  "description": "Recognise when the primary ask has hit a real (not invented) wall, and pivot to a different ask that is achievable, defensible, and worth the call's remaining minutes. Do not pretend the original goal is still alive; do not waste the call on dead negotiation.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any call where the rep, after legitimate escalation and probing, cannot grant the primary ask. Especially common in: refund requests after a clear cutoff, plan changes blocked by contract, claims denied by a real exclusion, services unavailable in user's area.",
+    "preconditions": [
+      "Agent has already attempted escalation per `push-past-invented-policy`.",
+      "Agent has a clear understanding of the user's underlying need (not just the literal ask).",
+      "Agent has been authorised to negotiate within a range, not just to deliver a single request."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "The literal ask is the surface; the underlying need is the substance. Pivoting means finding a DIFFERENT surface that satisfies the same substance.",
+    "Pivot opportunities: credit instead of refund, future discount instead of past credit, service upgrade instead of price cut, fee waiver instead of monthly reduction, account note for future leverage instead of immediate concession.",
+    "Pivot only when the wall is REAL. Pivoting prematurely concedes leverage you still have.",
+    "When pivoting, name the pivot out loud. 'Okay — if the refund isn't possible, what IS on the table?' This invites the rep into co-design rather than continued refusal.",
+    "Document the pivot. A consolation outcome you can't verify is worth less than a primary outcome you can.",
+    "Some pivots are bad pivots — accepting a worse contract for a one-time credit, taking a free month that triggers an upsell. Run any pivot through `spot-bait-and-switch` before saying yes."
+  ],
+  "phrases": {
+    "name_the_wall": "It sounds like [primary ask] genuinely isn't available here. I want to make sure I heard that right.",
+    "invite_alternatives": "If that's off the table, what IS available? I'd rather leave this call with something useful than nothing.",
+    "propose_specific_pivot": "Would [alternative ask] be something you could do instead? It's not what I came for, but it gets us partway there.",
+    "soft_ladder": "I understand. Could we explore: (a) a one-time credit, (b) a future-bill credit, (c) waiving the [fee], or (d) a note on my account I can reference later?",
+    "document_pivot": "Great — could you read that back so I have it exactly, and give me a confirmation number?"
+  },
+  "tactics": [
+    {
+      "name": "Confirm the wall is real",
+      "when": "After at least one escalation has reaffirmed the refusal.",
+      "script": "Use `name_the_wall`. Forces the rep to confirm the no on the record — important if you ever escalate later. Also gives them one last chance to soften.",
+      "priority": 1
+    },
+    {
+      "name": "Open the pivot space",
+      "when": "Wall confirmed.",
+      "script": "Use `invite_alternatives`. Often the rep already has a pivot offer queued and was waiting for an opening.",
+      "priority": 2
+    },
+    {
+      "name": "Offer a ladder of pivots",
+      "when": "Rep doesn't volunteer alternatives.",
+      "script": "Use `soft_ladder`. Listing 3-4 specific options is easier for a rep to act on than 'anything else'. They'll often pick the one they can do.",
+      "priority": 3
+    },
+    {
+      "name": "Run the pivot through bait-and-switch checks",
+      "when": "Rep proposes a pivot.",
+      "script": "Before accepting, ask: what's the duration, what's the reversion, what's the contract impact, what's the bundle dependency. See `spot-bait-and-switch`.",
+      "priority": 4
+    },
+    {
+      "name": "Document the pivot in writing",
+      "when": "About to close.",
+      "script": "Use `document_pivot`. Verbal pivots evaporate. Confirmation numbers, dated emails, and account notes survive."
+    },
+    {
+      "name": "Bank a small win even if you wanted a big one",
+      "when": "Pivot is small but real.",
+      "script": "Accept it cleanly without grumbling. A $20 credit + a note on the account beats a 30-minute argument that ends in zero."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep firmly refuses the refund but mentions a 'one-time courtesy credit'.",
+      "consider": [
+        "Genuine pivot — they cannot do refund, can do credit, treat as success.",
+        "Pivot with strings: credit applied to next bill, but autopay enrollment required.",
+        "Smaller-than-asked: $10 credit vs. $80 refund — accept only if no better is available.",
+        "Setup for a larger upsell — 'I can also offer you...' incoming."
+      ],
+      "next_action": "Ask: amount, applied when, any conditions. Then decide."
+    },
+    {
+      "observation": "Rep offers a free service upgrade instead of a price cut.",
+      "consider": [
+        "Genuine value if the user actually wants the upgrade.",
+        "Trojan upsell — free for 3 months, then $15/mo unless cancelled.",
+        "Counts as 'engaged customer' for retention metrics — gets the rep off the hook without saving the user money.",
+        "Real but worthless — user has no use for the upgraded feature."
+      ],
+      "next_action": "Ask whether it's truly free for the life of the account, and whether it can be removed any time without penalty."
+    },
+    {
+      "observation": "Rep won't pivot at all — refuses primary ask AND won't suggest alternatives.",
+      "consider": [
+        "Wall is genuinely total; this rep cannot give anything.",
+        "Wrong department — pivots may be available from retention/loyalty/billing.",
+        "Bad rep day — try `reset-by-callback`.",
+        "User's account is in a state (collections, fraud review) that blocks all discretion."
+      ],
+      "next_action": "Ask explicitly: 'Is there a different team or department where a pivot would be possible?'"
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept a pivot worse than no-deal (e.g., contract extension for a $5 credit).",
+    "Do NOT pivot without flagging to the operator if the user pre-authorised only the original ask.",
+    "Do NOT keep pivoting forever — two pivot rounds is usually the limit. Three is desperation.",
+    "Do NOT pretend the pivot is the original ask in the post-call report."
+  ],
+  "success_signals": [
+    "Rep proposes a pivot voluntarily.",
+    "Pivot has clear terms (amount, date, no strings).",
+    "Rep agrees to put pivot in writing.",
+    "User would have authorised the pivot if asked in advance."
+  ],
+  "failure_signals": [
+    "Rep refuses both primary and all alternatives.",
+    "Pivots offered all carry worse total terms than walking away.",
+    "Pivot 'credits' come with autopay/contract/bundle hooks the user hasn't authorised.",
+    "Pivot requires a separate call to a department that's closed."
+  ],
+  "exit_strategy": {
+    "on_success": "Accept the pivot, confirm in writing, flag clearly in the post-call report what was achieved vs. originally asked.",
+    "on_failure": "Walk away clean — no false-pivot acceptance. Report to operator with clarity about why the wall was real.",
+    "follow_ups": [
+      "If pivot was a future-dated credit, calendar a check that it actually appears.",
+      "If pivot was a 'note on the account', leverage it on the next interaction by reference."
+    ]
+  },
+  "required_user_info": [
+    "The underlying need, not just the literal ask.",
+    "Range of acceptable alternative outcomes (or authority to pivot at agent's discretion).",
+    "Whether the user wants to be re-consulted before accepting a pivot."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

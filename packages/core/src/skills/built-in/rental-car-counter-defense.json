@@ -1,0 +1,116 @@
+{
+  "id": "rental-car-counter-defense",
+  "name": "Rental Car Counter — Overbookings, Insurance Decline, Fuel Reversal",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["rental-car", "hertz", "avis", "enterprise", "cdw", "insurance", "fuel-purchase"],
+  "description": "Navigate the rental-car counter without being upsold: refuse unnecessary insurance, reverse the pre-purchase fuel trap, and handle overbookings without spending an extra $40/day on a 'free upgrade'.",
+  "disclaimer": "Always confirm your credit-card rental coverage details with the issuer for your specific country and rental type. Some countries (Italy, Ireland, Israel, Jamaica) require local CDW that bypasses credit-card coverage.",
+  "context": {
+    "when_to_use": "User is picking up (or returning) a rental car from Hertz, Avis, Enterprise/National/Alamo, Budget, Sixt, Europcar, Dollar, Thrifty, or a local operator. Specifically helpful at airport counters where upsell pressure is highest.",
+    "preconditions": [
+      "User has the reservation confirmation number.",
+      "User has their primary credit card (the one that pays — also the one carrying CDW coverage).",
+      "User knows whether their credit-card rental coverage is PRIMARY or SECONDARY (Chase Sapphire Reserve = primary in the US for most rentals; Amex Platinum = secondary unless you pre-enroll in Premium Car Rental Protection).",
+      "User has a domestic driver's license + IDP if renting abroad in a country that requires it."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Insurance: the most-upsold, least-needed product at the counter. Most US-issued credit cards include CDW. If your card is PRIMARY (Sapphire Reserve, United Club Infinite, USAA), you almost never need the counter's CDW.",
+    "Local CDW where required: in Italy, Ireland, Israel, Jamaica, the rental agreement requires CDW that overrides card coverage. Pay it. Elsewhere — decline.",
+    "Pre-purchase fuel ('FPO') is a trap unless you're returning empty. The math: you pay for a full tank at a slightly cheaper rate, then return as empty as you dare. If you return with even 1/4 tank, you've paid for fuel you didn't use.",
+    "Overbooking is rare but happens. You're entitled to an equivalent or better car at the original rate. 'Free upgrade' usually means same daily rate; an SUV at SUV rate isn't an upgrade.",
+    "Status programs skip the counter entirely. Hertz Gold Plus Rewards, Avis Preferred, National Emerald Club Executive — get the keys directly from the lot. Five seconds to enroll for free.",
+    "Inspect the car before driving off. Photograph every panel and the dashboard fuel level. Tiny dents become $500 charges if you don't have a timestamp."
+  ],
+  "phrases": {
+    "opener": "Hi — picking up reservation [confirmation]. I'm declining all optional coverage. I have primary CDW through my credit card. Could we keep the original rate?",
+    "decline_cdw": "I'm declining LDW/CDW. My credit card covers it as primary. I'll initial the decline box.",
+    "decline_sli": "I'm declining the supplemental liability insurance. My personal auto policy covers liability when I rent.",
+    "decline_pec": "I'm declining personal effects coverage. My homeowners/renters policy covers items in the car.",
+    "decline_fpo": "I don't need fuel pre-purchase. I'll refuel before return. If your system added it, please remove it now.",
+    "handle_overbook": "If the car class I reserved isn't available, can you put me in an equivalent or better class at the same daily rate?",
+    "handle_pressure": "Thanks, but I'm set. Can we finalize the keys?",
+    "fuel_reversal_at_return": "I returned the car with a full tank. The pre-purchase fuel option was added at check-out. Can you reverse it on this receipt?",
+    "graceful_close_success": "Thanks. Can you print or email the final agreement so I can confirm the daily rate and no add-ons before I drive off?",
+    "graceful_close_failure": "If you can't waive the [add-on], please print the agreement as-is — I'll dispute the charge with my credit card on return."
+  },
+  "tactics": [
+    {
+      "name": "Pre-enroll in loyalty before you arrive",
+      "when": "Before booking, ideally.",
+      "script": "Hertz Gold Plus Rewards, Avis Preferred, National Emerald Club, Enterprise Plus, Budget Fastbreak, Sixt Loyalty — all free, all skip the counter. National Executive (free with no spend) lets you pick ANY car in the Executive aisle.",
+      "priority": 1
+    },
+    {
+      "name": "Know your card's CDW terms",
+      "when": "Before the counter conversation.",
+      "script": "PRIMARY US CDW cards: Chase Sapphire Reserve, Chase United Club Infinite, USAA, Amex Platinum (only when you pre-enroll in 'Premium Car Rental Protection' — $12.25/rental). Most other cards are SECONDARY = pay your personal auto first, card picks up remainder. Excluded categories on most cards: exotic, vintage (10+ yrs), trucks/cargo vans, rentals longer than 31 days. Always read the benefits guide.",
+      "priority": 2
+    },
+    {
+      "name": "Decline every add-on by name",
+      "when": "Agent walks through coverages.",
+      "script": "LDW/CDW, SLI (supplemental liability), PAI (personal accident), PEC (personal effects), roadside assistance plus, fuel pre-purchase. Decline each. Initial the boxes. Calm and friendly, not adversarial.",
+      "priority": 3
+    },
+    {
+      "name": "Refuse a 'free upgrade' that isn't free",
+      "when": "Agent offers an SUV / premium because your class is unavailable.",
+      "script": "Ask: 'At what daily rate? Same as my reservation?' If no — that's not an upgrade, that's an upsell. Per industry norms, you're owed an equivalent or better car at the ORIGINAL rate when your class is unavailable.",
+      "priority": 4
+    },
+    {
+      "name": "Photograph every panel, plus dash + odometer",
+      "when": "Before driving off the lot.",
+      "script": "Walk around the car. Photograph each side, both bumpers, roof, hood, all four wheels, the dashboard showing fuel level and odometer, and any existing damage marked or unmarked. Time-stamped photos beat any dispute later."
+    },
+    {
+      "name": "Reverse FPO at return if accidentally added",
+      "when": "Returning with full tank but the system shows FPO on receipt.",
+      "script": "Show the agent the fuel receipt and the receipt's FPO line. They can remove it on the spot 90% of the time. If not, dispute with credit card."
+    },
+    {
+      "name": "Foreign rental: prepay local CDW",
+      "when": "Italy, Ireland, Jamaica, Israel, parts of Eastern Europe.",
+      "script": "Use Auto Europe, AutoSlash, or the rental brand's site with local CDW INCLUDED in the booking. The counter will still try to upsell 'Super CDW'; usually you can decline that if you have card coverage."
+    }
+  ],
+  "boundaries": [
+    "Do NOT decline local CDW where it's legally required (Italy is the most common trap).",
+    "Do NOT drive an exotic/luxury class assuming card coverage applies — check the card's exclusions.",
+    "Do NOT skip the pre-rental walkaround. Photos prevent disputes.",
+    "Do NOT lie about who's driving — adding a driver costs $0-$15/day and matters for insurance.",
+    "Do NOT use the rental for prohibited activities (off-road, ride-sharing, towing) — voids both rental and card coverage."
+  ],
+  "success_signals": [
+    "Agent prints the agreement with no add-ons and the original daily rate.",
+    "Walkaround done and photographed without rush.",
+    "Equivalent or better car offered at the original rate when overbooked.",
+    "Final receipt at return matches the agreement with no surprise charges."
+  ],
+  "failure_signals": [
+    "Agent insists you 'must' take CDW (false in the US absent specific exclusions).",
+    "FPO is added despite your decline.",
+    "Daily rate at counter is higher than the reservation rate without explanation.",
+    "Car has unmarked damage and agent refuses to mark it."
+  ],
+  "exit_strategy": {
+    "on_success": "Drive off with the agreement saved and photos timestamped. Refuel within 10 minutes of return and keep the receipt.",
+    "on_failure": "Pay under protest, finalize the agreement, and dispute the unauthorized add-ons with the credit-card issuer using your initialed decline boxes as evidence.",
+    "follow_ups": [
+      "On return, photograph the car again with the fuel needle and odometer.",
+      "If charged for damage you didn't cause, file a card dispute within 60 days with your photos.",
+      "If the rental was for a corporate trip, submit the receipt promptly — many corp T&E systems reject if uploaded >30 days late."
+    ]
+  },
+  "required_user_info": [
+    "Reservation confirmation number",
+    "Pickup location and date",
+    "Credit card used to book + whether its CDW is PRIMARY or SECONDARY",
+    "Whether the rental is in a country requiring local CDW",
+    "Loyalty number"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

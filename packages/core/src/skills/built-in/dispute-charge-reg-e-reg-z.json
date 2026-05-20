@@ -1,0 +1,131 @@
+{
+  "id": "dispute-charge-reg-e-reg-z",
+  "name": "Dispute a Debit or Credit Charge Under Reg E / Reg Z",
+  "version": "1.0.2",
+  "category": "finance-admin",
+  "tags": [
+    "dispute",
+    "regulation-e",
+    "regulation-z",
+    "billing-error",
+    "chargeback",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call the bank to dispute a specific charge that the user DID initially authorize but where something went wrong (merchant didn't deliver, charged twice, charged wrong amount, won't refund per their own policy). Different workflow from outright fraud: this is a billing-error / merchant-dispute case under Reg E (debit, EFTA) or Reg Z (credit, FCBA).",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User authorized a transaction but the merchant: (a) charged more than agreed, (b) charged twice, (c) failed to deliver goods/services, (d) refused to honor their own refund policy, or (e) the recurring charge was supposed to be cancelled. Different from `report-fraudulent-transaction` — that's for charges the user never authorized at all.",
+    "preconditions": [
+      "User has attempted (or has a good-faith reason to skip) resolving directly with the merchant first — banks ask this.",
+      "User has the transaction details: date, amount, merchant name.",
+      "User has any supporting evidence: order confirmation, cancellation email, photos, terms-of-service screenshot, communication thread.",
+      "For credit cards: dispute filed within 60 days of the statement showing the charge (FCBA window).",
+      "For debit cards: dispute filed within 60 days of the statement (Reg E window for billing errors)."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Frame it as a 'billing error' or 'merchant dispute' — not fraud. Mislabeling as fraud can backfire when the merchant produces a receipt with the user's name on it.",
+    "Reg Z (FCBA) covers credit cards: written dispute within 60 days, bank must acknowledge within 30 days, resolve within 2 billing cycles (max 90 days). Reg E covers debit cards / EFTs: 60-day window for unauthorized EFTs, billing errors have shorter clocks.",
+    "Documentation wins disputes. Have the merchant's own refund policy ready, the cancellation confirmation, or the proof of non-delivery.",
+    "First-line reps often default to 'have you tried the merchant?' — answer once, clearly, with what was tried and when. Then move on.",
+    "Banks can issue a temporary credit while investigating — ask explicitly.",
+    "Get the case in writing. Phone disputes start the clock, but written confirmation locks the bank into Reg Z/Reg E timing requirements."
+  ],
+  "phrases": {
+    "opener": "Hi, I need to file a billing-error dispute on a [credit / debit] charge. The charge was authorized but the merchant [didn't deliver / double-charged / charged the wrong amount / won't honor their refund policy]. I have documentation to support the claim.",
+    "state_the_merchant_attempts": "I contacted [Merchant] on [dates] by [phone / email / chat]. They said [outcome]. I'm now exercising my rights under [Regulation Z if credit / Regulation E if debit] to dispute this with the bank.",
+    "ask_temporary_credit": "While the investigation is pending, can the bank apply a temporary credit so I'm not paying interest on a disputed amount?",
+    "ask_billing_cycle_pause": "For the credit card: can you confirm that, while this is disputed, the disputed amount won't accrue interest or count toward late-payment fees per Reg Z?",
+    "ask_for_writing": "Can you confirm the dispute is opened in writing — a secure message in-app or an email summary? I'd like the case number and the regulatory timing in writing.",
+    "request_supervisor": "Could you bring in a dispute specialist or a supervisor? I want to make sure the case is coded correctly the first time — merchant dispute under [Reg E / Reg Z], not fraud.",
+    "upload_evidence_offer": "I have [order confirmation / cancellation email / refund-policy screenshot / tracking showing non-delivery]. Where should I upload it — secure message in-app, email, or fax?",
+    "graceful_close": "Thanks. Can you read back the case number, the disputed amount, the temporary credit (if any), and the deadline by which the bank expects to resolve? I'd like that summary in writing."
+  },
+  "tactics": [
+    {
+      "name": "Open with the correct label",
+      "when": "First substantive turn.",
+      "script": "Use `opener`. Say 'billing error' or 'merchant dispute' — NOT 'fraud'. Misclassifying triggers the wrong workflow and can be denied when the merchant proves you authorized the initial charge.",
+      "priority": 1
+    },
+    {
+      "name": "Answer 'did you try the merchant' once, completely",
+      "when": "Rep asks about prior merchant contact.",
+      "script": "Use `state_the_merchant_attempts`. Be specific about dates and channels. Then redirect to the dispute.",
+      "priority": 2
+    },
+    {
+      "name": "Anchor in the regulation",
+      "when": "Rep seems to be improvising the process.",
+      "script": "Name the regulation explicitly — Reg Z (credit) or Reg E (debit). Reps are trained on these; using the name signals competence and triggers the right workflow.",
+      "priority": 3
+    },
+    {
+      "name": "Ask for temporary credit",
+      "when": "Claim is opened.",
+      "script": "Use `ask_temporary_credit`. For credit cards, also use `ask_billing_cycle_pause` — Reg Z prohibits collecting on a disputed amount during the investigation.",
+      "priority": 4
+    },
+    {
+      "name": "Upload evidence promptly",
+      "when": "Rep asks if you have supporting documentation.",
+      "script": "Use `upload_evidence_offer`. Banks resolve documented disputes faster. Upload via secure in-app message, never plain email.",
+      "priority": 5
+    },
+    {
+      "name": "Escalate if miscoded",
+      "when": "Rep says 'we'll file this as fraud' or 'we can't dispute, it's authorized.'",
+      "script": "Use `request_supervisor`. Repeat: this is a Reg [E/Z] billing-error dispute, not fraud."
+    },
+    {
+      "name": "Lock in the writeback",
+      "when": "Claim filed, evidence uploaded.",
+      "script": "Use `graceful_close`. Case number + amount + temporary credit + resolution deadline + rep name. In writing."
+    }
+  ],
+  "boundaries": [
+    "Do NOT label this as fraud just to speed the call — if the merchant produces a receipt, a miscoded fraud claim gets denied AND can flag the user's account.",
+    "Do NOT lie about whether you contacted the merchant — banks ask the merchant, who shows the call/chat logs.",
+    "Do NOT agree to a 'reversal' that closes the merchant relationship without checking whether the user has services still pending with that merchant.",
+    "Do NOT share more identifying info than needed — last 4 of SSN and the card number are typically sufficient.",
+    "Do NOT close without case number, written summary path, and the resolution deadline.",
+    "Do NOT accept a verbal 'the merchant provided proof' as a closer. The bank must produce the documentation it relied on — under Reg E/Z the consumer has the right to a copy. Without seeing the evidence the bank cannot fairly close the dispute.",
+    "Do NOT withdraw the dispute on the phone because the rep says 'it'll be denied anyway'. A denial creates a documented record you can escalate; a withdrawal closes the door."
+  ],
+  "success_signals": [
+    "Rep codes it correctly as 'billing error' / 'merchant dispute' under Reg E or Reg Z.",
+    "Temporary credit applied or scheduled.",
+    "Rep confirms interest pause on credit-card disputes.",
+    "Evidence upload path provided and accessible.",
+    "Resolution deadline given (typically 30 days acknowledge / 90 days resolve for Reg Z)."
+  ],
+  "failure_signals": [
+    "Rep refuses to file because 'you authorized it' — they're conflating fraud with billing error.",
+    "Rep insists on a paper-only filing (push for digital).",
+    "No case number after 20 minutes — escalate.",
+    "Rep tells you to call back after attempting merchant again, despite documented attempts.",
+    "Rep claims 'the merchant provided proof you authorized this' but cannot or will not send the proof — the consumer is entitled to it under Reg E/Z.",
+    "Rep urges you to 'withdraw the dispute and try the merchant one more time' — that closes your case without a documented denial and resets the regulatory clock."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm case number, disputed amount, temporary-credit status, evidence-upload path, written-summary delivery, resolution deadline. Email operator with the case details + calendar a check-back at the 30-day mark.",
+    "on_failure": "Get case number anyway. If miscoded as fraud, escalate to dispute specialist. If repeatedly blocked, file a CFPB complaint and consider a small-claims action vs. the merchant. Surface to operator for approval to escalate.",
+    "follow_ups": [
+      "Day 30: confirm acknowledgment received in writing (Reg Z 30-day rule).",
+      "Day 60: check status — many banks resolve at this mark.",
+      "Day 90: final resolution deadline — if not resolved, escalate to CFPB."
+    ]
+  },
+  "required_user_info": [
+    "Account / card last 4",
+    "Transaction details: date, amount, merchant name",
+    "Reason for dispute (non-delivery, double-charge, wrong amount, refund refused, recurring after cancel)",
+    "Summary of merchant-contact attempts: dates, channels, outcomes",
+    "Supporting evidence files ready to upload",
+    "Operator-approved threshold for any further escalation costs"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

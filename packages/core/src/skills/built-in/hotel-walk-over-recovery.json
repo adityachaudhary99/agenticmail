@@ -1,0 +1,114 @@
+{
+  "id": "hotel-walk-over-recovery",
+  "name": "Hotel 'Walked' — Get a Real Comparable Room at the Original Rate",
+  "version": "1.0.1",
+  "category": "travel",
+  "tags": ["hotel", "walking", "overbook", "loyalty", "marriott", "hilton", "hyatt", "ihg"],
+  "description": "The hotel is overbooked and is 'walking' you to a sister or partner property. This skill secures the brand-mandated remedies: comparable room, paid transport, free first night, points compensation, and a path back to the original property for subsequent nights.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "User arrives at the hotel and is told their room is unavailable due to overbooking, maintenance, or oversold conditions. Most powerful inside the Big Four loyalty programs (Marriott Bonvoy, Hilton Honors, Hyatt World of Hyatt, IHG One Rewards) because the brand-level walk policies are written and enforceable.",
+    "preconditions": [
+      "User has the original reservation confirmation (printed, screenshot, or in app).",
+      "User has their loyalty number and tier (if any).",
+      "User has not yet checked in (or has, but the room is unavailable for tonight)."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Brand walk policies are written, public-facing, and enforceable at the front desk. Marriott Bonvoy's 'Ultimate Reservation Guarantee' is a published page; Hilton, Hyatt, and IHG all have analogues. Have the page bookmarked.",
+    "Comparable means equal or better: same brand tier or higher, same room category (e.g. king bed, not double-double), same general location.",
+    "Walked guests get the FIRST night free at the new property, paid transport, and one free phone call. For elite members, additional point compensation applies (e.g. Marriott: 90,000 Bonvoy points + $100 cash for Platinum and above).",
+    "The duty manager — not the front-desk agent — is the right person to talk to. Ask politely but firmly.",
+    "Get the remedy in writing BEFORE leaving the original property. A signed note from the manager or a printed confirmation prevents 'he said / she said' the next morning.",
+    "Loop the brand's customer care line if the property stonewalls. Marriott Bonvoy Member Support, Hilton Honors Diamond Desk, Hyatt Concierge — these can call the property and force compliance."
+  ],
+  "phrases": {
+    "opener": "Hi, I just learned you can't honor my reservation tonight — confirmation [number]. These things happen. Let's walk through the brand's walk policy together so we get this right: comparable room at a comparable property, you pay tonight, you cover transport, and the points compensation per your program.",
+    "ask_for_duty_manager": "Could the duty manager join us? I want to make sure we agree on which property I'm being walked to and what the compensation is, and they're usually the right person for that conversation.",
+    "specify_comparable": "I booked a [room type] for [nights]. The replacement should be the same category or better, same brand tier or higher, and within reasonable distance — I'd say [10–15] minutes by car. What property do you have in mind?",
+    "ask_for_transport": "Will you arrange a car or taxi voucher? Per policy that's on the hotel.",
+    "ask_for_points": "Since I'm a [tier] member, I'd like to apply the [program] walk compensation — for Marriott Bonvoy that's [90,000 points + $100] at my tier. Can you log that to my account before I leave?",
+    "ask_for_return": "I'd like to come back here for the remainder of my stay starting tomorrow. Can you confirm that and hold the room? I'd prefer to be in one place.",
+    "loop_brand_care": "If we can't agree at the property, I'll call [Marriott Bonvoy Member Support / Hilton Diamond Desk / Hyatt Concierge] together with you so we're on the same page.",
+    "graceful_close_success": "Thanks for handling this professionally. Can I get a printed note confirming: walked to [property] tonight, transport covered, [points/cash] credited, and returning to this property tomorrow with [room type] held?",
+    "graceful_close_failure": "Alright — I'll be calling [brand] member services now and filing a formal complaint. Please print or email me what you can confirm: comparable property name, address, and check-in instructions."
+  },
+  "tactics": [
+    {
+      "name": "Stay calm, voice low",
+      "when": "First moment after hearing 'we can't honor your reservation'.",
+      "script": "Walking is stressful but the front-desk agent didn't do this to you. The hotel revenue management system did. Anger forfeits goodwill; calm extracts maximum remedy. Channel slight disappointment, not anger.",
+      "priority": 1
+    },
+    {
+      "name": "Cite the brand walk policy by name",
+      "when": "Negotiating the remedy.",
+      "script": "Marriott: 'Ultimate Reservation Guarantee — compensation for not honoring a confirmed reservation.' Hilton: 'Hilton Honors guest service guarantee.' Hyatt: 'Guest of Honor / Globalist guarantee.' IHG: 'Service Guarantee.' Front desks know these but won't volunteer them.",
+      "priority": 2
+    },
+    {
+      "name": "Specify 'comparable' explicitly",
+      "when": "Property suggests an alternative.",
+      "script": "Push back on: a downbrand (e.g. Courtyard when you booked Westin), a downgrade in room type, or a property 30+ minutes away. Ask what other partner properties they have within 15 min that match your original tier.",
+      "priority": 3
+    },
+    {
+      "name": "Lock in the points + cash element",
+      "when": "Loyalty member at elite tier.",
+      "script": "Marriott Platinum+: 90,000 points + $100 cash (Ultimate Reservation Guarantee). Hilton Diamond: 'walk' policy adds extra points + cash equivalent depending on property. Get the points posted to your account BEFORE leaving — front desk can do it.",
+      "priority": 4
+    },
+    {
+      "name": "Demand a written remedy slip",
+      "when": "Before walking out the door.",
+      "script": "Ask for a printed confirmation: name of replacement property, tonight is comped, who's paying transport, points credited, and tomorrow's return room type. Sign it together. Photograph it."
+    },
+    {
+      "name": "Plan the return night",
+      "when": "Multi-night stay.",
+      "script": "If you booked 4 nights and are walked tonight, you want to come back tomorrow. Get the original property to commit in writing to your room type and any upgrade/late-checkout you had."
+    },
+    {
+      "name": "Call brand care if the property refuses",
+      "when": "Front desk says no to the written policy.",
+      "script": "Marriott Bonvoy Member Support: 800-535-4028 (or Bonvoy app chat). Hilton Diamond Desk: 800-548-8690. Hyatt Concierge: 800-323-7249. IHG: 888-211-9874. Call ON THE SPOT, with the front desk standing there."
+    }
+  ],
+  "boundaries": [
+    "Do NOT raise your voice — front-desk agents have the power to make this go very badly. Calm + cited policy = leverage.",
+    "Do NOT accept a vague 'we'll sort it out tomorrow'. Get tonight's remedy in writing tonight.",
+    "Do NOT leave for the partner property until you have transport arranged.",
+    "Do NOT cancel the reservation yourself — if you cancel, you lose 'walked' status and the program protections. Make the hotel cancel it on their end as 'walk'."
+  ],
+  "success_signals": [
+    "Duty manager engages directly.",
+    "Property names the brand walk policy without prompting.",
+    "Transport is offered automatically.",
+    "Points/cash compensation is logged in front of you.",
+    "Comparable property is at the same tier or higher."
+  ],
+  "failure_signals": [
+    "Offer is a sister-brand downbrand (Sheraton walked to Aloft, Hilton walked to Hampton Inn).",
+    "Replacement is 30+ min away with no transport.",
+    "Property refuses to commit to your return night.",
+    "Duty manager refuses to come out."
+  ],
+  "exit_strategy": {
+    "on_success": "Take the printed remedy slip, ride the comped transport, check in at the replacement, set an alarm for tomorrow's return. Email yourself the photo of the slip.",
+    "on_failure": "Pay for a competitor hotel out-of-pocket, save the receipt, and file a complaint with brand care within 24 hours. Brands usually pay even when properties resist — but only with documentation.",
+    "follow_ups": [
+      "If walking caused you to miss a paid activity (concert, tour), include that in the brand complaint — sometimes reimbursed.",
+      "Status credits — confirm the original night still counts toward elite-night totals; some brands credit walked stays at the original property, some don't.",
+      "If you paid via Amex Fine Hotels & Resorts or a similar program, loop the booking concierge — they have separate leverage."
+    ]
+  },
+  "required_user_info": [
+    "Hotel name, address, reservation confirmation number",
+    "Room type and rate booked",
+    "Number of nights, including tonight",
+    "Loyalty program and tier",
+    "Whether the stay is for a specific event (wedding, conference) requiring proximity"
+  ],
+  "contributed_by": "travel-rebooking agent (v0.9.87 community drop)"
+}

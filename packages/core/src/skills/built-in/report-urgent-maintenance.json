@@ -1,0 +1,123 @@
+{
+  "id": "report-urgent-maintenance",
+  "name": "Report and Escalate an Urgent Maintenance Issue",
+  "version": "1.0.1",
+  "category": "real-estate",
+  "tags": [
+    "maintenance",
+    "habitability",
+    "no-heat",
+    "leak",
+    "pest",
+    "emergency",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the landlord, property manager, or after-hours maintenance line to report an urgent habitability issue (no heat, active leak, gas smell, sewage, severe pest, broken lock) — while creating a written paper trail that preserves the tenant's legal posture if the issue is ignored.",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "An urgent condition exists that affects habitability or safety: no heat in cold weather, no hot water, no running water, gas smell, active water leak, sewage backup, broken exterior lock, severe pest infestation, electrical hazard, broken AC in extreme heat (in many jurisdictions). Use AFTER any immediate safety call (911 for gas, fire dept for active leak threatening structure) is already in motion if needed.",
+    "preconditions": [
+      "User is safe — no active gas leak, fire, or flooding requiring 911.",
+      "User has the landlord's name, the property-management number, and the after-hours emergency line (if any).",
+      "User can describe what's broken, when it started, and what they've already tried.",
+      "User has (or is willing to take) photos / video / a thermostat reading documenting the issue."
+    ],
+    "estimated_call_duration_minutes": 12
+  },
+  "principles": [
+    "Document first, then call. Photos, videos, and a thermostat reading with a timestamp are leverage; memory is not.",
+    "State the words 'habitability' or 'uninhabitable' deliberately when it applies. It signals you know the legal frame — landlords respond faster.",
+    "Get a specific ETA, not 'soon' or 'this week.' 'A technician by 6pm tomorrow' is actionable; 'we'll get to it' is not.",
+    "Always follow the call with an email or text restating what was promised, by whom, by when. That email is the paper trail courts actually look at.",
+    "Refuse verbal-only assurances about anything that affects your rent, your lease, or your right to repair-and-deduct. Ask for it in writing.",
+    "Do NOT withhold rent or threaten to withhold rent on the call. That's a legal step with strict procedural requirements that vary by state — escalate to operator instead."
+  ],
+  "phrases": {
+    "opener_business_hours": "Hi, this is [name] at [unit/address]. I have an urgent maintenance issue I need to report — [one-sentence description]. I'm calling to get a technician scheduled today and to put this on record.",
+    "opener_after_hours": "Hi, I'm calling the emergency line for [unit/address]. I have [issue] — this is affecting habitability and I need someone out tonight.",
+    "name_the_legal_frame": "Just so we're aligned — without [heat / running water / a working lock / etc.] the unit isn't habitable, so I need this treated as urgent, not standard maintenance.",
+    "ask_for_eta": "What time can a technician be here? I need a specific window today, not a callback later.",
+    "ask_who_is_dispatched": "Can you tell me the name of the technician or vendor who's coming, and the number I can reach them at if they're running late?",
+    "confirm_in_writing": "Can you send me an email or text in the next 15 minutes confirming the technician's name, the ETA, and what's being repaired? I want to make sure we both have the same record.",
+    "escalate_to_manager": "Okay — can you connect me with the property manager or your supervisor? This isn't a standard ticket and it needs that level of attention.",
+    "graceful_close_promised": "Thank you. Just to confirm: [technician name] is arriving by [time] to fix [issue], and you're sending me written confirmation now. I'll be here.",
+    "graceful_close_unresolved": "Thanks for your help. Since we don't have an ETA yet, I'm going to follow up by email right after this call documenting what we discussed, and I may need to escalate if I don't hear back by [time]."
+  },
+  "tactics": [
+    {
+      "name": "Open with the legal frame already implied",
+      "when": "First substantive turn.",
+      "script": "Use opener and `name_the_legal_frame`. The word 'habitability' shifts the call from 'ticket' to 'priority' without being adversarial.",
+      "priority": 1
+    },
+    {
+      "name": "Pin a specific ETA",
+      "when": "After the issue is acknowledged.",
+      "script": "Use `ask_for_eta`. Refuse 'we'll let you know' — ask for a window. If they can't give one, that itself is the answer and goes in the paper trail.",
+      "priority": 2
+    },
+    {
+      "name": "Identify the technician",
+      "when": "Once an ETA exists.",
+      "script": "Use `ask_who_is_dispatched`. Knowing the vendor's name lets the user verify they actually showed up, and tightens accountability.",
+      "priority": 3
+    },
+    {
+      "name": "Force the paper trail",
+      "when": "Before ending any call where a promise was made.",
+      "script": "Use `confirm_in_writing`. If they won't email a confirmation, that's a red flag — note it and operator should send the recap email immediately.",
+      "priority": 4
+    },
+    {
+      "name": "Escalate to manager if blown off",
+      "when": "Front-line dispatcher won't commit to a same-day or same-shift ETA on a true habitability issue.",
+      "script": "Use `escalate_to_manager`. Habitability issues legally require prompt response in most jurisdictions; the manager will know that even if dispatch doesn't.",
+      "priority": 5
+    },
+    {
+      "name": "Set the next escalation step BEFORE ending the call",
+      "when": "Call ends without a firm ETA.",
+      "script": "Use `graceful_close_unresolved` and state a specific deadline (e.g. 'if I don't hear back by 6pm'). Then follow through — the recap email + the missed deadline together are what unlock formal complaints later."
+    }
+  ],
+  "boundaries": [
+    "Do NOT threaten to withhold rent. Rent-withholding has strict legal procedure that varies by jurisdiction — ask_operator.",
+    "Do NOT agree to fix the issue yourself in exchange for a reimbursement promise unless the user has explicitly authorised it AND has the cost cap in writing.",
+    "Do NOT sign any waiver, release, or 'as-is' acknowledgment about the condition — even verbally.",
+    "Do NOT accept 'we'll send someone when we can' as a final answer on a true emergency. Escalate.",
+    "Do NOT exaggerate the issue. 'It's a little chilly' is not no-heat; misframing destroys credibility for the next real call."
+  ],
+  "success_signals": [
+    "Specific technician name + ETA window within a habitable timeframe.",
+    "Written confirmation arrives by email or text within an hour.",
+    "Landlord acknowledges habitability framing without resistance.",
+    "Manager or supervisor takes the call and re-runs the ticket."
+  ],
+  "failure_signals": [
+    "Landlord says 'we'll get to it' with no ETA.",
+    "Landlord refuses to send written confirmation.",
+    "Landlord pressures the user to fix it themselves with no reimbursement commitment in writing.",
+    "Landlord retaliates with talk of non-renewal, eviction, or rent increase when the tenant reports the issue.",
+    "Same issue has been reported 2+ times and no repair has been completed."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm technician name, ETA, scope of repair, and that written confirmation was sent. Tell operator to keep the unit accessible for the window and to document the repair after it's done.",
+    "on_failure": "End politely, send the recap email immediately, and recommend escalation: city housing department complaint, repair-and-deduct in jurisdictions that allow it, or tenant-attorney consult. See `file-habitability-complaint` skill.",
+    "follow_ups": [
+      "Operator sends the recap email within 15 minutes: who was called, when, what was promised, by whom.",
+      "Take a photo / video of the condition AFTER the call so the timestamped record is complete.",
+      "Calendar reminder at the ETA — if technician hasn't arrived, call back and document the no-show.",
+      "If unresolved within the promised window, escalate to `file-habitability-complaint`."
+    ]
+  },
+  "required_user_info": [
+    "Full unit address and unit number",
+    "Landlord name, property management number, after-hours emergency number",
+    "One-sentence description of the issue and when it started",
+    "Photos / videos / thermostat readings already captured",
+    "Whether the unit is currently safe to stay in tonight"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,116 @@
+{
+  "id": "referral-followup-without-burning",
+  "name": "Follow Up on a Referral Without Burning the Referrer",
+  "version": "1.0.1",
+  "category": "other",
+  "tags": [
+    "referral",
+    "warm-intro",
+    "relationships",
+    "phone-call",
+    "trust",
+    "outreach-sales"
+  ],
+  "description": "Call a prospect who was introduced via a mutual contact, using the referrer's name responsibly so the lead converts AND the referrer's relationship with both parties is preserved or strengthened.",
+  "disclaimer": "Skills assume the call is solicited by the operator. NEVER use these to power a mass-cold-call campaign without the operator's explicit per-prospect authorisation.",
+  "context": {
+    "when_to_use": "Operator has been introduced to a prospect by a mutual contact — either via a double-opt-in email intro, a verbal 'you should talk to them', or a public mention. Agent is making the follow-up call.",
+    "preconditions": [
+      "The referrer has explicitly given permission to be named, OR has made a public introduction (e.g. CC'd intro email).",
+      "The operator has briefed the agent on the referrer relationship (close friend? Casual acquaintance? Past colleague?).",
+      "The agent knows what the referrer told the prospect about the operator.",
+      "The agent has a clear, short reason for the call that matches what the referrer set up."
+    ],
+    "estimated_call_duration_minutes": 8
+  },
+  "principles": [
+    "The referrer's reputation is collateral on this call. Behave accordingly.",
+    "Match the warmth of the introduction. A casual 'you two should talk' is NOT the same as a written endorsement — don't oversell the closeness.",
+    "Land the conversation with low pressure. Aggressive selling on a referred call damages the referrer more than a cold call ever could.",
+    "Update the referrer afterwards — briefly. Silence after they did you a favour is the fastest way to lose future referrals.",
+    "If the call uncovers that the prospect isn't a fit, say so. Forcing it makes the referrer regret introducing you."
+  ],
+  "phrases": {
+    "opener_email_intro": "Hi [target first name], it's [agent name] from [operator]'s side — following up on the intro [referrer first name] sent across last week.",
+    "opener_verbal": "Hi [target first name], this is [agent name] on behalf of [operator]. [Referrer name] mentioned we should connect — they thought we might be useful to each other on [topic].",
+    "calibrate_warmth": "Just so I'm not assuming — how do you know [referrer]? I want to make sure I'm bringing the right context.",
+    "low_pressure_ask": "[Referrer] suggested a quick conversation rather than email. I'm not here to pitch you — I'd love 10 minutes to understand what you're working on and then we can decide together if there's anything worth doing next.",
+    "redirect_if_misfit": "Honestly, from what you're describing, I'm not sure we're the most useful — but I'd like to be straight about that rather than waste your time. Want me to tell [referrer] we talked and it wasn't quite the right shape?",
+    "graceful_close": "This was useful — thanks for the time. I'll send [referrer] a quick thanks and let them know we connected. I'll follow up with you on [specific next step] by [day]."
+  },
+  "tactics": [
+    {
+      "name": "Lead with the referrer's name, not the operator's company",
+      "when": "First sentence.",
+      "script": "Use `opener_email_intro` or `opener_verbal`. The referrer's name is the credential — front-load it.",
+      "priority": 1
+    },
+    {
+      "name": "Calibrate the relationship the referrer has with the target",
+      "when": "Within the first 90 seconds.",
+      "script": "Use `calibrate_warmth`. A 'we worked together 10 years ago' is different from 'best friends' — your tone and the depth of the ask should follow that signal.",
+      "priority": 2
+    },
+    {
+      "name": "Explicitly de-pressurise",
+      "when": "After introductions, before any substance.",
+      "script": "Use `low_pressure_ask`. State out loud that this is not a pitch. Referred calls that turn into pitches get reported back to the referrer fast.",
+      "priority": 3
+    },
+    {
+      "name": "Reflect the referrer's language",
+      "when": "Whenever discussing why this call is happening.",
+      "script": "If you have the referrer's exact phrasing ('they're working on something similar to what you did at X'), reuse it. The target will recognise it and relax.",
+      "priority": 4
+    },
+    {
+      "name": "Volunteer disqualification before pushing",
+      "when": "First sign that the fit isn't right.",
+      "script": "Use `redirect_if_misfit`. Walking away protects the referrer's standing and often leads to a counter-referral from the target.",
+      "priority": 5
+    },
+    {
+      "name": "Close the loop with the referrer within 24 hours",
+      "when": "After the call ends, regardless of outcome.",
+      "script": "Send a 3-line note to the referrer: thank, outcome (next step / not a fit), what you learned. Do this even — especially — when the fit was wrong."
+    }
+  ],
+  "boundaries": [
+    "Do NOT exaggerate the closeness of the referrer relationship beyond what is true.",
+    "Do NOT name the referrer in voicemails, on hold music, or to assistants without permission to do so.",
+    "Do NOT use a referral as cover for a hard sell — the prospect will tell the referrer, and you've lost two people.",
+    "Do NOT promise the prospect things the referrer mentioned the operator could do unless the operator has confirmed.",
+    "Do NOT share any confidential context the referrer gave you about the prospect.",
+    "Do NOT contact the prospect more than once via phone if they don't respond — the referrer's name does not unlock additional attempts."
+  ],
+  "success_signals": [
+    "Prospect references the referrer warmly ('oh yeah, [referrer] told me about you').",
+    "Prospect engages substantively on the topic the intro framed.",
+    "A concrete next step is agreed on the call.",
+    "Prospect asks for a way to reciprocate or makes their own offer."
+  ],
+  "failure_signals": [
+    "Prospect doesn't remember the referrer or seems unclear why the call is happening.",
+    "Prospect was 'just being polite' to the referrer and isn't actually interested.",
+    "Prospect mentions a misalignment that the referrer should have known about.",
+    "Prospect declines a next step without a specific reason."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm the agreed next step, send the recap email, and CC the referrer ONLY if the referrer asked to stay looped in (otherwise send a separate thank-you).",
+    "on_failure": "Close the call warmly. Send the referrer a short, honest note. Do not retry the prospect by phone without re-engaging the referrer first.",
+    "follow_ups": [
+      "Email to the referrer within 24 hours: 'Thanks again, here's what happened.'",
+      "Calendar entry for any agreed next-step date with the prospect.",
+      "CRM note tagging this as a referral, with the referrer's name and the closeness rating."
+    ]
+  },
+  "required_user_info": [
+    "Referrer's name, relationship to the operator, and explicit permission to use their name",
+    "How the introduction happened (email / verbal / public mention)",
+    "What the referrer told the prospect about the operator",
+    "Operator's preferred next-step menu",
+    "Whether the referrer wants to be CC'd on follow-ups"
+  ],
+  "contributed_by": "sales-outbound agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

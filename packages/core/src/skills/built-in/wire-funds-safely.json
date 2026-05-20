@@ -1,0 +1,129 @@
+{
+  "id": "wire-funds-safely",
+  "name": "Initiate a Wire Transfer Safely",
+  "version": "1.0.0",
+  "category": "finance-admin",
+  "tags": [
+    "wire-transfer",
+    "wire-fraud",
+    "verification",
+    "real-estate",
+    "business-email-compromise",
+    "phone-call",
+    "banking-finance"
+  ],
+  "description": "Call a bank to initiate (or authorize) a domestic or international wire transfer with rigorous recipient verification — wires are irrevocable once sent, and impersonation / BEC fraud accounts for the largest dollar losses in retail banking.",
+  "disclaimer": "Not financial or tax advice. Agent must NEVER share SSN unprompted, NEVER initiate wires above the operator's stated cap, NEVER agree to a hardship plan / settlement that affects credit without explicit ask_operator approval.",
+  "context": {
+    "when_to_use": "User needs to send funds via wire — real-estate closing, large vendor payment, family transfer abroad, business B2B, etc. Critical context: wires settle in minutes and are practically irrevocable once sent. Fraud rings impersonate title companies, lawyers, executives, family members in distress. This skill exists to add friction in the right places, not to slow legitimate payments.",
+    "preconditions": [
+      "Explicit operator approval for the wire amount, recipient, and reason — recorded.",
+      "Recipient banking details verified through a SECOND channel (phone call to a known-good number, NOT a number from the email that requested the wire).",
+      "User has authentication factors ready: account, PIN/passcode, possibly callback-verification setup.",
+      "User has the bank's wire cutoff time (typically 3-5pm local) and knows weekend / holiday delays.",
+      "For real-estate / closings: title company contact verified at the brokerage's main line, NOT a number from a 'wire instructions' email."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Wires are IRREVOCABLE. Treat every detail like a one-way door — verify before, not after.",
+    "The number-one fraud pattern is a SPOOFED EMAIL with last-minute changed wire instructions. Always verify wire instructions on a fresh outbound call to a known-good number BEFORE the wire call.",
+    "Match the wire amount to the operator's pre-approved cap. Anything above triggers an `ask_operator` halt, full stop. No clever interpretations.",
+    "Read recipient details back digit-by-digit to the rep. ABA/routing, account number, SWIFT/IBAN for international, beneficiary name exactly as on the receiving account.",
+    "Use the bank's callback-verification or out-of-band approval feature if available — it's there because wire fraud is the bank's largest loss category.",
+    "Be skeptical of urgency. 'Send it now or we lose the deal' is the single most common fraud pressure tactic — legitimate counterparties tolerate a 30-minute verification delay."
+  ],
+  "phrases": {
+    "opener": "Hi, I'd like to initiate a wire transfer. Before we start: I'd like to verify recipient details carefully, confirm any applicable cutoff times, and use any callback-verification process the bank offers.",
+    "state_the_wire": "The wire is for $[amount] to [recipient name] at [bank], routing [###], account [###]. The purpose is [closing / vendor / family transfer / etc.].",
+    "verify_callback": "Does the bank offer a callback-verification step where you call me back on the phone number on file before releasing the wire? I'd like to use that.",
+    "ask_cutoff_times": "What is today's cutoff time for [domestic / international] wires, and when will the funds settle at the receiving bank?",
+    "international_extras": "For the international wire — please confirm the SWIFT/BIC, IBAN if applicable, intermediary bank details, and the currency. Also, what FX rate are you applying and what are the total fees?",
+    "ask_for_purpose_field": "What goes in the purpose / memo field? Please use exactly: [text].",
+    "stop_on_red_flag": "I'd like to pause and re-verify the recipient details. Please hold the wire — I'll call back after I confirm the instructions via my second channel.",
+    "graceful_close": "Can you confirm the wire is queued, read back the amount, recipient name, account number, routing/SWIFT, expected settlement time, total fees, and give me the reference / Federal Reference (IMAD/OMAD) number?"
+  },
+  "tactics": [
+    {
+      "name": "Re-verify recipient on a fresh outbound call FIRST",
+      "when": "Before even dialing the bank.",
+      "script": "Call the recipient (title company, vendor, family member) on a number you ALREADY know — not one from any email. Read back the routing + account they expect. If they don't match the emailed instructions, STOP — the email was spoofed.",
+      "priority": 1
+    },
+    {
+      "name": "Check operator-approved cap",
+      "when": "Before authorizing any dollar amount on the call.",
+      "script": "If the wire is at or below the operator's pre-approved cap and to the pre-approved recipient — proceed. If either differs — halt and `ask_operator`. No exceptions.",
+      "priority": 2
+    },
+    {
+      "name": "Open with verification request",
+      "when": "First substantive turn with the bank.",
+      "script": "Use `opener` + `verify_callback`. Banks have these features because wire fraud is rampant; using them is normal and signals you're cautious.",
+      "priority": 3
+    },
+    {
+      "name": "Read details back digit-by-digit",
+      "when": "Stating the wire.",
+      "script": "Use `state_the_wire`, then have the REP read back routing/account/SWIFT. Catch transpositions live — once sent, a mis-keyed digit can land funds at a random account and recovery is not guaranteed.",
+      "priority": 4
+    },
+    {
+      "name": "International extras",
+      "when": "Wire is cross-border.",
+      "script": "Use `international_extras`. Compare the FX rate to mid-market (e.g., Google's rate) so the spread is known. Confirm intermediary-bank fees that can shave 20-40 USD off the received amount."
+    },
+    {
+      "name": "Pause on red flags",
+      "when": "Anything feels off — pressure to hurry, last-minute detail changes, rep waiving the callback step, mismatched recipient names.",
+      "script": "Use `stop_on_red_flag`. Hang up if needed. Re-verify, then restart. A 30-minute delay is cheap; an irrecoverable $50k wire is not."
+    },
+    {
+      "name": "Capture the audit trail",
+      "when": "Wire is queued or sent.",
+      "script": "Use `graceful_close`. Get IMAD (incoming) / OMAD (outgoing) Federal Reference numbers — these are the unique identifiers used to trace the wire if a recall is later needed."
+    }
+  ],
+  "boundaries": [
+    "Do NOT initiate a wire above the operator's stated cap under any pretext — halt and `ask_operator`.",
+    "Do NOT use wire instructions from an email without out-of-band verification — assume the email is spoofed until proven otherwise.",
+    "Do NOT proceed if anyone is pressuring urgency (rep, recipient, third party). Urgency is the universal fraud tell.",
+    "Do NOT initiate a wire to crypto exchanges, gift-card processors, or 'IRS payment' addresses — these are the canonical scam destinations.",
+    "Do NOT skip the callback-verification step even if the rep offers to.",
+    "Do NOT share full SSN unless it's bank policy for the wire desk and operator has approved disclosure.",
+    "Do NOT close the call without IMAD/OMAD or equivalent reference number."
+  ],
+  "success_signals": [
+    "Recipient details verified out-of-band match the bank-call details exactly.",
+    "Bank callback-verification step completed.",
+    "Rep reads back details accurately, no transpositions.",
+    "Wire queued with reference number; cutoff time confirmed.",
+    "Fees and (if FX) rate disclosed and within expectations."
+  ],
+  "failure_signals": [
+    "Recipient details don't match between channels — suspected BEC, halt.",
+    "Rep waives or skips the bank's standard callback step.",
+    "Urgency pressure ('send now or it's gone').",
+    "Recipient name on the receiving account doesn't match what the user expects.",
+    "Wire destination is a personal account at an obscure overseas bank when the deal context says corporate domestic."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm IMAD/OMAD reference, settlement time, fees, FX (if applicable). Notify the operator immediately with the reference. Notify the recipient on a known-good channel so they can confirm receipt.",
+    "on_failure": "If the wire was sent in error or to a fraudster, call the bank IMMEDIATELY — within minutes — and request a wire RECALL via the Federal Reserve's recall process. File a complaint at IC3.gov and a report with local law enforcement. Inform the operator.",
+    "follow_ups": [
+      "Day +1: confirm receipt with recipient via known-good channel.",
+      "If international: confirm intermediary fees were as quoted.",
+      "If anything off: file IC3.gov report within 24 hours — recall windows are short."
+    ]
+  },
+  "required_user_info": [
+    "Wire amount, currency, purpose",
+    "Recipient legal name (exact match to receiving account)",
+    "Routing / ABA (domestic), SWIFT/BIC + IBAN (international), beneficiary account",
+    "Out-of-band-verified phone number for the recipient",
+    "Operator-approved cap and explicit approval for THIS wire",
+    "Source account from which to debit"
+  ],
+  "contributed_by": "banking-finance agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

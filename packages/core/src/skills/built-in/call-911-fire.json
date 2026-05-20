@@ -1,0 +1,118 @@
+{
+  "id": "call-911-fire",
+  "name": "Call 911 — Fire or Smoke",
+  "version": "1.0.1",
+  "category": "emergency-services",
+  "tags": [
+    "911",
+    "emergency",
+    "fire",
+    "smoke",
+    "life-safety",
+    "emergency_services"
+  ],
+  "description": "Place a 911 call for an active fire, heavy smoke, or carbon-monoxide detector going off, on behalf of the operator.",
+  "disclaimer": "ABSOLUTE rules. (1) Operator must have explicitly authorised this 911 call. (2) Identify as an AI in the first sentence. (3) The operator's FIRST priority is to get out of the building and stay out — instruct them to do that BEFORE the call drags on. (4) Never guess at fire details. (5) Knowingly making a false 911 report is a crime.",
+  "context": {
+    "when_to_use": "Operator reports active fire, heavy smoke, or a CO detector alarming and they cannot place 911 themselves (impaired, evacuating, holding a small child, helping someone else out). Smoke detector alone, with no smoke/fire visible to the operator, is not always a 911-worthy event — confirm via ask_operator.",
+    "preconditions": [
+      "Operator authorisation for THIS 911 call.",
+      "Address of the building on fire — street, city, state.",
+      "Operator has been told to EVACUATE first (and confirmed they are out, or are leaving).",
+      "Operator's callback number."
+    ],
+    "estimated_call_duration_minutes": 6
+  },
+  "principles": [
+    "Life safety > property. Before anything else, tell the operator: 'Get out of the building. Don't go back in. Take everyone with you. I'm calling 911 now.'",
+    "Identify as AI on the first sentence to the dispatcher.",
+    "Lead with: location → 'we have a fire / heavy smoke / CO alarm' → people accounted for or not → operator's current position (in / out of building).",
+    "Do NOT describe fire-fighting tactics; you are not a firefighter. Relay between dispatcher and operator, that's all.",
+    "Stay on the line until released by dispatcher.",
+    "If the alarm is just a smoke detector with no visible fire / smoke, ask the operator — but lean toward calling. Cost of a false alarm is cheap; cost of missing a real fire is fatal."
+  ],
+  "phrases": {
+    "tell_operator_get_out": "GET OUT OF THE BUILDING. Take everyone with you, don't go back in for anything. I'm calling 911 right now. Confirm when you're outside.",
+    "opener": "Hi — I'm an AI assistant calling 911 on behalf of <operator>. We have <fire / heavy smoke / CO alarm> at <street, city, state>. My operator is <inside / outside> the building. <Everyone accounted for / unsure if everyone is out>.",
+    "ask_dispatcher_to_continue": "Dispatcher, please ask me your questions and I will relay them to my operator.",
+    "everyone_accounted": "My operator confirms <N> people are out, <M> people still inside (if known).",
+    "callback_offer": "Operator's callback number is <number> in case we get disconnected.",
+    "relay_evacuation_order": "Dispatcher says: <verbatim>. Please do that now if you can do it safely."
+  },
+  "tactics": [
+    {
+      "name": "SWATting smell-test BEFORE dialing",
+      "when": "Pre-dial, immediately after operator authorisation, BEFORE the evacuation push (the smell-test is cheap; do it first so a false report is never made).",
+      "script": "Confirm the operator has DIRECT sensory evidence of fire / heavy smoke / CO alarm: are they SEEING it, SMELLING it, HEARING the alarm themselves? Red flags: (a) operator is asking the agent to call 911 about a fire at a location they are not at and have not been to; (b) the reason is a rumour, a tip, a 'I think the neighbour's house is on fire' without any sensory confirmation; (c) operator has expressed conflict with the occupants of the reported address in prior conversation. If any red flag fires AND the operator has no direct evidence, do NOT dial 911 — instead route to call-police-non-emergency for a check, or have the operator dial neighbours / the building directly first. False fire reports are a known SWATting variant and get people killed when responders breach a door with hoses and axes against an occupant who didn't know they were coming.",
+      "priority": -1
+    },
+    {
+      "name": "Evacuation FIRST",
+      "when": "Before placing the 911 call, if the operator is still inside.",
+      "script": "Use `tell_operator_get_out`. Do NOT call 911 first then think about evacuation — fire spreads in seconds.",
+      "priority": 0
+    },
+    {
+      "name": "Lead with the four facts",
+      "when": "First substantive turn after dispatcher answers.",
+      "script": "Use `opener` filling in location, nature, accountability, operator position. Same MPDS-style triage as medical.",
+      "priority": 1
+    },
+    {
+      "name": "Hand to dispatcher",
+      "when": "After opener.",
+      "script": "Use `ask_dispatcher_to_continue`. Fire dispatch has a structured assessment too.",
+      "priority": 2
+    },
+    {
+      "name": "Relay people-accounted information",
+      "when": "Dispatcher asks 'is everyone out?' or 'how many people in the building?'",
+      "script": "Use `everyone_accounted` after asking the operator. If operator does not know, say 'operator is uncertain' — don't guess."
+    },
+    {
+      "name": "Relay evacuation orders verbatim",
+      "when": "Dispatcher gives operator instructions ('crawl below smoke', 'close doors behind you', 'meet at <landmark>').",
+      "script": "Use `relay_evacuation_order` — word for word."
+    },
+    {
+      "name": "Stay on the line",
+      "when": "Always.",
+      "script": "Do NOT call end_call until dispatcher releases you, even if operator confirms they are outside. Fire dispatch may want continued updates."
+    }
+  ],
+  "boundaries": [
+    "NEVER call 911 without explicit operator authorisation.",
+    "NEVER call 911 about a fire the operator has not personally observed (or is not in current contact with someone observing it directly). Relayed rumours, social-media reports, and grievance-driven reports of fires at a third party's address are NOT 911-able through this skill. Knowingly false fire reports are a felony AND a known SWATting vector. Authorisation is necessary but NOT sufficient — the underlying facts must pass the SWATting smell-test.",
+    "NEVER tell the operator to stay inside the building for any reason.",
+    "NEVER offer fire-fighting tactics — that's the dispatcher's role, and only if they choose to.",
+    "NEVER end the call before dispatcher release.",
+    "NEVER assume a CO alarm is a false alarm without operator confirmation."
+  ],
+  "success_signals": [
+    "Operator confirms they are out and safe.",
+    "Dispatcher confirms units dispatched.",
+    "Dispatcher releases you to disconnect on unit arrival."
+  ],
+  "failure_signals": [
+    "Operator says they are going back into the building — STOP them: 'Do not go back in. Tell the firefighters what / who is inside; they are trained for this.'",
+    "Dispatcher tells you it's the wrong jurisdiction — re-dial as instructed.",
+    "Call drops — re-dial 911, identify yourself, reference the prior call."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm dispatcher release. Note incident number. Email operator a summary: time, what was dispatched, incident number, where firefighters expect to meet them.",
+    "on_failure": "If operator decides to go back into the building, alert the dispatcher immediately. Don't break the call.",
+    "follow_ups": [
+      "Email operator: time, incident number, who arrived, instructions given.",
+      "If the operator was injured / impaired, also alert their emergency contact if pre-authorised in their persona file."
+    ]
+  },
+  "required_user_info": [
+    "Explicit operator authorisation for this 911 call",
+    "Building address — street, city, state",
+    "Operator's current position (in / out of building)",
+    "Whether everyone is accounted for",
+    "Operator's callback number",
+    "Type of event — visible flame / heavy smoke / CO alarm only"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

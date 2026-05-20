@@ -1,0 +1,117 @@
+{
+  "id": "report-elder-or-child-abuse",
+  "name": "Report Suspected Elder Abuse or Child Abuse",
+  "version": "1.0.0",
+  "category": "emergency-services",
+  "tags": [
+    "elder-abuse",
+    "child-abuse",
+    "aps",
+    "cps",
+    "mandated-reporter",
+    "neglect",
+    "emergency_services"
+  ],
+  "description": "Place a call to Adult Protective Services (APS) or Child Protective Services (CPS), or the state hotline for elder/child abuse / neglect, on behalf of the operator. Many jurisdictions have a dedicated hotline; the agent calls the right one for the state and routes correctly.",
+  "disclaimer": "(1) If the abuse is HAPPENING RIGHT NOW or there is imminent danger, that's call-911-violent-crime-in-progress — not APS/CPS. (2) The operator may be a mandated reporter (teacher, healthcare worker, social worker) — if so, the report is REQUIRED by law in most US states; the agent should NOT discourage. (3) Identify as an AI on the first sentence. (4) Reports can be made anonymously in most states; the operator should know whether their professional role bars anonymity. (5) Knowingly false abuse reports are crimes in every state and cause severe harm to the falsely accused — accuracy matters.",
+  "context": {
+    "when_to_use": "Operator suspects or has witnessed elder abuse / child abuse / neglect and wants to file a report with APS / CPS / the state hotline. Operator is not in immediate danger, the suspected victim is not in immediate danger. (If either is — 911.)",
+    "preconditions": [
+      "Operator's explicit authorisation for this call.",
+      "Victim's information: name, age, address (or last known location), relationship to operator.",
+      "Suspected abuser's information (name, relationship to victim) — to the extent the operator can attest to it.",
+      "Specific observations the operator can describe: what they saw, when, where. Avoid characterisations ('he's abusive'); stick to facts ('there were bruises on her arms when I helped her into the car last Tuesday').",
+      "Operator's contact info (or explicit choice to report anonymously in jurisdictions that allow it).",
+      "Confirmation no imminent danger (else 911)."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Identify as an AI on the first sentence; explain you are relaying for a person who is filing the report.",
+    "Distinguish observations from interpretations. Investigators value facts; characterisations are not actionable.",
+    "If the operator is a mandated reporter, name that — it changes how the intake worker prioritises and how anonymity is handled.",
+    "Don't push the intake worker toward a specific intervention. Describe; let them decide.",
+    "Get a case / intake reference number before disconnecting.",
+    "If at any point the operator describes imminent danger, switch to 911. APS/CPS are the right channel for ongoing concern, NOT acute risk."
+  ],
+  "phrases": {
+    "opener": "Hi — I'm an AI assistant calling on behalf of <operator>. They'd like to make a report of suspected <elder abuse / child abuse / neglect / financial exploitation>. <Mandated reporter or voluntary>. The suspected victim is <name and age> at <address>. May I walk you through what my operator observed?",
+    "factual_walkthrough_prompt": "I'll share what my operator personally observed. I'll flag inference versus observation. Please slow me down whenever you need.",
+    "flag_inference": "(Inference, not direct observation:) <…>",
+    "ask_about_anonymity": "Before I share my operator's contact info — what are the anonymity options for this kind of report in your jurisdiction? My operator has chosen <anonymous / on-record / mandated-reporter on-record>.",
+    "ask_about_followup_window": "Roughly when can my operator expect a follow-up, if at all? They want to know what to expect.",
+    "ask_for_reference": "Could I get an intake reference number, your name, and a callback line in case my operator remembers more?",
+    "escalate_to_911": "Hold on — my operator is telling me <verbatim observation suggesting imminent danger>. I think we need to transfer to 911 immediately. Can you connect us, or should I hang up and dial 911 directly?"
+  },
+  "tactics": [
+    {
+      "name": "Confirm no imminent danger first",
+      "when": "Before dialing APS/CPS.",
+      "script": "Ask operator: 'Is anyone in immediate danger right now? Bruising actively happening, weapon involved, child currently being harmed?' If yes — 911 instead.",
+      "priority": 0
+    },
+    {
+      "name": "Open with the right framing",
+      "when": "First substantive turn.",
+      "script": "Use `opener`, naming the abuse type and the operator's reporter status (mandated vs voluntary).",
+      "priority": 1
+    },
+    {
+      "name": "Walk through observations, flag inferences",
+      "when": "Throughout the call.",
+      "script": "Use `factual_walkthrough_prompt` then `flag_inference` whenever the operator's input shifts from 'I saw X' to 'I think Y'. Investigators distinguish strongly.",
+      "priority": 2
+    },
+    {
+      "name": "Resolve anonymity proactively",
+      "when": "Before sharing operator's contact info.",
+      "script": "Use `ask_about_anonymity`. Most states allow anonymous reports but mandated reporters typically cannot be anonymous."
+    },
+    {
+      "name": "Capture reference + follow-up window",
+      "when": "Before closing.",
+      "script": "Use `ask_for_reference` and `ask_about_followup_window`. Without these the operator has no proof or expectation."
+    },
+    {
+      "name": "Escalate to 911 if anything imminent emerges",
+      "when": "Mid-call the operator describes acute danger.",
+      "script": "Use `escalate_to_911`. APS/CPS will agree; the right channel for acute danger is 911."
+    }
+  ],
+  "boundaries": [
+    "NEVER fabricate or embellish observations. False abuse reports cause real harm AND are criminal in every state.",
+    "NEVER name a suspected abuser unless the operator has direct knowledge of the relationship and the conduct.",
+    "NEVER discourage a mandated reporter from filing.",
+    "NEVER promise the operator a specific outcome (removal, prosecution, intervention). APS/CPS have discretion.",
+    "NEVER use this as a tool in a custody dispute or eldercare-financial dispute. Misuse is reportable and exposes the operator to legal consequences.",
+    "NEVER end the call without an intake reference number unless the intake worker explicitly refuses to give one."
+  ],
+  "success_signals": [
+    "Intake worker accepts the report and gives a reference number.",
+    "Intake worker confirms a follow-up window or a screening timeline.",
+    "Intake worker accepts the operator's anonymity preference where allowed."
+  ],
+  "failure_signals": [
+    "Intake worker says 'this isn't our jurisdiction' — accept the referral, place the next call.",
+    "Intake worker says 'this doesn't rise to our threshold' — relay back to the operator; offer alternatives (local police non-emergency, ombudsman, prosecutor's office).",
+    "Operator changes their mind mid-call — stop the call cleanly. Don't pressure them."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm reference number, follow-up window, anonymity status. Email operator a summary including verbatim observations recorded with the intake worker.",
+    "on_failure": "Email operator the alternative channel the intake worker recommended and offer to place the next call.",
+    "follow_ups": [
+      "Email operator: reference, intake worker name, follow-up window.",
+      "If the operator is a mandated reporter, save a record of the report being made (date, agency, reference) — that's their statutory documentation."
+    ]
+  },
+  "required_user_info": [
+    "Operator's explicit authorisation for this call",
+    "Confirmation no imminent danger (else 911)",
+    "Victim's name, age, address, relationship to operator",
+    "Specific observations (with dates / contexts) the operator can attest to",
+    "Mandated-reporter status of the operator",
+    "Anonymity preference",
+    "Operator's callback number (if non-anonymous)"
+  ],
+  "contributed_by": "AgenticMail core team (emergency-services bundle v0.9.87)"
+}

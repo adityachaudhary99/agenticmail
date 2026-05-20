@@ -1,0 +1,159 @@
+{
+  "id": "push-past-invented-policy",
+  "name": "Distinguish Real Policy From Invented Outs (and Push Past)",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adversarial-robustness",
+    "policy-verification",
+    "phone-call",
+    "escalation",
+    "critical-reasoning"
+  ],
+  "description": "When a rep cites 'policy' to refuse a request, determine whether the policy is (a) a real written rule, (b) a system limitation, (c) a department-level guideline, or (d) an improvised refusal phrased as policy. Each one is pushed past differently.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any refusal that includes the words 'policy', 'system won't let me', 'we don't do that', 'against the rules', 'I'm not allowed', or 'my supervisor said no'.",
+    "preconditions": [
+      "Agent has the original ask clearly in mind and can rephrase it.",
+      "Agent has access to any prior written communication from the company that bears on the ask.",
+      "Agent has authority to escalate at least once before disengaging."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "There are four kinds of 'policy' refusals; treating them as the same is the single most common failure mode in customer-service negotiation.",
+    "Real policy has a name, a section, a document, and survives escalation. Invented outs do not survive even one careful follow-up.",
+    "Asking for the policy SOURCE is not adversarial — it's the most basic compliance question. Phrased as curiosity, it disarms.",
+    "Reps invent outs when they don't know the answer and don't want to admit it. Make admitting easier than inventing.",
+    "When you can't get past invented policy with the current rep, change the rep — don't keep arguing.",
+    "Never demand the policy in writing as a threat. Ask for it as 'help me understand'."
+  ],
+  "phrases": {
+    "ask_for_name": "Got it. Could you tell me what that policy is called or what section it's in? I'd love to look at the exact language.",
+    "ask_for_written": "Could you send me that policy in writing — a link, an email, or a screenshot? I want to make sure I'm interpreting it the same way you are.",
+    "ask_for_authority": "I appreciate that. Just to understand — is this a company-wide policy, a department policy, or your own judgement call here? All of those are valid; I just want to know which.",
+    "soft_supervisor": "I don't think this is something you and I can resolve at this level. Could you bring in a supervisor or whoever owns this policy? Not a complaint — I just want to talk to the right person.",
+    "reframe_around_outcome": "Let's set the policy aside for a moment. What's the OUTCOME the policy is trying to prevent? Maybe we can solve that a different way.",
+    "exception_request": "I understand the general rule. Is there an exception process — a manager override, a one-time courtesy, a hardship review?"
+  },
+  "tactics": [
+    {
+      "name": "Classify the refusal",
+      "when": "Within 10 seconds of the refusal.",
+      "script": "Tag mentally: (a) WRITTEN policy — rep can cite section, (b) SYSTEM limitation — rep says tool doesn't allow, (c) GUIDELINE — department or team norm, (d) INVENTED — rep is improvising. Each gets a different play.",
+      "priority": 1
+    },
+    {
+      "name": "Ask for the source by name",
+      "when": "Refusal phrased as 'policy'.",
+      "script": "Use `ask_for_name`. Tone curious, not challenging. Real policies have names. Invented ones don't.",
+      "priority": 2
+    },
+    {
+      "name": "Distinguish company / department / personal",
+      "when": "Rep can't immediately produce the policy name.",
+      "script": "Use `ask_for_authority`. Offers the rep three plausible answers — and only one of them ('personal judgement') is recoverable by escalation.",
+      "priority": 3
+    },
+    {
+      "name": "Reframe around outcome",
+      "when": "Policy is real but the user's underlying need is legitimate.",
+      "script": "Use `reframe_around_outcome`. Real policies usually exist to prevent a specific harm. If you can demonstrate the harm doesn't apply, an exception path often opens.",
+      "priority": 4
+    },
+    {
+      "name": "Ask about exception process",
+      "when": "Policy is real and rigid.",
+      "script": "Use `exception_request`. Even hard policies have escalation paths — manager overrides, hardship review, regulatory complaint, retention discretion."
+    },
+    {
+      "name": "Escalate one level",
+      "when": "Front-line cannot answer.",
+      "script": "Use `soft_supervisor`. Do this ONCE. Don't keep escalating with the same call — the supervisor is the policy authority; if they say the same thing with detail, the policy is probably real."
+    },
+    {
+      "name": "Reset by callback",
+      "when": "Invented out won't budge and rep refuses to escalate.",
+      "script": "Hang up politely. Call back. Different rep, different judgement. See `reset-by-callback`."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep says 'our policy doesn't allow refunds after 30 days'.",
+      "consider": [
+        "Written policy, accurately stated — most common.",
+        "Written policy with exception clauses the rep didn't mention.",
+        "Department guideline, but a manager has override authority.",
+        "Rep's improv; no such written limit exists.",
+        "Policy is correct as stated but doesn't apply to the user's situation (e.g., billing error vs. buyer's remorse)."
+      ],
+      "next_action": "Ask `ask_for_name` and `exception_request` in sequence."
+    },
+    {
+      "observation": "Rep says 'the system won't let me'.",
+      "consider": [
+        "Literally true at their permission level — a supervisor has the same screen with more buttons.",
+        "True at this department; another department's tool has the option.",
+        "False; rep doesn't want to use a manual override they're allowed to use.",
+        "Workaround exists (manual ticket, escalation form) that the rep hasn't offered."
+      ],
+      "next_action": "Ask: 'Who or what team has a tool that CAN do this?' Refusal to answer suggests case (c)."
+    },
+    {
+      "observation": "Rep says 'my supervisor already said no'.",
+      "consider": [
+        "Supervisor genuinely reviewed and refused.",
+        "Rep checked with a peer, not a supervisor.",
+        "Supervisor refused a misframed version of your ask.",
+        "No one was actually asked; this is a deflection."
+      ],
+      "next_action": "Politely ask to speak with the supervisor directly. Reframe the ask in your own words once you have them."
+    },
+    {
+      "observation": "Rep says 'that's just how it works'.",
+      "consider": [
+        "Genuine policy they can't cite by name.",
+        "Industry norm being passed off as company policy.",
+        "Rep is tired and improvising.",
+        "Rep doesn't know and is hoping you'll drop it."
+      ],
+      "next_action": "Ask `ask_for_authority`. Almost always reveals it as guideline or judgement, both of which are negotiable."
+    }
+  ],
+  "boundaries": [
+    "Do NOT call the rep a liar even when the policy is clearly invented. Curiosity > confrontation.",
+    "Do NOT keep arguing past the second 'no' from a supervisor — change reps instead.",
+    "Do NOT demand 'put it in writing' as a threat — request it as clarification.",
+    "Do NOT claim a policy you read somewhere unless you can cite it accurately."
+  ],
+  "success_signals": [
+    "Rep changes phrasing from 'policy' to 'guideline' or 'usually'.",
+    "Rep mentions an exception path or escalation route unprompted.",
+    "Supervisor adjusts the answer the front-line rep gave.",
+    "Rep produces the policy in writing and the language doesn't actually forbid the ask.",
+    "Rep volunteers a workaround that achieves the same outcome."
+  ],
+  "failure_signals": [
+    "Supervisor confirms the front-line rep's refusal with detail, citation, and consistency.",
+    "Multiple reps over multiple calls give the same refusal in the same language.",
+    "Policy is in writing and unambiguous.",
+    "Rep escalates to ending the call instead of escalating to a supervisor."
+  ],
+  "exit_strategy": {
+    "on_success": "Document the exception or workaround granted, with the rep's name, time, and a confirmation number. Get it in writing.",
+    "on_failure": "End politely. Note the exact wording of the refusal. Decide whether to (a) callback for a different rep, (b) submit a written complaint citing the policy text, or (c) accept the outcome.",
+    "follow_ups": [
+      "If invented-policy is suspected, attempt one callback. If the second rep gives a different answer, document both for written escalation.",
+      "For regulated industries (banking, insurance, healthcare, telecom), invented outs can be escalated to a regulator — note for the user."
+    ]
+  },
+  "required_user_info": [
+    "What the user actually wants and what they'd settle for.",
+    "Any prior written communication relevant to the policy.",
+    "How much time the user is willing to spend on escalation."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,140 @@
+{
+  "id": "detect-fake-escalation-loops",
+  "name": "Detect and Bypass Fake Escalation Loops",
+  "version": "1.0.1",
+  "category": "customer-service",
+  "tags": [
+    "escalation",
+    "anti-pattern",
+    "phone-call",
+    "transfer-loops",
+    "ghost-callbacks",
+    "stall-detection",
+    "customer-support"
+  ],
+  "description": "Spot the patterns that tell you you're not actually being escalated — transfers that loop you back to the same queue, callbacks that never come, 'tickets' that don't exist in any system. Then bypass them rather than burn another hour in the same maze.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "You're on call #2 or #3 about the same issue, OR you've been transferred more than twice in one call, OR a promised callback hasn't materialized. This skill is about detecting the stall pattern and choosing the right counter-move, not about being paranoid on a first-time call.",
+    "preconditions": [
+      "User has at least one prior interaction (call, chat, or email) about the same issue.",
+      "User has tracked basic details: case numbers (if given), names of reps, dates, and what was promised.",
+      "User is willing to invest energy in pattern-detection rather than just plowing forward — this skill is slower upfront but saves hours."
+    ],
+    "estimated_call_duration_minutes": 20
+  },
+  "principles": [
+    "Loops are designed to wear you down without leaving an audit trail. The defense is the audit trail — name dates, case numbers, and prior promises explicitly on every call. Loops can't survive contact with documented history.",
+    "The five common stalls: (1) Hot-potato transfer — sent to another queue that sends you back. (2) Ghost callback — promise of return call that never happens. (3) Phantom ticket — case number that doesn't exist when you reference it next time, OR exists but with no notes. (4) Sympathy stall — long empathetic conversation that ends with no action. (5) Hold-out — repeated hold-and-check that runs your clock down.",
+    "Each stall has a tell. Hot-potato: rep can't articulate WHY this transfer is different from the last one. Ghost callback: rep won't give a specific time, just 'within 24-72 hours'. Phantom ticket: rep can't read back details. Sympathy stall: lots of 'I totally understand' but no 'here's what I can do'. Hold-out: hold durations escalating without new information.",
+    "When you detect a stall, the move is NOT to argue with the rep — it's to change your method. Same input, same output. You need different input: different channel, different rep, different framing, or different evidence.",
+    "Case numbers are the single best stall-defense. Always ask for one. Reference prior ones. A call that starts with 'I have case number XYZ from [date]' is harder to put into a loop than one that starts cold.",
+    "Decision point — every 10 minutes, ask yourself: 'In the last 10 minutes, has anything CHANGED — a new fact, a real escalation, a specific commitment with a date?' If no, you're in a loop. Exit the loop.",
+    "Some loops are unconscious — the company isn't deliberately stalling, the systems are just bad. Doesn't matter. The counter is the same."
+  ],
+  "phrases": {
+    "case_number_check": "Before we start, I want to give you context — case number [X] from [date] with [rep name]. Could you pull that up and read back what's noted?",
+    "test_the_transfer": "Before you transfer me — can you confirm exactly which team you're sending me to, and that they have authority to [specific action]? I've been bounced before and I want to make sure this is a real escalation, not another queue.",
+    "lock_the_callback": "If you can't help now, I need a SPECIFIC callback time — not a window. What hour, on what day, and from what number? And can you put your name and ID on the callback note?",
+    "verify_the_ticket": "Could you read me the case number you just opened, AND read back the first two lines of what's noted? I want to make sure my issue is captured before we hang up.",
+    "name_the_loop": "I want to flag something carefully — I've been transferred three times today and twice last week, all on the same issue, with no resolution and no callback. I'm not blaming you, but I need help breaking that pattern. Who in your org owns 'cases that have been escalated multiple times without resolution'?",
+    "stop_the_hold_loop": "Before you put me on hold again — let's confirm what you're going to check this time that's different from what you checked last time. If it's the same thing, the answer will be the same. Let's not waste either of our time.",
+    "the_evidence_close": "I'm going to stay on this call until we have either a resolution or a specific written commitment with a date. I know that's not fun for either of us — but I can't accept another 'we'll get back to you' without a name, a time, and a number.",
+    "channel_switch_signal": "I'm going to end this call and pursue this through a different channel. Could you confirm: your name, your ID, the case number, and your manager's name for my records?"
+  },
+  "tactics": [
+    {
+      "name": "Open with prior-case context",
+      "when": "First minute of every follow-up call about the same issue.",
+      "script": "Use `case_number_check`. Pre-loaded context disrupts the loop — reps can't pretend it's a fresh issue and start the script over. If they can't pull the case or claim it's not in the system, that's data point #1.",
+      "priority": 1,
+      "decision_point": "If the rep claims they can't find your prior case number — pause. Either (a) ask them to search by your phone or account, OR (b) treat the missing case as evidence of a phantom-ticket stall and ask explicitly: 'is this case in your system or not?' Don't just plow forward and let them open a new case — that resets your timeline."
+    },
+    {
+      "name": "Test the transfer before accepting it",
+      "when": "Rep offers a transfer.",
+      "script": "Use `test_the_transfer`. Reps doing a real transfer can name the team and confirm authority. Reps doing a hot-potato transfer waffle.",
+      "priority": 2,
+      "decision_point": "If the rep can't name the team or authority — REFUSE the transfer. Say: 'I'd rather not be transferred until we know that's the right place. Let me speak with your supervisor here first.' Refusing a transfer is a legitimate move; you don't have to accept every hold."
+    },
+    {
+      "name": "Lock down callback specifics",
+      "when": "Rep offers a callback instead of in-call resolution.",
+      "script": "Use `lock_the_callback`. Vague callback windows ('within 72 hours') are stall-friendly. Specific commitments ('Tuesday between 10-11am from 800-555-0143') are harder to silently drop.",
+      "priority": 3,
+      "decision_point": "If the rep refuses to give a specific time/number — that's a strong signal of a ghost-callback stall. Either insist on specifics or escalate. Don't accept the vague window — it's designed to make the missed callback unprovable."
+    },
+    {
+      "name": "Verify the ticket while still on the line",
+      "when": "Rep opens a new case or claims one is already open.",
+      "script": "Use `verify_the_ticket`. Phantom tickets exist (typo'd, opened under the wrong account, opened without notes). Catching it before you hang up saves 30 minutes on the next call.",
+      "priority": 4
+    },
+    {
+      "name": "Stop the hold-and-check loop",
+      "when": "Rep is going on hold for the second time on the same question.",
+      "script": "Use `stop_the_hold_loop`. The script says 'let me check'. Forcing the rep to articulate what they're checking — and how it differs from last time — collapses the stall.",
+      "priority": 5
+    },
+    {
+      "name": "Name the loop without accusation",
+      "when": "You've confirmed (via your own count) that you're in a documented pattern of unresolved escalations.",
+      "script": "Use `name_the_loop`. Most companies have a 'cases stuck in escalation' workflow or supervisor responsible for it — you just have to ask for it by function. The framing ('I'm not blaming you') keeps the rep on your side.",
+      "priority": 6,
+      "decision_point": "If the rep responds 'we don't have anyone who handles that' or 'that's not really a thing' — your suspicion is confirmed: this org has no exit ramp for loops. Time to switch channels (`multi-channel-escalation`) or go above (`reach-executive-office`)."
+    },
+    {
+      "name": "Refuse to disengage without commitment",
+      "when": "Rep tries to close the call with no resolution and no specifics.",
+      "script": "Use `the_evidence_close`. Saying it out loud — calmly — often produces a sudden escalation that 'wasn't available' five minutes earlier.",
+      "priority": 7
+    },
+    {
+      "name": "Signal the channel switch",
+      "when": "You've decided to exit this call.",
+      "script": "Use `channel_switch_signal`. Don't reveal which channel — just signal that the next contact will be elsewhere. This often produces a last-minute escalation as the rep realizes the case is escaping their queue.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "Do NOT accuse the rep of lying. Even when they are stalling, calling it out destroys the recording's value to you.",
+    "Do NOT chain more than 2 transfers in one call. If you've been transferred twice and still not resolved, hang up and document — the third transfer is the loop confirming itself.",
+    "Do NOT accept callbacks without specific time, number, and a named person responsible. Generic callbacks ('someone will reach out') are designed to be undeliverable.",
+    "Do NOT skip taking notes during the call to 'save time'. The notes are the only thing that breaks the next loop. If you can't take notes, record (where legally permitted) — see `document-call-promises`.",
+    "Do NOT keep calling back to the same queue every day. Three calls without movement = wrong queue. Switch channels.",
+    "Do NOT bluff a deadline ('if you don't call me back by 5pm I'm filing a complaint') unless you'll actually follow through. Empty deadlines train the loop to ignore you."
+  ],
+  "success_signals": [
+    "Rep pulls up prior case + reads back accurate notes — case is real, history is intact.",
+    "Rep declines to do a transfer when challenged — and instead handles it themselves.",
+    "Rep gives a specific callback time + direct number + their personal name + ID.",
+    "Rep names a function ('our re-escalation supervisor') in response to the loop call-out.",
+    "Different sound profile (different hold music, no hold music, direct dial) — you've left the standard queue."
+  ],
+  "failure_signals": [
+    "Rep can't find your case number, OR finds it but can't read back notes.",
+    "Rep won't commit to specific callback time, OR keeps offering windows like 'within 24-72 business hours'.",
+    "More than two transfers in one call without escalation.",
+    "Rep deflects the 'who handles cases stuck in escalation' question.",
+    "Hold durations escalating (1min → 5min → 12min) without new information at the end of each hold.",
+    "Rep starts using closing scripts ('is there anything else…') as a soft hangup."
+  ],
+  "exit_strategy": {
+    "on_success": "Document precisely: time of resolution, rep name + ID, case number, specific commitment + date, written confirmation channel. Confirm in writing within 24h.",
+    "on_failure": "End the call with name + ID + case number captured. Switch channels immediately — do NOT call the same queue again. Use `multi-channel-escalation` (email + executive office + social) or `invoke-regulator-firmly` if the issue is regulator-eligible.",
+    "follow_ups": [
+      "Build a one-page timeline: every contact, date, rep, what was promised, what happened. This document is your weapon for the next escalation tier.",
+      "If callback window passed without contact: do NOT just call back to the queue. Use the timeline to escalate to executive office, social media, or regulator.",
+      "Note: many companies have a 'cases over 30 days' escalation flag. Reference the AGE of the issue in your next contact — 'this case has been open 47 days across 6 contacts' is significantly more powerful than 'I'm frustrated'."
+    ]
+  },
+  "required_user_info": [
+    "Complete history of prior contacts: dates, rep names, case numbers, what was promised",
+    "Original issue stated in one sentence",
+    "All callback promises that were missed (with dates)",
+    "Account identifier",
+    "Note-taking method ready (or recording where legally permitted)"
+  ],
+  "contributed_by": "support-escalator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

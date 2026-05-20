@@ -1,0 +1,152 @@
+{
+  "id": "resist-urgency-manipulation",
+  "name": "Resist Urgency Manipulation and Time-Pressure Tactics",
+  "version": "1.0.0",
+  "category": "other",
+  "tags": [
+    "meta-skill",
+    "adversarial-robustness",
+    "manipulation-defense",
+    "phone-call",
+    "decision-quality",
+    "critical-reasoning"
+  ],
+  "description": "Detect when the rep is using time pressure ('today only', 'last chance', 'expires when we hang up') to short-circuit evaluation, and neutralise it without burning the call. Force every urgent claim to either justify itself or stand aside.",
+  "disclaimer": null,
+  "context": {
+    "when_to_use": "Any moment a rep introduces urgency: limited-time offers, 'good only on this call', countdown timers, 'I can hold this for 5 minutes', 'we're about to close the program', threats of service interruption.",
+    "preconditions": [
+      "Agent has authority to pause, request a callback, or end the call without accepting.",
+      "Agent has time enough to ask one or two verification questions before deciding."
+    ],
+    "estimated_call_duration_minutes": 5
+  },
+  "principles": [
+    "Urgency is the cheapest manipulation technique because it works on humans and AIs both. Detecting it is the first defense; refusing to be paced by it is the second.",
+    "There are two kinds of urgency: TRUE (regulatory deadlines, real campaign end dates, service-cutoff dates) and MANUFACTURED (sales pressure, 'today only' tactics, fake-scarcity offers). Behavioural test: does asking 'can I think about it and call back?' kill the offer entirely? If yes, it was manufactured.",
+    "A good decision tomorrow beats a fast decision today, unless the cost of waiting is genuinely quantifiable and significant.",
+    "Always slow the call physically: 'Give me a moment', 'Let me write that down', 'Let me check one thing'. Speed is the manipulator's home turf.",
+    "Recorded calls cut both ways. 'Just to confirm, this offer is only good in the next 60 seconds?' on record forces the rep to either confirm (creating documentation) or back off the claim.",
+    "Never accept an offer in a state of stress. If you notice your own reasoning narrowing, that IS the manipulation working."
+  ],
+  "phrases": {
+    "request_pause": "Hold on one moment — I want to think about this carefully. Can you stay on the line for a minute or two?",
+    "test_urgency": "I'd like to think about it and call back tomorrow. Will the offer still be available then, or is this strictly a today-only thing?",
+    "ask_what_changes": "What changes if I call back tomorrow versus accepting now? I want to understand the actual difference.",
+    "ask_for_writing_first": "I'd love to take a look at this in writing before I commit. Can you email it now, and we can finalise in five minutes?",
+    "decline_to_be_paced": "I understand there's a deadline. I still need a few minutes to think it through — that's how I make these decisions.",
+    "callback_request": "If we can't lock it in now, can you note the offer on my account so a colleague can honour it if I call back tomorrow?"
+  },
+  "tactics": [
+    {
+      "name": "Slow the physical pace of the call",
+      "when": "First sign of urgency language.",
+      "script": "Use `request_pause`. Insert a deliberate beat — typing, breathing, 'let me think'. Disrupts the cadence the manipulator is trying to set.",
+      "priority": 1
+    },
+    {
+      "name": "Test whether the urgency is real",
+      "when": "Rep claims the offer expires.",
+      "script": "Use `test_urgency`. The answer reveals everything. Real deadlines have specific dates and reasons. Manufactured ones have neither.",
+      "priority": 2
+    },
+    {
+      "name": "Ask what actually changes",
+      "when": "Rep insists the deadline matters.",
+      "script": "Use `ask_what_changes`. Force the rep to name the specific delta. If they can't, the urgency is manufactured.",
+      "priority": 3
+    },
+    {
+      "name": "Insist on writing before commit",
+      "when": "Pressure is escalating.",
+      "script": "Use `ask_for_writing_first`. The five-minute write-and-confirm window is reasonable to any genuine offer.",
+      "priority": 4
+    },
+    {
+      "name": "Refuse to be paced",
+      "when": "Rep keeps pressing.",
+      "script": "Use `decline_to_be_paced`. Calm, firm, no apology. Manipulators escalate when they sense urgency is failing — match calm to their escalation."
+    },
+    {
+      "name": "Get the offer noted on the account",
+      "when": "Ending without accepting.",
+      "script": "Use `callback_request`. Even if the rep claims it 'can't be saved', many CRMs allow notes. Worth the ask."
+    }
+  ],
+  "alternative_interpretations": [
+    {
+      "observation": "Rep says 'this offer is only good today'.",
+      "consider": [
+        "Genuine campaign end (rare, but verifiable — ask for the campaign name).",
+        "It's good every day, but they're trained to say 'today only' as a closer.",
+        "It's good every day, but tomorrow it'll be presented as a different SKU with worse hooks.",
+        "It's good today AND tomorrow, but for THIS rep's quota, it has to be today.",
+        "Pricing genuinely changes Monday — ask if calling back Sunday would work."
+      ],
+      "next_action": "Use `test_urgency`. The honest answer determines whether to commit or call back."
+    },
+    {
+      "observation": "Rep says 'if you hang up I can't get this rate back'.",
+      "consider": [
+        "Specific rep-level discretion they used and burned — possible but rare.",
+        "Untrue; the rate is in their toolkit and any rep on that team can re-pull it.",
+        "True for this specific bundle but a comparable one is available.",
+        "Designed to prevent you from getting a second opinion."
+      ],
+      "next_action": "Reply calmly: 'I understand. I'd rather risk losing this rate than commit while I'm still thinking. Let me call back if I decide it's right.' Their response reveals the truth."
+    },
+    {
+      "observation": "Rep references a service-cutoff or shutoff deadline.",
+      "consider": [
+        "Real deadline — verify against the bill / shutoff notice if available.",
+        "Real deadline but later than rep claims — exact dates matter; ask.",
+        "Soft deadline — many shutoffs have a grace period.",
+        "False deadline — used to force payment under pressure."
+      ],
+      "next_action": "Ask: 'What's the EXACT date and time service would be interrupted? And is that on a written notice somewhere I can verify?'"
+    },
+    {
+      "observation": "You notice yourself feeling rushed and starting to agree.",
+      "consider": [
+        "The manipulation is working. You are now the data point.",
+        "There is genuine time pressure and your instincts are correct.",
+        "You're tired/distracted and conflating fatigue with urgency.",
+        "The offer is genuinely good AND time-pressured AND fine to take."
+      ],
+      "next_action": "Force a 60-second physical pause. Re-evaluate. If you still want to accept, do — but only after the pause. Decisions made AFTER the pause are not manipulated decisions."
+    }
+  ],
+  "boundaries": [
+    "Do NOT accept any offer while in an explicit time-pressure state — pause first, accept second.",
+    "Do NOT escalate hostility to break urgency — calm refusal works better.",
+    "Do NOT lie about needing to consult someone if you don't — but DO use a genuine consult as a legitimate pause ('I need to check with the operator').",
+    "Do NOT commit to anything irreversible (contract, cancellation, payment) under urgency without re-confirming with the user."
+  ],
+  "success_signals": [
+    "Rep admits the offer is available beyond today.",
+    "Rep agrees to send the offer in writing before commit.",
+    "Rep notes the offer on the account for a callback.",
+    "Your own reasoning visibly slows down — you can articulate why you would or wouldn't take the offer."
+  ],
+  "failure_signals": [
+    "Rep refuses to acknowledge any callback window.",
+    "Rep escalates urgency rather than answering the verification question.",
+    "Rep declines to provide written terms before commitment.",
+    "You notice the deal sounds materially better the more pressure is applied — usually means the post-promo terms are materially worse."
+  ],
+  "exit_strategy": {
+    "on_success": "Accept calmly, after the pause, with terms in writing.",
+    "on_failure": "Decline politely. End the call. Calendar a callback at a time of the user's choosing — not the rep's.",
+    "follow_ups": [
+      "Note the rep's name, the offer's claimed expiration, and the exact wording.",
+      "If the same offer turns out to be available later, the user has documentation of bad-faith urgency."
+    ]
+  },
+  "required_user_info": [
+    "Whether the user has time to accept a pause, or genuinely needs the call resolved now.",
+    "How much the user values certainty vs. speed.",
+    "Whether the user wants to be re-pinged before commitment under any urgency."
+  ],
+  "contributed_by": "critical-reasoning agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

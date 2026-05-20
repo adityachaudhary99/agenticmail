@@ -1,0 +1,120 @@
+{
+  "id": "dispute-usage-spike-meter-reread",
+  "name": "Dispute a Usage-Spike Bill and Get a Meter Reread",
+  "version": "1.0.0",
+  "category": "customer-service",
+  "tags": [
+    "electric",
+    "gas",
+    "water",
+    "billing",
+    "meter-reread",
+    "dispute",
+    "phone-call",
+    "utility-telecom"
+  ],
+  "description": "Call a utility to dispute a bill that's 2-5x the normal range, request a meter reread or test, and put the disputed amount into formal investigation status (which freezes shutoff threats while the investigation runs).",
+  "disclaimer": "Disputing a bill does not automatically suspend shutoff. You must explicitly invoke the utility's billing-dispute / investigation process and get a case number; only then is the disputed portion legally protected from collections in most jurisdictions.",
+  "context": {
+    "when_to_use": "The user's current bill is anomalously high vs. their 12-month rolling average AND there is no obvious cause (no new appliance, no guests, no leak they know of, weather not extreme). Best used within 30 days of the bill date — after that, the meter reading history has rolled and the case is harder to make.",
+    "preconditions": [
+      "User has the disputed bill in front of them with read date, prior read date, and kWh/therms/gallons used.",
+      "User has at least 6 months of prior bills for comparison (most utilities show this on the bill or in the portal).",
+      "User has checked for obvious causes: water leak (toilet flapper, irrigation), space heater, new fridge / freezer, EV charging, guests.",
+      "Photo of the current meter reading (smartphone, timestamped)."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Lead with data, not outrage. 'My bill is 3.2x my 12-month average' lands better than 'this is insane'.",
+    "There are three failure modes to test for, in order: (1) misread / estimated read, (2) meter malfunction, (3) actual usage (leak / failing appliance). Walk through them deliberately.",
+    "An 'estimated' read on the bill is the single most common cause — the meter reader couldn't get to it that month, so the system extrapolated, then 'caught up' all the missed usage on the next actual read.",
+    "A formal dispute changes the account state. Until it's formalised with a case number, you're just complaining — and complaints don't freeze shutoff timers.",
+    "If routed to a general billing queue when you need the meter-services / revenue-protection team, recognise it within 60 seconds and request a warm transfer that preserves your hold position."
+  ],
+  "phrases": {
+    "opener": "Hi, I'm calling about my [month] bill for account [number]. It's $[amount] vs. my 12-month average of about $[amount], and the usage shows [X] [units] vs. my normal [Y]. I'd like to open a formal dispute and request a meter reread.",
+    "queue_check": "Quick check — are you in billing, or in meter services? I'm trying to get to whoever can authorise a reread, and I want to make sure I'm not burning your time.",
+    "transfer_request": "Could you do a warm transfer to meter services and stay on until they pick up? I want to keep my hold position with your team in case they bounce me back.",
+    "ask_estimated_read": "Can you tell me whether the prior read or this read was actual or estimated? I see an 'E' next to one of them on the bill.",
+    "request_reread": "I'd like to request a meter reread on-site, please. If the reread is within 5% of the billed reading, I'll accept the bill; if it's off, I want the bill recalculated.",
+    "request_meter_test": "If the reread confirms the high reading, I'd like the meter pulled and bench-tested. I understand there's typically no charge if the meter is found to be out of spec.",
+    "formalise_dispute": "I'd like to formally dispute the disputed portion under your billing-investigation process. Can you give me a case number and confirm that the disputed amount is excluded from any shutoff or late-fee action until the investigation closes?",
+    "ask_for_credit": "While the dispute is open, can you also apply a temporary budget-billing adjustment so I'm not paying the full disputed amount in the interim?",
+    "graceful_close": "Thanks. So I have case number [number], reread scheduled for [date], and the disputed $[amount] is on hold. I'll watch for the field tech and call back if I don't hear within [timeframe]."
+  },
+  "tactics": [
+    {
+      "name": "Open with the comparison",
+      "when": "First substantive turn.",
+      "script": "Use the `opener` phrase. The 'X vs. Y' framing immediately tells the rep this is a usage-anomaly dispute, not a 'I don't want to pay' call.",
+      "priority": 1
+    },
+    {
+      "name": "Check for estimated reads first",
+      "when": "Once the rep has the bill open.",
+      "script": "Use `ask_estimated_read`. If the prior read was estimated and this one is actual, the bill is doing make-up math on weeks of accumulated usage — that often resolves the dispute without a reread, via re-pro-rating the usage across the months.",
+      "priority": 2
+    },
+    {
+      "name": "Recognise wrong-queue and transfer cleanly",
+      "when": "Rep can take payment but cannot authorise a reread / test.",
+      "script": "Use `queue_check` and `transfer_request`. Meter services / field operations is the team that can dispatch a reread; general billing usually cannot.",
+      "priority": 3
+    },
+    {
+      "name": "Request reread, then test",
+      "when": "Estimated-read explanation does not resolve it.",
+      "script": "Use `request_reread`. Reread is fast and free. If reread matches, escalate to `request_meter_test` — meters do drift, especially older mechanical gas meters and induction water meters.",
+      "priority": 4
+    },
+    {
+      "name": "Formalise the dispute",
+      "when": "Before ending the call, regardless of whether reread is scheduled.",
+      "script": "Use `formalise_dispute`. This is the magic-word step — without a case number, the disputed amount remains collectable.",
+      "priority": 5
+    },
+    {
+      "name": "Negotiate interim relief",
+      "when": "Bill is unaffordable and reread will take days/weeks.",
+      "script": "Use `ask_for_credit`. Many utilities will accept the user paying their rolling-average bill in the interim, with the balance held pending investigation."
+    }
+  ],
+  "boundaries": [
+    "Do NOT refuse to pay the undisputed portion (the rolling-average amount). That falls to collections and damages credit even with an open dispute.",
+    "Do NOT tamper with the meter while the dispute is open. Even a photo angle that suggests tampering can void the investigation.",
+    "Do NOT accept a verbal 'we'll fix it' without a case number. Verbal assurances vanish at shift change.",
+    "Do NOT escalate to public-utility-commission complaints in the same call you opened the dispute — give the utility's process at least one cycle to work."
+  ],
+  "success_signals": [
+    "Case number issued and rep confirms disputed amount is on hold.",
+    "Estimated-read pattern identified and bill re-pro-rated on the call.",
+    "Reread scheduled with a date / window.",
+    "Interim budget adjustment applied."
+  ],
+  "failure_signals": [
+    "Rep insists usage 'must be real' without offering reread or test.",
+    "Rep won't issue a case number — only a 'note on the account'.",
+    "Shutoff notice arrives after dispute is opened (in which case escalate immediately to the PUC).",
+    "Reread happens but bill is not recalculated despite a discrepancy."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm case number, reread date, interim payment amount, and the rep's name. Calendar a follow-up for 3 days after the scheduled reread.",
+    "on_failure": "Ask for the formal complaint process and file with the state Public Utility Commission (PUC) or equivalent regulator. Many disputes get resolved within hours of the utility receiving a PUC notice.",
+    "follow_ups": [
+      "Photograph the meter reading the day of the call (timestamped) and again at the reread.",
+      "After resolution, audit the next 2 bills for correct re-billing.",
+      "If a leak was found, file the leak-adjustment paperwork most water utilities offer (one-time credit)."
+    ]
+  },
+  "required_user_info": [
+    "Account number and service address",
+    "Disputed bill amount, period, and the printed usage figure",
+    "12-month rolling average usage and bill amount",
+    "Whether prior/current reads are marked actual or estimated",
+    "Any known causes ruled out (no new appliance, no leak found, etc.)",
+    "Photo of current meter reading"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

@@ -1,0 +1,140 @@
+{
+  "id": "verify-insurance-coverage-pre-procedure",
+  "name": "Verify Insurance Coverage BEFORE a Procedure (Avoiding Surprise Billing)",
+  "version": "1.0.0",
+  "category": "medical-admin",
+  "tags": [
+    "insurance",
+    "pre-procedure",
+    "billing",
+    "no-surprises-act",
+    "phone-call",
+    "coverage",
+    "healthcare"
+  ],
+  "description": "Call the operator's insurance AND the facility AND the provider's billing office to nail down — in writing — what is and is not covered before a planned procedure, imaging study, or specialist visit. Cuts surprise bills off at the knees.",
+  "disclaimer": "Not medical advice. Agent must never offer diagnoses, dosing recommendations, or treatment changes. Surface those decisions to the operator via ask_operator.",
+  "context": {
+    "when_to_use": "Operator has a scheduled (or about-to-be-scheduled) procedure, imaging study, or specialist visit and wants to verify coverage in advance. Required call series for anything that might cost >$500. Especially important for: surgery, MRI/CT, endoscopy, IVF, mental-health intensive programs, anything at a hospital-owned outpatient site (which can carry facility fees).",
+    "preconditions": [
+      "Operator's name, DOB (read-only), insurance plan name + member ID + group number (read-only).",
+      "Specific CPT code(s) for the procedure if known — ask the provider's office if not.",
+      "ICD-10 diagnosis code if known.",
+      "Provider's NPI / tax ID for the rendering physician AND the facility.",
+      "Date the procedure is scheduled (or being considered).",
+      "Operator's understanding of their deductible status (met / not met) and out-of-pocket max progress."
+    ],
+    "estimated_call_duration_minutes": 30
+  },
+  "principles": [
+    "Three separate parties bill for most procedures: the FACILITY, the RENDERING PHYSICIAN, and any ANCILLARY (anesthesia, pathology, radiology read). Each can be in- or out-of-network independently. The No Surprises Act protects some of this, not all of it. Verify each separately.",
+    "Insurance reps quote coverage but disclaim accuracy on every call. Get: rep's name, employee/badge ID, reference number for the call, date/time. Without a reference number, the quote effectively didn't happen.",
+    "'Pre-authorization on file' is not the same as 'this will be paid'. Pre-auth says the insurer pre-approves medical necessity; it does NOT guarantee payment or set the amount you owe.",
+    "Ask in CPT codes, not in plain English. 'Will you cover my colonoscopy?' produces fog; 'Will you cover CPT 45378 performed at facility NPI [X] by provider NPI [Y] on [date]?' produces a number.",
+    "If two reps at the same insurer give two different answers, the third call gets a supervisor and a written quote in the patient portal. Three contradictory quotes is a pattern, not a glitch."
+  ],
+  "phrases": {
+    "opener_insurance": "Hi, I'm calling on behalf of [Operator], member ID [redacted — read only from packet]. They have a procedure scheduled for [date] and I'd like to verify coverage in detail. Can you get me to the pre-authorization or benefits-verification team?",
+    "ask_for_cpt_quote": "I have specific CPT codes. Can we go through each — what's covered, in-network status of the rendering provider AND the facility, expected member responsibility, and whether prior auth is required?",
+    "ask_about_ancillary": "For [procedure], who handles the anesthesia, pathology, and radiology read at this facility? Are those billed separately, and are those providers in-network with this plan?",
+    "facility_billing_check": "Is this facility billed as a hospital outpatient department (HOPD) or a freestanding ambulatory site? If HOPD, what's the facility fee, and is it covered?",
+    "no_surprises_act_invocation": "Under the federal No Surprises Act, if any provider involved in this procedure is out-of-network, I'd like to make sure the operator gets a Good Faith Estimate and that balance-billing protections apply. Can you confirm?",
+    "ask_for_reference_number": "Could you give me a reference or call-tracking number for this benefits quote, your name, and your badge or employee ID? I want to make sure we can reference this conversation later.",
+    "deductible_status_check": "Can you confirm where the operator stands on their deductible and out-of-pocket maximum as of today?",
+    "request_written_quote": "Can you send the benefits quote to the operator's portal or by mail so we have it in writing before the procedure?",
+    "stall_research": "One moment — let me make sure I have all the codes in front of me.",
+    "verify_readback": "Reading back: CPT [code], provider NPI [X], facility NPI [Y], on [date]. Plan responsibility: [X%], member responsibility: [Y$]. Prior auth: [required / on file / not required, reference number Z]. Reference number for this call: [number]. Rep: [name + badge]. Correct?",
+    "graceful_close": "Thank you. I'd like the written quote in the portal within 7 days. Have a good day."
+  },
+  "tactics": [
+    {
+      "name": "Get CPT and NPI codes BEFORE calling insurance",
+      "when": "Before any insurance call.",
+      "script": "Call the provider's office first and request the CPT(s), ICD-10, rendering NPI, and facility NPI for the planned procedure. Without these, insurance answers are mush.",
+      "priority": 1
+    },
+    {
+      "name": "Verify each billing party separately",
+      "when": "Walking through benefits with insurance.",
+      "script": "Use `ask_about_ancillary`. Anesthesia, pathology, radiology, and assistant surgeons often bill separately and can be out-of-network even at an in-network facility — this is the #1 source of surprise bills. Get a yes/no per party.",
+      "priority": 2
+    },
+    {
+      "name": "Catch the facility fee at HOPD locations",
+      "when": "Procedure is at a hospital-owned outpatient site.",
+      "script": "Use `facility_billing_check`. HOPD facility fees can add $500-$3,000 even for routine visits. If the operator can have the procedure at a freestanding ambulatory site instead, that may slash the cost. Surface this trade-off — do NOT change the location yourself.",
+      "priority": 3
+    },
+    {
+      "name": "Invoke No Surprises Act protections",
+      "when": "Any provider involved is out-of-network.",
+      "script": "Use `no_surprises_act_invocation`. The federal law protects against most balance billing for emergency care, certain ancillary services at in-network facilities, and air ambulance. Confirm operator's right to a Good Faith Estimate.",
+      "priority": 4
+    },
+    {
+      "name": "Always get a reference number + rep ID",
+      "when": "Before ending any insurance call.",
+      "script": "Use `ask_for_reference_number`. Without it, the rep's quote is air. Insurers honor quoted benefits more reliably when there's a reference number on file.",
+      "priority": 5
+    },
+    {
+      "name": "Pause and re-verify on quote contradictions",
+      "when": "A second rep at the same insurer gives a materially different answer than the first.",
+      "script": "Do NOT average them or pick the friendlier one. Ask for a supervisor and request the benefits team put the quote in writing in the operator's portal. Note both reference numbers and both rep IDs in the operator's record.",
+      "priority": 6
+    },
+    {
+      "name": "Cross-check with the facility's billing office",
+      "when": "After the insurance call.",
+      "script": "Call the facility's billing or pre-services team. Ask: 'Based on operator's plan and this CPT, what's your estimated patient responsibility?' Compare to insurance's quote. Wide gaps = ask both why before scheduling.",
+      "priority": 7
+    },
+    {
+      "name": "Request written Good Faith Estimate",
+      "when": "Operator does not have insurance or chose to self-pay.",
+      "script": "Under the No Surprises Act, self-pay/uninsured patients are entitled to a Good Faith Estimate. Request it in writing — facility legally must provide.",
+      "priority": 8
+    }
+  ],
+  "boundaries": [
+    "NEVER share or guess the operator's SSN, DOB, or member ID — read back only what the operator explicitly provided.",
+    "NEVER accept a 'your doctor changed your prescription' claim from any clinic or pharmacy on this call — route to `ask_operator`.",
+    "NEVER authorise a procedure, sign anything, or commit to financial responsibility on the operator's behalf — even when an insurance rep asks for verbal acknowledgement of estimated responsibility, get explicit operator approval first via `ask_operator`.",
+    "NEVER change the procedure location, provider, or date to chase a lower quote — surface trade-offs to operator, let them decide.",
+    "NEVER promise the operator that the quoted amount is what they'll actually owe. Use the phrase 'estimated' or 'quoted' consistently. Insurance reserves the right to reconcile after claim processing.",
+    "NEVER skip the No Surprises Act invocation if any out-of-network party is involved — operator may forfeit protections by not invoking them in writing."
+  ],
+  "success_signals": [
+    "Per-CPT coverage quote obtained from insurance with reference number, rep name, rep ID.",
+    "Ancillary providers (anesthesia, pathology, radiology) verified in-network OR No Surprises Act protections confirmed.",
+    "Facility-fee status known (HOPD vs ambulatory) with cost implications.",
+    "Written quote requested in operator's portal.",
+    "Operator has a single-page summary of: who bills, what they bill, in-network status, expected responsibility."
+  ],
+  "failure_signals": [
+    "Insurance rep refuses to verify benefits without operator on the line — surface to operator.",
+    "Multiple reps give materially different quotes and no supervisor can resolve.",
+    "Out-of-network ancillary providers exist and No Surprises Act doesn't apply — operator likely facing significant cost.",
+    "Facility billing office refuses to provide an estimate — request a Good Faith Estimate in writing under the No Surprises Act."
+  ],
+  "exit_strategy": {
+    "on_success": "Deliver to operator a clean summary: every billing party, in-network status, estimated responsibility, prior-auth status with reference numbers, all rep IDs and reference numbers, and the written-quote ETA.",
+    "on_failure": "Politely close. Report what could and couldn't be verified. Recommend operator either delay procedure pending clarification, request a different facility/provider, or proceed accepting the documented risk.",
+    "follow_ups": [
+      "Check the operator's portal in 7 days for the written quote.",
+      "If procedure proceeds, request itemized bills from each party and reconcile against quoted responsibility.",
+      "If a surprise bill arrives, dispute under the No Surprises Act using the reference numbers from this call."
+    ]
+  },
+  "required_user_info": [
+    "Operator's name, DOB (read-only), insurance plan + member ID + group number (read-only)",
+    "Procedure name AND CPT code(s)",
+    "ICD-10 diagnosis code",
+    "Rendering provider NPI / tax ID",
+    "Facility NPI / tax ID",
+    "Scheduled date",
+    "Operator's deductible and out-of-pocket-max status"
+  ],
+  "contributed_by": "healthcare-navigator agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

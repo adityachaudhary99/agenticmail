@@ -1,0 +1,123 @@
+{
+  "id": "hoa-dispute",
+  "name": "Dispute an HOA Fine, Denial, or Common-Area Issue",
+  "version": "1.0.0",
+  "category": "real-estate",
+  "tags": [
+    "hoa",
+    "fine",
+    "architectural-review",
+    "common-area",
+    "covenants",
+    "phone-call",
+    "housing-tenancy"
+  ],
+  "description": "Call the HOA management company or board liaison to dispute a fine, appeal an architectural-review denial, or escalate a common-area maintenance issue — establishing the formal record and timeline required by most HOA CC&Rs (covenants, conditions, and restrictions).",
+  "disclaimer": "Not legal advice. Habitability + early-termination skills are scripted to PRESERVE legal posture (request things in writing, refuse verbal-only assurances) — but the operator must consult a tenant attorney for actual rights determination.",
+  "context": {
+    "when_to_use": "User has received: (a) an HOA fine they believe is improper or excessive, (b) a denial from architectural review on a planned change (paint, fence, solar, landscaping), or (c) an unresolved common-area issue (broken gate, pool maintenance, drainage). Most HOAs have a formal dispute or appeal process with strict deadlines — this call opens that process.",
+    "preconditions": [
+      "User has a copy of the CC&Rs and the bylaws (or knows where to get them).",
+      "User has the fine notice, denial letter, or written complaint with date.",
+      "User knows the appeal / dispute deadline stated in the notice (commonly 14–30 days).",
+      "User has photos / documentation of the alleged violation or the common-area issue."
+    ],
+    "estimated_call_duration_minutes": 15
+  },
+  "principles": [
+    "Read the CC&Rs BEFORE the call — knowing the actual rule cited beats any opinion.",
+    "Appeal deadlines are strict. Missing the appeal window in many HOAs forfeits the right to challenge at all.",
+    "Board members are volunteers; management-company staff are paid. Both deserve courtesy — but the management-company employee is usually the one to schedule the appeal.",
+    "Always request the formal appeal in writing and ask for the rule, section, and citation that the fine or denial is based on. Vague citations don't survive an appeal.",
+    "Document selective enforcement. If neighbors are not being fined for the same thing, that's a real defense — but it requires photos and dates, not anecdotes.",
+    "Keep the tone professional. HOA disputes are repeated games — you and the board see each other at the mailbox for years."
+  ],
+  "phrases": {
+    "opener_fine": "Hi, I'm calling about a violation notice I received dated [date] for [property]. I'd like to formally dispute it and understand the appeal process.",
+    "opener_denial": "Hi, I'm calling about the architectural-review denial I received on [date] for my [project]. I'd like to appeal — what's the process and the deadline?",
+    "opener_common_area": "Hi, I'm calling about a common-area issue at [location] — [one-sentence description]. It's been [unaddressed since X / a recurring problem]. How do I get this on the board agenda?",
+    "ask_for_citation": "Can you tell me exactly which section of the CC&Rs or rules this notice cites? I want to look at the specific language.",
+    "ask_for_appeal_process": "Walk me through the appeal: do I submit in writing, do I get a hearing, who decides, and what's the deadline?",
+    "raise_selective_enforcement": "I've noticed [specific examples — addresses, photos, dates] where the same condition wasn't cited. Is the rule being enforced consistently? I'd like that addressed in my appeal.",
+    "ask_about_due_process": "Was there a notice-and-cure period before the fine was levied? Most HOAs require one — I'd like to confirm the procedure was followed.",
+    "graceful_close_appeal_scheduled": "Thank you. To confirm: appeal filed in writing by [date], hearing on [date], decision within [X] days. Anything else I should submit before then?",
+    "graceful_close_referral": "Understood. Could you also forward this to the board president? I want to make sure they're aware of my appeal directly."
+  },
+  "tactics": [
+    {
+      "name": "Open with the specific notice and the appeal intent",
+      "when": "First substantive turn.",
+      "script": "Use the matching opener. Be specific — date, property, action. Establishes a real dispute, not a vague complaint.",
+      "priority": 1
+    },
+    {
+      "name": "Demand the specific citation",
+      "when": "Once the dispute is logged.",
+      "script": "Use `ask_for_citation`. Many fines cite vague 'community standards.' Force them to the section number — that's what an appeal panel reviews.",
+      "priority": 2
+    },
+    {
+      "name": "Lock the appeal process and deadlines",
+      "when": "After the citation is identified.",
+      "script": "Use `ask_for_appeal_process`. Get the form of appeal, who decides, and the deadlines. Missing the deadline ends the dispute.",
+      "priority": 3
+    },
+    {
+      "name": "Raise selective enforcement IF documented",
+      "when": "Other properties have the same condition uncited.",
+      "script": "Use `raise_selective_enforcement`. Bring it with documentation (addresses, photos, dates). Without documentation it weakens your case.",
+      "priority": 4
+    },
+    {
+      "name": "Probe due-process compliance",
+      "when": "Disputing a fine.",
+      "script": "Use `ask_about_due_process`. Many HOAs MUST give a notice-and-cure period; skipping it can void the fine entirely.",
+      "priority": 5
+    },
+    {
+      "name": "Loop in the board president",
+      "when": "Management-company response is dismissive.",
+      "script": "Use `graceful_close_referral`. Board members can override management staff. Keep tone neutral — you're asking for awareness, not complaining about the staffer."
+    }
+  ],
+  "boundaries": [
+    "Do NOT skip paying the underlying assessment or dues — pay them under protest if necessary. Non-payment compounds the problem and can result in liens.",
+    "Do NOT make claims about board members' personal motives or other owners — stick to the rule and the facts.",
+    "Do NOT accept a settlement that requires waiving future challenges to the same rule without operator review.",
+    "Do NOT threaten litigation on the first call. Mention the formal appeal as the path.",
+    "Do NOT discuss the dispute on social media or community forums — those quotes will surface in the appeal hearing."
+  ],
+  "success_signals": [
+    "Specific CC&R section cited.",
+    "Appeal form, deadline, and hearing date confirmed.",
+    "Management agrees to forward to the board.",
+    "Management acknowledges a procedural gap (no notice-and-cure, ambiguous rule)."
+  ],
+  "failure_signals": [
+    "Management refuses to identify the cited section.",
+    "Appeal process is described as 'just pay it.'",
+    "Hearing is scheduled past the cure deadline (fine compounds).",
+    "Board liaison won't take the call or respond to written appeal."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm appeal deadline, hearing date, what must be submitted, and who will decide. Operator emails a recap within 24 hours.",
+    "on_failure": "Submit the written appeal anyway by certified mail to preserve the record. If the dispute involves a significant fine, lien threat, or pattern of selective enforcement, consult an HOA attorney before the hearing.",
+    "follow_ups": [
+      "Pull the CC&Rs section cited and read it carefully before drafting the written appeal.",
+      "Collect documentation: photos of the alleged violation, photos of identical uncited conditions on neighboring properties, prior correspondence.",
+      "Send the written appeal by both email AND certified mail before the deadline.",
+      "Calendar the hearing date and prepare a 2-minute statement.",
+      "If the dispute escalates to a lien threat, consult an HOA attorney immediately."
+    ]
+  },
+  "required_user_info": [
+    "Notice date, property address, CC&R citation (or claim of citation)",
+    "Stated fine amount or denial reason",
+    "Appeal deadline as stated in the notice",
+    "CC&Rs / bylaws (copy or link)",
+    "Photos and documentation supporting the dispute",
+    "Names of management-company contact and board liaison"
+  ],
+  "contributed_by": "housing-tenancy agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}

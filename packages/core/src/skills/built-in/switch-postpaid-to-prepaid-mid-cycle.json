@@ -1,0 +1,130 @@
+{
+  "id": "switch-postpaid-to-prepaid-mid-cycle",
+  "name": "Switch From Postpaid to Prepaid Mid-Cycle Without Losing Balance",
+  "version": "1.0.0",
+  "category": "subscription",
+  "tags": [
+    "telecom",
+    "mobile",
+    "prepaid",
+    "postpaid",
+    "switch",
+    "phone-call",
+    "savings",
+    "utility-telecom"
+  ],
+  "description": "Call a mobile carrier to convert a line from postpaid to prepaid (same carrier or to their prepaid sub-brand) mid-billing-cycle — keeping the number, salvaging any unused prepaid balance/credit, and avoiding double-billing for the cycle.",
+  "disclaimer": "Switching from postpaid to prepaid on the SAME carrier is often a port-internal flow that loses none of the number's history. Switching to a DIFFERENT carrier's prepaid brand is a number port — use `port-mobile-number-survive-retention` for the port-out side. Device installment plans on postpaid typically accelerate to a final balance on conversion; confirm before pulling the trigger.",
+  "context": {
+    "when_to_use": "User wants to lower mobile costs by moving to prepaid (same carrier's prepaid brand like Cricket / Visible / Metro / Mint) and is in the middle of their postpaid billing cycle. Best near the END of the postpaid cycle so the user isn't paying postpaid for days they won't use.",
+    "preconditions": [
+      "User has identified the target prepaid plan and price.",
+      "Account number, account holder name, billing zip on postpaid line.",
+      "Knowledge of any device-installment balance still owed.",
+      "Whether the user has any unused postpaid credit (autopay credit, referral credit, manufacturer rebate) — these often DO NOT transfer to prepaid.",
+      "Current postpaid bill date and next-cycle start date."
+    ],
+    "estimated_call_duration_minutes": 25
+  },
+  "principles": [
+    "Time the switch to the LAST 1-3 days of the postpaid cycle. Postpaid is paid in advance for service through end-of-cycle — switching mid-cycle leaves money on the table.",
+    "Burn any non-transferable postpaid credits BEFORE the switch (international roaming credit, device-protection credit, etc.). Once converted, those credits typically zero out.",
+    "Some carriers run 'switch and save' incentives between their postpaid and prepaid arms — ask explicitly. Reps don't always volunteer the cross-brand incentive.",
+    "If you're routed to retention because the rep heard 'I want prepaid', recognise it within 60 seconds. Retention will try to keep you on postpaid; you want sales / activations for the prepaid brand.",
+    "Confirm the eSIM / SIM logistics BEFORE confirming the conversion. Some prepaid brands require a new SIM ship; the gap between activation and SIM arrival is a day or two of no service."
+  ],
+  "phrases": {
+    "opener": "Hi, I want to convert line [number] from postpaid to prepaid — moving to the [target plan name] on [prepaid brand]. My postpaid cycle ends [date]. I want to make sure timing is right and I'm not paying twice.",
+    "queue_check": "Are you the team that handles postpaid-to-prepaid conversions, or is that a different group? I want to be with whoever can actually flip the switch.",
+    "transfer_request": "Could you do a warm transfer to the prepaid activations / conversions team and stay on the line until they pick up? I'd rather not lose my hold position.",
+    "decline_retention_polite": "Thanks for the offer — I've already evaluated the postpaid plans. I'm moving to prepaid to lock in the price. I'd rather not spend time on a save offer today.",
+    "ask_cycle_alignment": "When exactly should the conversion happen so I don't pay overlap? My postpaid cycle ends [date] — can we schedule activation on [date - 1 or date]?",
+    "device_installment_check": "I have a device on installments — balance about $[X]. What happens to that balance on conversion? Does it accelerate, get split, or follow me to prepaid?",
+    "credits_check": "Do I have any non-transferable credits on this account — autopay credit, manufacturer rebate, account credit? I want to burn them before the conversion if they won't carry.",
+    "sim_logistics": "Will I need a new SIM or eSIM for the prepaid line? If physical, when does it ship and can I activate before it arrives? I can't have a service gap.",
+    "ask_switch_promo": "Is there a 'switch and save' bonus running between [postpaid brand] and [prepaid brand] — first-month free, bill credit, port-in bonus? Reps don't always volunteer it.",
+    "lock_in_writing": "Please email confirmation of: conversion date, final postpaid bill amount, device installment status, SIM logistics, and confirmation that the number is preserved.",
+    "graceful_close": "Thanks. Conversion on [date], device balance $[X] handled by [method], SIM via [eSIM/ship], confirmation number [number], number preserved."
+  },
+  "tactics": [
+    {
+      "name": "Align the switch with cycle end",
+      "when": "First substantive turn.",
+      "script": "Use `ask_cycle_alignment`. Conversion mid-cycle = paying postpaid for unused days. The 1-3 days before cycle end is the sweet spot.",
+      "priority": 1
+    },
+    {
+      "name": "Recognise wrong-queue / retention",
+      "when": "Rep starts running postpaid save offers.",
+      "script": "Use `queue_check` and `transfer_request`. The prepaid activation / conversion team is the one that can actually perform the conversion. Retention's job is to prevent it.",
+      "priority": 2
+    },
+    {
+      "name": "Settle the device installment question first",
+      "when": "Within the first 5 minutes.",
+      "script": "Use `device_installment_check`. If the balance accelerates to a final bill, the user may want to pay it down first or delay conversion. If it 'follows' to a sub-brand, less of an issue.",
+      "priority": 3
+    },
+    {
+      "name": "Burn non-transferable credits before converting",
+      "when": "Before the conversion is scheduled.",
+      "script": "Use `credits_check`. Autopay credits, port-in promos, manufacturer rebates frequently zero out on postpaid-to-prepaid conversion. Use them up first (or apply them to the final bill).",
+      "priority": 4
+    },
+    {
+      "name": "Ask explicitly about switch incentives",
+      "when": "Before final confirmation.",
+      "script": "Use `ask_switch_promo`. Same-carrier-family conversions often have hidden incentives — first month free on prepaid, port-in bonus, bill credit. Not volunteered unless asked.",
+      "priority": 5
+    },
+    {
+      "name": "Pin SIM / eSIM logistics",
+      "when": "Before final confirmation.",
+      "script": "Use `sim_logistics`. Activating before the SIM arrives leaves a service gap. eSIM avoids this entirely if the device supports it."
+    },
+    {
+      "name": "Get it in writing",
+      "when": "Before ending the call.",
+      "script": "Use `lock_in_writing`. Conversion bugs (number lost, double-bill, device balance disappearing into the void) are common — written confirmation is the lever to fix them."
+    }
+  ],
+  "boundaries": [
+    "Do NOT cancel the postpaid line as a separate step before converting — that releases the number and can break the conversion.",
+    "Do NOT convert if a critical device-installment promo (e.g. 'pay $0 for the iPhone with 36 months of postpaid service') is still running. Conversion typically voids the promo and accelerates the full retail price.",
+    "Do NOT skip checking whether the prepaid plan has the same data / hotspot / international coverage. Cheaper plans often cut these silently.",
+    "Do NOT trust autopay-credit promises that 'transfer over' — get the dollar amount and apply mechanism in writing."
+  ],
+  "success_signals": [
+    "Conversion scheduled at end of postpaid cycle.",
+    "Device installment status disclosed with clear next step.",
+    "Non-transferable credits identified and burn plan in place.",
+    "Switch incentive applied (if available).",
+    "SIM/eSIM logistics confirmed with no service gap."
+  ],
+  "failure_signals": [
+    "Rep insists conversion must take effect today (will create overlap charge).",
+    "Device balance status is hand-waved — no clear final amount.",
+    "Switch is being processed as a 'cancel + new account' instead of a conversion — that's a port-out, treat it as such.",
+    "Number transfer cannot be confirmed."
+  ],
+  "exit_strategy": {
+    "on_success": "Confirm date, balances, SIM logistics. Calendar the conversion date and a 7-day follow-up to verify billing landed correctly.",
+    "on_failure": "Step back and treat as a full port-out to a different carrier — sometimes a competitor prepaid (Mint / US Mobile / Tello) is cleaner than the same-family prepaid arm. Use `port-mobile-number-survive-retention`.",
+    "follow_ups": [
+      "Day before scheduled conversion: confirm via app the work order is still set.",
+      "Day after conversion: verify the line is active on prepaid, the number is preserved, and that postpaid shows final-bill status.",
+      "Within 14 days: verify the final postpaid bill matches expectations and no recurring postpaid charge continues.",
+      "Within 30 days: verify all credits/incentives applied as promised."
+    ]
+  },
+  "required_user_info": [
+    "Account number, holder name, billing zip on postpaid",
+    "Phone number to convert",
+    "Target prepaid plan and brand",
+    "Device installment balance (if any) and device finance terms",
+    "Outstanding account credits",
+    "Postpaid cycle start/end dates"
+  ],
+  "contributed_by": "utility-telecom agent (v0.9.87 community drop)",
+  "updated_at": "2026-05-20T06:09:47Z"
+}
