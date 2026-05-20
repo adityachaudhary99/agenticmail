@@ -1250,14 +1250,16 @@ async function cmdSetupPhone() {
         'Input is hidden — you won\'t see what you type, that\'s expected.',
       ],
       secret: true,
-      // The API redacts to `(encrypted)` — flag it as present without
-      // pulling the actual value. The user can still UPDATE in the
-      // phase-2 flow if they need to rotate the token.
-      current: existing.password
-        ? '(encrypted, kept as-is unless you update below)'
-        : (provider === 'twilio'
+      // Encrypted-at-rest — the API redacts to `(encrypted)`. We flag
+      // its presence via `hasValue`, never pull the decrypted bytes
+      // into the cli. `current` stays empty so the summary renders
+      // "(set — kept unless you update below)" cleanly.
+      hasValue: !!existing.password,
+      current: !existing.password
+        ? (provider === 'twilio'
             ? (flag('auth-token') ?? process.env.TWILIO_AUTH_TOKEN ?? '')
-            : (flag('password') ?? process.env.ELKS_PASSWORD ?? '')),
+            : (flag('password') ?? process.env.ELKS_PASSWORD ?? ''))
+        : '',
       required: true,
     },
     {
@@ -1271,12 +1273,14 @@ async function cmdSetupPhone() {
         'Get a key at https://platform.openai.com/api-keys.',
       ],
       secret: true,
-      // Mark as configured if config.json already has it. The literal
-      // value isn't shown — the user either keeps it (skip) or
-      // updates it (re-enter via the update-any picker).
-      current: existingOpenaiKey
-        ? '(set in ~/.agenticmail/config.json — kept unless you update below)'
-        : (flag('openai-api-key') ?? process.env.OPENAI_API_KEY ?? ''),
+      // Stored in `~/.agenticmail/config.json` plaintext (file mode
+      // 0600). We do have the literal value but treat it as a secret
+      // via `hasValue` to avoid showing it to anyone shoulder-surfing
+      // — the summary renders "(set — kept unless you update below)".
+      hasValue: !!existingOpenaiKey,
+      current: !existingOpenaiKey
+        ? (flag('openai-api-key') ?? process.env.OPENAI_API_KEY ?? '')
+        : '',
       required: false,
     },
   ];
@@ -1532,9 +1536,10 @@ async function cmdSetupTelegram() {
         'Input is hidden — you won\'t see what you type, that\'s expected.',
       ],
       secret: true,
-      current: existingTg.botToken
-        ? '(encrypted, kept as-is unless you update below)'
-        : (flag('bot-token') ?? process.env.TELEGRAM_BOT_TOKEN ?? ''),
+      hasValue: !!existingTg.botToken,
+      current: !existingTg.botToken
+        ? (flag('bot-token') ?? process.env.TELEGRAM_BOT_TOKEN ?? '')
+        : '',
       required: true,
     },
     {
@@ -1599,24 +1604,16 @@ async function cmdSetupTelegram() {
       : 'Updating allowed chat id...');
     spinner.start();
     try {
-      // Build the body. If we don't have a fresh token, the server's
-      // /telegram/setup currently REQUIRES one — so we have to read the
-      // stored encrypted token, decrypt-then-resend... or trust the
-      // caller to have only triggered this branch when they have a
-      // new token. The fresh token is required by the route handler
-      // anyway, so this path only fires when `botTokenNew` is set OR
-      // (existing token + chat-id changed) — in the second case we
-      // have to surface a clearer message because the route insists
-      // on a token even just to update the chat-id.
-      if (!botTokenNew) {
-        spinner.fail('Updating just the chat id without re-supplying the bot token isn\'t supported by the server yet.');
-        info(`Re-run and choose to update the ${c.bold('bot token')} too (you can paste the same value).`);
-        process.exit(1);
-      }
+      // The server's /telegram/setup now supports a partial-update
+      // merge — if we omit `botToken`, it picks up the agent's
+      // existing stored value. That means a chat-id-only change
+      // doesn't force the user to re-paste the BotFather token.
+      const tgBody: Record<string, unknown> = { mode: 'poll', operatorChatId: operatorChatId || undefined };
+      if (botTokenNew) tgBody.botToken = botTokenNew;
       const resp = await fetch(`${apiBase}/api/agenticmail/telegram/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
-        body: JSON.stringify({ botToken: botTokenNew, mode: 'poll', operatorChatId: operatorChatId || undefined }),
+        body: JSON.stringify(tgBody),
         signal: AbortSignal.timeout(15_000),
       });
       if (!resp.ok) {

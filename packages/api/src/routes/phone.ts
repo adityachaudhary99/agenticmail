@@ -258,7 +258,26 @@ export function createPhoneRoutes(
       const agent = getAgent(req, res);
       if (!agent) return;
 
-      const cfg = buildPhoneTransportConfig(req.body ?? {});
+      // Partial-update support — `setup-phone` re-runs that only
+      // change e.g. the phone number shouldn't require the user to
+      // re-paste the auth token. If a transport config already
+      // exists for this agent, merge the incoming body OVER the
+      // current values: any field omitted (or sent as empty string /
+      // null / undefined) inherits the existing encrypted-at-rest
+      // value. Twilio aliases (`accountSid` / `authToken`) are
+      // normalised against the canonical `username` / `password`
+      // pair so a body using either spelling overrides cleanly.
+      const existing = phoneManager.getPhoneTransportConfig(agent.id);
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const merged: Record<string, unknown> = existing ? { ...existing } : {};
+      if (body.accountSid && !body.username) body.username = body.accountSid;
+      if (body.authToken && !body.password) body.password = body.authToken;
+      for (const [k, v] of Object.entries(body)) {
+        if (v === undefined || v === null) continue;
+        if (typeof v === 'string' && v.length === 0) continue;
+        merged[k] = v;
+      }
+      const cfg = buildPhoneTransportConfig(merged);
       phoneManager.savePhoneTransportConfig(agent.id, cfg);
       res.json({
         success: true,

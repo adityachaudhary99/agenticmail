@@ -286,7 +286,14 @@ export function createTelegramRoutes(
       const agent = getAgent(req, res);
       if (!agent) return;
 
-      const botToken = requestString(req.body?.botToken);
+      // Partial-update support — `setup-telegram` re-runs that only
+      // change the operator chat id shouldn't require the user to
+      // re-paste the bot token. If the agent already has a Telegram
+      // config saved, fall back to the existing bot token when the
+      // request body doesn't supply one. Same pattern as the
+      // /phone/transport/setup merge.
+      const existingTg = telegramManager.getConfig(agent.id);
+      const botToken = requestString(req.body?.botToken) || existingTg?.botToken || '';
       if (!botToken) {
         return res.status(400).json({ error: 'botToken is required (from @BotFather)' });
       }

@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.68] - 2026-05-20
+
+### Fixed — `setup-phone` re-run kept failing with "accountSid and authToken are required"
+
+Two coupled bugs in the v0.9.67 re-entrant wizard:
+
+1. **`/phone/transport/setup` and `/telegram/setup` rejected partial
+   updates.** Both routes ran the incoming body through their own
+   strict `buildPhoneTransportConfig` / required-field check, which
+   demanded the secret credentials on EVERY POST — even when the
+   only change was the phone number. The wizard correctly omitted
+   the unchanged secret (so the cli never holds the decrypted bytes
+   in memory), but the route then 400'd. Both routes now merge the
+   incoming body OVER the existing config: fields omitted (or sent
+   empty) inherit the encrypted-at-rest value. Token rotations
+   work the same way they did before; re-runs that just tweak the
+   phone number or chat id no longer require re-pasting the
+   credentials.
+
+2. **Secret display had a stray paren** — `(set, ends …elow))`. The
+   wizard was stuffing a literal `(encrypted, kept as-is unless you
+   update below)` placeholder into a secret field's `current`, then
+   the summary-line renderer ran THAT through `defaultSecretMask`
+   which wrapped it again. Added a `hasValue: boolean` field to
+   `SetupField` for the encrypted-at-rest case so the cli never
+   holds the placeholder in `current` — the summary line renders
+   `(set — kept unless you update below)` directly. `setup-phone`
+   and `setup-telegram` both now use `hasValue` for their
+   encrypted-at-rest secrets.
+
 ## [0.9.67] - 2026-05-20
 
 ### Added — OpenAI key prompt in `setup-phone` + re-entrant config flow

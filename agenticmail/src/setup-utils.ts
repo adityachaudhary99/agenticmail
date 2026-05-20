@@ -53,11 +53,22 @@ export interface SetupField {
   required?: boolean;
   /**
    * Existing value for this field. Pass undefined / empty string for
-   * "not yet configured". For secrets, pass the literal value (the
-   * collector won't show it — it only checks truthy/falsy and renders
-   * `mask?(current) ?? '(set)'` in the summary).
+   * "not yet configured". For non-secrets the value is shown as-is in
+   * the summary. For secrets, prefer setting {@link hasValue} = true
+   * with `current` left empty — the collector never holds the
+   * decrypted secret in memory, only knows whether one exists.
    */
   current?: string;
+  /**
+   * Set true for a secret field that's already configured server-side
+   * (where the caller doesn't have the decrypted bytes to show, just
+   * knows the value exists). The summary renders `(set — kept unless
+   * you update below)` instead of running the `current` value through
+   * `defaultSecretMask`. Without this flag, secret fields whose
+   * `current` is set to a literal `(encrypted, ...)` placeholder string
+   * end up double-wrapped: `(set, ends …elow))`.
+   */
+  hasValue?: boolean;
   /**
    * How to render the existing value in the summary line. Defaults:
    *   - non-secret → show the value as-is
@@ -126,8 +137,10 @@ function defaultSecretMask(value: string): string {
 
 /** Format a single field's "current state" line for the summary header. */
 function renderCurrent(f: SetupField, c: ColorHelpers): string {
-  const set = f.current && f.current.length > 0;
+  const hasCurrent = !!(f.current && f.current.length > 0);
+  const set = hasCurrent || !!f.hasValue;
   if (!set) return c.dim('(not set)');
+  if (f.hasValue && !hasCurrent) return c.dim('(set — kept unless you update below)');
   if (f.mask) return c.dim(f.mask(f.current!));
   if (f.secret) return c.dim(defaultSecretMask(f.current!));
   return c.dim(f.current!);
@@ -193,7 +206,8 @@ export async function collectFields(opts: {
   // on whether they need to add / update anything, and makes the
   // upcoming prompts feel like a delta on real state instead of a
   // restart-from-scratch.
-  const anyConfigured = fields.some((f) => (f.current ?? '') !== '');
+  const isSet = (f: SetupField) => (f.current ?? '') !== '' || !!f.hasValue;
+  const anyConfigured = fields.some(isSet);
   if (anyConfigured) {
     log(`  ${c.dim('Currently configured:')}`);
     for (const f of fields) {
@@ -211,8 +225,11 @@ export async function collectFields(opts: {
     return { values, changedKeys };
   }
 
-  // Phase 1: prompt for every MISSING field (current === '').
-  const missing = fields.filter((f) => (values[f.key] ?? '') === '');
+  // Phase 1: prompt for every MISSING field — `current` empty AND no
+  // server-side "hasValue" marker. Secret fields whose value lives
+  // encrypted at rest count as "configured" via `hasValue` even
+  // though we never pulled the decrypted bytes into the cli.
+  const missing = fields.filter((f) => (values[f.key] ?? '') === '' && !f.hasValue);
   if (missing.length > 0) {
     if (anyConfigured) {
       // Re-entrant case — we're filling in gaps. Make that explicit so
@@ -232,7 +249,7 @@ export async function collectFields(opts: {
   // a true-first-run (nothing configured before this command started)
   // because the just-entered values ARE the config.
   if (anyConfigured) {
-    const existingFields = fields.filter((f) => (f.current ?? '') !== '');
+    const existingFields = fields.filter(isSet);
     if (existingFields.length > 0) {
       const reply = (await prompts.ask(`  ${c.bold('Update any of the already-configured values?')} ${c.dim('(y/N)')} `)).trim();
       if (reply.toLowerCase().startsWith('y')) {
