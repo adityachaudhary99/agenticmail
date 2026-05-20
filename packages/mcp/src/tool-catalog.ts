@@ -78,6 +78,22 @@ export const TOOL_SETS = {
     'get_thread_id',
     'save_thread_memory',
     'check_tasks',
+    // Cross-channel agent capabilities. The host might be running in a
+    // Telegram-bridged context (the bot replying to a DM) or the email
+    // dispatcher (a worker turn) or an interactive Claude Code session.
+    // In every one of those, the operator routinely asks the agent for
+    // things that need these tools — "call my dentist", "DM me the
+    // result", "what's the date in three weeks", "look up Twilio's
+    // status page". Keeping these in essential means the agent never
+    // has to discover them via request_tools mid-conversation and
+    // never has to apologise that "the voice tool isn't loaded" when
+    // the user asks for a phone call from Telegram.
+    'call_phone',
+    'telegram_send',
+    'get_datetime',
+    'web_search',
+    'memory',
+    'memory_context',
   ],
 
   /** Less-common mail operations. */

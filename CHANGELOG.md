@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.74] - 2026-05-20
+
+### Fixed — Telegram bot couldn't see the voice / phone tool
+
+Field report: user DM'd the Telegram bot "call me", agent
+replied "the AgenticMail voice tool isn't showing up in my
+available tools this session". Two coupled bugs:
+
+1. **`call_phone`, `telegram_send`, `get_datetime`, `web_search`,
+   and the memory tools were NOT in the MCP `essential` tier.**
+   Every `@agenticmail/mcp`-using host (the Telegram bridge, the
+   dispatcher's spawned workers, interactive Claude Code sessions)
+   loads only the `essential` tier by default; everything else is
+   reachable via `request_tools` / `invoke` on demand. The
+   cross-channel staples (place a phone call, send a Telegram DM,
+   look up the date, search the web, query memory) belong in
+   `essential` — they're the things any operator asks for in any
+   channel and the agent shouldn't have to discover them via
+   `request_tools` mid-conversation. Added all six to
+   `essential`. Existing 18 tools stay; total essential is now 24.
+
+2. **The Telegram bridge's per-message prompt didn't list its
+   capabilities.** Even with `call_phone` in essential, the agent
+   reasoned from its own perceived tool list rather than from
+   what the bridge declared was available. Added an `=== AVAILABLE
+   AGENTIC MAIL CAPABILITIES ===` block to the bridge's
+   `formatPrompt` listing the pre-loaded essentials, calling out
+   `call_phone` specifically ("YES, you CAN place a phone call"),
+   and pointing at `request_tools` / `invoke` for the 50+ tools
+   not in the default list. The bridge now hands the agent a
+   concrete inventory instead of letting it guess.
+
 ## [0.9.73] - 2026-05-20
 
 ### Added — Skill library Phase 2: mid-call dynamic loading + BM25F search
