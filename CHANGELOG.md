@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.63] - 2026-05-20
+
+### Added — non-interactive `setup-phone` and `setup-telegram` commands
+
+Two new focused subcommands that let an AI assistant (or any
+scripted installer) wire up Twilio / 46elks and Telegram without
+the interactive `agenticmail setup` wizard. Same surface area as the
+existing `setup-email`: secrets ride in via env vars or flags, never
+typed at a TTY, and the secret prompts that would otherwise block
+on stdin are replaced with structured-input parsing.
+
+- **`agenticmail setup-phone --provider twilio|46elks`** — takes
+  `--account-sid` + `--auth-token` (Twilio) or `--username` +
+  `--password` (46elks), plus `--phone-number` and `--webhook-url`.
+  All flags have env-var equivalents (`TWILIO_ACCOUNT_SID`,
+  `TWILIO_AUTH_TOKEN`, `ELKS_USERNAME`, `ELKS_PASSWORD`,
+  `AGENTICMAIL_PHONE_NUMBER`, `AGENTICMAIL_WEBHOOK_URL`,
+  `AGENTICMAIL_WEBHOOK_SECRET`). Webhook secret is auto-minted if
+  omitted; secrets are stored encrypted at rest under the master key.
+- **`agenticmail setup-telegram`** — takes `--bot-token` and
+  optional `--chat-id` (env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`).
+  Registers the channel against the API AND writes the three
+  bridge config files (`telegram-token`, `agent-key`,
+  `telegram-allowed-ids`) at `~/.agenticmail/telegram/` so
+  `agenticmail start` auto-spawns the bridge.
+- **CLAUDE.md updated** with one-liner recipes for both, so a
+  Claude session given installer duties can wire phone + Telegram
+  in two env-piped commands.
+
 ## [0.9.62] - 2026-05-20
 
 ### Added — MCP-wired Telegram bridge + auto-start + clean uninstall

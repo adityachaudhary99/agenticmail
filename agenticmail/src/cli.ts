@@ -945,6 +945,322 @@ async function cmdSetupEmail() {
 }
 
 /**
+ * `agenticmail setup-phone` — non-interactive phone-transport setup.
+ *
+ * Companion to `setup-email`: this is the focused subcommand for adding
+ * a Twilio / 46elks calling carrier AFTER the initial bootstrap is
+ * done, without re-running the full interactive `setup` wizard.
+ *
+ * Everything comes from flags or env vars — no prompts. That makes the
+ * command safe for a Claude / scripted install: secrets travel via
+ * `--auth-token` / `TWILIO_AUTH_TOKEN` and never appear in shell
+ * history when the operator pipes them in (the same way you'd hand
+ * a curl an `--data @-` body). The auth token is also masked in any
+ * log line this command emits.
+ *
+ * Usage:
+ *
+ *     agenticmail setup-phone --provider twilio \
+ *         --account-sid ACxxxx --auth-token xxxx \
+ *         --phone-number +13105550000 \
+ *         --webhook-url https://your-tunnel.example/
+ *
+ *     agenticmail setup-phone --provider 46elks \
+ *         --username uXXXX --password XXXX \
+ *         --phone-number +461234567 \
+ *         --webhook-url https://your-tunnel.example/
+ *
+ * Or via env (handy when piping secrets from a vault):
+ *
+ *     TWILIO_ACCOUNT_SID=ACxxxx TWILIO_AUTH_TOKEN=xxxx \
+ *         AGENTICMAIL_PHONE_NUMBER=+13105550000 \
+ *         AGENTICMAIL_WEBHOOK_URL=https://.../  \
+ *         agenticmail setup-phone --provider twilio
+ *
+ * `--webhook-secret` is optional; we mint a 24-byte hex one if absent
+ * so the operator doesn't need to invent entropy themselves. The
+ * webhook secret is stored encrypted at rest under the master key
+ * (same as the Twilio auth token).
+ */
+async function cmdSetupPhone() {
+  const args = process.argv.slice(3);
+
+  function flag(name: string): string | undefined {
+    const eq = `--${name}=`;
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === `--${name}` && i + 1 < args.length) return args[i + 1];
+      if (args[i].startsWith(eq)) return args[i].slice(eq.length);
+    }
+    return undefined;
+  }
+  const hasFlag = (name: string) => args.includes(`--${name}`);
+
+  if (hasFlag('help') || args.includes('-h') || args.includes('help')) {
+    log('');
+    log(`  ${c.pinkBg(' 🎀 agenticmail setup-phone ')}`);
+    log('');
+    log(`  ${c.bold('Usage:')} agenticmail setup-phone --provider <twilio|46elks> [flags]`);
+    log('');
+    log(`  ${c.bold('Flags / env (either works):')}`);
+    log(`    --provider <twilio|46elks>     ${c.dim('Required')}`);
+    log(`    --phone-number  <E.164>        ${c.dim('Env: AGENTICMAIL_PHONE_NUMBER')}`);
+    log(`    --webhook-url   <https://...>  ${c.dim('Env: AGENTICMAIL_WEBHOOK_URL')}`);
+    log(`    --webhook-secret <string>      ${c.dim('Env: AGENTICMAIL_WEBHOOK_SECRET (auto-gen if absent)')}`);
+    log('');
+    log(`  ${c.bold('Twilio:')}`);
+    log(`    --account-sid <AC...>          ${c.dim('Env: TWILIO_ACCOUNT_SID')}`);
+    log(`    --auth-token  <secret>         ${c.dim('Env: TWILIO_AUTH_TOKEN')}`);
+    log('');
+    log(`  ${c.bold('46elks:')}`);
+    log(`    --username <user>              ${c.dim('Env: ELKS_USERNAME')}`);
+    log(`    --password <pass>              ${c.dim('Env: ELKS_PASSWORD')}`);
+    log('');
+    log(`  ${c.dim('Secrets are stored encrypted at rest under your master key.')}`);
+    log(`  ${c.dim('Pipe via env / stdin to keep them out of shell history.')}`);
+    log('');
+    return;
+  }
+
+  const provider = flag('provider');
+  if (provider !== 'twilio' && provider !== '46elks') {
+    fail(`--provider must be "twilio" or "46elks" (got: ${provider ?? '(none)'})`);
+    info(`See: ${c.green('agenticmail setup-phone --help')}`);
+    process.exit(1);
+  }
+
+  const phoneNumber = flag('phone-number') ?? process.env.AGENTICMAIL_PHONE_NUMBER ?? '';
+  const webhookBaseUrl = flag('webhook-url') ?? process.env.AGENTICMAIL_WEBHOOK_URL ?? '';
+  const username = provider === 'twilio'
+    ? (flag('account-sid') ?? process.env.TWILIO_ACCOUNT_SID ?? '')
+    : (flag('username') ?? process.env.ELKS_USERNAME ?? '');
+  const password = provider === 'twilio'
+    ? (flag('auth-token') ?? process.env.TWILIO_AUTH_TOKEN ?? '')
+    : (flag('password') ?? process.env.ELKS_PASSWORD ?? '');
+  // Webhook secret needs ≥24 chars of entropy; mint one if the operator
+  // didn't supply it so they don't have to invent it themselves. Same
+  // logic the interactive wizard uses.
+  const customSecret = flag('webhook-secret') ?? process.env.AGENTICMAIL_WEBHOOK_SECRET ?? '';
+  const webhookSecret = customSecret || randomBytes(24).toString('hex');
+
+  const missing: string[] = [];
+  if (!phoneNumber) missing.push('--phone-number');
+  if (!username) missing.push(provider === 'twilio' ? '--account-sid' : '--username');
+  if (!password) missing.push(provider === 'twilio' ? '--auth-token' : '--password');
+  if (!webhookBaseUrl) missing.push('--webhook-url');
+  if (missing.length) {
+    log('');
+    fail(`Missing required field(s): ${missing.join(', ')}`);
+    info(`See: ${c.green('agenticmail setup-phone --help')}`);
+    log('');
+    process.exit(1);
+  }
+
+  const configPath = join(homedir(), '.agenticmail', 'config.json');
+  if (!existsSync(configPath)) {
+    fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
+    info(`Run ${c.cyan('agenticmail setup')} first, then re-run this.`);
+    process.exit(1);
+  }
+
+  let config: SetupConfig;
+  try { config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig; }
+  catch (err) { fail(`Could not read ${configPath}: ${(err as Error).message}`); process.exit(1); }
+
+  // Bring the API up if it's not already, then resolve the per-agent
+  // API key (the /phone/transport/setup endpoint is agent-scoped).
+  const apiBase = `http://${config.api.host}:${config.api.port}`;
+  try {
+    const probe = await fetch(`${apiBase}/api/agenticmail/health`, { signal: AbortSignal.timeout(2_000) });
+    if (!probe.ok) throw new Error('not ok');
+  } catch {
+    try { await startApiServer(config); }
+    catch { fail(`API server not reachable at ${c.cyan(apiBase)}. Start it with ${c.green('agenticmail start')}.`); process.exit(1); }
+  }
+
+  const agent = await resolveAgentApiKey(config);
+  if (!agent) {
+    fail('No agent provisioned yet — connect email first via `agenticmail setup-email`.');
+    process.exit(1);
+  }
+
+  log('');
+  log(`  ${c.bold(`🎀 AgenticMail — connect ${provider} phone calling`)}`);
+  log('');
+  log(`  ${c.dim('agent:')}      ${c.cyan(agent.name)}`);
+  log(`  ${c.dim('provider:')}   ${provider}`);
+  log(`  ${c.dim('number:')}     ${phoneNumber}`);
+  log(`  ${c.dim('webhook:')}    ${webhookBaseUrl}`);
+  log('');
+
+  const spinner = new Spinner('general', 'Saving phone transport...');
+  spinner.start();
+  try {
+    const resp = await fetch(`${apiBase}/api/agenticmail/phone/transport/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+      body: JSON.stringify({ provider, phoneNumber, username, password, webhookBaseUrl, webhookSecret }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (resp.ok) {
+      spinner.succeed(`Phone calling enabled — ${c.bold(phoneNumber)} via ${provider}, linked to ${c.bold(agent.name)}`);
+      info(`Your agent can now place outbound calls. Try ${c.green('/call')} from ${c.green('agenticmail shell')}.`);
+      log('');
+    } else {
+      const text = await resp.text();
+      spinner.fail(`Could not save phone transport: ${parseFriendlyError(text).message}`);
+      log('');
+      process.exit(1);
+    }
+  } catch (err) {
+    spinner.fail(`Could not save phone transport: ${(err as Error).message}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * `agenticmail setup-telegram` — non-interactive Telegram channel setup.
+ *
+ * Companion to `setup-email` / `setup-phone`. Takes the bot token and
+ * (optionally) the operator's chat id via flags or env vars, registers
+ * the channel against the running API, AND writes the three files
+ * the standalone `agenticmail-telegram-bridge` service needs to wake
+ * the agent on inbound DMs:
+ *
+ *   ~/.agenticmail/telegram/telegram-token        the BotFather token
+ *   ~/.agenticmail/telegram/telegram-allowed-ids  one chat id per line
+ *   ~/.agenticmail/telegram/agent-key             the agent's API key
+ *                                                  (so MCP tools are
+ *                                                  available to spawned
+ *                                                  Claude turns)
+ *
+ * All three files are 0600. The bridge picks them up automatically the
+ * next time `agenticmail start` runs (or immediately if the bridge is
+ * already running and re-reads its config on poll). After this command
+ * succeeds, the operator can DM their bot and the agent will reply with
+ * full memory + tool access.
+ *
+ * Usage:
+ *
+ *     agenticmail setup-telegram --bot-token <token> --chat-id <id>
+ *
+ * Or via env:
+ *
+ *     TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... agenticmail setup-telegram
+ */
+async function cmdSetupTelegram() {
+  const args = process.argv.slice(3);
+
+  function flag(name: string): string | undefined {
+    const eq = `--${name}=`;
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === `--${name}` && i + 1 < args.length) return args[i + 1];
+      if (args[i].startsWith(eq)) return args[i].slice(eq.length);
+    }
+    return undefined;
+  }
+  if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
+    log('');
+    log(`  ${c.pinkBg(' 🎀 agenticmail setup-telegram ')}`);
+    log('');
+    log(`  ${c.bold('Usage:')} agenticmail setup-telegram --bot-token <token> [--chat-id <id>]`);
+    log('');
+    log(`  ${c.bold('Flags / env:')}`);
+    log(`    --bot-token <token>   ${c.dim('Env: TELEGRAM_BOT_TOKEN (from @BotFather)')}`);
+    log(`    --chat-id <id>        ${c.dim('Env: TELEGRAM_CHAT_ID (allow-list — your own chat)')}`);
+    log('');
+    log(`  ${c.dim('Token is stored encrypted at rest under your master key.')}`);
+    log(`  ${c.dim('Pipe via env to keep it out of shell history.')}`);
+    log('');
+    return;
+  }
+
+  const botToken = flag('bot-token') ?? process.env.TELEGRAM_BOT_TOKEN ?? '';
+  const operatorChatId = (flag('chat-id') ?? process.env.TELEGRAM_CHAT_ID ?? '').trim();
+
+  if (!botToken) {
+    fail('--bot-token is required (get one from @BotFather → /newbot).');
+    info(`See: ${c.green('agenticmail setup-telegram --help')}`);
+    process.exit(1);
+  }
+
+  const configPath = join(homedir(), '.agenticmail', 'config.json');
+  if (!existsSync(configPath)) {
+    fail(`AgenticMail isn't set up yet — no config at ${c.dim(configPath)}`);
+    info(`Run ${c.cyan('agenticmail setup')} first, then re-run this.`);
+    process.exit(1);
+  }
+  let config: SetupConfig;
+  try { config = JSON.parse(readFileSync(configPath, 'utf-8')) as SetupConfig; }
+  catch (err) { fail(`Could not read ${configPath}: ${(err as Error).message}`); process.exit(1); }
+
+  const apiBase = `http://${config.api.host}:${config.api.port}`;
+  try {
+    const probe = await fetch(`${apiBase}/api/agenticmail/health`, { signal: AbortSignal.timeout(2_000) });
+    if (!probe.ok) throw new Error('not ok');
+  } catch {
+    try { await startApiServer(config); }
+    catch { fail(`API server not reachable at ${c.cyan(apiBase)}. Start it with ${c.green('agenticmail start')}.`); process.exit(1); }
+  }
+
+  const agent = await resolveAgentApiKey(config);
+  if (!agent) {
+    fail('No agent provisioned yet — connect email first via `agenticmail setup-email`.');
+    process.exit(1);
+  }
+
+  log('');
+  log(`  ${c.bold('🎀 AgenticMail — connect Telegram')}`);
+  log('');
+  log(`  ${c.dim('agent:')}    ${c.cyan(agent.name)}`);
+  log(`  ${c.dim('chat id:')}  ${operatorChatId || c.dim('(none — only the operator chat is allowed to DM, set later)')}`);
+  log('');
+
+  const spinner = new Spinner('general', 'Verifying bot token with Telegram...');
+  spinner.start();
+  try {
+    const resp = await fetch(`${apiBase}/api/agenticmail/telegram/setup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${agent.apiKey}` },
+      body: JSON.stringify({ botToken, mode: 'poll', operatorChatId: operatorChatId || undefined }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      spinner.fail(`Could not enable Telegram: ${parseFriendlyError(text).message}`);
+      process.exit(1);
+    }
+    const data = await resp.json() as any;
+    const botName = data?.bot?.username ? `@${data.bot.username}` : 'your bot';
+    spinner.succeed(`Telegram channel enabled — ${c.bold(botName)} linked to ${c.bold(agent.name)}`);
+  } catch (err) {
+    spinner.fail(`Could not enable Telegram: ${(err as Error).message}`);
+    process.exit(1);
+  }
+
+  // Write the standalone bridge's config files. This is what makes
+  // inbound DMs actually wake the agent (vs. just being recorded in
+  // the API). agent-key gives the bridge's spawned `claude -p` turns
+  // access to the full @agenticmail/mcp toolset via mcp-config.json.
+  try {
+    const { mkdirSync: mkdir, writeFileSync: writeFile, chmodSync } = await import('node:fs');
+    const tgDir = join(homedir(), '.agenticmail', 'telegram');
+    mkdir(tgDir, { recursive: true });
+    writeFile(join(tgDir, 'telegram-token'), botToken, { mode: 0o600 });
+    chmodSync(join(tgDir, 'telegram-token'), 0o600);
+    writeFile(join(tgDir, 'agent-key'), agent.apiKey, { mode: 0o600 });
+    chmodSync(join(tgDir, 'agent-key'), 0o600);
+    if (operatorChatId) writeFile(join(tgDir, 'telegram-allowed-ids'), operatorChatId + '\n');
+    ok(`Bridge files written to ${c.dim(tgDir)}`);
+    info(`Run ${c.green('agenticmail start')} to start (or restart) the bridge.`);
+    log('');
+  } catch (err) {
+    fail(`Could not write bridge config: ${(err as Error).message}`);
+    info('Telegram is configured in the API but the bridge service is not. Inbound DMs will not wake the agent until you re-run this.');
+    process.exit(1);
+  }
+}
+
+/**
  * Resolve an agent API key from the running API server.
  *
  * The phone-transport and Telegram channels are per-agent config —
@@ -4192,6 +4508,16 @@ switch (command) {
   case 'connect-email':
     cmdSetupEmail().catch(err => { console.error(err); process.exit(1); });
     break;
+  case 'setup-phone':
+  case 'phone':
+  case 'setup-twilio':
+  case 'setup-46elks':
+    cmdSetupPhone().catch(err => { console.error(err); process.exit(1); });
+    break;
+  case 'setup-telegram':
+  case 'telegram':
+    cmdSetupTelegram().catch(err => { console.error(err); process.exit(1); });
+    break;
   case 'start':
     cmdStart().catch(err => { console.error(err); process.exit(1); });
     break;
@@ -4253,6 +4579,8 @@ switch (command) {
     log(`    ${c.green('agenticmail bootstrap')} ${c.dim('Zero-question install — for AI agents (Claude Code) to run on a user\'s behalf')}`);
     log(`    ${c.green('agenticmail setup')}     Re-run the setup wizard ${c.dim('(use --yes for non-interactive)')}`);
     log(`    ${c.green('agenticmail setup-email')}  Connect your mailbox — just email + password ${c.dim('(auto-detects Gmail/Outlook/custom)')}`);
+    log(`    ${c.green('agenticmail setup-phone')}  Connect Twilio / 46elks for outbound calls ${c.dim('(--account-sid + --auth-token, or env vars)')}`);
+    log(`    ${c.green('agenticmail setup-telegram')}  Wire up the Telegram bridge ${c.dim('(--bot-token + --chat-id, or env vars)')}`);
     log(`    ${c.green('agenticmail start')}     Start the server`);
     log(`    ${c.green('agenticmail stop')}      Stop the server`);
     log(`    ${c.green('agenticmail status')}    See what's running`);
