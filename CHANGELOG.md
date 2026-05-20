@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.62] - 2026-05-20
+
+### Added — MCP-wired Telegram bridge + auto-start + clean uninstall
+
+The Telegram bot is now a first-class agent — same memory store,
+same toolset, as the dispatcher's workers. The setup wizard does
+everything in one pass; uninstall puts the machine back to a clean
+slate.
+
+- **MCP server wired into every spawned Claude turn.** The bridge
+  auto-generates `~/.agenticmail/telegram/mcp-config.json` on
+  startup with `@agenticmail/mcp` registered and scoped to the
+  agent that owns the channel (via `AGENTICMAIL_API_KEY`). That
+  gives every Telegram turn:
+    - persistent memory via `mcp__agenticmail__memory_*` — shared
+      with email replies, voice calls, and the dispatcher's
+      workers (one memory store across channels)
+    - email send / search / read
+    - voice call dispatch (`call_phone` and friends — the bot can
+      literally place a phone call from inside a Telegram turn)
+    - SMS, contacts, drafts, signatures, file storage, agent
+      coordination, scheduled sends
+  Absent agent-key → the bot still replies but with no MCP tools,
+  and the bridge logs a clear warning pointing at `agenticmail setup`.
+- **Setup wizard writes the bridge files.** Step 8 (Telegram)
+  now writes `telegram-token`, `telegram-allowed-ids`, and
+  `agent-key` under `~/.agenticmail/telegram/` with `0600`
+  perms on the secrets, and tells the operator how to start the
+  bridge.
+- **`agenticmail start` auto-spawns the bridge.** If the three
+  files above are present the cli launches the bridge as a
+  detached child process and records its PID for stop/restart
+  idempotency. No pm2 dependency for new users — pm2 still works
+  if someone wants it, but the default install path is `service
+  install` (launchd) for the API plus the bridge as its sibling.
+- **`agenticmail stop` and `npm uninstall` both stop the bridge.**
+  The uninstall script also deletes any pm2-managed AgenticMail
+  services (`agenticmail-telegram-bridge`,
+  `agenticmail-claudecode-dispatcher`,
+  `agenticmail-codex-dispatcher`) so a reinstall doesn't race a
+  stale orphan polling the bot token.
+
 ## [0.9.61] - 2026-05-19
 
 ### Added — `agenticmail-telegram-bridge` (standalone Telegram service)

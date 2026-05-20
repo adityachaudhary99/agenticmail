@@ -33,6 +33,7 @@ import {
   TELEGRAM_OFFSET_FILE,
   TELEGRAM_WEBHOOK_CONFIG_FILE,
   MCP_CONFIG_FILE,
+  AGENT_KEY_FILE,
 } from './lib/paths.mjs';
 import {
   tgApi,
@@ -46,11 +47,58 @@ import {
 import { SessionMap } from './lib/sessions.mjs';
 import { runClaude as runFolaClaude, loadAnthropicToken } from './lib/claude-runner.mjs';
 
-// AgenticMail port: no MCP config is registered for now — the bridge replies
-// via direct stdout capture and Telegram API send. Future versions may wire
-// in `mcp__agenticmail__*` so the bot can call_phone / send_email / etc.
-// from inside a Telegram turn; until then, this is a noop.
-function ensureTelegramMcpRegistered() { return false; }
+/**
+ * Generate (or refresh) the MCP config the spawned `claude -p` turn loads.
+ *
+ * The config registers `@agenticmail/mcp` as a single MCP server, scoped
+ * to the agent that owns the Telegram channel via `AGENTICMAIL_API_KEY`.
+ * That gives every Telegram turn access to the full AgenticMail toolset:
+ *
+ *   - Persistent memory     — `mcp__agenticmail__memory_*` (the same
+ *     memory store the dispatcher's workers use, so a fact the bot
+ *     learns over Telegram is visible to email replies and vice
+ *     versa).
+ *   - Email send / search / read   — `mcp__agenticmail__send_email`, etc.
+ *   - Voice calls           — `call_phone` and friends, so the bot can
+ *     literally place a phone call from inside a Telegram turn.
+ *   - SMS, contacts, drafts, signatures, file storage, agent
+ *     coordination, scheduled sends … everything the MCP server
+ *     surfaces.
+ *
+ * The config is regenerated every boot so a key rotation flows in
+ * cleanly without manual cleanup. `agenticmail-mcp` resolves on
+ * PATH — the standard install of `@agenticmail/cli` puts it there.
+ *
+ * Returns the path to write, or `null` if no agent key is configured
+ * (in which case the bridge runs without MCP — the bot still replies,
+ * just without memory or tools).
+ */
+function ensureMcpConfig(log) {
+  if (!existsSync(AGENT_KEY_FILE)) {
+    log.warn(`No agent key at ${AGENT_KEY_FILE} — MCP tools (memory, send_email, call_phone, …) will be unavailable to the bot. Re-run \`agenticmail setup\` or write the key file manually to enable.`);
+    return null;
+  }
+  const agentKey = readFileSync(AGENT_KEY_FILE, 'utf8').trim();
+  if (!agentKey) {
+    log.warn(`Agent key file ${AGENT_KEY_FILE} is empty — skipping MCP wiring.`);
+    return null;
+  }
+  const apiUrl = process.env.AGENTICMAIL_API_URL || 'http://127.0.0.1:3829';
+  const cfg = {
+    mcpServers: {
+      agenticmail: {
+        command: 'agenticmail-mcp',
+        args: [],
+        env: {
+          AGENTICMAIL_API_KEY: agentKey,
+          AGENTICMAIL_API_URL: apiUrl,
+        },
+      },
+    },
+  };
+  writeFileSync(MCP_CONFIG_FILE, JSON.stringify(cfg, null, 2));
+  return MCP_CONFIG_FILE;
+}
 
 const log = createLogger('tg-bridge');
 
@@ -591,7 +639,7 @@ async function main() {
   const sessions = new SessionMap({ scope: 'telegram' }).load();
 
   // Ensure the telegram-mcp server is registered so Claude can send proactively
-  const mcpConfig = ensureTelegramMcpRegistered() ? MCP_CONFIG_FILE : undefined;
+  const mcpConfig = ensureMcpConfig(log) ?? undefined;
 
   // Bot identity sanity check
   let me;

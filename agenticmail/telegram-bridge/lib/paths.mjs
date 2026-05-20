@@ -31,6 +31,18 @@ export const TELEGRAM_OFFSET_FILE = join(TG_DIR, 'telegram-offset.json');
 export const TELEGRAM_SESSIONS_FILE = join(TG_DIR, 'telegram-sessions.json');
 export const TELEGRAM_WEBHOOK_CONFIG_FILE = join(TG_DIR, 'telegram-webhook.json');
 export const TELEGRAM_MEDIA_DIR = join(TG_DIR, 'telegram-media');
+
+// AgenticMail agent API key the bridge represents — written by
+// `agenticmail setup` Step 8 when the user picks which agent should
+// own the Telegram channel. When present, the bridge auto-generates
+// an `mcp-config.json` that registers `@agenticmail/mcp` as an MCP
+// server for every spawned `claude -p` turn, giving the bot access
+// to the same toolset the dispatcher's workers have: persistent
+// memory (mcp__agenticmail__memory_*), email send/receive, voice
+// calls (call_phone), SMS, file storage, and so on. Absent → the
+// bridge still works but the spawned Claude turns have no MCP tools
+// and therefore no persistent memory.
+export const AGENT_KEY_FILE = join(TG_DIR, 'agent-key');
 // Legacy single-session file (the sessions.mjs library reads it on first boot;
 // AgenticMail has no legacy to migrate, but the file is harmless if absent).
 export const TELEGRAM_LEGACY_SESSION_FILE = join(TG_DIR, 'telegram-session-id');

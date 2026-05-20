@@ -3,10 +3,12 @@
 /**
  * Cleanup script that runs on `npm uninstall agenticmail`.
  *
- * 1. Unloads & removes the launchd / systemd auto-start service
- * 2. Stops & removes the agenticmail-stalwart Docker container
- * 3. Cleans agenticmail entries from OpenClaw config
- * 4. Removes ~/.agenticmail data directory
+ * 1. Stops the Telegram bridge child process (if running)
+ * 2. Stops any pm2-managed AgenticMail services
+ * 3. Unloads & removes the launchd / systemd auto-start service
+ * 4. Stops & removes the agenticmail-stalwart Docker container
+ * 5. Cleans agenticmail entries from OpenClaw config
+ * 6. Removes ~/.agenticmail data directory
  */
 
 import { execSync, execFileSync } from 'node:child_process';
@@ -20,7 +22,38 @@ const os = platform();
 function log(msg) { console.log(`[agenticmail] ${msg}`); }
 function tryExec(cmd, opts = {}) { try { execSync(cmd, { timeout: 15_000, stdio: 'ignore', ...opts }); } catch { /* ignore */ } }
 
-// ── 1. Unload auto-start service ─────────────────────────────────
+// ── 1. Stop the Telegram bridge child process ────────────────────
+//
+// `agenticmail start` spawns the bridge when configured and records
+// its PID. Kill it explicitly so the upcoming `rm -rf ~/.agenticmail`
+// doesn't leave an orphan polling the bot token (the orphan would
+// then race a freshly-set-up bridge after a reinstall, with both
+// processes calling getUpdates against the same token — Telegram
+// alternates updates between them, half are lost).
+try {
+  const pidFile = join(home, '.agenticmail', 'telegram', 'bridge.pid');
+  if (existsSync(pidFile)) {
+    const pid = parseInt(readFileSync(pidFile, 'utf-8').trim(), 10);
+    if (!isNaN(pid) && pid > 0) {
+      try { process.kill(pid, 'SIGTERM'); } catch { /* already dead */ }
+      log(`Stopped Telegram bridge (pid ${pid})`);
+    }
+  }
+} catch { /* best-effort */ }
+
+// ── 2. Stop pm2-managed AgenticMail services ─────────────────────
+//
+// Earlier setup paths registered the bridge and the claudecode/codex
+// dispatchers under pm2. A reinstall would happily start fresh
+// instances, so the safe move is to delete the existing pm2 entries
+// here. pm2 itself is not a dependency — if it's not installed, the
+// command no-ops and we move on.
+for (const svc of ['agenticmail-telegram-bridge', 'agenticmail-claudecode-dispatcher', 'agenticmail-codex-dispatcher']) {
+  tryExec(`pm2 delete ${svc}`);
+}
+tryExec('pm2 save');
+
+// ── 3. Unload auto-start service ─────────────────────────────────
 
 if (os === 'darwin') {
   const plist = join(home, 'Library', 'LaunchAgents', 'com.agenticmail.server.plist');
@@ -40,7 +73,7 @@ if (os === 'darwin') {
   }
 }
 
-// ── 2. Stop Docker container ──────────────────────────────────────
+// ── 4. Stop Docker container ──────────────────────────────────────
 
 try {
   const ps = execFileSync('docker', ['ps', '-a', '--filter', 'name=agenticmail-stalwart', '--format', '{{.Names}}'],
@@ -51,7 +84,7 @@ try {
   }
 } catch { /* docker not available — skip */ }
 
-// ── 3. Clean OpenClaw config ──────────────────────────────────────
+// ── 5. Clean OpenClaw config ──────────────────────────────────────
 
 const openclawConfig = join(home, '.openclaw', 'openclaw.json');
 if (existsSync(openclawConfig)) {
@@ -87,7 +120,7 @@ if (existsSync(openclawConfig)) {
   } catch { /* don't fail uninstall */ }
 }
 
-// ── 4. Remove ~/.agenticmail ──────────────────────────────────────
+// ── 6. Remove ~/.agenticmail ──────────────────────────────────────
 
 const dataDir = join(home, '.agenticmail');
 if (existsSync(dataDir)) {

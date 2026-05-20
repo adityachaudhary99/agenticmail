@@ -433,7 +433,74 @@ async function startApiServer(config: SetupConfig): Promise<boolean> {
     try { writeFileSync(PID_FILE, String(child.pid)); } catch { /* ignore */ }
   }
 
-  return waitForApi(host, port);
+  const ready = await waitForApi(host, port);
+
+  // Start the Telegram bridge as a child of the cli — but only if the
+  // user has configured it (agent-key + token files present). The bridge
+  // is best-effort: a failure to start the bridge must not fail
+  // `agenticmail start`, the user just loses Telegram replies until
+  // they re-run setup.
+  if (ready) {
+    try { await startTelegramBridgeIfConfigured(); } catch { /* best-effort */ }
+  }
+
+  return ready;
+}
+
+/**
+ * Spawn the standalone Telegram bridge as a detached background process,
+ * but only when the user has gone through the Telegram setup step
+ * (`agenticmail setup` writes the three required files). The bridge
+ * file ships inside the cli package at `telegram-bridge/bridge.mjs`;
+ * we resolve it from the cli's own location so it works whether the
+ * cli is installed globally, locally, or run from source.
+ *
+ * Idempotent — if the bridge is already running (PID file points at
+ * a live process), we leave it alone. This is what makes `agenticmail
+ * start` safe to run repeatedly without piling up bridge processes.
+ */
+async function startTelegramBridgeIfConfigured(): Promise<void> {
+  const { existsSync: ex, readFileSync: rd, writeFileSync: wr } = await import('node:fs');
+  const { join: pj } = await import('node:path');
+  const { homedir: hd } = await import('node:os');
+
+  const tgDir = pj(hd(), '.agenticmail', 'telegram');
+  const tokenFile = pj(tgDir, 'telegram-token');
+  const agentKeyFile = pj(tgDir, 'agent-key');
+  if (!ex(tokenFile) || !ex(agentKeyFile)) return; // not configured yet
+
+  // PID-file dedup so repeated `agenticmail start` calls don't spawn
+  // a second bridge that races for getUpdates with the first.
+  const pidFile = pj(tgDir, 'bridge.pid');
+  if (ex(pidFile)) {
+    const existingPid = parseInt(rd(pidFile, 'utf8').trim(), 10);
+    if (!isNaN(existingPid) && existingPid > 0) {
+      try {
+        process.kill(existingPid, 0); // probe: throws if dead
+        return; // already running
+      } catch { /* dead — fall through and start a new one */ }
+    }
+  }
+
+  // Resolve the bridge entry from the cli's own directory. `__dirname`
+  // in this dist file is `<cli-install>/dist/`, so the bridge is at
+  // `../telegram-bridge/bridge.mjs`. Verify it exists — if not, the
+  // package was installed without the bridge files (shouldn't happen
+  // with current `files` list, but be defensive).
+  const distDir = dirname(fileURLToPath(import.meta.url));
+  const bridgeEntry = pj(distDir, '..', 'telegram-bridge', 'bridge.mjs');
+  if (!ex(bridgeEntry)) return;
+
+  const { spawn: sp } = await import('node:child_process');
+  const child = sp(process.execPath, [bridgeEntry], {
+    detached: true,
+    stdio: 'ignore',
+    env: process.env,
+  });
+  child.unref();
+  if (child.pid) {
+    try { wr(pidFile, String(child.pid)); } catch { /* ignore */ }
+  }
 }
 
 /**
@@ -1563,7 +1630,39 @@ async function cmdSetup() {
               if (!operatorChatId) {
                 info('No chat id linked yet — add one later so inbound messages are accepted.');
               }
-              info('Poll mode: messages are pulled with the telegram_poll tool or /poll in the shell.');
+
+              // Wire up the standalone Telegram bridge service. This is
+              // what actually wakes the agent on inbound DMs and routes
+              // replies back through `claude -p` (see
+              // `agenticmail/telegram-bridge/`). Writing the three
+              // files below is the bridge's full "boot config":
+              //   - telegram-token         the BotFather token
+              //   - telegram-allowed-ids   one chat id per line
+              //   - agent-key              the agent's API key, used
+              //                            to wire the MCP server so
+              //                            the bot has memory + email
+              //                            + voice tools, not just
+              //                            stdout.
+              try {
+                const { mkdirSync: mkdir, writeFileSync: writeFile, chmodSync } = await import('node:fs');
+                const { join: pathJoin } = await import('node:path');
+                const { homedir: hd } = await import('node:os');
+                const tgDir = pathJoin(hd(), '.agenticmail', 'telegram');
+                mkdir(tgDir, { recursive: true });
+                writeFile(pathJoin(tgDir, 'telegram-token'), botToken, { mode: 0o600 });
+                chmodSync(pathJoin(tgDir, 'telegram-token'), 0o600);
+                writeFile(pathJoin(tgDir, 'agent-key'), agent.apiKey, { mode: 0o600 });
+                chmodSync(pathJoin(tgDir, 'agent-key'), 0o600);
+                if (operatorChatId) {
+                  writeFile(pathJoin(tgDir, 'telegram-allowed-ids'), operatorChatId + '\n');
+                }
+                ok(`Bridge files written to ${c.dim(tgDir)}`);
+                info(`Start the bridge with: ${c.green('agenticmail service install')} (auto-start on boot)`);
+                info(`Or manually: ${c.green('agenticmail-telegram-bridge')} (foreground)`);
+              } catch (err) {
+                fail(`Could not write bridge config: ${(err as Error).message}`);
+                info('Telegram channel is configured in the API but the standalone bridge service is not. Replies will not be delivered until you start it.');
+              }
             } else {
               const text = await resp.text();
               spinner.fail(`Could not enable Telegram: ${parseFriendlyError(text).message}`);
@@ -3845,9 +3944,30 @@ async function cmdStart() {
   await interactiveShell({ config, onExit: () => {} });
 }
 
+/**
+ * Best-effort: terminate the Telegram bridge if its PID file points
+ * at a live process. Called from both `cmdStop` and the uninstall
+ * cleanup so the bridge does not outlive its companion API server.
+ */
+function stopTelegramBridge(): boolean {
+  try {
+    const tgDir = join(homedir(), '.agenticmail', 'telegram');
+    const pidFile = join(tgDir, 'bridge.pid');
+    if (!existsSync(pidFile)) return false;
+    const pid = parseInt(readFileSync(pidFile, 'utf8').trim(), 10);
+    if (isNaN(pid) || pid <= 0) return false;
+    try { process.kill(pid, 'SIGTERM'); } catch { /* already dead */ }
+    try { unlinkSync(pidFile); } catch { /* ignore */ }
+    return true;
+  } catch { return false; }
+}
+
 async function cmdStop() {
   log('');
   const stopped = stopApiServer();
+  // Stop the Telegram bridge too — it was started by `agenticmail
+  // start`, so `agenticmail stop` should reverse that.
+  stopTelegramBridge();
 
   // Also stop the launchd/systemd managed process if running
   const svc = new ServiceManager();
