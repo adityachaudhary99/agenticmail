@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.65] - 2026-05-20
+
+### Changed — bootstrap epilogue + AGENTS.md walk-through optional channels
+
+Field feedback from the v0.9.64 fresh-install run: the AI assistant
+finished `agenticmail bootstrap` and then told the user "setup
+complete, restart Claude Code" — without ever asking whether they
+wanted to wire up external email, phone calls, or Telegram. The
+user only realized those exist later. Two fixes:
+
+- **`agenticmail bootstrap` epilogue rewritten.** The "Bootstrap
+  complete" output now includes an "Optional — wire up external
+  channels" block with the three env-piped one-liners for
+  `setup-email`, `setup-phone`, and `setup-telegram`. Even an
+  inattentive AI assistant pasting stdout to the user can't miss
+  the next steps. The bootstrap auto-tunnel hint is right next to
+  the `setup-phone` example so the AI knows it doesn't need a
+  separate webhook URL.
+- **`AGENTS.md` — new "IMMEDIATELY after bootstrap" section.**
+  Tells AI assistants to walk the user through the three optional
+  channels as a yes/no checklist, with the env-piped command for
+  each. Same secret-hygiene rule as the existing email-password
+  guidance: secrets ride in env vars, never the chat.
+
+### Fixed — tool counts in docs
+
+Bumped the `62 mcp__agenticmail__* tools` references across
+`packages/mcp/README.md`, `agenticmail/README.md`, and `AGENTS.md`
+to the current count of **95**. Same drift across `73 OpenClaw
+tools` → **87**, `80+ MCP tools` → **95**, `60+ tools` → **95**.
+Counts come straight from the `name:` entries in
+`packages/mcp/src/tools.ts` and the `reg(` calls in
+`packages/openclaw/src/tools.ts` so they're easy to verify
+mechanically.
+
 ## [0.9.64] - 2026-05-20
 
 ### Added — `agenticmail tunnel` (free Cloudflare quick-tunnel)

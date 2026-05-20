@@ -68,6 +68,74 @@ After `bootstrap` finishes, tell the user to **restart their host CLI**
 new MCP server entry takes effect. The MCP block lands in
 `~/.claude.json` for Claude Code and `~/.codex/config.toml` for Codex.
 
+### IMMEDIATELY after bootstrap — ASK the user about the optional channels
+
+The bootstrap intentionally skips everything that needs user-owned
+credentials. Most users want at least one of these wired up, and they
+won't know to ask. **Don't end the install conversation without
+walking through this checklist** — phrase it as one question per
+channel so the user can opt in or out individually:
+
+> "Bootstrap is done. Before I close out, want me to wire up any of
+> these now? (Yes / no for each — I'll skip the ones you say no to.)
+>
+> 1. **External email** — agents become reachable on the real internet
+>    (e.g. `yourname+secretary@gmail.com`). Needs a Gmail app password
+>    or Outlook app password. You'll paste it into the terminal, not
+>    here.
+>
+> 2. **Phone calls (Twilio or 46elks)** — agents can place real
+>    outbound phone calls. Needs the carrier's Account SID + Auth
+>    Token, plus a number from that carrier. I'll open a free
+>    Cloudflare quick-tunnel so the webhooks reach your machine —
+>    no domain or static IP needed.
+>
+> 3. **Telegram bot** — DM your agent from your phone, agent replies
+>    in the same chat with full memory + tools. Needs a bot token
+>    from @BotFather (free, 30 seconds)."
+
+For each YES the user gives, run the matching non-interactive
+subcommand. **Have the user export the secret as an env var before
+running** — never accept secrets in chat (same rule as the email
+password, same rationale: shell history + LLM context window
+hygiene). Example flow if the user says yes to Twilio:
+
+> "OK, Twilio. Open your Twilio console → Account → API keys & tokens,
+> copy the Account SID and the primary Auth Token, then in your
+> terminal:
+>
+> ```bash
+> export TWILIO_ACCOUNT_SID='ACxxxx...'
+> export TWILIO_AUTH_TOKEN='your-auth-token'
+> export AGENTICMAIL_PHONE_NUMBER='+15555550100'  # your Twilio number
+> agenticmail setup-phone --provider twilio
+> ```
+>
+> Tell me when it succeeds. I won't see the token."
+
+Same pattern for the other two channels — env-piped secrets, you
+run the subcommand for them or have them run it themselves:
+
+```bash
+# Email — see "Setting up the email relay" section below
+agenticmail setup-email
+
+# Phone calls (Twilio — auto-opens a quick-tunnel if no AGENTICMAIL_WEBHOOK_URL)
+TWILIO_ACCOUNT_SID=… TWILIO_AUTH_TOKEN=… AGENTICMAIL_PHONE_NUMBER=… \
+  agenticmail setup-phone --provider twilio
+
+# Phone calls (46elks alternative)
+ELKS_USERNAME=… ELKS_PASSWORD=… AGENTICMAIL_PHONE_NUMBER=… \
+  agenticmail setup-phone --provider 46elks
+
+# Telegram bot
+TELEGRAM_BOT_TOKEN=… TELEGRAM_CHAT_ID=… \
+  agenticmail setup-telegram
+```
+
+The user can always re-run any of these later. Skipping during
+install is fine — but don't skip the *question*.
+
 ### Setting up the email relay — NEVER ask for the password in chat
 
 The bridge-escalation email path (next section) needs a working outbound relay so the API can deliver mail to the operator's personal mailbox. If `setup_operator_email` is set but the relay isn't, escalation emails fail silently (logged server-side, but no delivery).
@@ -552,7 +620,7 @@ for programmatic work driven by you.**
 |---|---|
 | `packages/core/` | `@agenticmail/core` — DB layer, account/mail/gateway managers, spam filter, search index, `AGENT_ROLES` (including `'bridge'`), `MESSAGE_NOT_FOUND` sentinel. Uses `node:sqlite` (Node 22+). |
 | `packages/api/` | `@agenticmail/api` — Express REST API. Mounts integration routes when `@agenticmail/claudecode` is installed. Also serves the Gmail-style web UI under `public/`, including the per-host avatar registry (`public/js/avatar.js` + `/branding/`). |
-| `packages/mcp/` | `@agenticmail/mcp` — MCP server (62 tools + `request_tools`/`invoke` meta-tools + `_account` per-call identity). `create_account` auto-stamps `metadata.host` from `AGENTICMAIL_MCP_HOST`. |
+| `packages/mcp/` | `@agenticmail/mcp` — MCP server (95 tools + `request_tools`/`invoke` meta-tools + `_account` per-call identity). `create_account` auto-stamps `metadata.host` from `AGENTICMAIL_MCP_HOST`. |
 | `packages/claudecode/` | `@agenticmail/claudecode` — Claude Code integration. Dispatcher daemon, persona engine, HTTP install endpoint, subagent `.md` generator, `claim` CLI. |
 | `packages/codex/` | `@agenticmail/codex` — OpenAI Codex CLI integration. Same shape as `claudecode`: TOML config writers (`~/.codex/config.toml`), subagent `.toml` generator (`~/.codex/agents/`), lifecycle hooks (`~/.codex/hooks.json`), PM2 dispatcher that wakes via `@openai/codex-sdk`. Supports `--workspace <dir>` to bind every worker to a shared project tree. |
 | `packages/openclaw/` | `@agenticmail/openclaw` — OpenClaw runtime integration. Older code path, still pinned to `@agenticmail/core@^0.5`. |

@@ -3041,15 +3041,48 @@ async function cmdBootstrap() {
   }
 
   // ── Done ─────────────────────────────────────────────────────────
+  //
+  // The closer to this output had two failure modes from the field:
+  //
+  //   1. AI assistants running bootstrap on the user's behalf would
+  //      stop here and tell the user "setup complete" — without ever
+  //      asking whether they wanted external email / phone calls /
+  //      Telegram. The user would only discover those exist days
+  //      later when they tried to do something the agent couldn't.
+  //   2. The "62 mcp__agenticmail__* tools" line drifted out of date
+  //      as the MCP server grew. The number below is the live count
+  //      from `packages/mcp/src/tools.ts`; update it (and AGENTS.md +
+  //      the package READMEs) when adding/removing tools.
+  //
+  // The "Next steps" block below addresses both: the asking-AI sees
+  // the optional channels and the exact non-interactive commands to
+  // wire them up, with secrets piped via env vars (never the
+  // command line, never the chat). The four-tool optional list MUST
+  // stay in sync with the `setup-*` cli commands.
   log('');
   log(`  ${c.pinkBg(' ✅ Bootstrap complete ')}`);
   log('');
   log(`  ${c.bold('Restart Claude Code')} and you'll have:`);
-  log(`    - 62 ${c.cyan('mcp__agenticmail__*')} tools in every session`);
+  log(`    - 95 ${c.cyan('mcp__agenticmail__*')} tools in every session`);
   log(`    - The ${c.cyan('Agent')} tool surfaces each AgenticMail agent as a subagent`);
   log(`    - Send mail to ${c.cyan('<agent>@localhost')} or call_agent → dispatcher auto-wakes them`);
   log('');
-  log(`  ${c.dim('To add an external email relay later:')} ${c.green('agenticmail setup')}`);
+  log(`  ${c.bold('Optional — wire up external channels')} ${c.dim('(pick any you want; skip the rest)')}`);
+  log('');
+  log(`  ${c.cyan('Real internet email')} ${c.dim('— send/receive mail to/from Gmail, Outlook, etc.')}`);
+  log(`    ${c.green('agenticmail setup-email')}`);
+  log('');
+  log(`  ${c.cyan('Phone calls (Twilio)')} ${c.dim('— agent places real outbound calls. Auto-opens a free')}`);
+  log(`  ${c.dim('Cloudflare quick-tunnel; no domain / static IP / Cloudflare account needed.')}`);
+  log(`    ${c.green('TWILIO_ACCOUNT_SID=… TWILIO_AUTH_TOKEN=… AGENTICMAIL_PHONE_NUMBER=… \\')}`);
+  log(`      ${c.green('agenticmail setup-phone --provider twilio')}`);
+  log(`    ${c.dim('(or --provider 46elks with ELKS_USERNAME / ELKS_PASSWORD)')}`);
+  log('');
+  log(`  ${c.cyan('Telegram bot')} ${c.dim('— DM your agent from your phone, agent replies with')}`);
+  log(`  ${c.dim('the same memory + tools as email-driven turns.')}`);
+  log(`    ${c.green('TELEGRAM_BOT_TOKEN=… TELEGRAM_CHAT_ID=… agenticmail setup-telegram')}`);
+  log('');
+  log(`  ${c.dim('Each setup-* command is idempotent; safe to re-run anytime.')}`);
   log('');
 }
 
