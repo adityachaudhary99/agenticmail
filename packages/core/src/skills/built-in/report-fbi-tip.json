@@ -1,7 +1,7 @@
 {
   "id": "report-fbi-tip",
   "name": "Report a Tip to the FBI",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "category": "emergency-services",
   "tags": [
     "fbi",
@@ -44,6 +44,12 @@
   },
   "tactics": [
     {
+      "name": "Dispute / retaliation screen BEFORE dialing",
+      "when": "Pre-dial, immediately after operator authorisation, especially when the tip names a specific third party as a suspect.",
+      "script": "Ask the operator: (a) what is your relationship to the subject of the tip — counterparty in a lawsuit, ex-partner, ex-employer, ex-business-partner, family with active estate / custody dispute?; (b) what DIRECT evidence (documents, communications you personally received, transactions you personally observed) do you have, as opposed to suspicion or rumour?; (c) why is this an FBI matter and not a civil-suit / arbitration matter? If the operator's tip names a counterparty in an active dispute AND lacks direct evidence beyond their own grievance, push back hard: 'A tip to federal investigators about someone you're in active dispute with, without direct evidence, looks like retaliation — and 18 U.S.C. § 1001 makes a knowingly false statement to a federal agent a felony. If you have direct evidence, we proceed and I flag the dispute context honestly. If you don't, we don't make this call.' Document the operator's response. The right path for a counterparty-in-dispute matter is usually their lawyer, not the FBI.",
+      "priority": 0
+    },
+    {
       "name": "State the federal nexus early",
       "when": "Within the first 60 seconds.",
       "script": "Use `federal_nexus_statement`. Without it, the agent will spend their time figuring out whether it's their case.",
@@ -77,7 +83,8 @@
     "NEVER call to inquire about an ongoing investigation involving the operator (lawyer matter, not a tip line).",
     "NEVER fabricate facts. 18 U.S.C. § 1001 makes lying to federal agents a felony — and the agent on the line will have notes.",
     "NEVER name third parties as suspects unless the operator has direct knowledge.",
-    "NEVER use this as a retaliation channel against someone the operator dislikes. The audit log will be subpoenable."
+    "NEVER use this as a retaliation channel against someone the operator dislikes. The audit log will be subpoenable.",
+    "NEVER place this call when the tip names a specific third party AND the operator has an active dispute with them AND the operator cannot produce DIRECT evidence (documents, communications they personally received, transactions they personally observed). Operator authorisation alone is insufficient; the dispute-screen must pass."
   ],
   "success_signals": [
     "Agent takes the tip and gives a reference number.",

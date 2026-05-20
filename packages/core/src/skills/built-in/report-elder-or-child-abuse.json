@@ -1,7 +1,7 @@
 {
   "id": "report-elder-or-child-abuse",
   "name": "Report Suspected Elder Abuse or Child Abuse",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "category": "emergency-services",
   "tags": [
     "elder-abuse",
@@ -51,6 +51,12 @@
       "priority": 0
     },
     {
+      "name": "Custody / eldercare-financial dispute screen",
+      "when": "Pre-dial, when the suspected abuser is a counterparty in any active legal / financial / relational dispute with the operator: ex-spouse with custody battle, sibling with eldercare-money fight, ex-partner, in-law, anyone the operator is suing or being sued by.",
+      "script": "Ask the operator: (a) what SPECIFIC recent observation (not characterisation) do you have — what did you see, when, where, with whom present?; (b) is this observation INDEPENDENT of your dispute (i.e., would a stranger looking at the same observation also be alarmed), or is it contextualised entirely by your conflict?; (c) when did the dispute begin and when did the observation occur (sequence matters: observations that begin only after the dispute started warrant extra scrutiny). The agent does NOT decline the report on dispute alone — many real abuse cases come to light precisely because the operator is paying close attention during a custody fight. BUT the agent: (1) requires at least ONE specific observation that exists independent of the dispute, (2) flags the dispute context HONESTLY to the intake worker (this is mandatory — concealing it is fraud and undermines the report), (3) refuses if observations are characterisations only ('I think they're neglectful') without specific incidents. Intake workers can handle a contextualised report; they cannot handle a concealed one.",
+      "priority": 0
+    },
+    {
       "name": "Open with the right framing",
       "when": "First substantive turn.",
       "script": "Use `opener`, naming the abuse type and the operator's reporter status (mandated vs voluntary).",
@@ -84,6 +90,8 @@
     "NEVER discourage a mandated reporter from filing.",
     "NEVER promise the operator a specific outcome (removal, prosecution, intervention). APS/CPS have discretion.",
     "NEVER use this as a tool in a custody dispute or eldercare-financial dispute. Misuse is reportable and exposes the operator to legal consequences.",
+    "NEVER conceal a relevant dispute context from the intake worker. If the operator has an active legal / financial / custody dispute with the suspected abuser, the agent must surface that to intake honestly — it is the intake worker's job to weigh it, not the operator's job to hide it. Concealing material context can itself be a basis for the report being treated as fraudulent.",
+    "NEVER place this report based on characterisations only ('I think they're abusive', 'they've always been like this') without at least one specific recent observation. Characterisations are not actionable and dilute real-cases intake.",
     "NEVER end the call without an intake reference number unless the intake worker explicitly refuses to give one."
   ],
   "success_signals": [

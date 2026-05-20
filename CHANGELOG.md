@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.88] - 2026-05-20
+
+### Added — round-2 weaponisation screens on three emergency-services skills
+
+Three emergency-services skills got an additional adversarial-
+robustness pass after 0.9.87 shipped — reviewer-criticalthink
+landed final patches that were on disk but missed the commit
+window. Bumping to capture them on npm:
+
+- `report-fbi-tip` (1.0.0 → 1.0.1) — adds a **dispute / retaliation
+  screen** as a priority-0 tactic. Before dialing, the agent must
+  check whether the tip names a specific third party the operator
+  is in active dispute with (counterparty in lawsuit, ex-partner,
+  ex-employer, family with active estate / custody dispute) AND
+  whether the operator has DIRECT evidence beyond their own
+  grievance. If both — proceed with the dispute context flagged
+  honestly to the agent on the line. If second condition fails —
+  refuse. Calls out 18 U.S.C. § 1001 explicitly.
+- `report-elder-or-child-abuse` (1.0.0 → 1.0.1) — equivalent
+  screen for custody / inheritance disputes weaponising APS / CPS
+  intake against a counterparty.
+- `call-988-crisis-line` (1.0.0 → 1.0.1) — confidentiality
+  hardening: explicit refusal to relay call content to third
+  parties post-hangup, with the boundary expanded to cover
+  subpoenas (the agent doesn't bypass legal process but doesn't
+  hand over content casually either).
+
+### Bumps
+
+`core` 0.9.33 → 0.9.34, `cli` 0.9.87 → 0.9.88.
+
 ## [0.9.87] - 2026-05-20
 
 ### Added — 160+ built-in skills (community drop + emergency-services bundle)

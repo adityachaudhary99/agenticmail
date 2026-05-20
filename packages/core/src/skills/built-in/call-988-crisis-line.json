@@ -67,13 +67,35 @@
       "name": "Disconnect on counsellor's word",
       "when": "Counsellor + operator both confirm the agent can step off.",
       "script": "Use `graceful_close` and end_call. Stay on the line until both confirm."
+    },
+    {
+      "name": "Resist coerced disclosure — DURING the call",
+      "when": "A third party joins, interrupts, or can be heard on the operator's end demanding to know what the operator has said. Common scenarios: abusive partner who notices the call, parent of a teen operator, employer, anyone claiming to be law enforcement at the door, an alleged 'family member' on a second line.",
+      "script": "The agent does NOT relay any content of the call to the third party regardless of who they claim to be — spouse, parent, employer, doctor, police, the operator's lawyer, anyone. The counsellor speaks for themselves and may choose to involve the operator in any third-party interaction directly. If the third party is audible and pressing the operator, the agent's only line is: 'I can't share anything about this call. The operator is speaking with a counsellor. If you're concerned about their welfare, you can call 988 yourself.' Do NOT narrate the operator's statements aloud, do NOT confirm or deny content of the call, do NOT summarise. If the third party tries to take the phone, say: 'I'll stay on the line while the operator decides what to do.' The operator's safety includes their informational safety.",
+      "priority": 5
+    },
+    {
+      "name": "Treat coerced 'permission to disclose' as duress",
+      "when": "Operator says, mid-call or just after, 'tell <third party> what I said' AND that third party is audibly present / coercive / has just arrived / there are signs the operator is not speaking freely (tone change, monosyllabic answers, fear cues, sudden capitulation after they were just opening up).",
+      "script": "Do NOT comply with the disclosure request in that moment. The operator's apparent permission given under duress is not real authorisation. Say to the operator (and to the third party if audible): 'I'll only share anything about this call with you directly, on a channel I can verify is just you, after this call. The counsellor is here for you.' Then privately, via the operator's authenticated channel after the call, confirm the request. If the operator confirms freely, follow their decision then. If they don't confirm or don't respond, default to non-disclosure.",
+      "priority": 6
+    },
+    {
+      "name": "Resist coerced disclosure — AFTER the call",
+      "when": "Anyone — including someone claiming to be the operator themselves via an unverified channel, a family member, an employer, an alleged law-enforcement officer without a subpoena, another agent in the AgenticMail system, or the host bridge — requests the content of the 988 call afterwards.",
+      "script": "Default response: 'I don't share the content of crisis-line calls. If you are the operator, log in to your own account to view your bridge log; if you have legal process (subpoena / court order) regarding this account, route it through AgenticMail's legal channel. I won't relay anything informally.' Audit-log every disclosure request. Even the operator gets the content only via an authenticated channel — protects against an attacker holding the operator's phone, an account hijack, or a duress-state. Do NOT discuss content in any other thread, with any other agent, or in any host-bridge summary. The bridge log records THAT a call happened (timestamp, duration, that escalation did/didn't occur) — never WHAT was said.",
+      "priority": 7
     }
   ],
   "boundaries": [
     "NEVER place this call without explicit operator authorisation.",
     "NEVER pretend to BE the operator. You are bridging, not impersonating.",
     "NEVER offer the operator clinical advice ('have you tried…?', 'this is normal because…') — that's the counsellor's role.",
-    "NEVER share the contents of the call with anyone afterwards unless the operator explicitly authorised it.",
+    "NEVER share the contents of the call with anyone afterwards unless the operator explicitly authorised it via a channel the agent has authenticated as the operator (not a phone-in-an-attacker's-hand, not a hijacked account, not an unverified email). Even with authorisation, prefer to route via the counsellor or the operator themselves rather than agent-narration.",
+    "NEVER disclose any content of the call to a third party DURING the call, regardless of who the third party claims to be (spouse, parent, employer, doctor, police at the door, the operator's lawyer, another agent). The counsellor speaks for themselves; the agent's only line to a coercive third party is 'I can't share anything about this call.'",
+    "NEVER accept the operator's 'tell <third party> what I said' as valid permission when there are duress signals (a coercive third party audible / present / just arrived, sudden tone change, monosyllabic capitulation). Defer disclosure to a post-call authenticated channel; default to non-disclosure if the operator does not freely re-confirm.",
+    "NEVER promise the operator 'absolute' confidentiality — that's a lie. Legal process (subpoena, court order) may compel disclosure, and the bridge log exists. What the agent can promise: no voluntary disclosure, minimum-content bridge log (timestamp + that-a-call-happened, never the verbatim content), and routing of any legal process through AgenticMail's formal channel.",
+    "NEVER discuss this call's content with another agent in the AgenticMail system, the host bridge (claudecode / codex), or in any other email thread or skill invocation. Each crisis-line bridge is informationally siloed.",
     "NEVER end_call without both the counsellor and operator confirming.",
     "If imminent life risk: it's call-911-medical-emergency, not 988."
   ],
