@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.75] - 2026-05-20
+
+### Fixed — Telegram bridge spawned MCP via a binary that often isn't installed
+
+The bridge's auto-generated `mcp-config.json` hardcoded the MCP server
+command as bare `agenticmail-mcp` — the binary from
+`@agenticmail/mcp`. But `@agenticmail/cli` doesn't pull `mcp` in as a
+transitive dependency, so a fresh `npm install -g @agenticmail/cli`
+installs the cli without the mcp binary. Claude couldn't find the
+command, so the MCP server never started, so the agent had no
+AgenticMail tools — and replied to the operator's "call me" DM with
+"the voice tool isn't loaded".
+
+The bridge now resolves the MCP command at config-write time:
+1. If `agenticmail-mcp` is on PATH, use it (cheapest cold-start).
+2. Otherwise fall back to `npx -y @agenticmail/mcp@latest` — fresh
+   installs Just Work; first spawn caches into `~/.npm/_npx/` so
+   subsequent spawns are fast.
+
+The bridge logs the resolved command at startup
+(`mcp server command: npx -y @agenticmail/mcp@latest`) so a
+misconfiguration is obvious from a single grep on the pm2 log.
+
+### Documented — Claude Code dispatcher requires Claude OAuth OR an API key
+
+Anthropic's recent policy lets an org disable Claude-subscription
+access for Claude Code without disabling Claude itself. When that
+flips, the dispatcher's spawned workers fail with `Your organization
+has disabled Claude subscription access for Claude Code` even though
+the operator's interactive `claude` CLI still works (and the Telegram
+bridge keeps working, since it uses a direct OAuth bearer from
+`~/.fola-claude-token`, not the subscription-routed Claude Code
+auth path).
+
+Workarounds:
+- Have the org admin re-enable Claude Code subscription access; OR
+- Set `ANTHROPIC_API_KEY` (pay-per-token) for the dispatcher's spawn
+  env so it uses the API path instead of the subscription path.
+
 ## [0.9.74] - 2026-05-20
 
 ### Fixed — Telegram bot couldn't see the voice / phone tool

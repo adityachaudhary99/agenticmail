@@ -25,6 +25,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { execFileSync } from 'node:child_process';
 import { createLogger } from './lib/log.mjs';
 import {
   FOLA_DIR,
@@ -84,11 +85,34 @@ function ensureMcpConfig(log) {
     return null;
   }
   const apiUrl = process.env.AGENTICMAIL_API_URL || 'http://127.0.0.1:3829';
+
+  // Resolve the MCP server command. Three paths in order of preference:
+  //
+  //   1. `agenticmail-mcp` is on PATH — they already installed
+  //      `@agenticmail/mcp` globally. Cheapest cold-start.
+  //   2. Fall through to `npx -y @agenticmail/mcp@latest` — fresh
+  //      installs that only ran `npm install -g @agenticmail/cli`
+  //      (which doesn't pull mcp transitively) still get a working
+  //      bridge. First spawn caches into ~/.npm/_npx so subsequent
+  //      spawns are fast.
+  //
+  // The earlier bridge config hardcoded the bare `agenticmail-mcp`
+  // command, which silently failed in case 2 — Claude couldn't find
+  // the binary and spawned with zero MCP tools, leaving the agent
+  // to apologise that "the voice tool isn't loaded" when the user
+  // asked for a phone call.
+  let command = 'npx';
+  let args = ['-y', '@agenticmail/mcp@latest'];
+  try {
+    const onPath = execFileSync('which', ['agenticmail-mcp'], { timeout: 3_000, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    if (onPath) { command = onPath; args = []; }
+  } catch { /* not on PATH — npx fallback wins */ }
+
   const cfg = {
     mcpServers: {
       agenticmail: {
-        command: 'agenticmail-mcp',
-        args: [],
+        command,
+        args,
         env: {
           AGENTICMAIL_API_KEY: agentKey,
           AGENTICMAIL_API_URL: apiUrl,
@@ -97,6 +121,7 @@ function ensureMcpConfig(log) {
     },
   };
   writeFileSync(MCP_CONFIG_FILE, JSON.stringify(cfg, null, 2));
+  log.info(`mcp server command: ${command} ${args.join(' ')}`.trim());
   return MCP_CONFIG_FILE;
 }
 
