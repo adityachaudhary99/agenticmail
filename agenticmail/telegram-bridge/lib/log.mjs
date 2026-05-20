@@ -1,5 +1,5 @@
 /**
- * Structured logger shared across all Fola always-on services.
+ * Structured logger shared across the agenticmail-telegram-bridge service.
  * Uses service tag to make multi-service PM2 logs scannable.
  */
 

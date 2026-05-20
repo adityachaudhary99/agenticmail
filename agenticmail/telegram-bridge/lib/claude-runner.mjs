@@ -8,12 +8,12 @@
  * `--resume <same-uuid>` so each Telegram user has one continuous
  * conversation that survives bridge restarts.
  *
- * Why standard `claude`, not the Fola harness — AgenticMail ships against
- * the public Claude Code CLI (installed globally as `claude`), not against
- * the agent-harness's vendored build. The harness wrapper exists in
- * `agent-harness/cli.js` and includes its own MCP / persona plumbing the
- * bridge doesn't need. Standard `claude` is simpler, gets the same model
- * via env vars, and avoids the harness becoming a runtime dependency.
+ * Always uses the standard, publicly-installed `claude` binary — the
+ * one a user gets from `npm install -g @anthropic-ai/claude-code`.
+ * Custom Claude wrappers (vendored builds with extra MCP / persona
+ * plumbing) are deliberately NOT used: they would become a runtime
+ * dependency of every install, and the bridge's needs are met by
+ * the standard CLI plus the MCP server we wire in via `--mcp-config`.
  */
 
 import { spawn } from 'node:child_process';
@@ -45,7 +45,7 @@ function claudeBin() {
  * `~/.claude/projects/<sanitized-cwd>/<session-id>.jsonl`, where sanitized
  * cwd replaces `/` with `-`. We always run with `cwd = TG_DIR` so the
  * mapping is predictable and the bridge can detect "is this session new
- * or resumed?" by file existence, identical to how Fola does it.
+ * or resumed?" by file existence, same pattern Claude Code itself uses for its --resume flag.
  */
 export function sessionFilePath(sessionId) {
   // Claude Code's actual project-dir sanitisation replaces BOTH `/` AND `.`
@@ -68,27 +68,29 @@ export function sessionExists(sessionId) {
  * Load the Anthropic OAuth bearer for the bridge's spawned `claude` runs.
  *
  * Lookup order — first hit wins:
- *   1. The bridge's own token file at `~/.agenticmail/telegram/anthropic-token`
- *      (so the bot can run under a different account than the operator's
- *      interactive Claude session if desired).
- *   2. The Fola token file at `~/.fola-claude-token` — Fola has had a
- *      working OAuth token there for ages on this machine; reusing it
- *      means the AgenticMail bridge "just works" alongside the existing
- *      Fola bridge without re-authing.
- *   3. The standard `ANTHROPIC_AUTH_TOKEN` env var.
+ *   1. The bridge's own token file at
+ *      `~/.agenticmail/telegram/anthropic-token` — operator-owned,
+ *      0600. The bot can run under a different account than the
+ *      operator's interactive Claude session if desired.
+ *   2. The shared AgenticMail token file at
+ *      `~/.agenticmail/anthropic-token` — also operator-owned, shared
+ *      with the claudecode dispatcher so a single token grants both
+ *      paths without copying.
+ *   3. The standard `ANTHROPIC_AUTH_TOKEN` env var (typical pm2
+ *      ecosystem.config.cjs setup).
  *
- * Returns { token, source } so the bridge can log which source it picked —
- * stale env tokens are otherwise hard to diagnose in pm2.
+ * Returns { token, source } so the bridge can log which source it
+ * picked — stale env tokens are otherwise hard to diagnose in pm2.
  */
 export function loadAnthropicToken() {
   if (existsSync(ANTHROPIC_TOKEN_FILE)) {
     const t = readFileSync(ANTHROPIC_TOKEN_FILE, 'utf8').trim();
-    if (t) return { token: t, source: 'agenticmail-file' };
+    if (t) return { token: t, source: 'agenticmail-telegram-file' };
   }
-  const fola = join(homedir(), '.fola-claude-token');
-  if (existsSync(fola)) {
-    const t = readFileSync(fola, 'utf8').trim();
-    if (t) return { token: t, source: 'fola-file' };
+  const shared = join(homedir(), '.agenticmail', 'anthropic-token');
+  if (existsSync(shared)) {
+    const t = readFileSync(shared, 'utf8').trim();
+    if (t) return { token: t, source: 'agenticmail-shared-file' };
   }
   if (process.env.ANTHROPIC_AUTH_TOKEN) {
     return { token: process.env.ANTHROPIC_AUTH_TOKEN, source: 'env' };

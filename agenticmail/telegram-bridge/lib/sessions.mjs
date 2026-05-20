@@ -12,10 +12,25 @@ import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import {
-  FOLA_DIR,
+  TG_DIR,
   TELEGRAM_SESSIONS_FILE,
   TELEGRAM_LEGACY_SESSION_FILE,
 } from './paths.mjs';
+
+/**
+ * Resolve the on-disk path for a Claude Code session file, given the
+ * session UUID. Claude Code writes session jsonl to
+ * `~/.claude/projects/<sanitised-cwd>/<id>.jsonl`, where the cwd is
+ * sanitised by replacing BOTH `/` AND `.` with `-`. The bridge always
+ * runs Claude with `cwd = TG_DIR` (see claude-runner.mjs), so we
+ * derive the sanitised name from TG_DIR rather than hardcoding any
+ * absolute filesystem path — earlier versions of this file embedded
+ * a developer-machine path that broke on every other install.
+ */
+function sessionFilePathFor(sessionId) {
+  const sanitised = TG_DIR.replace(/[/.]/g, '-');
+  return join(homedir(), '.claude', 'projects', sanitised, `${sessionId}.jsonl`);
+}
 
 // Session rotation: max size before starting a fresh session.
 // Bumped from the original 5MB ceiling — Claude Code's
@@ -39,7 +54,7 @@ export class SessionMap {
   }
 
   load() {
-    mkdirSync(FOLA_DIR, { recursive: true });
+    mkdirSync(TG_DIR, { recursive: true });
 
     if (existsSync(TELEGRAM_SESSIONS_FILE)) {
       try {
@@ -70,7 +85,7 @@ export class SessionMap {
   }
 
   persist() {
-    mkdirSync(FOLA_DIR, { recursive: true });
+    mkdirSync(TG_DIR, { recursive: true });
     writeFileSync(TELEGRAM_SESSIONS_FILE, JSON.stringify(this.sessions, null, 2));
   }
 
@@ -118,10 +133,7 @@ export class SessionMap {
    */
   shouldRotate(sessionId) {
     try {
-      // Session files live at ~/.claude/projects/-Users-ope-Desktop-projects-agent-harness/<id>.jsonl
-      const harnessDir = '/Users/ope/Desktop/projects/agent-harness';
-      const sanitized = harnessDir.replace(/\//g, '-');
-      const sessionFile = join(homedir(), '.claude', 'projects', sanitized, `${sessionId}.jsonl`);
+      const sessionFile = sessionFilePathFor(sessionId);
       if (!existsSync(sessionFile)) return false;
       const stat = statSync(sessionFile);
       return stat.size > MAX_SESSION_BYTES;
@@ -154,12 +166,12 @@ export class SessionMap {
   }
 
   /**
-   * Build a session file path for a given session id.
+   * Build a session file path for a given session id. Derived from
+   * the bridge's own TG_DIR rather than any hardcoded developer
+   * path — see `sessionFilePathFor` above.
    */
   sessionFilePath(sessionId) {
-    const harnessDir = '/Users/ope/Desktop/projects/agent-harness';
-    const sanitized = harnessDir.replace(/\//g, '-');
-    return join(homedir(), '.claude', 'projects', sanitized, `${sessionId}.jsonl`);
+    return sessionFilePathFor(sessionId);
   }
 
   /**

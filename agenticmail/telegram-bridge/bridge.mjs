@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * fola-telegram-bridge — always-on Telegram ↔ fola-claude router.
+ * agenticmail-telegram-bridge — always-on Telegram ↔ claude router.
  *
- * Shuttles inbound Telegram messages into fola-claude and streams the
+ * Shuttles inbound Telegram messages into claude and streams the
  * responses back. Supports:
  *   - Long-polling (default) OR webhook mode (if webhook URL configured)
  *   - Per-sender session isolation — each Telegram user gets a continuous
@@ -15,12 +15,12 @@
  *   - Per-chat inflight dedup + typing indicator
  *   - Clean restart recovery via persistent offset
  *
- * Setup: run `fola-telegram-setup` or see the top of that file for details.
+ * Setup: run `agenticmail setup-telegram` or see the top of that file for details.
  *
  * Env overrides:
  *   TELEGRAM_BOT_TOKEN           — inline bot token (overrides token file)
- *   FOLA_BRIDGE_MODE             — 'poll' | 'webhook' (default: auto-detect)
- *   FOLA_WEBHOOK_PORT            — port for webhook HTTP server (default: 8787)
+ *   AGENTICMAIL_BRIDGE_MODE             — 'poll' | 'webhook' (default: auto-detect)
+ *   AGENTICMAIL_BRIDGE_WEBHOOK_PORT            — port for webhook HTTP server (default: 8787)
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -28,7 +28,7 @@ import { createServer } from 'node:http';
 import { execFileSync } from 'node:child_process';
 import { createLogger } from './lib/log.mjs';
 import {
-  FOLA_DIR,
+  TG_DIR,
   TELEGRAM_TOKEN_FILE,
   TELEGRAM_ALLOWED_IDS_FILE,
   TELEGRAM_OFFSET_FILE,
@@ -46,7 +46,7 @@ import {
   getWebhookInfo,
 } from './lib/telegram-api.mjs';
 import { SessionMap } from './lib/sessions.mjs';
-import { runClaude as runFolaClaude, loadAnthropicToken } from './lib/claude-runner.mjs';
+import { runClaude, loadAnthropicToken } from './lib/claude-runner.mjs';
 
 /**
  * Generate (or refresh) the MCP config the spawned `claude -p` turn loads.
@@ -157,7 +157,7 @@ function loadOffset() {
 }
 
 function saveOffset(offset) {
-  mkdirSync(FOLA_DIR, { recursive: true });
+  mkdirSync(TG_DIR, { recursive: true });
   writeFileSync(
     TELEGRAM_OFFSET_FILE,
     JSON.stringify({ offset, updatedAt: new Date().toISOString() }),
@@ -191,7 +191,7 @@ function formatPrompt(msg, mediaPaths) {
   // and telegram_send is for OTHER chats only, we get exactly one message
   // per turn.
   const header = [
-    '[Incoming Telegram message — via fola-telegram-bridge]',
+    '[Incoming Telegram message — via agenticmail-telegram-bridge]',
     `from_name: ${senderName}`,
     `from_id: ${from.id}`,
     `chat_id: ${chat.id}`,
@@ -271,7 +271,7 @@ const seenMessageIds = new Map(); // chatId → Set<messageId>
 const SEEN_IDS_MAX = 500;
 
 // Words that, when sent alone (case-insensitive, trimmed, optional trailing
-// punctuation), abort whatever fola-claude run is in flight for that chat and
+// punctuation), abort whatever claude run is in flight for that chat and
 // clear any queued follow-ups. Kept narrow on purpose: anything longer or
 // ambiguous should be treated as a normal message.
 const STOP_WORDS = new Set(['stop', 'abort', 'kill', 'cancel', 'halt']);
@@ -302,14 +302,14 @@ function getChatQueue(chatId) {
     chatQueues.set(chatId, {
       messages: [],
       processing: false,
-      currentChild: null, // spawned fola-claude ChildProcess during a run
+      currentChild: null, // spawned claude ChildProcess during a run
       aborted: false,     // set by a stop command so the worker skips reply
     });
   }
   return chatQueues.get(chatId);
 }
 
-/** Kill the in-flight fola-claude run for a chat (if any) and clear its queue. */
+/** Kill the in-flight claude run for a chat (if any) and clear its queue. */
 function abortChatRun(chatId) {
   const queue = chatQueues.get(chatId);
   if (!queue) return { killed: false, dropped: 0 };
@@ -430,7 +430,7 @@ async function handleMessage(msg, state) {
 
 /**
  * Worker loop for a single chat. Drains the queue one batch at a time.
- * While a fola-claude turn is running, new messages accumulate in the queue.
+ * While a claude turn is running, new messages accumulate in the queue.
  * When the turn finishes, the worker checks if more messages arrived and
  * combines them into one prompt for the next turn (the "btw" batch).
  */
@@ -498,7 +498,7 @@ async function processChatQueue(chatId, state) {
         queue.aborted = false;
         let result;
         try {
-          result = await runFolaClaude({
+          result = await runClaude({
             prompt,
             sessionId,
             sessionHandoff,
@@ -605,9 +605,9 @@ async function runPollingLoop(state) {
 
 // ── transport: webhook ──────────────────────────────────────────────────────
 async function runWebhookServer(state, webhookCfg) {
-  const port = Number(process.env.FOLA_WEBHOOK_PORT || webhookCfg.port || 8787);
-  const path = webhookCfg.path || `/fola-telegram-webhook`;
-  const url = webhookCfg.url; // public URL: e.g. https://fola.example.com + path
+  const port = Number(process.env.AGENTICMAIL_BRIDGE_WEBHOOK_PORT || webhookCfg.port || 8787);
+  const path = webhookCfg.path || `/agenticmail-telegram-webhook`;
+  const url = webhookCfg.url; // public URL: e.g. https://your-domain.example + path
   const secret = webhookCfg.secret;
 
   if (!url) {
@@ -670,12 +670,12 @@ async function runWebhookServer(state, webhookCfg) {
 
 // ── main ─────────────────────────────────────────────────────────────────────
 async function main() {
-  mkdirSync(FOLA_DIR, { recursive: true });
+  mkdirSync(TG_DIR, { recursive: true });
 
   const token = loadBotToken();
   const { token: anthropicToken, source: tokenSource } = loadAnthropicToken();
   if (!anthropicToken) {
-    log.error('No Anthropic OAuth token. Save to ~/.fola-claude-token');
+    log.error('No Anthropic OAuth token. Save it to ~/.agenticmail/anthropic-token (or set ANTHROPIC_AUTH_TOKEN).');
     process.exit(1);
   }
   log.info(`anthropic token source: ${tokenSource} (suffix ...${anthropicToken.slice(-6)})`);
@@ -709,7 +709,7 @@ async function main() {
     stopServer: null,
   };
 
-  // Deferred shutdown: if SIGINT/SIGTERM arrives while a fola-claude child
+  // Deferred shutdown: if SIGINT/SIGTERM arrives while a claude child
   // is processing, DON'T exit immediately — the response would be lost and
   // the user sees silence. Instead, set running=false so the poll loop
   // stops after the current batch, and let processChatQueue's finally block
@@ -738,11 +738,11 @@ async function main() {
 
   // Mode selection
   const webhookCfg = loadWebhookConfig();
-  const mode = process.env.FOLA_BRIDGE_MODE || (webhookCfg?.url ? 'webhook' : 'poll');
+  const mode = process.env.AGENTICMAIL_BRIDGE_MODE || (webhookCfg?.url ? 'webhook' : 'poll');
 
   if (mode === 'webhook') {
     if (!webhookCfg) {
-      log.error(`FOLA_BRIDGE_MODE=webhook but ${TELEGRAM_WEBHOOK_CONFIG_FILE} is missing`);
+      log.error(`AGENTICMAIL_BRIDGE_MODE=webhook but ${TELEGRAM_WEBHOOK_CONFIG_FILE} is missing`);
       process.exit(1);
     }
     await runWebhookServer(state, webhookCfg);

@@ -40,43 +40,32 @@ import { resolveDispatcherTuning } from './dispatcher-tuning.js';
  * disabling Claude itself. When that flips, the SDK's default auth
  * path (subscription-routed Claude Code) fails with `Your organization
  * has disabled Claude subscription access for Claude Code` even
- * though the operator's interactive `claude` CLI still works AND the
- * Telegram bridge keeps working — because the bridge spawns `claude
- * -p` with `ANTHROPIC_AUTH_TOKEN` set, which routes the request as a
- * direct bearer instead of through the subscription policy check.
+ * though the operator's interactive `claude` CLI still works. The
+ * fix is to give the SDK a direct OAuth bearer via
+ * `ANTHROPIC_AUTH_TOKEN` (or, alternatively, an `ANTHROPIC_API_KEY`
+ * for pay-per-token billing). Either of those routes the request
+ * outside the subscription-policy check.
  *
- * The dispatcher used to inherit `ANTHROPIC_AUTH_TOKEN` only if pm2
- * happened to have it in env. Now we look in the standard
- * token-file locations first (same order the Telegram bridge uses) so
- * a default install Just Works without the operator having to edit
- * pm2's env config or export anything globally:
+ * Lookup order — first hit wins:
  *
- *   1. `~/.agenticmail/anthropic-token`  — AgenticMail-owned location.
- *   2. `~/.fola-claude-token`            — the original agent-harness
- *                                          token file. Operators on
- *                                          this machine already have
- *                                          it for the Fola bridge; if
- *                                          they used it the cli's
- *                                          claudecode integration
- *                                          installer copies the path
- *                                          forward.
- *   3. `process.env.ANTHROPIC_AUTH_TOKEN` — already set by the
- *                                          operator / pm2 ecosystem.
- *   4. `process.env.ANTHROPIC_API_KEY`    — pay-per-token API path
- *                                          (different from OAuth but
- *                                          accepted by the SDK).
+ *   1. `process.env.ANTHROPIC_AUTH_TOKEN`  — already set by the
+ *                                            operator / pm2 ecosystem.
+ *   2. `process.env.ANTHROPIC_API_KEY`     — pay-per-token API path,
+ *                                            also accepted by the SDK.
+ *   3. `~/.agenticmail/anthropic-token`    — operator-owned token file.
+ *                                            Same path the Telegram
+ *                                            bridge reads, so one
+ *                                            token covers both paths.
  *
- * Sets `process.env.ANTHROPIC_AUTH_TOKEN` from the first matching
- * file so the SDK reads it on import. No-op when the token is
- * already set or no file is found (the SDK will then attempt its
- * default Claude Code subscription path, which is correct for orgs
- * that haven't flipped the policy flag).
+ * Sets `process.env.ANTHROPIC_AUTH_TOKEN` from the file when the
+ * env-var routes aren't already set. No-op when no file exists (the
+ * SDK then attempts its default Claude Code subscription path,
+ * correct for orgs that haven't flipped the policy flag).
  */
 function ensureAnthropicTokenInEnv(): void {
   if (process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY) return;
   const candidates = [
     join(homedir(), '.agenticmail', 'anthropic-token'),
-    join(homedir(), '.fola-claude-token'),
   ];
   for (const path of candidates) {
     if (!existsSync(path)) continue;

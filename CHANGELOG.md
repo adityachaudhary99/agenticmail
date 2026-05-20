@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.77] - 2026-05-20
+
+### Fixed — removed maintainer's private project name + file paths from shipped code
+
+Two leaks and one runtime bug from the v0.9.61 Telegram-bridge port
+that slipped through into v0.9.76:
+
+1. **`~/.fola-claude-token` fallback** in the Telegram bridge's
+   `loadAnthropicToken` AND the claudecode dispatcher's
+   `ensureAnthropicTokenInEnv`. That filename is private to the
+   maintainer's own machine and shouldn't be the documented public
+   default. Both now look at `~/.agenticmail/anthropic-token` only;
+   operators who want to share a token across projects can symlink.
+
+2. **`/Users/ope/Desktop/projects/agent-harness` hardcoded in
+   `agenticmail/telegram-bridge/lib/sessions.mjs`** — `shouldRotate`
+   and `sessionFilePath` both built their `~/.claude/projects/…`
+   path against the maintainer's absolute developer-machine path.
+   That broke session rotation and handoff for every other install.
+   Both now derive the path from `TG_DIR` (the bridge's actual
+   working directory: `~/.agenticmail/telegram`), with `/` AND `.`
+   replaced by `-` (matching Claude Code's actual sanitisation rule).
+
+3. **`fola` / `Fola` / `FOLA` in 12+ comments, log strings, env
+   vars** across `bridge.mjs`, `claude-runner.mjs`, `sessions.mjs`,
+   `log.mjs`, and `paths.mjs`. All scrubbed — the bridge now
+   refers to itself as `agenticmail-telegram-bridge`; the
+   `FOLA_DIR` / `FOLA_BRIDGE_MODE` / `FOLA_WEBHOOK_PORT` aliases
+   are renamed to `TG_DIR` / `AGENTICMAIL_BRIDGE_MODE` /
+   `AGENTICMAIL_BRIDGE_WEBHOOK_PORT`.
+
+Net effect: a `grep -r fola packages/ agenticmail/` against the
+published code now returns zero matches. Same goes for any
+absolute path starting with `/Users/ope`.
+
 ## [0.9.76] - 2026-05-20
 
 ### Fixed — claudecode dispatcher now uses the OAuth bearer like the Telegram bridge does
@@ -20,7 +55,7 @@ direct bearer instead of through the policy check.
 
 The dispatcher now does the same lookup at startup: checks
 `~/.agenticmail/anthropic-token` first, falls back to
-`~/.fola-claude-token` (same location the bridge reads), and sets
+`~/.agenticmail/anthropic-token` (same location the bridge reads), and sets
 `process.env.ANTHROPIC_AUTH_TOKEN` if either has a token. The SDK
 picks it up on import and uses bearer auth — bypassing the
 subscription policy check that Anthropic's org policy flag controls.
@@ -65,7 +100,7 @@ flips, the dispatcher's spawned workers fail with `Your organization
 has disabled Claude subscription access for Claude Code` even though
 the operator's interactive `claude` CLI still works (and the Telegram
 bridge keeps working, since it uses a direct OAuth bearer from
-`~/.fola-claude-token`, not the subscription-routed Claude Code
+`~/.agenticmail/anthropic-token`, not the subscription-routed Claude Code
 auth path).
 
 Workarounds:
