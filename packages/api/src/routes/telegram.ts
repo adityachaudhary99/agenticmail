@@ -556,5 +556,56 @@ export function createTelegramRoutes(
     }
   });
 
+  /**
+   * v0.9.91 — operator-query answer intake from the standalone
+   * Telegram bridge. The bridge does its own long-polling (poll mode),
+   * so `/telegram/poll` would race against it. This endpoint takes
+   * a SINGLE already-parsed Telegram message and runs only the
+   * operator-query branch of `processInboundMessage` — no second
+   * Telegram fetch. The bridge calls this BEFORE forwarding the
+   * message to claudecode; if `answered` comes back true, the
+   * bridge sends the confirmation back to the operator and SKIPS
+   * the claudecode forward.
+   *
+   * Body shape mirrors {@link ParsedTelegramMessage} — chatId, text,
+   * messageId, replyToText, plus the standard sender fields. Agent
+   * is authenticated via the agent-key bearer (same as every other
+   * route on this router).
+   */
+  router.post('/telegram/operator-query/intake', (req: Request, res: Response) => {
+    try {
+      const agent = getAgent(req, res);
+      if (!agent) return;
+      const cfg = telegramManager.getConfig(agent.id);
+      if (!cfg?.enabled) {
+        return res.status(400).json({ error: 'Telegram not configured for this agent.' });
+      }
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const parsed = {
+        chatId: String(body.chatId ?? ''),
+        chatType: String(body.chatType ?? 'private') as 'private' | 'group' | 'supergroup' | 'channel',
+        messageId: Number(body.messageId ?? 0),
+        fromId: body.fromId == null ? undefined : String(body.fromId),
+        fromName: body.fromName == null ? undefined : String(body.fromName),
+        fromUsername: body.fromUsername == null ? undefined : String(body.fromUsername),
+        text: String(body.text ?? ''),
+        replyToText: body.replyToText == null ? undefined : String(body.replyToText),
+        updateId: Number(body.updateId ?? 0),
+      };
+      if (!parsed.chatId || !parsed.messageId || !parsed.text) {
+        return res.status(400).json({ error: 'chatId, messageId and text are required.' });
+      }
+      const result = processInboundMessage(telegramManager, phoneManager, agent.id, cfg, parsed);
+      return res.json({
+        recorded: result.recorded,
+        answered: Boolean(result.answeredQueryId),
+        answeredQueryId: result.answeredQueryId ?? null,
+        confirmation: result.confirmation ?? null,
+      });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
   return router;
 }

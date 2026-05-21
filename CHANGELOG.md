@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.91] - 2026-05-20
+
+### Fixed — caller voice in end-of-call digest + bridge-side operator-query intake + dispatcher awareness
+
+Three related fixes for the same field report (operator delegated a
+dentist-cancel call → voice agent asked for DOB → operator replied
+on Telegram → answer never reached the live call):
+
+1. **OpenAI Realtime input-audio transcription was never enabled.**
+   The bridge had code to handle `conversation.item.input_audio_
+   transcription.completed` events, but the session.update never
+   asked for them — so the caller's voice was relayed audibly to
+   the model but no transcript events came back. End-of-call
+   digests showed only the agent's side of the conversation.
+   Enabled `audio.input.transcription = { model: "gpt-4o-mini-
+   transcribe" }` in `buildRealtimeSessionConfig`. Next call's
+   digest interleaves both speakers, properly.
+
+2. **Telegram bridge now intercepts operator-query answers BEFORE
+   forwarding to claudecode.** New endpoint `/telegram/operator-
+   query/intake` runs only the operator-query branch of
+   `processInboundMessage` against a single parsed message. The
+   bridge calls this on every incoming text (when intake is
+   enabled — agent-key present on disk). If the API consumes the
+   message as an answer, the bridge sends the confirmation and
+   skips the claudecode forward. Sub-second routing of an answer
+   to the live call, no LLM round-trip.
+
+3. **claudecode dispatcher subagent template** gains a "Live phone
+   calls — operator-query awareness" section. Teaches the
+   dispatcher: a date / SSN-4 / account-number-shaped string
+   right after the operator delegated a call is almost certainly
+   an answer to a verification challenge, not a curiosity
+   question. Check for open queries first, post the answer via
+   `answer_operator_query`, acknowledge to the operator. The
+   emergent "claudecode re-dialed with the DOB this time" behaviour
+   from the field report is now the documented fallback path.
+
+### Bumps
+
+`core` 0.9.36 → 0.9.37, `api` 0.9.56 → 0.9.57, `claudecode` 0.2.29
+→ 0.2.30, `codex` 0.1.24 → 0.1.25, `cli` 0.9.90 → 0.9.91.
+
 ## [0.9.90] - 2026-05-20
 
 ### Changed — end-of-call digest interleaves both speakers; ask_operator UI cleaned up

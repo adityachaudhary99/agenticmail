@@ -88,6 +88,9 @@ describe('buildRealtimeSessionConfig', () => {
     expect(cfg.session.audio.input.turn_detection).toEqual({ type: 'server_vad' });
     expect(cfg.session.audio.output.voice).toBe(DEFAULT_REALTIME_VOICE);
     expect(cfg.session.instructions).toContain('Order a pizza');
+    // v0.9.91 — input-audio transcription must be enabled so the
+    // end-of-call digest gets the caller's side of the conversation.
+    expect(cfg.session.audio.input.transcription).toEqual({ model: 'gpt-4o-mini-transcribe' });
   });
 
   it('honours voice / model overrides and an explicit instructions string', () => {

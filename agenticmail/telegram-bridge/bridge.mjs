@@ -278,6 +278,38 @@ const SEEN_IDS_MAX = 500;
 // ambiguous should be treated as a normal message.
 const STOP_WORDS = new Set(['stop', 'abort', 'kill', 'cancel', 'halt']);
 
+/**
+ * v0.9.91 — POST a parsed Telegram message to the API's operator-query
+ * intake endpoint. The API parses the text for `/approve`, `/reject`,
+ * `/answer`, or a reply-quote with an `[AMQ oq_…]` tag, finds the
+ * matching pending operator query, and records the answer against the
+ * live phone mission. Returns the API's structured response, or null
+ * when intake is disabled (no agent-key on disk).
+ *
+ * Best-effort: any HTTP / network failure is THROWN so the caller can
+ * decide to fall through to claudecode (which is what the bridge does).
+ * A non-2xx response is logged and treated as "not consumed".
+ */
+async function tryOperatorQueryIntake(parsed, state, log) {
+  if (!state.agentKeyForIntake) return null;
+  const url = `${state.intakeApiBase}/api/agenticmail/telegram/operator-query/intake`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${state.agentKeyForIntake}`,
+    },
+    body: JSON.stringify(parsed),
+    signal: AbortSignal.timeout(5_000),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    log.warn(`intake non-2xx: ${res.status} ${body.slice(0, 200)}`);
+    return null;
+  }
+  return res.json();
+}
+
 function isStopCommand(text) {
   if (!text) return false;
   const cleaned = text.trim().toLowerCase().replace(/[!.?]+$/, '');
@@ -406,6 +438,53 @@ async function handleMessage(msg, state) {
   if (!text && mediaPaths.length === 0) {
     log.info(`empty message from user_id=${userId}, skipping`);
     return;
+  }
+
+  // v0.9.91 — operator-query intake. BEFORE forwarding to claudecode,
+  // ask the API whether this message answers a pending `ask_operator`
+  // query on a live phone call. If yes, the API records the answer (the
+  // voice agent on the call gets it within its next poll cycle), and the
+  // bridge sends a confirmation to the operator + skips the claudecode
+  // forward — much faster than letting an LLM round-trip notice it.
+  //
+  // Best-effort: if the API is unreachable, the intake throws, we log,
+  // and fall through to the regular claudecode path. The LLM still
+  // catches missed answers via its own context (the v0.9.91 dispatcher
+  // hardening also teaches claudecode to re-dial when an answer arrives
+  // after an operator query timed out).
+  if (text && mediaPaths.length === 0) {
+    try {
+      const intake = await tryOperatorQueryIntake({
+        chatId,
+        chatType: msg.chat?.type || 'private',
+        messageId,
+        fromId: userId,
+        fromName: [msg.from?.first_name, msg.from?.last_name].filter(Boolean).join(' ') || msg.from?.username || 'User',
+        fromUsername: msg.from?.username || '',
+        text,
+        replyToText: msg.reply_to_message?.text || msg.reply_to_message?.caption || '',
+        updateId: 0,
+      }, state, log);
+      if (intake?.answered) {
+        log.info(`operator-query answered via bridge intake: queryId=${intake.answeredQueryId} (skipping claudecode forward)`);
+        if (intake.confirmation) {
+          await sendMessage(state.token, chatId, intake.confirmation, {
+            replyToMessageId: messageId,
+          }).catch(() => {});
+        }
+        return; // consumed by operator-query path; no claudecode turn needed
+      }
+      if (intake?.confirmation) {
+        // Non-answered branch returned a hint (e.g. "you have 2 open
+        // questions, reply with /answer ..."). Surface it but still
+        // forward to claudecode so the LLM can also weigh in.
+        await sendMessage(state.token, chatId, intake.confirmation, {
+          replyToMessageId: messageId,
+        }).catch(() => {});
+      }
+    } catch (err) {
+      log.warn(`operator-query intake failed (${err.message}); falling through to claudecode`);
+    }
   }
 
   // /btw prefix → side-note framing. Strip the prefix from the text the agent
@@ -720,6 +799,24 @@ async function main() {
     log.info('persona: none configured (set AGENTICMAIL_AGENT_NAME or create ~/.agenticmail/agents/<name>/persona.md)');
   }
 
+  // v0.9.91 — bridge calls the API's operator-query intake endpoint
+  // before forwarding messages to claudecode, so a Telegram reply that
+  // answers a pending ask_operator query is routed to the live call in
+  // under a second (instead of waiting for an LLM round-trip). Read
+  // the agent key + API URL once at boot — both rarely change.
+  let agentKeyForIntake = '';
+  try {
+    if (existsSync(AGENT_KEY_FILE)) {
+      agentKeyForIntake = readFileSync(AGENT_KEY_FILE, 'utf8').trim();
+    }
+  } catch { /* missing key ⇒ intake path silently disabled */ }
+  const intakeApiBase = (process.env.AGENTICMAIL_API_URL || 'http://127.0.0.1:3829').replace(/\/$/, '');
+  if (agentKeyForIntake) {
+    log.info(`operator-query intake enabled (api: ${intakeApiBase})`);
+  } else {
+    log.info('operator-query intake disabled (no agent-key on disk)');
+  }
+
   const state = {
     token,
     anthropicToken,
@@ -727,6 +824,8 @@ async function main() {
     sessions,
     mcpConfig,
     personaPrompt,
+    agentKeyForIntake,
+    intakeApiBase,
     running: true,
     stopServer: null,
   };

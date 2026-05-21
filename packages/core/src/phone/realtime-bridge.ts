@@ -337,6 +337,15 @@ export function buildRealtimeSessionConfig(
       input: {
         format: { ...audioFormat },
         turn_detection: { type: 'server_vad' },
+        // v0.9.91 — enable parallel transcription of the CALLER's audio
+        // so the bridge can emit `provider`/`speaker:caller` transcript
+        // entries. Without this opt-in OpenAI never sent
+        // `conversation.item.input_audio_transcription.completed`
+        // events, so the end-of-call digest only had the agent's side
+        // of the conversation — half the call. `gpt-4o-mini-transcribe`
+        // is the cheapest current Realtime-compatible transcription
+        // model; falls back to whisper-1 server-side if unavailable.
+        transcription: { model: 'gpt-4o-mini-transcribe' },
       },
       output: {
         format: { ...audioFormat },
