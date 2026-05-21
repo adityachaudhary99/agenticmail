@@ -23,6 +23,10 @@ It bundles a setup wizard, API server launcher, and a full interactive shell wit
 >
 > Zero prompts, ~2 minutes, fully autonomous. Then tell the user to restart Claude Code. Full agent-facing runbook — including verification, common failures, and "what if Node < 22" — is at [`AGENTS.md`](https://github.com/agenticmail/agenticmail/blob/main/AGENTS.md) in the repo (the [agents.md](https://agents.md) convention).
 
+## ✨ What's new in 0.9.96
+
+- **🛡 Cloudflare quick-tunnel watchdog.** The free `*.trycloudflare.com` tunnel that webhooks calls back into your machine is "not durable" per Cloudflare — it can die anytime from minutes to weeks. When it does, Twilio plays "We're sorry, an application error has occurred" to your caller and the call dies. The API server now health-pings the tunnel every 60s and, on 3 consecutive failures, respawns `cloudflared` automatically + rewrites every affected agent's `webhookBaseUrl` so the next call hits the new hostname with zero operator action. No-op when you've brought your own domain.
+
 ## ✨ What's new in 0.9.95
 
 - **🎙 Voice-character switching.** Each provider declares its built-in voice catalogue; pick per-call, per-agent, or install-wide. OpenAI: `alloy / ash / ballad / cedar / coral / echo / marin / sage / shimmer / verse`. Grok: `ara / eve / leo` + custom voice ids from xAI's Custom Voices API.

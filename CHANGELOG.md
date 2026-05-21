@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.96] - 2026-05-21
+
+### Added — Cloudflare quick-tunnel watchdog (auto-respawn + auto-repoint)
+
+Cloudflare quick-tunnels (`cloudflared tunnel --url ...`) are
+documented as "not durable" — they can die silently from a process
+kill, an upstream reconnect failure, or Cloudflare rotating
+infrastructure. When that happens, Twilio's TwiML voice webhook
+fetches NXDOMAIN, Twilio plays its stock "application error has
+occurred" message, and the call dies before the bridge ever sees
+audio. (Field-confirmed this exact failure mode on 2026-05-21.)
+
+New `tunnel-watchdog.ts` runs inside the API server (started by
+`packages/api/src/index.ts` alongside the callback scheduler):
+
+- **Health-ping** the current `~/.agenticmail/tunnel.json` URL
+  every 60s via `/api/agenticmail/health` (proves the full
+  edge → tunnel → API round-trip, not just process liveness).
+- **3 consecutive failures** ⇒ declare dead.
+- **Auto-respawn** — spawn fresh `cloudflared tunnel --url http://127.0.0.1:<port>`,
+  capture the new `*.trycloudflare.com` URL from stdout,
+  persist to `tunnel.json`.
+- **Auto-repoint** — for every phone-transport config whose
+  `webhookBaseUrl` matches the old URL, rewrite to the new URL
+  via `PhoneManager.savePhoneTransportConfig`. No Twilio API
+  call needed; Twilio reads the URL fresh on each outbound
+  `/calls/start` call.
+- Transient blips (1-2 failed pings then recovered) reset the
+  counter without triggering respawn.
+- No-op when there's no tunnel file (operator brought their own
+  domain).
+
+Note on quick-tunnel TTL: Cloudflare doesn't document one.
+Lifetimes range from minutes to weeks. Reactive health-checked
+respawn is the right design; scheduled rotation isn't.
+
+### Bumps
+
+`api` 0.9.60 → 0.9.61, `cli` 0.9.95 → 0.9.96.
+
 ## [0.9.95] - 2026-05-21
 
 ### Added — voice-character switching (per provider) + interactive voice picker

@@ -7,6 +7,7 @@ import { closeAllSystemEventListeners } from './routes/system-events.js';
 import { startScheduledSender } from './routes/features.js';
 import { createRealtimeVoiceServer, REALTIME_WS_PATH } from './realtime-ws.js';
 import { startCallbackScheduler } from './callback-scheduler.js';
+import { startTunnelWatchdog } from './tunnel-watchdog.js';
 
 // Pre-resolve dynamically-loaded integration packages (e.g. @agenticmail/claudecode)
 // BEFORE the app is constructed, so their Express routes get mounted in the
@@ -44,6 +45,7 @@ const { port, host } = context.config.api;
 
 let scheduledTimer: ReturnType<typeof setInterval> | null = null;
 let stopCallbackScheduler: (() => void) | null = null;
+let stopTunnelWatchdog: (() => void) | null = null;
 
 const server = app.listen(port, host, async () => {
   const displayHost = host === '127.0.0.1' || host === '0.0.0.0' ? getLocalIp() : host;
@@ -94,6 +96,14 @@ const server = app.listen(port, host, async () => {
   // by itself; cleanup is wired into shutdown() below.
   stopCallbackScheduler = startCallbackScheduler(context.db, context.config);
 
+  // v0.9.96 — Cloudflare quick-tunnel watchdog. Pings the tunnel URL
+  // every minute; on 3 consecutive failures, respawns cloudflared,
+  // captures the new *.trycloudflare.com URL, and repoints every
+  // affected agent's phoneTransport.webhookBaseUrl so Twilio's TwiML
+  // voice webhook starts hitting the new hostname automatically.
+  // No-op when no tunnel file exists (operator brought their own domain).
+  stopTunnelWatchdog = startTunnelWatchdog(context.db, context.config);
+
   // Resume gateway (relay polling, domain tunnel) from saved config
   try {
     await context.gatewayManager.resume();
@@ -139,6 +149,7 @@ async function shutdown() {
   console.log('\nShutting down...');
   if (scheduledTimer) { try { clearInterval(scheduledTimer); } catch { /* ignore */ } }
   if (stopCallbackScheduler) { try { stopCallbackScheduler(); } catch { /* ignore */ } }
+  if (stopTunnelWatchdog) { try { stopTunnelWatchdog(); } catch { /* ignore */ } }
   try { realtimeVoice.close(); } catch { /* ignore */ }
   try { await closeAllWatchers(); } catch { /* ignore */ }
   try { closeAllSystemEventListeners(); } catch { /* ignore */ }
