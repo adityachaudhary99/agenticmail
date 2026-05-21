@@ -37,7 +37,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Figure out which version to announce.
       #   - release event  → use the release tag (strip leading 'v')
@@ -89,7 +89,7 @@ jobs:
       # Both fields are populated entirely from secrets/outputs, so
       # the action call below contains no personal data.
       - name: Send email to agent
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v17
         with:
           server_address: smtp.gmail.com
           server_port: 465
