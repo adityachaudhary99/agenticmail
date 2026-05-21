@@ -7,17 +7,22 @@ name: Publish to GitHub Packages
 # registry (compliance, security advisories tied to the repo) can pull
 # them by name.
 #
-# The job tries to publish every package; if a version is already on
-# GitHub Packages it'll fail with E409/E403, which we tolerate via
-# `continue-on-error: true` per-package step. New versions land
-# atomically; existing ones are no-ops.
+# The job tries to publish every package. Two classes of outcome:
+#   - exit 0 from npm publish → published ✅
+#   - npm publish 409 / "cannot publish over previously published" →
+#     already published this version, no-op ✅
+#   - anything else (auth failure, build failure, network, etc.) →
+#     fails LOUDLY so the maintainer notices. Previously the entire
+#     publish step had blanket `continue-on-error: true`, which masked
+#     real failures including the matrix gap that left @agenticmail/openclaw
+#     17 releases behind on GitHub Packages while every release run
+#     reported "success".
 #
 # Trigger: release publish, so the workflow fires once per actual
-# customer-facing release (matches what we do for enterprise).
+# customer-facing release. Also workflow_dispatch for manual backfills.
 on:
   release:
     types: [published]
-  # Manual trigger for backfilling missed releases or one-off catch-up runs.
   workflow_dispatch:
 
 jobs:
@@ -33,12 +38,17 @@ jobs:
       # shouldn't block the others.
       fail-fast: false
       matrix:
+        # Every workspace package that ships to npm publicly should also
+        # mirror to GitHub Packages. If you add a new package, add it here
+        # AND verify it appears on github.com/orgs/agenticmail/packages
+        # after the next release.
         package:
           - packages/core
           - packages/api
           - packages/mcp
           - packages/claudecode
           - packages/codex
+          - packages/openclaw
           - agenticmail   # @agenticmail/cli — lives at the monorepo root, not under packages/
 
     steps:
@@ -65,7 +75,7 @@ jobs:
       #     build also needs @agenticmail/claudecode + @agenticmail/codex
       #     type declarations (they're bundle-external but still typed)
       # Building core → api → claudecode → codex up front satisfies all
-      # six matrix packages.
+      # seven matrix packages.
       - name: Build workspace dependencies
         run: npm run build:core && npm run build:api && npm run build:claudecode && npm run build:codex
 
@@ -82,12 +92,63 @@ jobs:
             echo "::warning::No build script in ${{ matrix.package }}, skipping build"
           fi
 
-      # Publish. `continue-on-error` so a duplicate-version 409 from
-      # GitHub Packages doesn't fail the whole matrix — that just means
-      # this particular package wasn't bumped in this release.
+      # Publish with smart 409 handling. We want to:
+      #   - succeed on a fresh publish (exit 0)
+      #   - succeed on "this version is already published" (a normal
+      #     case when only some packages bumped in a release)
+      #   - FAIL on anything else (auth, network, registry 5xx, build
+      #     output missing, etc.) so the maintainer sees the failure
+      #     and doesn't silently drift behind npmjs.com
+      #
+      # Sentinel strings come from npm CLI + GitHub Packages registry
+      # responses for already-published versions:
+      #   - "EPUBLISHCONFLICT"
+      #   - "cannot publish over the previously published versions"
+      #   - "already exists"
+      #   - HTTP 409 Conflict
       - name: Publish ${{ matrix.package }}
+        id: publish
         working-directory: ${{ matrix.package }}
-        continue-on-error: true
-        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PKG: ${{ matrix.package }}
+        run: |
+          set +e
+          OUTPUT=$(npm publish --access public 2>&1)
+          STATUS=$?
+          echo "$OUTPUT"
+          if [ $STATUS -eq 0 ]; then
+            VERSION=$(node -p "require('./package.json').version")
+            NAME=$(node -p "require('./package.json').name")
+            echo "result=published" >> "$GITHUB_OUTPUT"
+            echo "name=$NAME" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "✅ Published $NAME@$VERSION"
+            exit 0
+          fi
+          if echo "$OUTPUT" | grep -qiE 'EPUBLISHCONFLICT|cannot publish over|already exists|409 Conflict|conflict.*already exists'; then
+            VERSION=$(node -p "require('./package.json').version")
+            NAME=$(node -p "require('./package.json').name")
+            echo "result=already-published" >> "$GITHUB_OUTPUT"
+            echo "name=$NAME" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  $NAME@$VERSION already on GitHub Packages — no-op"
+            exit 0
+          fi
+          echo "::error title=Publish failed for $PKG::npm publish exited $STATUS with an unexpected error. See log above."
+          exit $STATUS
+
+      # Per-package summary row in the GitHub Actions summary view so
+      # the maintainer can see at a glance which packages landed which
+      # versions, without digging through 7 sub-job logs.
+      - name: Write run summary
+        if: always() && steps.publish.outputs.result != ''
+        run: |
+          ICON="✅"
+          if [ "${{ steps.publish.outputs.result }}" = "already-published" ]; then ICON="ℹ️"; fi
+          if [ "${{ steps.publish.outcome }}" = "failure" ]; then ICON="❌"; fi
+          {
+            echo "| Status | Package | Version | Result |"
+            echo "|---|---|---|---|"
+            echo "| $ICON | \`${{ steps.publish.outputs.name }}\` | \`${{ steps.publish.outputs.version }}\` | ${{ steps.publish.outputs.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
