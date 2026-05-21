@@ -1,0 +1,123 @@
+name: Notify Agent on Release
+
+# When a new release is published, extract that release's CHANGELOG.md
+# section and email it to the operator's designated social-media agent
+# inbox. The agent picks the message up on its own polling cycle and
+# drafts/posts the release announcement to X and other socials.
+#
+# Configuration lives entirely in repo secrets — the workflow file
+# itself contains no personal info, so this is safe to keep public.
+# To change recipient, sender, or password, edit the corresponding
+# secret in Settings → Secrets and variables → Actions:
+#
+#   GMAIL_USERNAME      — sender Gmail address (used as SMTP login + From)
+#   GMAIL_APP_PASSWORD  — 16-char Gmail App Password (no spaces)
+#   AGENT_EMAIL         — recipient inbox the agent polls
+#
+# Trigger:
+#   - release:published — fires automatically on every new GitHub release
+#   - workflow_dispatch — manual trigger for testing or backfill;
+#                         optional `version` input lets you target an
+#                         older entry from CHANGELOG.md without cutting
+#                         a new release
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to notify about (e.g. 0.9.97). Leave blank to use the most recent CHANGELOG entry."
+        required: false
+        type: string
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Figure out which version to announce.
+      #   - release event  → use the release tag (strip leading 'v')
+      #   - manual dispatch with input → use the input
+      #   - manual dispatch without input → grab the topmost ## [X.Y.Z]
+      #     header in CHANGELOG.md
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          elif [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '[]#' | xargs)
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+
+      # Pull the section of CHANGELOG.md for this version. Awk walks
+      # the file, starts printing when it sees `## [VERSION]`, stops
+      # at the next `## [` header. The captured block is stuffed into
+      # a multi-line GH Actions output via the heredoc delimiter trick.
+      - name: Extract changelog section
+        id: changelog
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          SECTION=$(awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; print; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+          if [ -z "$SECTION" ]; then
+            echo "::error title=Changelog entry not found::No '## [$VERSION]' section in CHANGELOG.md"
+            exit 1
+          fi
+          {
+            echo "section<<CHANGELOG_EOF"
+            echo "$SECTION"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "--- preview ---"
+          echo "$SECTION" | head -40
+
+      # Compose the email subject + body and ship it via Gmail SMTP.
+      # Both fields are populated entirely from secrets/outputs, so
+      # the action call below contains no personal data.
+      - name: Send email to agent
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          from: ${{ secrets.GMAIL_USERNAME }}
+          to: ${{ secrets.AGENT_EMAIL }}
+          subject: "[release] AgenticMail v${{ steps.version.outputs.version }} — please draft a social-media announcement"
+          body: |
+            Hi Halo —
+
+            We just shipped AgenticMail v${{ steps.version.outputs.version }}.
+
+            Please draft and post a release announcement on X and the other
+            social channels you have access to. Keep the X post under 280
+            characters; lead with the headline change, then a short benefit
+            line. Link back to the release page:
+
+              https://github.com/agenticmail/agenticmail/releases/tag/v${{ steps.version.outputs.version }}
+
+            Full CHANGELOG section for this release is below.
+
+            ---
+
+            ${{ steps.changelog.outputs.section }}
+
+            ---
+
+            This email was sent automatically by the agenticmail/agenticmail
+            release workflow (.github/workflows/notify-agent.yml).
