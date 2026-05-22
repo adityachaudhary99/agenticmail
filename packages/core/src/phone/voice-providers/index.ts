@@ -27,3 +27,5 @@ export {
   resolveVoiceRuntime,
 } from './registry.js';
 export type { VoiceProvider, VoiceRuntimeConnection } from './types.js';
+export { previewVoice, playWav, PREVIEW_SAMPLE_RATE } from './preview.js';
+export type { VoicePreviewOptions, VoicePreviewResult } from './preview.js';

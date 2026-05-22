@@ -171,6 +171,9 @@ export {
   listVoiceProviders,
   getVoiceProvider,
   resolveVoiceRuntime,
+  // v0.9.99 — interactive audio preview for setup-voice picker.
+  previewVoice,
+  playWav,
   TWILIO_MEDIA_SAMPLE_RATE,
   buildTwilioClearMessage,
   buildTwilioMarkMessage,

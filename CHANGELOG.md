@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.99] - 2026-05-22
+
+### Added — `agenticmail setup-voice` plays a live audio preview before you commit
+
+Until now the voice-picker just listed names (`ara`, `eve`, `leo` for
+Grok; `marin`, `alloy`, `cedar`, ... for OpenAI). Operators had to
+either trust the name + place a real outbound call to hear the voice,
+or paste an account-less xAI demo URL. Both are friction at the
+exact moment you're trying to commit to a default.
+
+`setup-voice` now opens a short-lived WebSocket against the provider's
+realtime endpoint (the same `wss://api.openai.com/v1/realtime` /
+`wss://api.x.ai/v1/realtime` the call bridge uses), streams a ~5
+second sample with the picked voice, wraps the PCM in a WAV header,
+and plays through `afplay` (macOS) / `aplay` (Linux). Round-trip is
+under 5 s; cost is well under a cent per preview.
+
+New picker UX:
+
+  · `1` / `eve` — preview the voice, then ask `Use eve? (Y/n/r=replay)`
+  · `p 2` — preview voice #2 without committing (back-to-back sampling)
+  · `r` — replay the last preview
+  · `s` — skip, keep provider default
+
+Works against both OpenAI Realtime and xAI Grok Voice Agent. Soft-fails
+on a network blip or missing audio player — the picker keeps going so
+you can always commit by name.
+
+New `@agenticmail/core` exports:
+  · `previewVoice({ providerId, voice, apiKey, text?, timeoutMs? })`
+    → returns `{ wavPath, durationMs, pcmBytes }`. Reusable from any
+    host integration that wants to play a voice sample.
+  · `playWav(path)` — best-effort `afplay`/`aplay` wrapper.
+
+### Bumps
+
+`core` 0.9.40 → 0.9.41, `cli` 0.9.98 → 0.9.99.
+
 ## [0.9.98] - 2026-05-22
 
 ### Fixed — tunnel-watchdog couldn't find `cloudflared` on Apple Silicon

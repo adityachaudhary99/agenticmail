@@ -84,8 +84,16 @@ export {
   listVoiceProviders,
   getVoiceProvider,
   resolveVoiceRuntime,
+  previewVoice,
+  playWav,
+  PREVIEW_SAMPLE_RATE,
 } from './voice-providers/index.js';
-export type { VoiceProvider, VoiceRuntimeConnection } from './voice-providers/index.js';
+export type {
+  VoiceProvider,
+  VoiceRuntimeConnection,
+  VoicePreviewOptions,
+  VoicePreviewResult,
+} from './voice-providers/index.js';
 export {
   OPERATOR_QUERY_TIMEOUT_MS,
   OPERATOR_QUERY_POLL_INTERVAL_MS,

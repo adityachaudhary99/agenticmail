@@ -1371,6 +1371,30 @@ interface VoiceSetupOpts {
   allowSkip?: boolean;
 }
 
+/**
+ * v0.9.99 — fetch a short audio sample of `voiceName` from the
+ * provider's realtime endpoint and play it through the host's
+ * speakers. Soft-fails: any error becomes a one-line warning so the
+ * setup wizard never wedges on a network blip or a missing player.
+ */
+async function runPreview(
+  previewVoice: typeof import('@agenticmail/core').previewVoice,
+  playWav: typeof import('@agenticmail/core').playWav,
+  providerId: string,
+  voiceName: string,
+  apiKey: string,
+): Promise<void> {
+  log(`  ${c.dim('▸ Previewing')} ${c.cyan(voiceName)}${c.dim('… (~5s realtime sample)')}`);
+  try {
+    const result = await previewVoice({ providerId, voice: voiceName, apiKey });
+    const seconds = (result.pcmBytes / 2 / 24000).toFixed(1);
+    log(`  ${c.green('✓')} Generated ${seconds}s sample ${c.dim(`(${result.durationMs}ms round-trip)`)}`);
+    await playWav(result.wavPath);
+  } catch (err) {
+    info(`Preview failed: ${(err as Error).message}`);
+  }
+}
+
 async function runVoiceSetup(opts: VoiceSetupOpts = {}): Promise<{ skipped: boolean; providerId?: string }> {
   const { listVoiceProviders } = await import('@agenticmail/core');
   const providers = listVoiceProviders();
@@ -1486,37 +1510,91 @@ async function runVoiceSetup(opts: VoiceSetupOpts = {}): Promise<{ skipped: bool
   // defaultVoice on every call). Interactive callers see the list +
   // a custom-voice-id option when the provider supports it.
   if (process.stdin.isTTY) {
-    log('');
-    log(`  ${c.bold(`Pick a default voice character for ${provider.displayName}:`)}`);
-    log(`  ${c.dim('(this is what the caller actually hears; the model is set above)')}`);
-    log('');
-    provider.voices.forEach((v, i) => {
-      const marker = v === provider.defaultVoice ? c.dim('  ← default') : '';
-      log(`    ${c.cyan(String(i + 1))}. ${v}${marker}`);
-    });
-    if (provider.customVoicesSupported) {
-      log(`    ${c.cyan('c')}. ${c.dim('paste a custom voice id (Custom Voices API / xAI console)')}`);
-    }
-    log(`    ${c.cyan('s')}. ${c.dim('skip — use ' + provider.defaultVoice + ' (provider default)')}`);
-    log('');
-    const choice = (await ask(`  ${c.magenta('>')} `)).trim().toLowerCase();
+    // v0.9.99 — interactive picker with audio preview. The picker loops
+    // until the operator either commits to a voice ("y"), skips
+    // entirely ("s"), or runs out of patience. Previews stream live
+    // PCM from the provider's realtime endpoint, wrap it in a WAV
+    // header, and play through afplay (macOS) / aplay (Linux).
+    const { previewVoice, playWav } = await import('@agenticmail/core');
     let pickedVoice = '';
-    if (choice === 's' || choice === 'skip' || choice === '') {
-      // skip
-    } else if (choice === 'c' || choice === 'custom') {
+    // Inner loop: pick a voice candidate → preview → confirm/replay/back.
+    pickerLoop: while (true) {
+      log('');
+      log(`  ${c.bold(`Pick a default voice character for ${provider.displayName}:`)}`);
+      log(`  ${c.dim('(this is what the caller actually hears; the model is set above)')}`);
+      log('');
+      provider.voices.forEach((v, i) => {
+        const marker = v === provider.defaultVoice ? c.dim('  ← default') : '';
+        log(`    ${c.cyan(String(i + 1))}. ${v}${marker}`);
+      });
       if (provider.customVoicesSupported) {
-        pickedVoice = (await ask(`  ${c.cyan('Custom voice id')}: `)).trim();
-      } else {
-        info('Custom voice ids not supported by this provider — using default.');
+        log(`    ${c.cyan('c')}. ${c.dim('paste a custom voice id (Custom Voices API / xAI console)')}`);
       }
-    } else {
-      const byIndex = provider.voices[parseInt(choice, 10) - 1];
-      const byName = provider.voices.find((v) => v === choice);
-      pickedVoice = byIndex || byName || '';
-      if (!pickedVoice) {
-        info(`Unknown choice "${choice}" — using ${provider.defaultVoice} for now.`);
+      log(`    ${c.cyan('p <n>')}. ${c.dim('preview voice N without committing (e.g. "p 2")')}`);
+      log(`    ${c.cyan('s')}. ${c.dim('skip — use ' + provider.defaultVoice + ' (provider default)')}`);
+      log('');
+      const choice = (await ask(`  ${c.magenta('>')} `)).trim().toLowerCase();
+
+      if (choice === 's' || choice === 'skip' || choice === '') {
+        break pickerLoop;
+      }
+
+      // "p 2" / "p eve" → preview, then return to the picker without
+      // committing. Convenience shortcut so you can sample two or three
+      // voices back-to-back.
+      if (choice.startsWith('p ') || choice === 'p') {
+        const arg = choice.slice(1).trim();
+        const previewVoiceName = arg
+          ? (provider.voices[parseInt(arg, 10) - 1] || provider.voices.find((v) => v === arg) || '')
+          : '';
+        if (!previewVoiceName) {
+          info(`Couldn't parse "${choice}". Try "p 2" or "p eve".`);
+          continue pickerLoop;
+        }
+        await runPreview(previewVoice, playWav, provider.id, previewVoiceName, key);
+        continue pickerLoop;
+      }
+
+      // Custom voice id (Grok-only).
+      let candidate = '';
+      if (choice === 'c' || choice === 'custom') {
+        if (provider.customVoicesSupported) {
+          candidate = (await ask(`  ${c.cyan('Custom voice id')}: `)).trim();
+        } else {
+          info('Custom voice ids not supported by this provider.');
+          continue pickerLoop;
+        }
+      } else {
+        const byIndex = provider.voices[parseInt(choice, 10) - 1];
+        const byName = provider.voices.find((v) => v === choice);
+        candidate = byIndex || byName || '';
+      }
+      if (!candidate) {
+        info(`Unknown choice "${choice}". Pick a number, a name, "p <n>" to preview, or "s" to skip.`);
+        continue pickerLoop;
+      }
+
+      // Inner confirm loop: preview the candidate, then ask whether to
+      // commit. "r" replays, anything else returns to the picker.
+      await runPreview(previewVoice, playWav, provider.id, candidate, key);
+      while (true) {
+        log('');
+        const conf = (await ask(
+          `  ${c.bold(`Use ${c.cyan(candidate)}?`)} ${c.dim('(Y/n = pick again / r = replay)')} `,
+        )).trim().toLowerCase();
+        if (conf === '' || conf === 'y' || conf === 'yes') {
+          pickedVoice = candidate;
+          break pickerLoop;
+        }
+        if (conf === 'r' || conf === 'replay') {
+          await runPreview(previewVoice, playWav, provider.id, candidate, key);
+          continue;
+        }
+        // anything else → back to picker
+        break;
       }
     }
+
     if (pickedVoice) {
       config.voiceProviderVoices = config.voiceProviderVoices || {};
       config.voiceProviderVoices[provider.id] = pickedVoice;
