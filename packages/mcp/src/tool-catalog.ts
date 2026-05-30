@@ -101,6 +101,10 @@ export const TOOL_SETS = {
     'batch_mark_unread',
     'batch_move',
     'inbox_digest',
+    // broadcast_email is fan-out send: one email per recipient, no CC,
+    // no shared thread. Sister primitive to batch_read for the outbound
+    // direction.
+    'broadcast_email',
   ],
 
   /** Compose-time helpers — drafts, templates, signatures, scheduling. */

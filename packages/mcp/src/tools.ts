@@ -294,6 +294,41 @@ export const toolDefinitions = [
     },
   },
   {
+    name: 'broadcast_email',
+    description: 'Send the SAME email to N agents as N SEPARATE, ISOLATED emails — no CC, no shared thread. Each recipient sees ONLY their own address on the `To:` line and reads the message as a private 1:1 from you. Use this when you need to fan-out an announcement, hand the same task to several workers in parallel, or poll multiple agents for independent answers without letting them see each other\'s replies. **Not** a replacement for `send_email` + CC — use CC when the team should see each other and collaborate in one thread; use `broadcast_email` when the conversations are independent. Each per-recipient email gets its own Message-ID and thread, so replies come back to you privately (and `wait_for_email` can filter on `from:` to demultiplex). WAKE SEMANTICS: by default every local @localhost recipient gets a wake (since each is the sole `To:` of its own delivery). Pass `wake: []` to fan-out silently (no wakes), or `wake: ["alice","bob"]` to wake only specific recipients while still delivering to all. Outbound guard scans every per-recipient send individually; if ANY send is blocked, the response reports per-recipient status so you know what got through.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        to: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of recipient addresses. Accepts an array of strings (preferred) or a single comma-separated string. Each address gets its OWN email — there is no CC, no shared thread, no way for recipients to see each other.',
+        },
+        subject: { type: 'string', description: 'Subject line shared by every per-recipient delivery.' },
+        text: { type: 'string', description: 'Plain text body shared by every per-recipient delivery.' },
+        html: { type: 'string', description: 'HTML body shared by every per-recipient delivery (optional).' },
+        wake: {
+          description: 'Optional wake-control. Accepts: (1) an array of agent names — `["alice","bob"]` — to wake exactly those recipients (others still receive the mail but stay asleep); (2) the string `"all"` to wake every recipient (this is the default for broadcasts); (3) an empty array `[]` to deliver to everyone silently with no wakes; (4) omit entirely to use the default (wake every local recipient).',
+        },
+        attachments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              filename: { type: 'string', description: 'Attachment filename' },
+              content: { type: 'string', description: 'File content as text string (for text files) or base64-encoded string (for binary files)' },
+              contentType: { type: 'string', description: 'MIME type (e.g. text/plain, application/pdf)' },
+              encoding: { type: 'string', description: 'Set to "base64" only if content is base64-encoded' },
+            },
+            required: ['filename', 'content'],
+          },
+          description: 'File attachments. Same set is attached to every per-recipient delivery.',
+        },
+      },
+      required: ['to', 'subject'],
+    },
+  },
+  {
     name: 'list_inbox',
     description: 'List recent emails in the agent\'s inbox',
     inputSchema: {
@@ -1998,6 +2033,71 @@ async function dispatchToolCall(name: string, args: Record<string, unknown>, use
       let response = `Email sent successfully. Message ID: ${result?.messageId ?? 'unknown'}`;
       if (result?.outboundWarnings?.length) {
         response += `\n\n--- Outbound Guard ---\n[WARNING] ${result.outboundWarnings.length} potential issue(s):\n${result.outboundWarnings.map((w: any) => `  [${w.severity?.toUpperCase()}] ${w.description}: ${w.match}`).join('\n')}`;
+      }
+      return response;
+    }
+
+    case 'broadcast_email': {
+      // Fan-out: one POST /mail/send per recipient, so each recipient
+      // sees ONLY their own address on To: and replies land in
+      // independent threads. Forward `wake` as-is per call — the API's
+      // wake-allowlist already does the right thing: a wake list of
+      // ["alice"] only matches the per-call delivery whose To: is alice,
+      // so the other deliveries silently no-op the wake.
+      const rawTo = args.to;
+      const recipients: string[] = Array.isArray(rawTo)
+        ? (rawTo as unknown[]).map(String).map(s => s.trim()).filter(Boolean)
+        : typeof rawTo === 'string'
+          ? rawTo.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+      if (recipients.length === 0) {
+        throw new Error('broadcast_email requires at least one recipient in `to`.');
+      }
+
+      const attachments = Array.isArray(args.attachments) && args.attachments.length > 0
+        ? (args.attachments as any[]).map(a => ({
+            filename: a.filename,
+            content: a.content,
+            contentType: a.contentType,
+            ...(a.encoding ? { encoding: a.encoding } : {}),
+          }))
+        : undefined;
+
+      const results: Array<{ to: string; status: 'sent' | 'blocked' | 'error'; detail: string }> = [];
+      for (const recipient of recipients) {
+        const sendBody: Record<string, unknown> = {
+          to: recipient,
+          subject: args.subject,
+          text: args.text ?? '',
+          html: args.html,
+        };
+        if (attachments) sendBody.attachments = attachments;
+        if (args.wake !== undefined) sendBody.wake = args.wake;
+
+        try {
+          const result = await apiRequest('POST', '/mail/send', sendBody);
+          if (result?.blocked && result?.pendingId) {
+            scheduleFollowUp(result.pendingId, recipient, String(args.subject || '(no subject)'), makePendingCheck(result.pendingId));
+            results.push({ to: recipient, status: 'blocked', detail: `pendingId=${result.pendingId} (${result.summary ?? 'outbound guard'})` });
+          } else {
+            results.push({ to: recipient, status: 'sent', detail: `messageId=${result?.messageId ?? 'unknown'}` });
+          }
+        } catch (err) {
+          results.push({ to: recipient, status: 'error', detail: (err as Error).message });
+        }
+      }
+
+      const sent = results.filter(r => r.status === 'sent').length;
+      const blocked = results.filter(r => r.status === 'blocked').length;
+      const errored = results.filter(r => r.status === 'error').length;
+      const header = `Broadcast complete: ${sent} sent, ${blocked} blocked, ${errored} errored (of ${recipients.length} recipients).`;
+      const lines = results.map(r => {
+        const tag = r.status === 'sent' ? '[SENT]' : r.status === 'blocked' ? '[BLOCKED]' : '[ERROR]';
+        return `  ${tag} ${r.to} — ${r.detail}`;
+      });
+      let response = `${header}\n${lines.join('\n')}`;
+      if (blocked > 0) {
+        response += `\n\nBlocked deliveries are awaiting owner approval. Use manage_pending_emails(action='list') to review and follow up.`;
       }
       return response;
     }

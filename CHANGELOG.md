@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.102] - 2026-05-29
+
+### Added — `broadcast_email` MCP tool: fan-out one email to N agents privately
+
+Agents can now hand the same message to N teammates as N separate,
+isolated emails — no CC, no shared thread. Each recipient sees only
+their own address on `To:` and replies to the host land in independent
+threads. Use it for parallel work assignments, polling several agents
+for independent opinions, or fanning out an announcement without
+letting recipients see each other.
+
+```js
+broadcast_email({
+  to: ["vesper@localhost", "orion@localhost", "halo@localhost"],
+  subject: "Read this draft and reply with a single one-line take.",
+  text: "...",
+  // omit `wake` → every recipient gets a wake (the default for broadcasts)
+  // pass `wake: []` → fan out silently (no wakes)
+  // pass `wake: ["vesper"]` → wake only Vesper, deliver to all three
+});
+```
+
+Not a replacement for `send_email` + CC — when the team should see each
+other and collaborate in one thread, keep using `send_email` with CC.
+Use `broadcast_email` only when the conversations should be independent.
+
+Lives in the `mail_bulk` tool set, sister to `batch_read` (outbound
+fan-out paired with the inbound fan-out tools).
+
+Release: `@agenticmail/mcp@0.9.28`, `@agenticmail/claudecode@0.2.33`,
+`@agenticmail/codex@0.1.27`, `@agenticmail/cli@0.9.102`.
+
 ## [0.9.101] - 2026-05-28
 
 ### Security — fixes GHSA-63gr-g7jc-v8rg (missing auth on `@agenticmail/mcp --http`)
